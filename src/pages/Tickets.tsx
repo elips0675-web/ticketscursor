@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, ArrowUpDown, Filter, Plus, ChevronRight, MessageSquare, User } from "lucide-react"
+import { Search, ArrowUpDown, Filter, Plus, ChevronRight, MessageSquare, User, Download } from "lucide-react"
 import { useTickets } from "@/context/ticket-context"
 import { formatRelativeTime } from "@/lib/utils"
 import type { TicketStatus, TicketPriority } from "@/types"
@@ -39,6 +39,25 @@ export default function Tickets() {
       : new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime())
     return result
   }, [tickets, search, statusFilter, priorityFilter, sortBy])
+
+  const exportCSV = () => {
+    const headers = ["ID", "Название", "Статус", "Приоритет", "Категория", "Исполнитель", "Создан"]
+    const rows = filtered.map(t => [
+      t.id,
+      `"${t.title.replace(/"/g, '""')}"`,
+      statusLabels[t.status] || t.status,
+      priorityLabels[t.priority] || t.priority,
+      t.category,
+      t.assignedTo?.name || "",
+      new Date(t.createdAt).toLocaleDateString(),
+    ])
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n")
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url; a.download = `tickets-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click(); URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="space-y-6">
@@ -90,6 +109,9 @@ export default function Tickets() {
           </Select>
           <Button variant="outline" size="icon" onClick={() => setSortBy(s => s === "newest" ? "oldest" : "newest")}>
             <ArrowUpDown className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" size="sm" className="gap-2" onClick={exportCSV}>
+            <Download className="w-4 h-4" />CSV
           </Button>
         </div>
       </Card>
