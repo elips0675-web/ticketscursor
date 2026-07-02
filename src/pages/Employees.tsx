@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,10 +15,7 @@ import {
   LayoutGrid, List, Shield, UserCog, User,
 } from "lucide-react"
 import { useTickets } from "@/context/ticket-context"
-import { useAuth } from "@/context/AuthContext"
-import type { Employee, EmployeeRole } from "@/types"
-
-const API = "http://localhost:4000/api"
+import type { Employee } from "@/types"
 
 const roleLabels: Record<string, string> = {
   agent: "Агент", senior_agent: "Ст. агент", admin: "Администратор",
@@ -42,28 +39,12 @@ const roleFilterOptions = [
 ]
 
 export default function Employees() {
-  const { employees: demoEmployees } = useTickets()
-  const { token } = useAuth()
-  const [employees, setEmployees] = useState<Employee[]>(demoEmployees)
+  const { employees } = useTickets()
   const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState("")
   const [view, setView] = useState<"cards" | "table">("cards")
   const [sort, setSort] = useState<"name" | "activeTickets" | "resolvedToday">("name")
   const [selected, setSelected] = useState<Employee | null>(null)
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch(`${API}/employees`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (res.ok) {
-          const data = await res.json()
-          if (data.length > 0) setEmployees(data)
-        }
-      } catch { }
-    })()
-  }, [token])
 
   const filtered = useMemo(() => {
     let list = [...employees]
