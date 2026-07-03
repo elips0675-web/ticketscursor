@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, ArrowUpDown, Filter, Plus, MessageSquare, User, Download } from "lucide-react"
+import { Download, FileText } from "lucide-react"
 import { toast } from "sonner"
 import { useSocket } from "@/context/SocketContext"
 import { useTickets } from "@/context/ticket-context"
@@ -86,6 +86,35 @@ export default function Tickets() {
     a.click(); URL.revokeObjectURL(url)
   }
 
+  const exportPDF = async () => {
+    const { default: jsPDF } = await import("jspdf")
+    const doc = new jsPDF()
+    const pageW = doc.internal.pageSize.getWidth()
+    doc.setFontSize(16)
+    doc.text("Тикеты", pageW / 2, 15, { align: "center" })
+    doc.setFontSize(8)
+    doc.text(`Сгенерировано: ${new Date().toLocaleString()}`, pageW / 2, 21, { align: "center" })
+    let y = 28
+    doc.setFontSize(9)
+    doc.setFont("helvetica", "bold")
+    doc.text(["ID", "Название", "Статус", "Приоритет", "Категория", "Исполнитель"], 8, y)
+    y += 5
+    doc.setFont("helvetica", "normal")
+    filtered.forEach((t, i) => {
+      if (y > 275) { doc.addPage(); y = 15 }
+      doc.text([
+        String(t.id),
+        t.title.substring(0, 40),
+        statusLabels[t.status] || t.status,
+        priorityLabels[t.priority] || t.priority,
+        t.category,
+        t.assignedTo?.name || "—",
+      ], 8, y)
+      y += (i % 2 === 0 ? 4.5 : 5)
+    })
+    doc.save(`tickets-${new Date().toISOString().slice(0, 10)}.pdf`)
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -139,6 +168,9 @@ export default function Tickets() {
           </Button>
           <Button variant="outline" size="sm" className="gap-2" onClick={exportCSV}>
             <Download className="w-4 h-4" />CSV
+          </Button>
+          <Button variant="outline" size="sm" className="gap-2" onClick={exportPDF}>
+            <FileText className="w-4 h-4" />PDF
           </Button>
         </div>
       </Card>

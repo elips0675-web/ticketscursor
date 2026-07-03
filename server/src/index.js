@@ -3,10 +3,12 @@ import knex from 'knex'
 import knexConfig from '../knexfile.js'
 import { app, server } from './app.js'
 import { setupSocket } from './socket.js'
+import { initTelegram } from './telegram.js'
 
 const PORT = process.env.PORT || 4000
 
 setupSocket(server)
+initTelegram()
 
 // Auto-run migrations on startup
 ;(async () => {

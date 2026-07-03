@@ -2,6 +2,8 @@ import { Router } from 'express'
 import pool from '../db.js'
 import { authenticateToken, requireRole } from '../middleware.js'
 import { getIO } from '../socket.js'
+import { sendTicketNotification } from '../email.js'
+import { sendTelegramNotification } from '../telegram.js'
 
 const router = Router()
 
@@ -74,6 +76,7 @@ router.post('/', async (req, res) => {
     )
     const [ticket] = await pool.query('SELECT * FROM tickets WHERE id = ?', [ticketId])
     getIO()?.emit('ticket:created', { ...ticket[0], messages: [] })
+    sendTelegramNotification(`🆕 Новый тикет #${ticketId}: ${title}\nПриоритет: ${priority || 'medium'}\nКатегория: ${category || 'support'}`)
     res.status(201).json(ticket[0])
   } catch (err) {
     console.error('Create ticket error:', err)
@@ -89,6 +92,21 @@ router.put('/:id/status', requireRole('admin', 'senior_agent'), async (req, res)
   try {
     await pool.query('UPDATE tickets SET status = ?, updated_at = NOW() WHERE id = ?', [status, req.params.id])
     getIO()?.emit('ticket:updated', { id: Number(req.params.id), status, updatedBy: req.user.userId })
+    const labels = { open: 'Открыт', in_progress: 'В работе', resolved: 'Решён', closed: 'Закрыт' }
+    sendTelegramNotification(`📋 Статус тикета #${req.params.id} изменён на: ${labels[status] || status}`)
+
+    const [[ticket]] = await pool.query(
+      'SELECT t.title, e.email, e.name FROM tickets t JOIN employees e ON t.created_by = e.id WHERE t.id = ?',
+      [req.params.id],
+    )
+    if (ticket?.email) {
+      sendTicketNotification({
+        to: ticket.email,
+        subject: `Статус тикета #${req.params.id} изменён: ${labels[status] || status}`,
+        text: `Тикет "${ticket.title}" (#${req.params.id})\nНовый статус: ${labels[status] || status}\n\nService Desk`,
+      })
+    }
+
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ message: 'Failed to update status' })
