@@ -146,6 +146,7 @@
     "title": "Admin",
     "users": "Users",
     "push": "Push Notifications",
+    "settings": "Settings",
     "blocked": "Blocked",
     "active": "Active"
   }

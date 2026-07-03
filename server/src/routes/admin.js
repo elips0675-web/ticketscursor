@@ -5,6 +5,36 @@ import { authenticateToken, requireRole } from '../middleware.js'
 const router = Router()
 router.use(authenticateToken, requireRole('admin'))
 
+const ALLOWED_SETTINGS = ['TELEGRAM_BOT_TOKEN', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM', 'SMTP_SECURE']
+
+router.get('/settings', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT `key`, `value` FROM admin_settings')
+    const settings = {}
+    for (const r of rows) settings[r.key] = r.value
+    res.json(settings)
+  } catch (err) {
+    console.error('Settings get error:', err)
+    res.status(500).json({ message: 'Failed to fetch settings' })
+  }
+})
+
+router.put('/settings', async (req, res) => {
+  try {
+    for (const [key, value] of Object.entries(req.body)) {
+      if (!ALLOWED_SETTINGS.includes(key)) continue
+      await pool.query(
+        'INSERT INTO admin_settings (`key`, `value`, `updated_at`) VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `updated_at` = NOW()',
+        [key, String(value)],
+      )
+    }
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Settings update error:', err)
+    res.status(500).json({ message: 'Failed to update settings' })
+  }
+})
+
 router.get('/users', async (req, res) => {
   try {
     const [rows] = await pool.query(

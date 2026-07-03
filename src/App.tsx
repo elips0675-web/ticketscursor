@@ -27,6 +27,7 @@ import Register from "@/pages/Register"
 import Admin from "@/pages/Admin"
 import AdminUsers from "@/pages/AdminUsers"
 import AdminPush from "@/pages/AdminPush"
+import AdminSettings from "@/pages/AdminSettings"
 import NotFound from "@/pages/NotFound"
 import ProtectedRoute from "@/components/ProtectedRoute"
 
@@ -43,6 +44,7 @@ export default function App() {
             <Route path="/admin" element={<ProtectedRoute adminOnly><AdminLayout><Admin /></AdminLayout></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute adminOnly><AdminLayout><AdminUsers /></AdminLayout></ProtectedRoute>} />
             <Route path="/admin/push" element={<ProtectedRoute adminOnly><AdminLayout><AdminPush /></AdminLayout></ProtectedRoute>} />
+            <Route path="/admin/settings" element={<ProtectedRoute adminOnly><AdminLayout><AdminSettings /></AdminLayout></ProtectedRoute>} />
             <Route path="/*" element={
               <AppLayout>
                 <ProtectedRoute>
