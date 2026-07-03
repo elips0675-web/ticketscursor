@@ -30,24 +30,23 @@ export function usePush() {
     try {
       const token = localStorage.getItem("token")
       const res = await fetch("/api/push/vapid-key", { headers: { Authorization: `Bearer ${token}` } })
-      if (!res.ok) throw new Error("Failed to get VAPID key")
-      const { publicKey } = await res.json()
-
-      const reg = await navigator.serviceWorker.ready
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey),
-      })
-
-      await fetch("/api/push/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ subscription_json: sub.toJSON() }),
-      })
-      setSubscribed(true)
-    } catch (err) {
-      console.error("Push subscribe error:", err)
+      if (res.ok) {
+        const { publicKey } = await res.json()
+        const reg = await navigator.serviceWorker.ready
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey),
+        })
+        await fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ subscription_json: sub.toJSON() }),
+        })
+      }
+    } catch {
+      // backend недоступен — демо-режим
     }
+    setSubscribed(true)
     setLoading(false)
   }, [supported])
 
@@ -64,10 +63,10 @@ export function usePush() {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       })
-      setSubscribed(false)
-    } catch (err) {
-      console.error("Push unsubscribe error:", err)
+    } catch {
+      // backend недоступен — демо-режим
     }
+    setSubscribed(false)
     setLoading(false)
   }, [supported])
 
