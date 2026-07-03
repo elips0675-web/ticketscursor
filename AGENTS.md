@@ -28,15 +28,32 @@
 - Страницы: Admin.tsx (дашборд), AdminUsers.tsx (список, роли, блокировка), AdminPush.tsx (подписка + отправка)
 - `/admin` вынесен из основного лейаута
 
-### Этап 5 — Плиточная вёрстка (сделано сейчас)
+### Этап 5 — Плиточная вёрстка
 - **Polls.tsx** → плитка (1→2→3 колонки), варианты всегда видны, expand/collapse убран
 - **Tickets.tsx** → плитка (1→2→3 колонки) + пагинация «Показать ещё» (по 9)
 - **News.tsx** → плитка (1→2→3 колонки) + пагинация «Показать ещё» (по 6)
 - **Search.tsx** → результаты внутри каждой секции плиткой (grid 1→2 колонки), убран `max-w-3xl`
 
+### Этап 6 — RBAC фронтенд
+- **TicketDetail**: скрыто управление (статус/приоритет/назначение) для `agent`
+- **Polls**: кнопка «Создать опрос» только для `canManage`
+- **Calendar**: кнопка удаления события только для `canManage`
+- **ProtectedRoute**: новый компонент, редирект на `/login` без токена, на `/` при недостатке прав
+- **Register + /admin/***: защищены через `ProtectedRoute adminOnly`
+- **Тесты расширены**: 9→17 тестов (RBAC, register validation)
+
+### Этап 7 — WebSocket / real-time
+- **SocketContext.tsx**: исправлена передача instance (был stale ref), добавлен `connected`
+- **socket.js**: `getIO()` экспорт для доступа из REST-роутов
+- **tickets.js**: эмиты `ticket:created`, `ticket:updated` (status/priority/assign), `ticket:message`, `ticket:message-removed`
+- **Toaster (sonner)**: добавлен в `App.tsx` для toast-уведомлений
+- **Tickets.tsx**: слушает `ticket:created` / `ticket:updated` → toast
+- **TicketDetail.tsx**: слушает `ticket:message` для активного тикета → toast
+- Все эмиты безопасны (`getIO()?.emit` — не падает без WebSocket)
+
 ## Осталось
 
+- **Подключение страниц к API** — Polls, News, Admin используют демо-данные, не подключены к бэкенду
 - **Тёмная тема** — переключение светлой/тёмной темы
-- **Уведомления в реальном времени** — WebSocket/Socket.IO для live-обновлений
-- **Интеграция с бэкендом** — много страниц (Polls, News, Admin) используют демо-данные, не подключены к API
+- **Интеграция с бэкендом** — остальные страницы тоже на демо-данных
 - **Деплой** — сборка и развёртывание проекта

@@ -1,25 +1,33 @@
-import { useState, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
-import { Search, Newspaper, Plus, Clock, User, AlertTriangle, Pin } from "lucide-react"
+import { Search, Newspaper, Plus, Clock, User, AlertTriangle, Pin, Loader2 } from "lucide-react"
 import type { NewsPost } from "@/types"
 import { useAuth } from "@/context/AuthContext"
 
-const DEMO_NEWS: NewsPost[] = [
-  { id: 1, title: "Запуск новой версии Service Desk 2.1", content: "Сегодня состоялся релиз обновления 2.1. Добавлены: улучшенный поиск по тикетам, новый дизайн дашборда, исправлены критические ошибки. Список изменений доступен в Wiki.", important: true, authorId: 1, authorName: "Алексей Петров", createdAt: "2026-07-02T09:00:00" },
-  { id: 2, title: "Изменение графика работы техподдержки", content: "С 1 июля техподдержка работает с 8:00 до 20:00 по будням. Заявки, созданные в нерабочее время, обрабатываются на следующий день.", important: false, authorId: 2, authorName: "Мария Иванова", createdAt: "2026-06-28T14:00:00" },
-  { id: 3, title: "Плановые работы на сервере", content: "В ночь с 5 на 6 июля с 02:00 до 04:00 будут проводиться технические работы. Возможны кратковременные перерывы в доступе.", important: true, authorId: 1, authorName: "Алексей Петров", createdAt: "2026-06-25T11:00:00" },
-  { id: 4, title: "Новый сотрудник в команде", content: "Приветствуем Елену Павлову — нового разработчика в отделе IT. Елена будет заниматься улучшением интерфейса и новыми интеграциями.", important: false, authorId: 1, authorName: "Алексей Петров", createdAt: "2026-06-20T10:00:00" },
-  { id: 5, title: "Обновление правил SLA", content: "Обновлены временные рамки для уровней поддержки. Критические инциденты — реакция до 30 минут. Высокий приоритет — до 2 часов. Средний — до 8 часов.", important: false, authorId: 2, authorName: "Мария Иванова", createdAt: "2026-06-15T16:00:00" },
-]
+const API = "http://localhost:4000/api"
+
+function mapNews(raw: any): NewsPost {
+  return {
+    id: raw.id,
+    title: raw.title,
+    content: raw.content,
+    important: !!raw.important,
+    authorId: raw.author_id,
+    authorName: raw.author_name,
+    createdAt: raw.created_at,
+  }
+}
 
 const PER_PAGE = 6
 
 export default function NewsPage() {
-  const { canManage } = useAuth()
+  const { canManage, token } = useAuth()
+  const [news, setNews] = useState<NewsPost[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [showImportant, setShowImportant] = useState(false)
   const [open, setOpen] = useState(false)
@@ -28,32 +36,40 @@ export default function NewsPage() {
   const [newImportant, setNewImportant] = useState(false)
   const [page, setPage] = useState(1)
 
+  useEffect(() => {
+    fetch(`${API}/news`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.ok ? res.json() : [])
+      .then(data => { setNews(data.map(mapNews)); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [token])
+
   const filtered = useMemo(() => {
-    let items = DEMO_NEWS
+    let items = news
     if (showImportant) items = items.filter(n => n.important)
     if (search.trim()) {
       const q = search.toLowerCase()
       items = items.filter(n => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q))
     }
     return items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-  }, [search, showImportant])
+  }, [news, search, showImportant])
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE)
   const paged = filtered.slice(0, page * PER_PAGE)
   const resetPage = () => setPage(1)
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!newTitle.trim() || !newContent.trim()) return
-    const post: NewsPost = {
-      id: DEMO_NEWS.length + 1,
-      title: newTitle,
-      content: newContent,
-      important: newImportant,
-      authorId: 1,
-      authorName: "Алексей Петров",
-      createdAt: new Date().toISOString(),
-    }
-    DEMO_NEWS.unshift(post)
+    try {
+      const res = await fetch(`${API}/news`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ title: newTitle, content: newContent, important: newImportant }),
+      })
+      if (res.ok) {
+        const post = mapNews(await res.json())
+        setNews(prev => [post, ...prev])
+      }
+    } catch { /* ignore */ }
     setOpen(false)
     setNewTitle("")
     setNewContent("")
@@ -103,6 +119,11 @@ export default function NewsPage() {
         </Button>
       </div>
 
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {filtered.length === 0 && (
           <div className="col-span-full text-center py-16 text-muted-foreground">
@@ -125,6 +146,7 @@ export default function NewsPage() {
           </div>
         ))}
       </div>
+      )}
 
       {totalPages > 1 && page < totalPages && (
         <div className="flex justify-center pt-2">

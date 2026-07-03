@@ -1,79 +1,64 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Plus, BarChart3, CheckCheck, X } from "lucide-react"
-import type { Poll, PollOption } from "@/types"
+import { Plus, BarChart3, CheckCheck, Loader2, X } from "lucide-react"
+import type { Poll } from "@/types"
 import { useAuth } from "@/context/AuthContext"
 
-const DEMO_POLLS: Poll[] = [
-  {
-    id: 1, title: "Какой стек выбрать для нового проекта?", description: "Голосуем за стек технологий", multipleChoice: false,
-    options: [
-      { id: 1, pollId: 1, text: "React + Node.js", votesCount: 12 },
-      { id: 2, pollId: 1, text: "Vue + Python", votesCount: 5 },
-      { id: 3, pollId: 1, text: "Next.js + Go", votesCount: 8 },
-    ],
-    totalVotes: 25, myVotes: [], createdBy: 1, createdAt: "2026-07-01",
-  },
-  {
-    id: 2, title: "Удобство интерфейса", description: "Оцените новый дизайн тикет-системы", multipleChoice: true,
-    options: [
-      { id: 4, pollId: 2, text: "Всё отлично", votesCount: 18 },
-      { id: 5, pollId: 2, text: "Нужно доработать", votesCount: 7 },
-      { id: 6, pollId: 2, text: "Неудобно", votesCount: 3 },
-    ],
-    totalVotes: 28, myVotes: [], createdBy: 1, createdAt: "2026-06-28",
-  },
-]
+const API = "http://localhost:4000/api"
 
 export default function PollsPage() {
-  const { canManage } = useAuth()
-  const [polls, setPolls] = useState<Poll[]>(DEMO_POLLS)
+  const { canManage, token } = useAuth()
+  const [polls, setPolls] = useState<Poll[]>([])
+  const [loading, setLoading] = useState(true)
   const [showNew, setShowNew] = useState(false)
-  const [voting, setVoting] = useState<number | null>(null)
   const [form, setForm] = useState({ title: "", description: "", options: ["", ""], multipleChoice: false })
 
-  const createPoll = () => {
+  useEffect(() => {
+    fetch(`${API}/polls`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.ok ? res.json() : [])
+      .then(data => { setPolls(data); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [token])
+
+  const createPoll = async () => {
     if (!form.title.trim() || form.options.filter(o => o.trim()).length < 2) return
-    const opts: PollOption[] = form.options.filter(o => o.trim()).map((text, i) => ({
-      id: Date.now() + i, pollId: Date.now(), text, votesCount: 0,
-    }))
-    const poll: Poll = {
-      id: Date.now(), title: form.title, description: form.description,
-      multipleChoice: form.multipleChoice, options: opts,
-      totalVotes: 0, myVotes: [], createdBy: 1, createdAt: new Date().toISOString(),
-    }
-    setPolls(prev => [poll, ...prev])
+    try {
+      const res = await fetch(`${API}/polls`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          title: form.title,
+          description: form.description,
+          options: form.options.filter(o => o.trim()),
+          multipleChoice: form.multipleChoice,
+        }),
+      })
+      if (res.ok) {
+        const poll = await res.json()
+        setPolls(prev => [poll, ...prev])
+      }
+    } catch { /* ignore */ }
     setShowNew(false)
     setForm({ title: "", description: "", options: ["", ""], multipleChoice: false })
   }
 
-  const vote = (pollId: number, optionId: number) => {
-    setPolls(prev => prev.map(p => {
-      if (p.id !== pollId) return p
-      if (p.myVotes?.includes(optionId)) {
-        const newVotes = p.myVotes.filter(v => v !== optionId)
-        return {
-          ...p, myVotes: newVotes, totalVotes: p.totalVotes - 1,
-          options: p.options.map(o => o.id === optionId ? { ...o, votesCount: o.votesCount - 1 } : o),
-        }
+  const vote = async (pollId: number, optionId: number) => {
+    try {
+      const res = await fetch(`${API}/polls/${pollId}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ optionId }),
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setPolls(prev => prev.map(p => p.id === pollId ? updated : p))
       }
-      let newOpts = p.options.map(o => o.id === optionId ? { ...o, votesCount: o.votesCount + 1 } : o)
-      let newMyVotes: number[]
-      if (p.multipleChoice) {
-        newMyVotes = [...(p.myVotes || []), optionId]
-        return { ...p, options: newOpts, myVotes: newMyVotes, totalVotes: p.totalVotes + 1 }
-      } else {
-        newMyVotes = [optionId]
-        newOpts = newOpts.map(o => p.myVotes?.includes(o.id) ? { ...o, votesCount: o.votesCount - 1 } : o)
-        return { ...p, options: newOpts, myVotes: newMyVotes, totalVotes: p.totalVotes + 1 }
-      }
-    }))
+    } catch { /* ignore */ }
   }
 
   const calcPct = (votes: number, total: number) => total > 0 ? Math.round(votes / total * 100) : 0
@@ -134,9 +119,13 @@ export default function PollsPage() {
         </Card>
       )}
 
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {polls.map(poll => {
-          const open = voting === poll.id
           const hasVoted = (poll.myVotes?.length || 0) > 0
           return (
             <Card key={poll.id} className="flex flex-col">
@@ -196,13 +185,14 @@ export default function PollsPage() {
             </Card>
           )
         })}
-        {polls.length === 0 && (
+        {!loading && polls.length === 0 && (
           <div className="col-span-full text-center py-16 text-muted-foreground">
             <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-30" />
             <p className="font-bold text-sm">Опросов пока нет</p>
           </div>
         )}
       </div>
+      )}
     </div>
   )
 }
