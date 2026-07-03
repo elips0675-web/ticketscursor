@@ -1,23 +1,96 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react"
 import type { Ticket, TicketStats, Employee, TicketStatus, TicketPriority } from "@/types"
-import { DEMO_TICKETS, DEMO_EMPLOYEES, DEMO_STATS } from "@/lib/demo-data"
+import { useAuth } from "@/context/AuthContext"
+import { DEMO_TICKETS, DEMO_EMPLOYEES } from "@/lib/demo-data"
+
+const API = "http://localhost:4000/api"
 
 interface TicketContextType {
   tickets: Ticket[]
   employees: Employee[]
   stats: TicketStats
-  updateTicketStatus: (id: number, status: TicketStatus) => void
-  updateTicketPriority: (id: number, priority: TicketPriority) => void
-  assignTicket: (id: number, employeeId: number) => void
-  addMessage: (ticketId: number, text: string, isInternal: boolean) => void
-  createTicket: (ticket: { title: string; description: string; priority: TicketPriority; category: string; computerName?: string; userAccount?: string }) => void
+  updateTicketStatus: (id: number, status: TicketStatus) => Promise<void>
+  updateTicketPriority: (id: number, priority: TicketPriority) => Promise<void>
+  assignTicket: (id: number, employeeId: number) => Promise<void>
+  addMessage: (ticketId: number, text: string, isInternal: boolean) => Promise<void>
+  createTicket: (data: { title: string; description: string; priority: TicketPriority; category: string; computerName?: string; userAccount?: string }) => Promise<void>
+  loading: boolean
 }
 
 const TicketContext = createContext<TicketContextType | null>(null)
 
+function mapTicket(raw: any): Ticket {
+  return {
+    id: raw.id,
+    title: raw.title,
+    description: raw.description,
+    status: raw.status,
+    priority: raw.priority,
+    category: raw.category,
+    tags: [],
+    computerName: raw.computer_name,
+    userAccount: raw.user_account,
+    createdBy: { id: raw.created_by, name: raw.created_by_name || "User", email: "", avatar: "" },
+    assignedTo: raw.assigned_to ? { id: raw.assigned_to, name: raw.assigned_name || "", email: raw.assigned_email || "", avatar: raw.assigned_avatar || "" } : undefined,
+    messages: Array.isArray(raw.messages) ? raw.messages.map((m: any) => ({
+      id: m.id,
+      ticketId: m.ticket_id,
+      senderId: m.sender_id,
+      senderName: m.sender_name,
+      senderAvatar: m.sender_avatar || "",
+      text: m.text,
+      attachments: [],
+      createdAt: m.created_at,
+      isInternal: !!m.is_internal,
+    })) : [],
+    createdAt: raw.created_at,
+    updatedAt: raw.updated_at,
+  }
+}
+
 export function TicketProvider({ children }: { children: ReactNode }) {
-  const [tickets, setTickets] = useState<Ticket[]>(DEMO_TICKETS)
-  const [employees] = useState<Employee[]>(DEMO_EMPLOYEES)
+  const { token } = useAuth()
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchAll = useCallback(async () => {
+    if (!token) return
+    try {
+      const [tRes, eRes] = await Promise.all([
+        fetch(`${API}/tickets`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API}/employees`, { headers: { Authorization: `Bearer ${token}` } }),
+      ])
+      if (tRes.ok) {
+        const data = await tRes.json()
+        setTickets(data.map(mapTicket))
+      } else {
+        setTickets(DEMO_TICKETS)
+      }
+      if (eRes.ok) {
+        const data = await eRes.json()
+        setEmployees(data.map((e: any) => ({
+          id: e.id,
+          name: e.name,
+          email: e.email,
+          role: e.role as Employee["role"],
+          department: e.department,
+          avatar: e.avatar || "",
+          online: !!e.online,
+          activeTickets: e.activeTickets || 0,
+          resolvedToday: e.resolvedToday || 0,
+        })))
+      } else {
+        setEmployees(DEMO_EMPLOYEES)
+      }
+    } catch {
+      setTickets(DEMO_TICKETS)
+      setEmployees(DEMO_EMPLOYEES)
+    }
+    setLoading(false)
+  }, [token])
+
+  useEffect(() => { fetchAll() }, [fetchAll])
 
   const stats: TicketStats = {
     total: tickets.length,
@@ -28,68 +101,84 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     avgResolutionTime: 4.5,
   }
 
-  const updateTicketStatus = useCallback((id: number, status: TicketStatus) => {
-    setTickets(prev => prev.map(t => t.id === id ? { ...t, status, updatedAt: new Date().toISOString() } : t))
-  }, [])
+  const updateTicketStatus = useCallback(async (id: number, status: TicketStatus) => {
+    try {
+      await fetch(`${API}/tickets/${id}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status }),
+      })
+      setTickets(prev => prev.map(t => t.id === id ? { ...t, status, updatedAt: new Date().toISOString() } : t))
+    } catch { /* ignore */ }
+  }, [token])
 
-  const updateTicketPriority = useCallback((id: number, priority: TicketPriority) => {
-    setTickets(prev => prev.map(t => t.id === id ? { ...t, priority, updatedAt: new Date().toISOString() } : t))
-  }, [])
+  const updateTicketPriority = useCallback(async (id: number, priority: TicketPriority) => {
+    try {
+      await fetch(`${API}/tickets/${id}/priority`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ priority }),
+      })
+      setTickets(prev => prev.map(t => t.id === id ? { ...t, priority, updatedAt: new Date().toISOString() } : t))
+    } catch { /* ignore */ }
+  }, [token])
 
-  const assignTicket = useCallback((id: number, employeeId: number) => {
-    const emp = employees.find(e => e.id === employeeId)
-    setTickets(prev => prev.map(t => t.id === id ? { ...t, assignedTo: emp, updatedAt: new Date().toISOString() } : t))
-  }, [employees])
+  const assignTicket = useCallback(async (id: number, employeeId: number) => {
+    try {
+      await fetch(`${API}/tickets/${id}/assign`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ employeeId }),
+      })
+      const emp = employees.find(e => e.id === employeeId)
+      setTickets(prev => prev.map(t => t.id === id ? { ...t, assignedTo: emp, updatedAt: new Date().toISOString() } : t))
+    } catch { /* ignore */ }
+  }, [token, employees])
 
-  const addMessage = useCallback((ticketId: number, text: string, isInternal: boolean) => {
-    setTickets(prev => prev.map(t => {
-      if (t.id !== ticketId) return t
-      const newMsg = {
-        id: Date.now(),
-        ticketId,
-        senderId: 1,
-        senderName: "Алексей Петров",
-        senderAvatar: "",
-        text,
-        attachments: [],
-        createdAt: new Date().toISOString(),
-        isInternal,
+  const addMessage = useCallback(async (ticketId: number, text: string, isInternal: boolean) => {
+    try {
+      const res = await fetch(`${API}/tickets/${ticketId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ text, isInternal }),
+      })
+      if (res.ok) {
+        const msg = await res.json()
+        setTickets(prev => prev.map(t => {
+          if (t.id !== ticketId) return t
+          const newMsg = {
+            id: msg.id,
+            ticketId: msg.ticket_id,
+            senderId: msg.sender_id,
+            senderName: msg.sender_name,
+            senderAvatar: msg.sender_avatar || "",
+            text: msg.text,
+            attachments: [],
+            createdAt: msg.created_at,
+            isInternal: !!msg.is_internal,
+          }
+          return { ...t, messages: [...t.messages, newMsg], updatedAt: new Date().toISOString() }
+        }))
       }
-      return { ...t, messages: [...t.messages, newMsg], updatedAt: new Date().toISOString() }
-    }))
-  }, [])
+    } catch { /* ignore */ }
+  }, [token])
 
-  const createTicket = useCallback((data: { title: string; description: string; priority: TicketPriority; category: string; computerName?: string; userAccount?: string }) => {
-    const newTicket: Ticket = {
-      id: Date.now(),
-      title: data.title,
-      description: data.description,
-      status: "open",
-      priority: data.priority as TicketPriority,
-      category: data.category as any,
-      computerName: data.computerName,
-      userAccount: data.userAccount,
-      createdBy: { id: 1, name: "Алексей Петров", email: "alexey@example.com", avatar: "" },
-      messages: [{
-        id: Date.now(),
-        ticketId: Date.now(),
-        senderId: 1,
-        senderName: "Алексей Петров",
-        senderAvatar: "",
-        text: data.description,
-        attachments: [],
-        createdAt: new Date().toISOString(),
-        isInternal: false,
-      }],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      tags: [],
-    }
-    setTickets(prev => [newTicket, ...prev])
-  }, [])
+  const createTicket = useCallback(async (data: { title: string; description: string; priority: TicketPriority; category: string; computerName?: string; userAccount?: string }) => {
+    try {
+      const res = await fetch(`${API}/tickets`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(data),
+      })
+      if (res.ok) {
+        const created = mapTicket(await res.json())
+        setTickets(prev => [created, ...prev])
+      }
+    } catch { /* ignore */ }
+  }, [token])
 
   return (
-    <TicketContext.Provider value={{ tickets, employees, stats, updateTicketStatus, updateTicketPriority, assignTicket, addMessage, createTicket }}>
+    <TicketContext.Provider value={{ tickets, employees, stats, updateTicketStatus, updateTicketPriority, assignTicket, addMessage, createTicket, loading }}>
       {children}
     </TicketContext.Provider>
   )
