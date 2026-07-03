@@ -1,7 +1,8 @@
 import { NavLink } from "react-router-dom"
-import { Search, Ticket, LayoutDashboard, Users, PlusCircle, Calendar, BarChart3, FileText, MessageCircle, User, HelpCircle, LogOut, BookOpen, Newspaper, Shield, Columns3 } from "lucide-react"
+import { Search, Ticket, LayoutDashboard, Users, PlusCircle, Calendar, BarChart3, FileText, MessageCircle, User, HelpCircle, LogOut, BookOpen, Newspaper, Shield, Columns3, Sun, Moon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/context/AuthContext"
+import { useTheme } from "@/context/ThemeContext"
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Дашборд", roles: ["admin", "senior_agent", "agent"] },
@@ -28,6 +29,19 @@ export function Sidebar() {
     <aside className="hidden md:flex md:w-60 flex-col bg-sidebar text-sidebar-foreground h-screen shrink-0">
       <SidebarContent />
     </aside>
+  )
+}
+
+function ThemeToggle() {
+  const { theme, toggle } = useTheme()
+  return (
+    <button
+      onClick={toggle}
+      className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+    >
+      {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+      {theme === "dark" ? "Светлая тема" : "Тёмная тема"}
+    </button>
   )
 }
 
@@ -91,6 +105,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             {item.label}
           </NavLink>
         ))}
+        <ThemeToggle />
         <button
           onClick={() => { logout(); window.location.href = '/login' }}
           className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
