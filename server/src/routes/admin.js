@@ -81,4 +81,23 @@ router.put('/users/:id', async (req, res) => {
   }
 })
 
+router.get('/audit', async (req, res) => {
+  const { entityType, entityId, limit = 50, offset = 0 } = req.query
+  try {
+    let sql = 'SELECT * FROM audit_log'
+    const params = []
+    const conditions = []
+    if (entityType) { conditions.push('entity_type = ?'); params.push(entityType) }
+    if (entityId) { conditions.push('entity_id = ?'); params.push(Number(entityId)) }
+    if (conditions.length) sql += ' WHERE ' + conditions.join(' AND ')
+    sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
+    params.push(Number(limit), Number(offset))
+    const [rows] = await pool.query(sql, params)
+    res.json(rows)
+  } catch (err) {
+    console.error('Audit log error:', err)
+    res.status(500).json({ message: 'Failed to fetch audit log' })
+  }
+})
+
 export default router

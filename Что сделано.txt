@@ -145,6 +145,7 @@
 │ CI/CD (GitHub Actions)          │ ✅              │
 │ Email-уведомления (nodemailer)  │ ✅              │
 │ Telegram-бот (node-telegram-bot)│ ✅              │
+│ Админка: настройки интеграций   │ ✅              │
 │ Десктоп-версия (Tauri v2)       │ ✅ (нужен Rust) │
 │ vercel.json (SPA routing)        │ ✅              │
 └──────────────────────────────────┴─────────────────┘

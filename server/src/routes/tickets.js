@@ -4,6 +4,7 @@ import { authenticateToken, requireRole } from '../middleware.js'
 import { getIO } from '../socket.js'
 import { sendTicketNotification } from '../email.js'
 import { sendTelegramNotification } from '../telegram.js'
+import { logAudit } from '../audit.js'
 
 const router = Router()
 
@@ -76,6 +77,7 @@ router.post('/', async (req, res) => {
     )
     const [ticket] = await pool.query('SELECT * FROM tickets WHERE id = ?', [ticketId])
     getIO()?.emit('ticket:created', { ...ticket[0], messages: [] })
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'created', entityType: 'ticket', entityId: ticketId, details: { title } })
     sendTelegramNotification(`🆕 Новый тикет #${ticketId}: ${title}\nПриоритет: ${priority || 'medium'}\nКатегория: ${category || 'support'}`)
     res.status(201).json(ticket[0])
   } catch (err) {
@@ -90,9 +92,12 @@ router.put('/:id/status', requireRole('admin', 'senior_agent'), async (req, res)
   const allowed = ['open', 'in_progress', 'resolved', 'closed']
   if (!allowed.includes(status)) return res.status(400).json({ message: 'Invalid status' })
   try {
+    const [[old]] = await pool.query('SELECT status FROM tickets WHERE id = ?', [req.params.id])
+    if (!old) return res.status(404).json({ message: 'Ticket not found' })
     await pool.query('UPDATE tickets SET status = ?, updated_at = NOW() WHERE id = ?', [status, req.params.id])
     getIO()?.emit('ticket:updated', { id: Number(req.params.id), status, updatedBy: req.user.userId })
     const labels = { open: 'Открыт', in_progress: 'В работе', resolved: 'Решён', closed: 'Закрыт' }
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'status_changed', entityType: 'ticket', entityId: Number(req.params.id), details: { from: old.status, to: status } })
     sendTelegramNotification(`📋 Статус тикета #${req.params.id} изменён на: ${labels[status] || status}`)
 
     const [[ticket]] = await pool.query(
@@ -119,8 +124,10 @@ router.put('/:id/priority', requireRole('admin', 'senior_agent'), async (req, re
   const allowed = ['low', 'medium', 'high', 'critical']
   if (!allowed.includes(priority)) return res.status(400).json({ message: 'Invalid priority' })
   try {
+    const [[old]] = await pool.query('SELECT priority FROM tickets WHERE id = ?', [req.params.id])
     await pool.query('UPDATE tickets SET priority = ?, updated_at = NOW() WHERE id = ?', [priority, req.params.id])
     getIO()?.emit('ticket:updated', { id: Number(req.params.id), priority, updatedBy: req.user.userId })
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'priority_changed', entityType: 'ticket', entityId: Number(req.params.id), details: { from: old?.priority, to: priority } })
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ message: 'Failed to update priority' })
@@ -131,8 +138,10 @@ router.put('/:id/priority', requireRole('admin', 'senior_agent'), async (req, re
 router.put('/:id/assign', requireRole('admin', 'senior_agent'), async (req, res) => {
   const { employeeId } = req.body
   try {
-    await pool.query('UPDATE tickets SET assigned_to = ?, updated_at = NOW() WHERE id = ?', [employeeId, req.params.id])
+    const [[emp]] = employeeId ? await pool.query('SELECT name FROM employees WHERE id = ?', [employeeId]) : []
+    await pool.query('UPDATE tickets SET assigned_to = ?, updated_at = NOW() WHERE id = ?', [employeeId || null, req.params.id])
     getIO()?.emit('ticket:updated', { id: Number(req.params.id), assignedTo: employeeId, updatedBy: req.user.userId })
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'assigned', entityType: 'ticket', entityId: Number(req.params.id), details: { assignedTo: employeeId || null, assignedName: emp?.name || null } })
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ message: 'Failed to assign ticket' })

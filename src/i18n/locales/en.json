@@ -147,6 +147,7 @@
     "users": "Users",
     "push": "Push Notifications",
     "settings": "Settings",
+    "audit": "Audit Log",
     "blocked": "Blocked",
     "active": "Active"
   }

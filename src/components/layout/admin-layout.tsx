@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom"
-import { Shield, LayoutDashboard, Users, Bell, Settings, ArrowLeft, LogOut } from "lucide-react"
+import { Shield, LayoutDashboard, Users, Bell, Settings, History, ArrowLeft, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/context/AuthContext"
 import { useTranslation } from "react-i18next"
@@ -10,6 +10,7 @@ const adminNavItems = [
   { to: "/admin/users", icon: Users, labelKey: "admin.users" },
   { to: "/admin/push", icon: Bell, labelKey: "admin.push" },
   { to: "/admin/settings", icon: Settings, labelKey: "admin.settings" },
+  { to: "/admin/audit", icon: History, labelKey: "admin.audit" },
 ]
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
