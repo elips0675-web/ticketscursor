@@ -126,6 +126,7 @@ CREATE TABLE IF NOT EXISTS files (
   size VARCHAR(20),
   type VARCHAR(50),
   folder_id INT,
+  path VARCHAR(500),
   user_id INT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (folder_id) REFERENCES file_folders(id) ON DELETE CASCADE,

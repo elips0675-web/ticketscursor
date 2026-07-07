@@ -45,6 +45,7 @@ export default function FilesPage() {
             size: file.size,
             type: file.type,
             folderId: file.folderId,
+            path: file.path,
             createdAt: file.createdAt,
           })),
         }))
@@ -59,20 +60,20 @@ export default function FilesPage() {
 
   const uploadFile = async (file: File) => {
     setUploading(true)
-    const ext = file.name.split('.').pop() || ''
-    const typeMap: Record<string, string> = { png: 'img', jpg: 'img', jpeg: 'img', gif: 'img', svg: 'img', pdf: 'pdf', doc: 'doc', docx: 'doc', xls: 'doc', xlsx: 'doc', ts: 'code', tsx: 'code', js: 'code', jsx: 'code', py: 'code', sh: 'code', css: 'code', html: 'code' }
-    const fileType = typeMap[ext.toLowerCase()] || 'file'
-    const sizeKB = (file.size / 1024).toFixed(file.size > 1024 * 1024 ? 2 : 0)
-    const sizeStr = file.size > 1024 * 1024 ? (file.size / 1024 / 1024).toFixed(1) + ' MB' : sizeKB + ' KB'
     try {
+      const fd = new FormData()
+      fd.append('file', file)
+      if (activeFolder) fd.append('folderId', String(activeFolder))
       const res = await fetch(`${API}/files/upload`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ name: file.name, size: sizeStr, type: fileType, folderId: activeFolder }),
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
       })
       if (res.ok) {
         toast.success(`Файл загружен: ${file.name}`)
         fetchFolders()
+      } else {
+        toast.error("Ошибка загрузки")
       }
     } catch { toast.error("Ошибка загрузки") }
     setUploading(false)
@@ -201,7 +202,7 @@ export default function FilesPage() {
       ) : view === "grid" ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {displayFiles.map(f => (
-            <Card key={f.id} className="hover:shadow-md transition-all hover:-translate-y-0.5 cursor-pointer">
+            <Card key={f.id} className="hover:shadow-md transition-all hover:-translate-y-0.5 cursor-pointer" onClick={() => f.path && window.open(`${API.replace('/api', '')}${f.path}`, '_blank')}>
               <CardContent className="p-5 text-center">
                 <div className="text-4xl mb-3">
                   {{ img: "🖼️", pdf: "📄", doc: "📝", code: "💻", archive: "🗜️" }[f.type] || "📁"}

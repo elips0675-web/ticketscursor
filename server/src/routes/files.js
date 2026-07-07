@@ -1,6 +1,23 @@
 import { Router } from 'express'
+import path from 'path'
+import fs from 'fs'
+import { fileURLToPath } from 'url'
+import multer from 'multer'
 import pool from '../db.js'
 import { authenticateToken } from '../middleware.js'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const fileUploads = path.join(__dirname, '..', '..', 'uploads', 'files')
+fs.mkdirSync(fileUploads, { recursive: true })
+
+const storage = multer.diskStorage({
+  destination: fileUploads,
+  filename: (req, file, cb) => {
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    cb(null, unique + '-' + file.originalname)
+  },
+})
+const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } })
 
 const router = Router()
 router.use(authenticateToken)
@@ -13,7 +30,7 @@ router.get('/folders', async (req, res) => {
     )
     for (const f of folders) {
       const [files] = await pool.query(
-        'SELECT id, name, size, type, folder_id as folderId, created_at as createdAt FROM files WHERE folder_id = ? ORDER BY created_at DESC',
+        'SELECT id, name, size, type, folder_id as folderId, path, created_at as createdAt FROM files WHERE folder_id = ? ORDER BY created_at DESC',
         [f.id],
       )
       f.files = files
@@ -41,16 +58,23 @@ router.post('/folders', async (req, res) => {
   }
 })
 
-router.post('/upload', async (req, res) => {
-  const { name, size, type, folderId } = req.body
-  if (!name) return res.status(400).json({ message: 'Name required' })
+router.post('/upload', upload.single('file'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: 'Файл не загружен' })
+  const { folderId } = req.body
+  const name = req.file.originalname
+  const ext = path.extname(name).toLowerCase().replace('.', '')
+  const typeMap = { png: 'img', jpg: 'img', jpeg: 'img', gif: 'img', svg: 'img', pdf: 'pdf', doc: 'doc', docx: 'doc', xls: 'doc', xlsx: 'doc', ts: 'code', tsx: 'code', js: 'code', jsx: 'code', py: 'code', sh: 'code', css: 'code', html: 'code' }
+  const fileType = typeMap[ext] || 'file'
+  const sizeKB = req.file.size > 1024 * 1024
+    ? (req.file.size / 1024 / 1024).toFixed(1) + ' MB'
+    : (req.file.size / 1024).toFixed(req.file.size > 1024 ? 1 : 0) + ' KB'
   try {
     const [result] = await pool.query(
-      'INSERT INTO files (name, size, type, folder_id, user_id) VALUES (?, ?, ?, ?, ?)',
-      [name, size || '0 KB', type || 'file', folderId || null, req.user.userId],
+      'INSERT INTO files (name, size, type, folder_id, path, user_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, sizeKB, fileType, folderId || null, `/uploads/files/${req.file.filename}`, req.user.userId],
     )
     const [[file]] = await pool.query(
-      'SELECT id, name, size, type, folder_id as folderId, created_at as createdAt FROM files WHERE id = ?',
+      'SELECT id, name, size, type, folder_id as folderId, path, created_at as createdAt FROM files WHERE id = ?',
       [result.insertId],
     )
     res.status(201).json(file)

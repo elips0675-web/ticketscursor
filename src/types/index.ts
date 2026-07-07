@@ -95,6 +95,7 @@ export interface FileItem {
   size: string
   type: string
   folderId: number
+  path?: string
   folder?: string
   createdAt: string
 }
