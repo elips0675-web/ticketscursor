@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react"
 import { useNavigate, Link } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/context/AuthContext"
 
 export default function Login() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { login } = useAuth()
   const [email, setEmail] = useState("")
@@ -21,7 +23,7 @@ export default function Login() {
     e.preventDefault()
     setError("")
     if (!email.trim() || !password) {
-      setError("Введите email и пароль")
+      setError(t("auth.fillFields"))
       return
     }
     setLoading(true)
@@ -33,13 +35,13 @@ export default function Login() {
       })
       const data = await res.json()
       if (!res.ok) {
-        setError(data.message || "Ошибка входа")
+        setError(data.message || t("auth.loginError"))
         return
       }
       login(data.token, data.employee)
       navigate("/", { replace: true })
     } catch {
-      setError("Ошибка соединения с сервером")
+      setError(t("auth.connectionError"))
     } finally {
       setLoading(false)
     }
@@ -70,16 +72,17 @@ export default function Login() {
             <span className="text-white font-bold text-lg">SD</span>
           </div>
           <CardTitle>Service Desk</CardTitle>
-          <CardDescription>Войдите в систему</CardDescription>
+          <CardDescription>{t("auth.loginSubtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             {error && (
-              <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium">{error}</div>
+              <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium" role="alert">{error}</div>
             )}
             <div className="space-y-1.5">
-              <label className="text-sm font-bold">Email</label>
+              <label htmlFor="login-email" className="text-sm font-bold">{t("auth.email")}</label>
               <Input
+                id="login-email"
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
@@ -88,37 +91,38 @@ export default function Login() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-bold">Пароль</label>
+              <label htmlFor="login-password" className="text-sm font-bold">{t("auth.password")}</label>
               <Input
+                id="login-password"
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="Введите пароль"
+                placeholder={t("auth.passwordPlaceholder")}
                 required
               />
             </div>
             <div className="flex justify-end">
               <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-                Забыли пароль?
+                {t("auth.forgotPassword")}
               </Link>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Вход..." : "Войти"}
+              {loading ? t("auth.loggingIn") : t("auth.login")}
             </Button>
           </form>
 
           <div className="mt-4 pt-4 border-t">
             <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider text-center mb-2">
-              Быстрый вход (без пароля)
+              {t("auth.quickLogin")}
             </p>
             <Button variant="outline" size="sm" className="w-full" onClick={devLogin}>
-              Войти как Администратор
+              {t("auth.loginAsAdmin")}
             </Button>
           </div>
 
           <div className="text-center text-sm text-muted-foreground mt-4">
-            Нет аккаунта?{" "}
-            <Link to="/register" className="text-primary font-bold hover:underline">Регистрация</Link>
+            {t("auth.noAccount")}{" "}
+            <Link to="/register" className="text-primary font-bold hover:underline">{t("auth.register")}</Link>
           </div>
         </CardContent>
       </Card>

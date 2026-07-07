@@ -10,28 +10,29 @@ import { toast } from "sonner"
 import { useSocket } from "@/context/SocketContext"
 import { useTickets } from "@/context/ticket-context"
 import { formatRelativeTime } from "@/lib/utils"
+import { useTranslation } from "react-i18next"
 import type { TicketStatus, TicketPriority } from "@/types"
-
-const statusLabels: Record<string, string> = {
-  open: "Открытые", in_progress: "В работе", resolved: "Решённые", closed: "Закрытые",
-}
-const priorityLabels: Record<string, string> = {
-  low: "Низкий", medium: "Средний", high: "Высокий", critical: "Критичный",
-}
 
 const PER_PAGE = 9
 
 export default function Tickets() {
+  const { t } = useTranslation()
+  const statusLabels: Record<string, string> = {
+    open: t("tickets.open"), in_progress: t("tickets.inProgress"), resolved: t("tickets.resolved"), closed: t("tickets.closed"),
+  }
+  const priorityLabels: Record<string, string> = {
+    low: t("tickets.low"), medium: t("tickets.medium"), high: t("tickets.high"), critical: t("tickets.critical"),
+  }
   const { tickets } = useTickets()
   const { socket } = useSocket()
 
   useEffect(() => {
     if (!socket) return
     const onCreated = (ticket: any) => {
-      toast.success("Новый тикет", { description: ticket.title })
+      toast.success(t("tickets.notifNewTicket"), { description: ticket.title })
     }
     const onUpdated = (data: any) => {
-      toast.info("Тикет обновлён", { description: `#${data.id}` })
+      toast.info(t("tickets.notifTicketUpdated"), { description: `#${data.id}` })
     }
     socket.on("ticket:created", onCreated)
     socket.on("ticket:updated", onUpdated)
@@ -68,7 +69,7 @@ export default function Tickets() {
   const resetPage = () => setPage(1)
 
   const exportCSV = () => {
-    const headers = ["ID", "Название", "Статус", "Приоритет", "Категория", "Исполнитель", "Создан"]
+    const headers = [t("tickets.csvHeaderId"), t("tickets.csvHeaderTitle"), t("tickets.csvHeaderStatus"), t("tickets.csvHeaderPriority"), t("tickets.csvHeaderCategory"), t("tickets.csvHeaderAssignee"), t("tickets.csvHeaderCreated")]
     const rows = filtered.map(t => [
       t.id,
       `"${t.title.replace(/"/g, '""')}"`,
@@ -91,13 +92,13 @@ export default function Tickets() {
     const doc = new jsPDF()
     const pageW = doc.internal.pageSize.getWidth()
     doc.setFontSize(16)
-    doc.text("Тикеты", pageW / 2, 15, { align: "center" })
+    doc.text(t("tickets.title"), pageW / 2, 15, { align: "center" })
     doc.setFontSize(8)
     doc.text(`Сгенерировано: ${new Date().toLocaleString()}`, pageW / 2, 21, { align: "center" })
     let y = 28
     doc.setFontSize(9)
     doc.setFont("helvetica", "bold")
-    doc.text(["ID", "Название", "Статус", "Приоритет", "Категория", "Исполнитель"], 8, y)
+    doc.text([t("tickets.csvHeaderId"), t("tickets.csvHeaderTitle"), t("tickets.csvHeaderStatus"), t("tickets.csvHeaderPriority"), t("tickets.csvHeaderCategory"), t("tickets.csvHeaderAssignee")], 8, y)
     y += 5
     doc.setFont("helvetica", "normal")
     filtered.forEach((t, i) => {
@@ -120,11 +121,11 @@ export default function Tickets() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Тикеты</h1>
-          <p className="text-sm text-muted-foreground mt-1">{tickets.length} всего</p>
+          <p className="text-sm text-muted-foreground mt-1">{t("tickets.total", { count: filtered.length })}</p>
         </div>
         <Button onClick={() => navigate("/tickets/new")}>
           <Plus className="w-4 h-4 mr-1.5" />
-          Новый тикет
+          {t("tickets.new")}
         </Button>
       </div>
 
@@ -135,7 +136,7 @@ export default function Tickets() {
             <Input
               value={search}
               onChange={e => { setSearch(e.target.value); resetPage() }}
-              placeholder="Поиск тикетов..."
+              placeholder={t("tickets.search")}
               className="pl-9"
             />
           </div>
@@ -145,7 +146,7 @@ export default function Tickets() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Все статусы</SelectItem>
+              <SelectItem value="all">{t("tickets.allStatuses")}</SelectItem>
               {Object.entries(statusLabels).map(([k, v]) => (
                 <SelectItem key={k} value={k}>{v}</SelectItem>
               ))}
@@ -157,20 +158,20 @@ export default function Tickets() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Все приоритеты</SelectItem>
+              <SelectItem value="all">{t("tickets.allPriorities")}</SelectItem>
               {Object.entries(priorityLabels).map(([k, v]) => (
                 <SelectItem key={k} value={k}>{v}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" onClick={() => { setSortBy(s => s === "newest" ? "oldest" : "newest"); resetPage() }}>
+          <Button variant="outline" size="icon" onClick={() => { setSortBy(s => s === "newest" ? "oldest" : "newest"); resetPage() }} aria-label="Сортировка">
             <ArrowUpDown className="w-4 h-4" />
           </Button>
           <Button variant="outline" size="sm" className="gap-2" onClick={exportCSV}>
-            <Download className="w-4 h-4" />CSV
+            <Download className="w-4 h-4" />{t("tickets.exportCSV")}
           </Button>
           <Button variant="outline" size="sm" className="gap-2" onClick={exportPDF}>
-            <FileText className="w-4 h-4" />PDF
+            <FileText className="w-4 h-4" />{t("tickets.exportPDF")}
           </Button>
         </div>
       </Card>
@@ -180,6 +181,9 @@ export default function Tickets() {
           <div
             key={ticket.id}
             onClick={() => navigate(`/tickets/${ticket.id}`)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/tickets/${ticket.id}`) } }}
             className="bg-white rounded-xl border p-5 hover:shadow-md transition-all cursor-pointer flex flex-col"
           >
             <div className="flex items-center gap-2 mb-3">
@@ -207,8 +211,8 @@ export default function Tickets() {
         ))}
         {filtered.length === 0 && (
           <div className="col-span-full text-center py-16 text-muted-foreground">
-            <p className="font-bold text-sm">Тикеты не найдены</p>
-            <p className="text-xs mt-1">Попробуйте изменить параметры поиска</p>
+            <p className="font-bold text-sm">{t("tickets.notFound")}</p>
+            <p className="text-xs mt-1">{t("tickets.tryAdjust")}</p>
           </div>
         )}
       </div>
@@ -216,7 +220,7 @@ export default function Tickets() {
       {totalPages > 1 && page < totalPages && (
         <div className="flex justify-center pt-2">
           <Button variant="outline" onClick={() => setPage(p => p + 1)}>
-            Показать ещё
+            {t("tickets.showMore")}
           </Button>
         </div>
       )}

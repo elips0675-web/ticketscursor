@@ -50,7 +50,7 @@ export function PwaInstallPrompt() {
       <Button size="sm" onClick={handleInstall} className="shrink-0">
         Установить
       </Button>
-      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleDismiss}>
+      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleDismiss} aria-label="Закрыть">
         <X className="h-4 w-4" />
       </Button>
     </div>

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -17,10 +18,6 @@ import {
 import { useTickets } from "@/context/ticket-context"
 import type { Employee } from "@/types"
 
-const roleLabels: Record<string, string> = {
-  agent: "Агент", senior_agent: "Ст. агент", admin: "Администратор",
-}
-
 const roleIcons: Record<string, any> = {
   agent: User, senior_agent: UserCog, admin: Shield,
 }
@@ -31,20 +28,27 @@ const roleColors: Record<string, string> = {
   admin: "bg-amber-500/10 text-amber-600",
 }
 
-const roleFilterOptions = [
-  { value: "", label: "Все" },
-  { value: "agent", label: "Агенты" },
-  { value: "senior_agent", label: "Ст. агенты" },
-  { value: "admin", label: "Администраторы" },
-]
-
 export default function Employees() {
+  const { t } = useTranslation()
   const { employees } = useTickets()
   const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState("")
   const [view, setView] = useState<"cards" | "table">("cards")
   const [sort, setSort] = useState<"name" | "activeTickets" | "resolvedToday">("name")
   const [selected, setSelected] = useState<Employee | null>(null)
+
+  const roleLabels: Record<string, string> = {
+    agent: t("employees.agent"),
+    senior_agent: t("employees.seniorAgent"),
+    admin: t("employees.admin"),
+  }
+
+  const roleFilterOptions = [
+    { value: "", label: t("common.all") },
+    { value: "agent", label: t("employees.agents") },
+    { value: "senior_agent", label: t("employees.seniorAgents") },
+    { value: "admin", label: t("employees.admins") },
+  ]
 
   const filtered = useMemo(() => {
     let list = [...employees]
@@ -86,14 +90,14 @@ export default function Employees() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Сотрудники</h1>
-          <p className="text-sm text-muted-foreground mt-1">{employees.length} человек · {onlineCount} онлайн</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("employees.title")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{employees.length} человек · {onlineCount} {t("employees.online")}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant={view === "cards" ? "default" : "outline"} size="icon" onClick={() => setView("cards")}>
+          <Button variant={view === "cards" ? "default" : "outline"} size="icon" onClick={() => setView("cards")} aria-label={t("employees.cardsView")}>
             <LayoutGrid className="w-4 h-4" />
           </Button>
-          <Button variant={view === "table" ? "default" : "outline"} size="icon" onClick={() => setView("table")}>
+          <Button variant={view === "table" ? "default" : "outline"} size="icon" onClick={() => setView("table")} aria-label={t("employees.tableView")}>
             <List className="w-4 h-4" />
           </Button>
         </div>
@@ -105,8 +109,9 @@ export default function Employees() {
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Поиск по имени, отделу, email..."
+            placeholder={t("employees.searchPlaceholder")}
             className="pl-9"
+            aria-label={t("employees.searchPlaceholder")}
           />
         </div>
         <div className="flex gap-1.5 flex-wrap">
@@ -117,6 +122,7 @@ export default function Employees() {
               size="sm"
               className="text-xs"
               onClick={() => setRoleFilter(o.value)}
+              aria-pressed={roleFilter === o.value}
             >
               {o.label}
             </Button>
@@ -148,9 +154,9 @@ export default function Employees() {
             </div>
           ))}
           {filtered.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="text-center py-12 text-muted-foreground" role="status">
               <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p className="text-lg font-medium">Ничего не найдено</p>
+              <p className="text-lg font-medium">{t("employees.noData")}</p>
             </div>
           )}
         </div>
@@ -159,16 +165,16 @@ export default function Employees() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="cursor-pointer select-none" onClick={() => setSort("name")}>
-                  Имя {sort === "name" && "↓"}
+                <TableHead className="cursor-pointer select-none" onClick={() => setSort("name")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSort("name") } }} aria-sort={sort === "name" ? "ascending" : undefined}>
+                  {t("employees.sortName")} {sort === "name" && "↓"}
                 </TableHead>
                 <TableHead>Роль</TableHead>
                 <TableHead>Отдел</TableHead>
-                <TableHead className="cursor-pointer select-none text-right" onClick={() => setSort("activeTickets")}>
-                  Активные {sort === "activeTickets" && "↓"}
+                <TableHead className="cursor-pointer select-none text-right" onClick={() => setSort("activeTickets")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSort("activeTickets") } }} aria-sort={sort === "activeTickets" ? "ascending" : undefined}>
+                  {t("employees.sortTickets")} {sort === "activeTickets" && "↓"}
                 </TableHead>
-                <TableHead className="cursor-pointer select-none text-right" onClick={() => setSort("resolvedToday")}>
-                  Решено {sort === "resolvedToday" && "↓"}
+                <TableHead className="cursor-pointer select-none text-right" onClick={() => setSort("resolvedToday")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSort("resolvedToday") } }} aria-sort={sort === "resolvedToday" ? "ascending" : undefined}>
+                  {t("employees.sortResolved")} {sort === "resolvedToday" && "↓"}
                 </TableHead>
                 <TableHead className="text-right">Контакты</TableHead>
               </TableRow>
@@ -177,7 +183,7 @@ export default function Employees() {
               {filtered.map(emp => {
                 const RoleIcon = roleIcons[emp.role] || User
                 return (
-                  <TableRow key={emp.id} className="cursor-pointer" onClick={() => setSelected(emp)}>
+                  <TableRow key={emp.id} className="cursor-pointer" onClick={() => setSelected(emp)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(emp) } }}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="relative">
@@ -215,8 +221,8 @@ export default function Employees() {
             </TableBody>
           </Table>
           {filtered.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              <p className="text-lg font-medium">Ничего не найдено</p>
+            <div className="text-center py-12 text-muted-foreground" role="status">
+              <p className="text-lg font-medium">{t("employees.noData")}</p>
             </div>
           )}
         </Card>
@@ -228,9 +234,15 @@ export default function Employees() {
 }
 
 function EmployeeCard({ employee, onClick }: { employee: Employee; onClick: () => void }) {
+  const { t } = useTranslation()
+  const roleLabels: Record<string, string> = {
+    agent: t("employees.agent"),
+    senior_agent: t("employees.seniorAgent"),
+    admin: t("employees.admin"),
+  }
   const RoleIcon = roleIcons[employee.role] || User
   return (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={onClick}>
+    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={onClick} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}>
       <CardContent className="p-5">
         <div className="flex items-start gap-4">
           <div className="relative">
@@ -256,11 +268,11 @@ function EmployeeCard({ employee, onClick }: { employee: Employee; onClick: () =
         <div className="mt-4 flex items-center gap-4 text-[10px] text-muted-foreground">
           <div className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
-            {employee.activeTickets} активных
+            {t("employees.activeTickets", { count: employee.activeTickets })}
           </div>
           <div className="flex items-center gap-1">
             <CheckCircle2 className="w-3 h-3 text-green-500" />
-            {employee.resolvedToday} сегодня
+            {employee.resolvedToday} {t("employees.resolvedToday")}
           </div>
         </div>
 
@@ -286,13 +298,19 @@ function EmployeeCard({ employee, onClick }: { employee: Employee; onClick: () =
 }
 
 function EmployeeDetail({ employee, onClose }: { employee: Employee | null; onClose: () => void }) {
+  const { t } = useTranslation()
   if (!employee) return null
+  const roleLabels: Record<string, string> = {
+    agent: t("employees.agent"),
+    senior_agent: t("employees.seniorAgent"),
+    admin: t("employees.admin"),
+  }
   const RoleIcon = roleIcons[employee.role] || User
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Сотрудник</DialogTitle>
+          <DialogTitle>{t("employees.title")}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col items-center text-center pt-2">
           <div className="relative mb-3">
@@ -329,11 +347,11 @@ function EmployeeDetail({ employee, onClose }: { employee: Employee | null; onCl
         <div className="flex justify-center gap-6 mt-4 pt-4 border-t">
           <div className="text-center">
             <p className="text-2xl font-bold">{employee.activeTickets}</p>
-            <p className="text-xs text-muted-foreground">Активных тикетов</p>
+            <p className="text-xs text-muted-foreground">{t("employees.activeTickets", { count: employee.activeTickets })}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold">{employee.resolvedToday}</p>
-            <p className="text-xs text-muted-foreground">Решено сегодня</p>
+            <p className="text-xs text-muted-foreground">{t("employees.resolvedToday")}</p>
           </div>
         </div>
       </DialogContent>

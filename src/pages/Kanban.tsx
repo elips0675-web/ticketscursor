@@ -90,6 +90,9 @@ export default function KanbanPage() {
                   draggable
                   onDragStart={e => handleDragStart(e, ticket.id)}
                   onClick={() => navigate(`/tickets/${ticket.id}`)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/tickets/${ticket.id}`); } }}
+                  role="button"
+                  tabIndex={0}
                   className="rounded-lg border bg-card p-3 cursor-grab active:cursor-grabbing hover:border-primary/50 transition-all space-y-2 shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-2">

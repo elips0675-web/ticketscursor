@@ -133,7 +133,7 @@ export default function ChatDetail() {
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] max-w-3xl mx-auto">
       <div className="flex items-center gap-3 mb-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/chats")} className="rounded-full">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/chats")} className="rounded-full" aria-label="Назад">
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -143,7 +143,7 @@ export default function ChatDetail() {
           <h2 className="font-bold text-sm truncate">{chatInfo.name}</h2>
           <p className="text-[10px] text-muted-foreground">{isGroup ? "Групповой чат" : "Личный чат"}</p>
         </div>
-        <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setShowSearch(!showSearch)}>
+        <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setShowSearch(!showSearch)} aria-label="Поиск по чату">
           <Search className="w-4 h-4" />
         </Button>
       </div>
@@ -227,7 +227,7 @@ export default function ChatDetail() {
                       )}
                     </div>
                     {isMe && (
-                      <button onClick={() => delMsg(msg.id)} className="p-1 hover:bg-muted rounded-full text-muted-foreground">
+                      <button onClick={() => delMsg(msg.id)} className="p-1 hover:bg-muted rounded-full text-muted-foreground" aria-label="Удалить">
                         <Trash2 className="w-3 h-3" />
                       </button>
                     )}
@@ -245,7 +245,7 @@ export default function ChatDetail() {
           <div className="relative inline-block rounded-lg overflow-hidden border">
             <img src={imageFile} alt="" className="max-h-24 object-cover" />
             <button onClick={() => setImageFile(null)}
-              className="absolute top-1 right-1 w-5 h-5 bg-black/50 rounded-full flex items-center justify-center hover:bg-black/70 transition-colors"
+              className="absolute top-1 right-1 w-5 h-5 bg-black/50 rounded-full flex items-center justify-center hover:bg-black/70 transition-colors" aria-label="Удалить"
             >
               <X className="w-3 h-3 text-white" />
             </button>
@@ -257,17 +257,17 @@ export default function ChatDetail() {
             placeholder="Написать сообщение..." className="flex-1 h-10 text-sm"
           />
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
-          <Button variant="ghost" size="icon" onClick={pickImage} className="h-10 w-10 rounded-xl shrink-0 text-muted-foreground hover:text-foreground" title="Прикрепить изображение">
+          <Button variant="ghost" size="icon" onClick={pickImage} className="h-10 w-10 rounded-xl shrink-0 text-muted-foreground hover:text-foreground" title="Прикрепить изображение" aria-label="Прикрепить изображение">
             <ImagePlus className="w-4 h-4" />
           </Button>
-          <Button size="icon" onClick={send} disabled={!input.trim() && !imageFile} className="h-10 w-10 rounded-xl shrink-0">
+          <Button size="icon" onClick={send} disabled={!input.trim() && !imageFile} className="h-10 w-10 rounded-xl shrink-0" aria-label="Отправить">
             <Send className="w-4 h-4" />
           </Button>
         </div>
         {previewImg && (
           <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setPreviewImg(null)}>
             <button onClick={() => setPreviewImg(null)}
-              className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+              className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors" aria-label="Закрыть"
             >
               <X className="w-5 h-5 text-white" />
             </button>

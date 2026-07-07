@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -27,6 +28,7 @@ interface Stats {
 }
 
 export default function Admin() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [employees, setEmployees] = useState<Employee[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
@@ -52,9 +54,9 @@ export default function Admin() {
 
   const roleBadge = (role: string) => {
     const map: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
-      admin: { label: "Админ", variant: "default" },
-      senior_agent: { label: "Ст. агент", variant: "secondary" },
-      agent: { label: "Агент", variant: "outline" },
+      admin: { label: t("employees.admin"), variant: "default" },
+      senior_agent: { label: t("employees.seniorAgent"), variant: "secondary" },
+      agent: { label: t("employees.agent"), variant: "outline" },
     }
     const c = map[role] || { label: role, variant: "outline" as const }
     return <Badge variant={c.variant} className="text-[10px]">{c.label}</Badge>
@@ -66,12 +68,12 @@ export default function Admin() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Дашборд</h1>
-          <p className="text-sm text-muted-foreground mt-1">Общая статистика системы</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("admin.dashboard")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("admin.dashboardSubtitle")}</p>
         </div>
         <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
           <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? "animate-spin" : ""}`} />
-          Обновить
+          {t("admin.refresh")}
         </Button>
       </div>
 
@@ -84,7 +86,7 @@ export default function Admin() {
               </div>
             </div>
             <div className="text-2xl font-bold">{activeEmployees.length}</div>
-            <p className="text-xs text-muted-foreground font-medium mt-1">Сотрудников</p>
+            <p className="text-xs text-muted-foreground font-medium mt-1">{t("admin.employees")}</p>
           </CardContent>
         </Card>
         <Card>
@@ -95,7 +97,7 @@ export default function Admin() {
               </div>
             </div>
             <div className="text-2xl font-bold">{activeEmployees.filter(e => e.online).length}</div>
-            <p className="text-xs text-muted-foreground font-medium mt-1">Онлайн</p>
+            <p className="text-xs text-muted-foreground font-medium mt-1">{t("admin.online")}</p>
           </CardContent>
         </Card>
         <Card>
@@ -106,7 +108,7 @@ export default function Admin() {
               </div>
             </div>
             <div className="text-2xl font-bold">{stats?.total || 0}</div>
-            <p className="text-xs text-muted-foreground font-medium mt-1">Всего тикетов</p>
+            <p className="text-xs text-muted-foreground font-medium mt-1">{t("admin.totalTickets")}</p>
           </CardContent>
         </Card>
         <Card>
@@ -117,7 +119,7 @@ export default function Admin() {
               </div>
             </div>
             <div className="text-2xl font-bold">{stats ? stats.open + stats.inProgress : 0}</div>
-            <p className="text-xs text-muted-foreground font-medium mt-1">Активных</p>
+            <p className="text-xs text-muted-foreground font-medium mt-1">{t("admin.active")}</p>
           </CardContent>
         </Card>
       </div>
@@ -126,10 +128,10 @@ export default function Admin() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
             <UserCog className="w-4 h-4 text-primary" />
-            Сотрудники
+            {t("admin.employees")}
           </CardTitle>
           <Button variant="outline" size="sm" onClick={() => navigate("/admin/users")}>
-            Управление
+            {t("admin.manage")}
           </Button>
         </CardHeader>
         <CardContent className="p-0">
@@ -150,9 +152,9 @@ export default function Admin() {
                 </div>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span className={emp.online ? "text-green-600 font-medium" : ""}>
-                    {emp.online ? "Онлайн" : "Офлайн"}
+                    {emp.online ? t("admin.online") : t("admin.offline")}
                   </span>
-                  <span>{emp.activeTickets} тикетов</span>
+                  <span>{t("admin.ticketCount", { count: emp.activeTickets })}</span>
                 </div>
               </div>
             ))}
@@ -164,15 +166,15 @@ export default function Admin() {
         <CardHeader>
           <CardTitle className="text-sm flex items-center gap-2">
             <Shield className="w-4 h-4 text-primary" />
-            Статистика по ролям
+            {t("admin.roleStats")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { role: "admin", label: "Администраторы", icon: Shield },
-              { role: "senior_agent", label: "Старшие агенты", icon: UserCog },
-              { role: "agent", label: "Агенты", icon: Users },
+              { role: "admin", label: t("admin.admins"), icon: Shield },
+              { role: "senior_agent", label: t("admin.seniorAgents"), icon: UserCog },
+              { role: "agent", label: t("admin.agents"), icon: Users },
             ].map(({ role, label, icon: Icon }) => {
               const count = employees.filter(e => e.role === role).length
               return (

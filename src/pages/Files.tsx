@@ -7,20 +7,21 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Search, Grid3X3, List, FileText, Image, FileCode, File, Folder, Loader2, Upload, X } from "lucide-react"
 import type { FileItem, FileFolder } from "@/types"
 import { useAuth } from "@/context/AuthContext"
+import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 const API = "http://localhost:4000/api"
 
-const CATEGORIES = [
-  { key: "all", label: "Все", icon: Folder },
-  { key: "img", label: "Изображения", icon: Image },
-  { key: "pdf", label: "PDF", icon: FileText },
-  { key: "doc", label: "Документы", icon: FileText },
-  { key: "code", label: "Код", icon: FileCode },
-]
-
 export default function FilesPage() {
   const { token } = useAuth()
+  const { t } = useTranslation()
+  const CATEGORIES = [
+    { key: "all", label: t("files.catAll"), icon: Folder },
+    { key: "img", label: t("files.catImages"), icon: Image },
+    { key: "pdf", label: t("files.catPDF"), icon: FileText },
+    { key: "doc", label: t("files.catDocs"), icon: FileText },
+    { key: "code", label: t("files.catCode"), icon: FileCode },
+  ]
   const [folders, setFolders] = useState<FileFolder[]>([])
   const [loading, setLoading] = useState(true)
   const [activeFolder, setActiveFolder] = useState<number | null>(null)
@@ -70,12 +71,12 @@ export default function FilesPage() {
         body: fd,
       })
       if (res.ok) {
-        toast.success(`Файл загружен: ${file.name}`)
+        toast.success(t("files.uploadSuccess", { name: file.name }))
         fetchFolders()
       } else {
-        toast.error("Ошибка загрузки")
+        toast.error(t("files.uploadError"))
       }
-    } catch { toast.error("Ошибка загрузки") }
+    } catch { toast.error(t("files.uploadError")) }
     setUploading(false)
   }
 
@@ -134,11 +135,10 @@ export default function FilesPage() {
       )}
 
       <Card className="border-dashed border-2 bg-muted/20">
-        <CardContent className="p-6 text-center" onClick={() => fileInputRef.current?.click()}>
+        <CardContent className="p-6 text-center" onClick={() => fileInputRef.current?.click()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click(); } }}>
           <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileSelect} />
           <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-          <p className="font-bold text-sm">Перетащите файлы сюда</p>
-          <p className="text-xs text-muted-foreground mt-1">или нажмите для выбора</p>
+          <p className="font-bold text-sm">{t("files.dropzone")}</p>
           {uploading && <Loader2 className="w-4 h-4 animate-spin mx-auto mt-2 text-primary" />}
         </CardContent>
       </Card>
@@ -173,7 +173,7 @@ export default function FilesPage() {
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder={search ? "Поиск по всем файлам..." : "Поиск в папке..."}
+            placeholder={search ? t("files.searchAll") : t("files.searchInFolder")}
             className="pl-9"
           />
         </div>
@@ -188,7 +188,7 @@ export default function FilesPage() {
               ))}
             </TabsList>
           </Tabs>
-          <Button variant="outline" size="icon" onClick={() => setView(v => v === "grid" ? "list" : "grid")}>
+          <Button variant="outline" size="icon" onClick={() => setView(v => v === "grid" ? "list" : "grid")} aria-label={view === "grid" ? "Вид списком" : "Вид сеткой"}>
             {view === "grid" ? <List className="w-4 h-4" /> : <Grid3X3 className="w-4 h-4" />}
           </Button>
         </div>
@@ -197,12 +197,12 @@ export default function FilesPage() {
       {displayFiles.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <File className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="font-bold text-sm">{search ? "Ничего не найдено" : "Папка пуста"}</p>
+          <p className="font-bold text-sm">{search ? "Ничего не найдено" : t("files.empty")}</p>
         </div>
       ) : view === "grid" ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {displayFiles.map(f => (
-            <Card key={f.id} className="hover:shadow-md transition-all hover:-translate-y-0.5 cursor-pointer" onClick={() => f.path && window.open(`${API.replace('/api', '')}${f.path}?token=${localStorage.getItem('token')}`, '_blank')}>
+            <Card key={f.id} className="hover:shadow-md transition-all hover:-translate-y-0.5 cursor-pointer" onClick={() => f.path && window.open(`${API.replace('/api', '')}${f.path}?token=${localStorage.getItem('token')}`, '_blank')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); f.path && window.open(`${API.replace('/api', '')}${f.path}?token=${localStorage.getItem('token')}`, '_blank'); } }}>
               <CardContent className="p-5 text-center">
                 <div className="text-4xl mb-3">
                   {{ img: "🖼️", pdf: "📄", doc: "📝", code: "💻", archive: "🗜️" }[f.type] || "📁"}

@@ -21,10 +21,20 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npx tsc --noEmit
+      - run: npx vitest run --config vitest.client.config.ts
       - run: npx vite build
 
   backend:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: servicedesk_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
     defaults:
       run:
         working-directory: server
@@ -36,5 +46,13 @@ jobs:
           cache: npm
           cache-dependency-path: server/package-lock.json
       - run: npm ci
+      - run: mysql -h 127.0.0.1 -u root -proot servicedesk_test < seed.sql
       - run: npx vitest run
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: root
+          DB_PASSWORD: root
+          DB_NAME: servicedesk_test
+          JWT_SECRET: test-secret
       - run: node --check src/index.js

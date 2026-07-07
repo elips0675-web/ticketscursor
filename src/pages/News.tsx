@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -25,6 +26,7 @@ function mapNews(raw: any): NewsPost {
 const PER_PAGE = 6
 
 export default function NewsPage() {
+  const { t } = useTranslation()
   const { canManage, token } = useAuth()
   const [news, setNews] = useState<NewsPost[]>([])
   const [loading, setLoading] = useState(true)
@@ -70,32 +72,38 @@ export default function NewsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Newspaper className="w-6 h-6 text-primary" />
-            Новости
+            {t("news.title")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Объявления и обновления системы</p>
         </div>
         {canManage && (
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2"><Plus className="w-4 h-4" />Новость</Button>
+            <Button className="gap-2"><Plus className="w-4 h-4" />{t("news.create")}</Button>
           </DialogTrigger>
           <DialogContent className="max-w-xl">
             <DialogHeader>
-              <DialogTitle>Создать новость</DialogTitle>
+              <DialogTitle>{t("news.createTitle")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
-              <Input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Заголовок" />
-              <Textarea value={newContent} onChange={e => setNewContent(e.target.value)} placeholder="Содержание" rows={6} />
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={newImportant} onChange={e => setNewImportant(e.target.checked)} className="rounded" />
-                <span>Важное объявление</span>
+              <div className="space-y-1.5">
+                <label htmlFor="news-title" className="text-sm font-bold">{t("news.titleLabel")}</label>
+                <Input id="news-title" value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder={t("news.titleLabel")} />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="news-content" className="text-sm font-bold">{t("news.contentLabel")}</label>
+                <Textarea id="news-content" value={newContent} onChange={e => setNewContent(e.target.value)} placeholder={t("news.contentLabel")} rows={6} />
+              </div>
+              <label htmlFor="news-important" className="flex items-center gap-2 text-sm">
+                <input id="news-important" type="checkbox" checked={newImportant} onChange={e => setNewImportant(e.target.checked)} className="rounded" />
+                <span>{t("news.importantLabel")}</span>
               </label>
-              <Button onClick={handleCreate} className="w-full">Опубликовать</Button>
+              <Button onClick={handleCreate} className="w-full">{t("news.submitBtn")}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -105,10 +113,10 @@ export default function NewsPage() {
       <div className="flex gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input value={search} onChange={e => { setSearch(e.target.value); resetPage() }} placeholder="Поиск новостей..." className="pl-9" />
+          <Input value={search} onChange={e => { setSearch(e.target.value); resetPage() }} placeholder={t("news.searchPlaceholder")} className="pl-9" />
         </div>
         <Button variant={showImportant ? "default" : "outline"} size="sm" onClick={() => { setShowImportant(!showImportant); resetPage() }} className="gap-2">
-          <AlertTriangle className="w-4 h-4" />Важные
+          <AlertTriangle className="w-4 h-4" />{t("news.important")}
         </Button>
       </div>
 
@@ -121,7 +129,7 @@ export default function NewsPage() {
         {news.length === 0 && (
           <div className="col-span-full text-center py-16 text-muted-foreground">
             <Newspaper className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p className="font-bold text-sm">Новости не найдены</p>
+            <p className="font-bold text-sm">{t("news.empty")}</p>
           </div>
         )}
         {paged.map(n => (
@@ -144,7 +152,7 @@ export default function NewsPage() {
       {totalPages > 1 && page < totalPages && (
         <div className="flex justify-center pt-2">
           <Button variant="outline" onClick={() => setPage(p => p + 1)}>
-            Показать ещё
+            {t("news.showMore")}
           </Button>
         </div>
       )}

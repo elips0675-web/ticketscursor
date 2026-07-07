@@ -8,13 +8,6 @@ import { useTranslation } from "react-i18next"
 
 const API = "http://localhost:4000/api"
 
-const ACTION_LABELS: Record<string, string> = {
-  created: "Created",
-  status_changed: "Status Changed",
-  priority_changed: "Priority Changed",
-  assigned: "Assigned",
-}
-
 const ACTION_COLORS: Record<string, string> = {
   created: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
   status_changed: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
@@ -36,6 +29,16 @@ export default function AdminAudit() {
       .catch(() => setLoading(false))
   }, [token])
 
+  const actionLabel = (action: string) => {
+    const map: Record<string, string> = {
+      created: t("admin.created"),
+      status_changed: t("admin.statusChanged"),
+      priority_changed: t("admin.priorityChanged"),
+      assigned: t("admin.assigned"),
+    }
+    return map[action] || action
+  }
+
   const filtered = search
     ? logs.filter(l =>
         (l.user_name || "").toLowerCase().includes(search.toLowerCase()) ||
@@ -46,13 +49,14 @@ export default function AdminAudit() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Audit Log</h1>
-        <p className="text-sm text-muted-foreground mt-1">History of all changes</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("admin.audit")}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t("admin.auditSubtitle")}</p>
       </div>
 
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search actions..." className="pl-9" />
+        <label htmlFor="auditSearch" className="sr-only">{t("admin.searchAudit")}</label>
+        <Input id="auditSearch" value={search} onChange={e => setSearch(e.target.value)} placeholder={t("admin.searchAudit")} className="pl-9" />
       </div>
 
       {loading ? (
@@ -60,7 +64,7 @@ export default function AdminAudit() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <Clock className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="font-bold text-sm">No entries found</p>
+          <p className="font-bold text-sm">{t("admin.noAudit")}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -77,7 +81,7 @@ export default function AdminAudit() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-sm">{log.user_name}</span>
                       <Badge className={`text-[9px] ${ACTION_COLORS[log.action] || ""}`}>
-                        {ACTION_LABELS[log.action] || log.action}
+                        {actionLabel(log.action)}
                       </Badge>
                       <span className="text-[10px] text-muted-foreground">
                         #{log.entity_id} {log.entity_type}

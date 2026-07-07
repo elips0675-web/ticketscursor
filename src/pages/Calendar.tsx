@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,6 +15,7 @@ const API = "http://localhost:4000/api"
 const MONTHS_RU = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
 
 export default function CalendarPage() {
+  const { t } = useTranslation()
   const { canManage, token } = useAuth()
   const [date, setDate] = useState(new Date())
   const [events, setEvents] = useState<CalendarEvent[]>([])
@@ -80,20 +82,20 @@ export default function CalendarPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Календарь</h1>
-          <p className="text-sm text-muted-foreground mt-1">События и напоминания</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("calendar.title")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("calendar.subtitle")}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
-            <Button variant="outline" size="sm" onClick={prevMonth} className="gap-1">
+            <Button variant="outline" size="sm" onClick={prevMonth} className="gap-1" aria-label="Предыдущий месяц">
               <ChevronLeft className="w-4 h-4" />
               <span className="hidden sm:inline">{MONTHS_RU[month - 1] || ""}</span>
             </Button>
             <h3 className="font-bold text-base sm:text-lg">{MONTHS_RU[month]} {year}</h3>
-            <Button variant="outline" size="sm" onClick={nextMonth} className="gap-1">
+            <Button variant="outline" size="sm" onClick={nextMonth} className="gap-1" aria-label="Следующий месяц">
               <span className="hidden sm:inline">{MONTHS_RU[month + 1] || ""}</span>
               <ChevronRight className="w-4 h-4" />
             </Button>
@@ -122,6 +124,9 @@ export default function CalendarPage() {
                   return (
                     <div
                       key={day}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelDay(day) } }}
                       className={`calendar-day${selDay === day ? " selected" : ""}${isToday(day) ? " today" : ""}`}
                       onClick={() => setSelDay(day)}
                     >
@@ -143,21 +148,21 @@ export default function CalendarPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-sm">
-                {selDay ? `${selDay} ${MONTHS_RU[month]}` : "Выберите день"}
+                {selDay ? `${selDay} ${MONTHS_RU[month]}` : t("calendar.selectDay")}
               </CardTitle>
               {selDay && (
                 <Button size="sm" variant="outline" onClick={() => setShowAdd(true)}>
                   <Plus className="w-3.5 h-3.5 mr-1" />
-                  Событие
+                  {t("calendar.eventBtn")}
                 </Button>
               )}
             </CardHeader>
             <CardContent>
               {!selDay && (
-                <p className="text-sm text-muted-foreground text-center py-8">Нажмите на день в календаре</p>
+                <p className="text-sm text-muted-foreground text-center py-8">{t("calendar.clickDay")}</p>
               )}
               {selDay && dayEvents.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-8">Нет событий</p>
+                <p className="text-sm text-muted-foreground text-center py-8">{t("calendar.noEvents")}</p>
               )}
               {selDay && dayEvents.map(e => (
                 <div key={e.id} className="border-b last:border-b-0 py-3 group">
@@ -170,7 +175,7 @@ export default function CalendarPage() {
                             {e.time}
                           </Badge>
                         ) : (
-                          <Badge variant="secondary" className="text-[9px]">Весь день</Badge>
+                          <Badge variant="secondary" className="text-[9px]">{t("calendar.allDay")}</Badge>
                         )}
                       </div>
                       <h4 className="font-bold text-sm">{e.title}</h4>
@@ -184,6 +189,7 @@ export default function CalendarPage() {
                       size="icon"
                       className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 shrink-0"
                       onClick={() => deleteEvent(e.id)}
+                      aria-label={t("common.delete")}
                     >
                       <Trash2 className="w-3 h-3 text-destructive" />
                     </Button>
@@ -198,7 +204,7 @@ export default function CalendarPage() {
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">
                 <Bell className="w-4 h-4 text-primary" />
-                Ближайшие
+                {t("calendar.upcoming")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -211,7 +217,7 @@ export default function CalendarPage() {
                     <div className="w-1 h-1 rounded-full bg-primary shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold truncate">{e.title}</p>
-                      <p className="text-[10px] text-muted-foreground">{formatDate(e.date)}{e.time ? ` в ${e.time}` : ""}</p>
+                      <p className="text-[10px] text-muted-foreground">{formatDate(e.date)}{e.time ? ` ${t("calendar.at")} ${e.time}` : ""}</p>
                     </div>
                   </div>
                 ))}
@@ -223,29 +229,32 @@ export default function CalendarPage() {
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Новое событие</DialogTitle>
+            <DialogTitle>{t("calendar.createEvent")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-bold">Название</label>
+              <label htmlFor="event-title" className="text-sm font-bold">{t("calendar.eventTitle")}</label>
               <Input
+                id="event-title"
                 value={form.title}
                 onChange={e => setForm({ ...form, title: e.target.value })}
-                placeholder="Введите название"
+                placeholder={t("calendar.eventPlaceholderTitle")}
                 autoFocus
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-bold">Время</label>
+              <label htmlFor="event-time" className="text-sm font-bold">{t("calendar.eventTime")}</label>
               <Input
+                id="event-time"
                 type="time"
                 value={form.time}
                 onChange={e => setForm({ ...form, time: e.target.value })}
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-bold">Описание</label>
+              <label htmlFor="event-desc" className="text-sm font-bold">{t("calendar.eventDesc")}</label>
               <Textarea
+                id="event-desc"
                 value={form.description}
                 onChange={e => setForm({ ...form, description: e.target.value })}
                 rows={2}
@@ -253,8 +262,8 @@ export default function CalendarPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAdd(false)}>Отмена</Button>
-            <Button onClick={addEvent} disabled={!form.title.trim()}>Создать</Button>
+            <Button variant="outline" onClick={() => setShowAdd(false)}>{t("common.cancel")}</Button>
+            <Button onClick={addEvent} disabled={!form.title.trim()}>{t("calendar.submitBtn")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

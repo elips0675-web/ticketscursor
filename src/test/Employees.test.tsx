@@ -1,7 +1,36 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
 import { AllTheProviders } from './test-utils'
 import Employees from '@/pages/Employees'
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const map: Record<string, string> = {
+        'employees.title': 'Сотрудники',
+        'employees.searchPlaceholder': 'Поиск по имени, отделу, email...',
+        'common.all': 'Все',
+        'employees.agents': 'Агенты',
+        'employees.seniorAgents': 'Ст. агенты',
+        'employees.admins': 'Администраторы',
+        'employees.agent': 'Агент',
+        'employees.seniorAgent': 'Ст. агент',
+        'employees.admin': 'Администратор',
+        'employees.online': 'Онлайн',
+        'employees.offline': 'Офлайн',
+        'employees.activeTickets': '{count} тикетов',
+        'employees.resolvedToday': 'Решено сегодня',
+        'employees.noData': 'Нет данных',
+        'employees.cardsView': 'Карточки',
+        'employees.tableView': 'Таблица',
+        'employees.sortName': 'По имени',
+        'employees.sortTickets': 'По тикетам',
+        'employees.sortResolved': 'По решённым',
+      }
+      return map[key] || key
+    },
+  }),
+}))
 
 describe('Employees Page', () => {
   it('renders title', () => {

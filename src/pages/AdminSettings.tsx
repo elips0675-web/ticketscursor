@@ -11,13 +11,13 @@ import { Save, Loader2, Eye, EyeOff } from "lucide-react"
 const API = "http://localhost:4000/api"
 
 const FIELDS = [
-  { key: "TELEGRAM_BOT_TOKEN", label: "Telegram Bot Token", type: "password", section: "Telegram" },
-  { key: "SMTP_HOST", label: "SMTP Host", type: "text", section: "Email (SMTP)" },
-  { key: "SMTP_PORT", label: "SMTP Port", type: "text", section: "Email (SMTP)" },
-  { key: "SMTP_SECURE", label: "SMTP Secure (true/false)", type: "text", section: "Email (SMTP)" },
-  { key: "SMTP_USER", label: "SMTP User", type: "text", section: "Email (SMTP)" },
-  { key: "SMTP_PASS", label: "SMTP Password", type: "password", section: "Email (SMTP)" },
-  { key: "SMTP_FROM", label: "SMTP From", type: "text", section: "Email (SMTP)" },
+  { key: "TELEGRAM_BOT_TOKEN", label: "telegramToken", type: "password", section: "telegramSettings" },
+  { key: "SMTP_HOST", label: "smtpHost", type: "text", section: "emailSettings" },
+  { key: "SMTP_PORT", label: "smtpPort", type: "text", section: "emailSettings" },
+  { key: "SMTP_SECURE", label: "smtpSecure", type: "text", section: "emailSettings" },
+  { key: "SMTP_USER", label: "smtpUser", type: "text", section: "emailSettings" },
+  { key: "SMTP_PASS", label: "smtpPass", type: "password", section: "emailSettings" },
+  { key: "SMTP_FROM", label: "smtpFrom", type: "text", section: "emailSettings" },
 ]
 
 export default function AdminSettings() {
@@ -43,9 +43,9 @@ export default function AdminSettings() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(values),
       })
-      if (res.ok) toast.success("Settings saved")
-      else toast.error("Failed to save")
-    } catch { toast.error("Network error") }
+      if (res.ok) toast.success(t("admin.saveSuccess"))
+      else toast.error(t("admin.saveError"), { role: "alert" })
+    } catch { toast.error(t("common.loading"), { role: "alert" }) }
     setSaving(false)
   }
 
@@ -56,19 +56,20 @@ export default function AdminSettings() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground mt-1">Configure integrations</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("admin.settings")}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t("admin.settingsSubtitle")}</p>
       </div>
 
       {sections.map(section => (
         <Card key={section}>
-          <CardHeader><CardTitle className="text-sm">{section}</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">{t(`admin.${section}`)}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             {FIELDS.filter(f => f.section === section).map(f => (
               <div key={f.key}>
-                <Label className="text-xs font-bold">{f.label}</Label>
+                <Label htmlFor={f.key} className="text-xs font-bold">{t(`admin.${f.label}`)}</Label>
                 <div className="relative mt-1">
                   <Input
+                    id={f.key}
                     type={f.type === "password" && !show[f.key] ? "password" : "text"}
                     value={values[f.key] || ""}
                     onChange={e => setValues(prev => ({ ...prev, [f.key]: e.target.value }))}
@@ -92,7 +93,7 @@ export default function AdminSettings() {
 
       <Button onClick={save} disabled={saving} className="gap-2">
         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-        {saving ? "Saving..." : "Save"}
+        {saving ? t("common.loading") : t("common.save")}
       </Button>
     </div>
   )

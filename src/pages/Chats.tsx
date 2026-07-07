@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -23,6 +24,7 @@ function mapChatRoom(raw: any): ChatRoom {
 }
 
 export default function ChatsPage() {
+  const { t } = useTranslation()
   const { token } = useAuth()
   const navigate = useNavigate()
   const [chats, setChats] = useState<ChatRoom[]>([])
@@ -62,6 +64,9 @@ export default function ChatsPage() {
     <div
       key={c.id}
       onClick={() => navigate(`/chats/${c.id}`)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/chats/${c.id}`) } }}
       className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 cursor-pointer transition-all group"
     >
       {chatIcon(c)}
@@ -73,7 +78,7 @@ export default function ChatsPage() {
           </span>
         </div>
         <div className="flex items-center justify-between mt-0.5">
-          <p className="text-xs text-muted-foreground truncate">{c.lastMessage || "Нет сообщений"}</p>
+          <p className="text-xs text-muted-foreground truncate">{c.lastMessage || t("chats.noMessages")}</p>
           <div className="flex items-center gap-1.5 shrink-0 ml-2">
             {c.members && <span className="text-[9px] text-muted-foreground">{c.members}</span>}
             {c.unread > 0 && (
@@ -92,7 +97,7 @@ export default function ChatsPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <MessageCircle className="w-6 h-6 text-primary" />
-          Чаты
+          {t("chats.title")}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">Общение и коммуникация</p>
       </div>
@@ -102,8 +107,9 @@ export default function ChatsPage() {
         <Input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Поиск чатов..."
+          placeholder={t("chats.searchPlaceholder")}
           className="pl-9"
+          aria-label={t("chats.searchPlaceholder")}
         />
       </div>
 
@@ -116,7 +122,7 @@ export default function ChatsPage() {
         {filteredGroups.length > 0 && (
           <div>
             <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1 mb-2">
-              Общие — {filteredGroups.length}
+              {t("chats.general")} — {filteredGroups.length}
             </h3>
             <div className="space-y-0.5">
               {filteredGroups.sort(sortByTime).map(renderChat)}
@@ -127,7 +133,7 @@ export default function ChatsPage() {
         {filteredPersonal.length > 0 && (
           <div className="mt-6">
             <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1 mb-2">
-              Личные — {filteredPersonal.length}
+              {t("chats.personal")} — {filteredPersonal.length}
             </h3>
             <div className="space-y-0.5">
               {filteredPersonal.sort(sortByTime).map(renderChat)}
@@ -136,9 +142,9 @@ export default function ChatsPage() {
         )}
 
         {filteredGroups.length === 0 && filteredPersonal.length === 0 && (
-          <div className="text-center py-16 text-muted-foreground">
+          <div className="text-center py-16 text-muted-foreground" role="status">
             <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p className="font-bold text-sm">Чаты не найдены</p>
+            <p className="font-bold text-sm">{t("common.noResults")}</p>
           </div>
         )}
       </div>

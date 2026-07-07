@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth } from "@/context/AuthContext"
+import { useTranslation } from "react-i18next"
 
 const DEPARTMENTS = [
   { id: 1, name: "IT" },
@@ -15,6 +16,7 @@ const DEPARTMENTS = [
 ]
 
 export default function Register() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { login } = useAuth()
   const [form, setForm] = useState({ name: "", email: "", password: "", department: "", title: "" })
@@ -25,11 +27,11 @@ export default function Register() {
     e.preventDefault()
     setError("")
     if (!form.name.trim() || !form.email.trim() || !form.password) {
-      setError("Заполните обязательные поля")
+      setError(t("auth.fillRequired"))
       return
     }
     if (form.password.length < 6) {
-      setError("Пароль должен быть минимум 6 символов")
+      setError(t("auth.passwordTooShort"))
       return
     }
     setLoading(true)
@@ -41,13 +43,13 @@ export default function Register() {
       })
       const data = await res.json()
       if (!res.ok) {
-        setError(data.error || data.message || "Ошибка регистрации")
+        setError(data.error || data.message || t("auth.registerError"))
         return
       }
       login(data.token, data.employee)
       navigate("/")
     } catch {
-      setError("Ошибка соединения с сервером")
+      setError(t("auth.connectionError"))
     } finally {
       setLoading(false)
     }
@@ -60,26 +62,28 @@ export default function Register() {
           <div className="mx-auto w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-3">
             <span className="text-white font-bold text-lg">SD</span>
           </div>
-          <CardTitle>Регистрация</CardTitle>
-          <CardDescription>Создайте учётную запись</CardDescription>
+          <CardTitle>{t("auth.registerTitle")}</CardTitle>
+          <CardDescription>{t("auth.registerSubtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium">{error}</div>
+              <div role="alert" className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium">{error}</div>
             )}
             <div className="space-y-1.5">
-              <label className="text-sm font-bold">Имя и фамилия</label>
+              <label htmlFor="reg-name" className="text-sm font-bold">{t("auth.nameFull")}</label>
               <Input
+                id="reg-name"
                 value={form.name}
                 onChange={e => setForm({ ...form, name: e.target.value })}
-                placeholder="Иван Петров"
+                placeholder={t("auth.namePlaceholder")}
                 required
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-bold">Email</label>
+              <label htmlFor="reg-email" className="text-sm font-bold">{t("auth.email")}</label>
               <Input
+                id="reg-email"
                 type="email"
                 value={form.email}
                 onChange={e => setForm({ ...form, email: e.target.value })}
@@ -88,21 +92,22 @@ export default function Register() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-bold">Пароль</label>
+              <label htmlFor="reg-password" className="text-sm font-bold">{t("auth.password")}</label>
               <Input
+                id="reg-password"
                 type="password"
                 value={form.password}
                 onChange={e => setForm({ ...form, password: e.target.value })}
-                placeholder="Минимум 6 символов"
+                placeholder={t("auth.passwordMin")}
                 minLength={6}
                 required
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-bold">Отдел</label>
+              <label htmlFor="reg-department" className="text-sm font-bold">{t("auth.department")}</label>
               <Select value={form.department} onValueChange={v => setForm({ ...form, department: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите отдел" />
+                <SelectTrigger id="reg-department">
+                  <SelectValue placeholder={t("auth.departmentPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {DEPARTMENTS.map(d => (
@@ -112,20 +117,21 @@ export default function Register() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-bold">Должность</label>
+              <label htmlFor="reg-title" className="text-sm font-bold">{t("auth.titlePosition")}</label>
               <Input
+                id="reg-title"
                 value={form.title}
                 onChange={e => setForm({ ...form, title: e.target.value })}
-                placeholder="Например: Junior Developer"
+                placeholder={t("auth.titlePlaceholder")}
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Регистрация..." : "Зарегистрироваться"}
+              {loading ? t("auth.registering") : t("auth.registerBtn")}
             </Button>
           </form>
           <div className="text-center text-sm text-muted-foreground mt-6">
-            Уже есть аккаунт?{" "}
-            <Link to="/login" className="text-primary font-bold hover:underline">Войти</Link>
+            {t("auth.hasAccount")}{" "}
+            <Link to="/login" className="text-primary font-bold hover:underline">{t("auth.goToLogin")}</Link>
           </div>
         </CardContent>
       </Card>

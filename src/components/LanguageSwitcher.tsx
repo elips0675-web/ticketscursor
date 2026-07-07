@@ -10,6 +10,7 @@ export default function LanguageSwitcher() {
       size="sm"
       onClick={() => i18n.changeLanguage(lng === "ru" ? "en" : "ru")}
       className="w-full justify-center text-xs font-bold uppercase tracking-widest"
+      aria-label={t("common.switchLang", "Переключить язык")}
     >
       {lng === "ru" ? "EN" : "RU"}
     </Button>

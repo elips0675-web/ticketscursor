@@ -70,11 +70,11 @@ function MobileHeader({ onMenuClick }: { onMenuClick: () => void }) {
           size="icon"
           onClick={() => { logout(); window.location.href = '/login' }}
           className="text-muted-foreground hover:text-destructive"
-          title="Выйти"
+          title="Выйти" aria-label="Выйти"
         >
           <LogOut className="w-5 h-5" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={onMenuClick} className="md:hidden">
+        <Button variant="ghost" size="icon" onClick={onMenuClick} className="md:hidden" aria-label="Меню">
           <Menu className="w-5 h-5" />
         </Button>
       </div>

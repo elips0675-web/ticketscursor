@@ -9,6 +9,7 @@ import { Search, BookOpen, Plus, Clock, User, Tag, Layers, Loader2, ImageIcon } 
 import { Separator } from "@/components/ui/separator"
 import type { WikiArticle } from "@/types"
 import { useAuth } from "@/context/AuthContext"
+import { useTranslation } from "react-i18next"
 
 const API = "http://localhost:4000/api"
 
@@ -30,6 +31,7 @@ const CATEGORIES = ["Все", "Руководство", "Правила", "Ин�
 
 export default function WikiPage() {
   const { canManage, token } = useAuth()
+  const { t } = useTranslation()
   const [articles, setArticles] = useState<WikiArticle[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -113,41 +115,49 @@ export default function WikiPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <BookOpen className="w-6 h-6 text-primary" />
-            База знаний
+            {t("wiki.title")}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">Статьи, инструкции и документация</p>
+          <p className="text-sm text-muted-foreground mt-1">{t("wiki.description")}</p>
         </div>
         {canManage && (
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2"><Plus className="w-4 h-4" />Статья</Button>
+            <Button className="gap-2"><Plus className="w-4 h-4" />{t("wiki.create")}</Button>
           </DialogTrigger>
           <DialogContent className="max-w-xl">
             <DialogHeader>
-              <DialogTitle>Новая статья</DialogTitle>
+              <DialogTitle>{t("wiki.createTitle")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
-              <Input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Заголовок статьи" />
-              <Textarea value={newContent} onChange={e => setNewContent(e.target.value)} placeholder="Содержание (Markdown)" rows={8} />
+              <label htmlFor="wiki-title" className="text-sm font-medium">{t("wiki.articleTitle")}</label>
+              <Input id="wiki-title" value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder={t("wiki.articleTitle")} />
+              <label htmlFor="wiki-content" className="text-sm font-medium">{t("wiki.content")}</label>
+              <Textarea id="wiki-content" value={newContent} onChange={e => setNewContent(e.target.value)} placeholder={t("wiki.contentPlaceholder")} rows={8} />
               <div className="flex gap-3">
-                <Select value={newCategory} onValueChange={setNewCategory}>
-                  <SelectTrigger className="w-1/2"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.filter(c => c !== "Все").map(c => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input value={newTags} onChange={e => setNewTags(e.target.value)} placeholder="Теги через запятую" className="w-1/2" />
+                <div className="w-1/2 space-y-1">
+                  <label htmlFor="wiki-category" className="text-sm font-medium">{t("wiki.category")}</label>
+                  <Select value={newCategory} onValueChange={setNewCategory}>
+                    <SelectTrigger id="wiki-category"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.filter(c => c !== "Все").map(c => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="w-1/2 space-y-1">
+                  <label htmlFor="wiki-tags" className="text-sm font-medium">{t("wiki.tags")}</label>
+                  <Input id="wiki-tags" value={newTags} onChange={e => setNewTags(e.target.value)} placeholder={t("wiki.tagsPlaceholder")} />
+                </div>
               </div>
               <div className="flex gap-2">
                 <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                 <Button variant="outline" type="button" onClick={() => imageInputRef.current?.click()} disabled={uploadingImg}>
                   {uploadingImg ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-                  {uploadingImg ? "Загрузка..." : "Добавить изображение"}
+                  {uploadingImg ? t("wiki.uploading") : t("wiki.addImage")}
                 </Button>
               </div>
-              <Button onClick={handleCreate} className="w-full">Создать</Button>
+              <Button onClick={handleCreate} className="w-full">{t("common.create")}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -157,12 +167,12 @@ export default function WikiPage() {
       <div className="flex gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Поиск в базе знаний..." className="pl-9" />
+          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder={t("wiki.searchPlaceholder")} className="pl-9" />
         </div>
         <Select value={category} onValueChange={setCategory}>
           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
-            {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c === "Все" ? t("common.all") : c}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
@@ -185,7 +195,7 @@ export default function WikiPage() {
                 {article.tags.map(t => <Badge key={t} className="text-[9px] bg-primary/10 text-primary border-0">{t}</Badge>)}
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setArticle(null)}>Назад</Button>
+            <Button variant="ghost" size="sm" onClick={() => setArticle(null)}>{t("common.back")}</Button>
           </div>
           <Separator />
           <div className="text-sm leading-relaxed whitespace-pre-wrap">{article.content}</div>
@@ -193,13 +203,13 @@ export default function WikiPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {filtered.length === 0 && (
-            <div className="col-span-full text-center py-16 text-muted-foreground">
+            <div className="col-span-full text-center py-16 text-muted-foreground" role="alert">
               <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p className="font-bold text-sm">Статьи не найдены</p>
+              <p className="font-bold text-sm">{t("wiki.noArticles")}</p>
             </div>
           )}
           {filtered.map(a => (
-            <div key={a.id} onClick={() => setArticle(a)} className="rounded-xl border bg-card p-4 hover:bg-muted/50 cursor-pointer transition-all space-y-2">
+            <div key={a.id} onClick={() => setArticle(a)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setArticle(a); } }} role="button" tabIndex={0} className="rounded-xl border bg-card p-4 hover:bg-muted/50 cursor-pointer transition-all space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-bold text-sm leading-snug">{a.title}</h3>
                 <Layers className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />

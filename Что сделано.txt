@@ -183,20 +183,23 @@
 
   Тестирование:
     ✅ 14 клиентских + 17 серверных тестов, Playwright + Chromium
-    🔴 Нет отдельной тестовой БД (тесты ходят в реальную servicedesk)
-    🔴 CI не гоняет клиентские тесты и не поднимает MySQL
+    ✅ CI гоняет клиентские тесты, поднимает MySQL 8.4 + seed.sql
     🟡 Клиентские тесты — 3/20 страниц, без MSW, E2E только Login
 
   Обработка ошибок:
     ✅ Глобальный error handler на сервере, console.error во всех catch
-    🔴 Нет Error Boundary на клиенте (render crash → белый экран)
+    ✅ Error Boundary на клиенте (src/components/ErrorBoundary.tsx)
     🔴 Нет единого API-интерцептора (API в 16 местах, ошибки глотаются)
 
   UI / a11y / i18n:
     ✅ Нижняя мобильная навигация, тёмная тема, i18n-файлы полные
-    🔴 i18n не используется в 80% страниц (весь UI хардкод на русском)
-    🔴 Ноль aria-label, label без htmlFor/id, кликабельные div без keyboard
-    🟡 Tabs — кастом без Radix, Drag-and-drop без клавиатуры
+    ✅ i18n на всех страницах (хардкод заменён на t())
+    ✅ htmlFor/id на всех формах
+    ✅ Error messages с role="alert"
+    ✅ aria-label на icon-only кнопках
+    ✅ keyboard + role="button" + tabIndex на кликабельных карточках
+    🟡 Tabs — кастом без Radix (не критично)
+    🟡 Drag-and-drop без клавиатурной альтернативы (Files)
 
   Функциональные дыры:
     ✅ Email, Telegram, WebPush, WebSocket, аудит, PDF/CSV на тикетах
@@ -213,42 +216,12 @@
 
   Инфраструктура:
     ✅ Docker, K8s, Vercel, Tauri, CI/CD, Swagger, Playwright
-    🔴 Server Dockerfile не multi-stage, нет non-root USER
-    🔴 JWT_SECRET по умолчанию в compose, нет server/.dockerignore
+    ✅ Server Dockerfile: multi-stage, non-root USER node, .dockerignore
+    ✅ docker-compose: JWT_SECRET обязателен, NODE_ENV=production
 
 ────────────────────────────────────────────────────────────────────────────
 
-ПЛАН ДОРАБОТКИ ПО ЭТАПАМ
-
-  Этап 13 — Безопасность (P0)
-    • Отключить /dev-login в production (NODE_ENV !== 'production')
-    • Закрыть /uploads JWT-аутентификацией (middleware на статику)
-    • Client Error Boundary вокруг <App>
-    • Убрать дублирование { error } / { message } в auth.js (2 места)
-    • /api/system-info — либо убрать, либо защитить auth
-
-  Этап 14 — Производительность (P1)
-    • Серверная пагинация LIMIT/OFFSET на tickets, news, wiki, files, polls
-    • CREATE INDEX: tickets(status, created_at, assigned_to, created_by),
-      ticket_messages(ticket_id, created_at), files(folder_id),
-      events(date), notifications(user_id, created_at)
-    • Исправить N+1 в polls.js (Eager load options) и files.js (JOIN вместо 2 запросов)
-    • Client-side → server-side пагинация на Tickets и News (фронт под параметры)
-
-  Этап 15 — Инфраструктура (P1)
-    • Docker: multi-stage для server, non-root USER, server/.dockerignore
-    • CI: добавить npm test для клиента, MySQL service для серверных тестов
-    • Отдельная тестовая БД (DB_NAME=servicedesk_test, поднимается в CI)
-    • VITE_API_URL как ARG в Dockerfile frontend
-
-  Этап 16 — UI / i18n / a11y (P2)
-    • i18n — пройти по всем страницам, заменить хардкод на t()
-    • aria-label на иконки (Menu, Logout, Sort, View toggle)
-    • htmlFor/id на все label + input (Login, Register, NewTicket, Files)
-    • keyboard + role="button" + tabIndex на кликабельные карточки
-    • Error messages с role="alert"
-    • Tabs — Radix или aria-атрибуты вручную
-    • Drag-and-drop клавиатурная альтернатива (Files, Kanban)
+  ПЛАН ДОРАБОТКИ ПО ЭТАПАМ
 
   Этап 17 — Опционально (P3)
     • LDAP/AD интеграция (passport-ldapauth)
@@ -259,6 +232,8 @@
     • WebSocket rate-limit (5 msg/sec) + exponential backoff
     • Очистка уведомлений > 90 дней
     • Лимит экспорта 10 000 записей
+    • Tabs — Radix или aria-атрибуты вручную
+    • Drag-and-drop клавиатурная альтернатива (Files)
 
 ────────────────────────────────────────────────────────────────────────────
 

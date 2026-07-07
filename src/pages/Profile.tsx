@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,6 +13,7 @@ import { useAuth } from "@/context/AuthContext"
 const API = "http://localhost:4000/api"
 
 export default function ProfilePage() {
+  const { t } = useTranslation()
   const { user: authUser, token } = useAuth()
   const [employee, setEmployee] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -73,15 +75,15 @@ export default function ProfilePage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Профиль</h1>
-        <p className="text-sm text-muted-foreground mt-1">Управление аккаунтом</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("profile.title")}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t("profile.subtitle")}</p>
       </div>
 
       <Tabs defaultValue="profile">
         <TabsList>
-          <TabsTrigger value="profile" className="gap-1.5"><User className="w-3.5 h-3.5" /> Профиль</TabsTrigger>
-          <TabsTrigger value="files" className="gap-1.5"><FileText className="w-3.5 h-3.5" /> Файлы</TabsTrigger>
-          <TabsTrigger value="settings" className="gap-1.5"><Settings className="w-3.5 h-3.5" /> Настройки</TabsTrigger>
+          <TabsTrigger value="profile" className="gap-1.5"><User className="w-3.5 h-3.5" /> {t("profile.title")}</TabsTrigger>
+          <TabsTrigger value="files" className="gap-1.5"><FileText className="w-3.5 h-3.5" /> {t("nav.files")}</TabsTrigger>
+          <TabsTrigger value="settings" className="gap-1.5"><Settings className="w-3.5 h-3.5" /> {t("profile.settings")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="mt-6">
@@ -113,24 +115,36 @@ export default function ProfilePage() {
               <div className="space-y-4">
                 {editing ? (
                   <>
-                    <div className="space-y-1.5"><label className="text-sm font-bold flex items-center gap-2"><Mail className="w-3.5 h-3.5" /> Email</label><Input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
-                    <div className="space-y-1.5"><label className="text-sm font-bold flex items-center gap-2"><Phone className="w-3.5 h-3.5" /> Телефон</label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
-                    <div className="space-y-1.5"><label className="text-sm font-bold flex items-center gap-2"><Briefcase className="w-3.5 h-3.5" /> Должность</label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
-                    <div className="space-y-1.5"><label className="text-sm font-bold flex items-center gap-2"><FileText className="w-3.5 h-3.5" /> О себе</label><Textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} rows={3} /></div>
+                    <div className="space-y-1.5">
+                      <label htmlFor="profile-email" className="text-sm font-bold flex items-center gap-2"><Mail className="w-3.5 h-3.5" /> {t("auth.email")}</label>
+                      <Input id="profile-email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label htmlFor="profile-phone" className="text-sm font-bold flex items-center gap-2"><Phone className="w-3.5 h-3.5" /> {t("profile.phone")}</label>
+                      <Input id="profile-phone" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label htmlFor="profile-title" className="text-sm font-bold flex items-center gap-2"><Briefcase className="w-3.5 h-3.5" /> {t("profile.position")}</label>
+                      <Input id="profile-title" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label htmlFor="profile-bio" className="text-sm font-bold flex items-center gap-2"><FileText className="w-3.5 h-3.5" /> {t("profile.bio")}</label>
+                      <Textarea id="profile-bio" value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} rows={3} />
+                    </div>
                     <div className="flex gap-2 pt-2">
-                      <Button onClick={saveProfile} className="gap-1.5"><Save className="w-4 h-4" /> Сохранить</Button>
-                      <Button variant="outline" onClick={cancelEdit}>Отмена</Button>
+                      <Button onClick={saveProfile} className="gap-1.5"><Save className="w-4 h-4" /> {t("common.save")}</Button>
+                      <Button variant="outline" onClick={cancelEdit}>{t("common.cancel")}</Button>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className="flex items-center gap-3 py-2 border-b"><Mail className="w-4 h-4 text-muted-foreground" /><div><p className="text-xs text-muted-foreground">Email</p><p className="text-sm font-medium">{employee?.email || ""}</p></div></div>
-                    <div className="flex items-center gap-3 py-2 border-b"><Phone className="w-4 h-4 text-muted-foreground" /><div><p className="text-xs text-muted-foreground">Телефон</p><p className="text-sm font-medium">{employee?.phone || ""}</p></div></div>
-                    <div className="flex items-center gap-3 py-2 border-b"><Briefcase className="w-4 h-4 text-muted-foreground" /><div><p className="text-xs text-muted-foreground">Должность</p><p className="text-sm font-medium">{employee?.title || ""}</p></div></div>
-                    <div className="flex items-center gap-3 py-2 border-b"><MapPin className="w-4 h-4 text-muted-foreground" /><div><p className="text-xs text-muted-foreground">Отдел</p><p className="text-sm font-medium">{employee?.department || ""}</p></div></div>
-                    {form.bio && <div className="py-2"><p className="text-xs text-muted-foreground mb-1">О себе</p><p className="text-sm">{form.bio}</p></div>}
+                    <div className="flex items-center gap-3 py-2 border-b"><Mail className="w-4 h-4 text-muted-foreground" /><div><p className="text-xs text-muted-foreground">{t("auth.email")}</p><p className="text-sm font-medium">{employee?.email || ""}</p></div></div>
+                    <div className="flex items-center gap-3 py-2 border-b"><Phone className="w-4 h-4 text-muted-foreground" /><div><p className="text-xs text-muted-foreground">{t("profile.phone")}</p><p className="text-sm font-medium">{employee?.phone || ""}</p></div></div>
+                    <div className="flex items-center gap-3 py-2 border-b"><Briefcase className="w-4 h-4 text-muted-foreground" /><div><p className="text-xs text-muted-foreground">{t("profile.position")}</p><p className="text-sm font-medium">{employee?.title || ""}</p></div></div>
+                    <div className="flex items-center gap-3 py-2 border-b"><MapPin className="w-4 h-4 text-muted-foreground" /><div><p className="text-xs text-muted-foreground">{t("profile.department")}</p><p className="text-sm font-medium">{employee?.department || ""}</p></div></div>
+                    {form.bio && <div className="py-2"><p className="text-xs text-muted-foreground mb-1">{t("profile.bio")}</p><p className="text-sm">{form.bio}</p></div>}
                     <div className="flex gap-2 pt-2">
-                      <Button variant="outline" onClick={() => setEditing(true)} className="gap-1.5"><Camera className="w-4 h-4" /> Редактировать</Button>
+                      <Button variant="outline" onClick={() => setEditing(true)} className="gap-1.5"><Camera className="w-4 h-4" /> {t("profile.editProfile")}</Button>
                     </div>
                   </>
                 )}
@@ -141,16 +155,16 @@ export default function ProfilePage() {
             <CardContent className="p-5">
               <div className="flex items-center gap-2 mb-3">
                 <Monitor className="w-4 h-4 text-primary" />
-                <h3 className="font-bold text-sm">Текущее устройство</h3>
+                <h3 className="font-bold text-sm">{t("profile.currentDevice")}</h3>
               </div>
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Имя компьютера</label>
-                  <Input id="sys-computer" defaultValue={sysInfo.computerName} onChange={updateSysInfo} placeholder="Например: PC-IT-01" className="text-sm" />
+                  <label htmlFor="sys-computer" className="text-xs text-muted-foreground mb-1 block">{t("profile.computerName")}</label>
+                  <Input id="sys-computer" defaultValue={sysInfo.computerName} onChange={updateSysInfo} placeholder={t("profile.computerPlaceholder")} className="text-sm" />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Учётная запись</label>
-                  <Input id="sys-account" defaultValue={sysInfo.userAccount} onChange={updateSysInfo} placeholder="Домен\Пользователь" className="text-sm" />
+                  <label htmlFor="sys-account" className="text-xs text-muted-foreground mb-1 block">{t("profile.userAccount")}</label>
+                  <Input id="sys-account" defaultValue={sysInfo.userAccount} onChange={updateSysInfo} placeholder={t("profile.accountPlaceholder")} className="text-sm" />
                 </div>
               </div>
             </CardContent>
@@ -162,11 +176,11 @@ export default function ProfilePage() {
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">
                 <FileText className="w-4 h-4 text-primary" />
-                Мои файлы
+                {t("profile.myFiles")}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground text-center py-8">Нет файлов</p>
+              <p className="text-sm text-muted-foreground text-center py-8">{t("profile.noFiles")}</p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -174,24 +188,24 @@ export default function ProfilePage() {
         <TabsContent value="settings" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Настройки</CardTitle>
+              <CardTitle className="text-sm">{t("profile.settings")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Уведомления</p>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t("profile.notifications")}</p>
                 <label className="flex items-center justify-between py-2">
-                  <span className="text-sm font-medium">Звук уведомлений</span>
+                  <span className="text-sm font-medium">{t("profile.notificationSound")}</span>
                   <input type="checkbox" defaultChecked className="rounded" />
                 </label>
                 <label className="flex items-center justify-between py-2">
-                  <span className="text-sm font-medium">Push-уведомления</span>
+                  <span className="text-sm font-medium">{t("profile.pushNotifications")}</span>
                   <input type="checkbox" defaultChecked className="rounded" />
                 </label>
               </div>
               <div className="space-y-3 pt-3 border-t">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Приватность</p>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t("profile.privacy")}</p>
                 <label className="flex items-center justify-between py-2">
-                  <span className="text-sm font-medium">Показывать онлайн-статус</span>
+                  <span className="text-sm font-medium">{t("profile.showOnlineStatus")}</span>
                   <input type="checkbox" defaultChecked className="rounded" />
                 </label>
               </div>

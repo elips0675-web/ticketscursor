@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -7,6 +8,7 @@ import { Bell, Send } from "lucide-react"
 import { usePush } from "@/lib/use-push"
 
 export default function AdminPush() {
+  const { t } = useTranslation()
   const { subscribed, supported, loading: pushLoading, subscribe, unsubscribe } = usePush()
   const [pushTitle, setPushTitle] = useState("")
   const [pushBody, setPushBody] = useState("")
@@ -43,15 +45,15 @@ export default function AdminPush() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Push-уведомления</h1>
-        <p className="text-sm text-muted-foreground mt-1">Рассылка уведомлений всем сотрудникам</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("admin.push")}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t("admin.pushSubtitle")}</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="text-sm flex items-center gap-2">
             <Bell className="w-4 h-4 text-primary" />
-            Рассылка
+            {t("admin.pushSend")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -59,7 +61,7 @@ export default function AdminPush() {
             <div className="flex items-center justify-between rounded-lg bg-muted/30 p-3">
               <div className="flex items-center gap-2 text-sm">
                 <Bell className="w-4 h-4 text-muted-foreground" />
-                <span>{subscribed ? "Уведомления включены" : "Уведомления выключены"}</span>
+                <span>{subscribed ? t("admin.pushOn") : t("admin.pushOff")}</span>
               </div>
               <Button
                 variant={subscribed ? "outline" : "default"}
@@ -67,35 +69,38 @@ export default function AdminPush() {
                 onClick={subscribed ? unsubscribe : subscribe}
                 disabled={pushLoading}
               >
-                {subscribed ? "Отключить" : "Включить"}
+                {subscribed ? t("admin.unsubscribe") : t("admin.subscribe")}
               </Button>
             </div>
           )}
           {!supported && (
-            <p className="text-sm text-muted-foreground">Push-уведомления не поддерживаются вашим браузером</p>
+            <p className="text-sm text-muted-foreground" role="alert">{t("admin.pushNotSupported")}</p>
           )}
 
           <div className="space-y-3">
             <div>
-              <label className="text-sm font-medium mb-1 block">Заголовок *</label>
+              <label htmlFor="pushTitle" className="text-sm font-medium mb-1 block">{t("admin.pushTitle")}</label>
               <Input
-                placeholder="Например: Важное обновление"
+                id="pushTitle"
+                placeholder={t("admin.pushTitlePlaceholder")}
                 value={pushTitle}
                 onChange={e => setPushTitle(e.target.value)}
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">Текст</label>
+              <label htmlFor="pushBody" className="text-sm font-medium mb-1 block">{t("admin.pushBody")}</label>
               <Textarea
-                placeholder="Текст уведомления..."
+                id="pushBody"
+                placeholder={t("admin.pushBodyPlaceholder")}
                 value={pushBody}
                 onChange={e => setPushBody(e.target.value)}
                 rows={3}
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">Ссылка</label>
+              <label htmlFor="pushUrl" className="text-sm font-medium mb-1 block">{t("admin.pushUrl")}</label>
               <Input
+                id="pushUrl"
                 placeholder="/"
                 value={pushUrl}
                 onChange={e => setPushUrl(e.target.value)}
@@ -104,11 +109,11 @@ export default function AdminPush() {
             <div className="flex items-center gap-3 pt-1">
               <Button onClick={handleSendPush} disabled={sending || !pushTitle.trim()}>
                 <Send className="w-4 h-4 mr-1.5" />
-                {sending ? "Отправка..." : "Отправить"}
+                {sending ? t("admin.pushSending") : t("admin.pushSubmitBtn")}
               </Button>
               {sendResult && (
                 <span className="text-sm text-muted-foreground">
-                  Отправлено: {sendResult.sent}, ошибок: {sendResult.failed}
+                  {t("admin.pushResult", { sent: sendResult.sent, failed: sendResult.failed })}
                 </span>
               )}
             </div>

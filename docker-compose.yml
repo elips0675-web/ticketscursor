@@ -4,8 +4,10 @@ services:
     container_name: sd-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
       MYSQL_DATABASE: servicedesk
+      MYSQL_USER: ${DB_USER:-sduser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-sdpassword}
     ports:
       - "3307:3306"
     volumes:
@@ -28,24 +30,29 @@ services:
       PORT: 4000
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_USER: root
-      DB_PASSWORD: ${DB_PASSWORD:-root}
+      DB_USER: ${DB_USER:-sduser}
+      DB_PASSWORD: ${DB_PASSWORD:-sdpassword}
       DB_NAME: servicedesk
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
-      CORS_ORIGIN: http://localhost
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+      NODE_ENV: production
+    volumes:
+      - uploads_data:/app/uploads
     ports:
       - "4000:4000"
 
   frontend:
-    build: .
+    build:
+      context: .
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api}
     container_name: sd-frontend
     restart: unless-stopped
     depends_on:
       - api
-    environment:
-      API_URL: http://api:4000
     ports:
       - "80:80"
 
 volumes:
   mysql_data:
+  uploads_data:

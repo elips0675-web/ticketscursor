@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { useSocket } from "@/context/SocketContext"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,6 +20,7 @@ import type { TicketStatus, TicketPriority } from "@/types"
 const API = "http://localhost:4000/api"
 
 export default function TicketDetail() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
   const { tickets, employees, updateTicketStatus, updateTicketPriority, assignTicket, addMessage } = useTickets()
@@ -39,7 +41,7 @@ export default function TicketDetail() {
     if (!socket || !ticket) return
     const onMessage = (data: { ticketId: number; message: any }) => {
       if (data.ticketId === ticket.id) {
-        toast.info(`Новое сообщение от ${data.message.senderName}`)
+        toast.info(t("tickets.newMessageFrom", { name: data.message.senderName }))
       }
     }
     socket.on("ticket:message", onMessage)
@@ -48,9 +50,9 @@ export default function TicketDetail() {
 
   if (!ticket) {
     return (
-      <div className="text-center py-20">
-        <h2 className="font-bold text-lg">Тикет не найден</h2>
-        <Button variant="link" onClick={() => navigate("/tickets")}>Вернуться к списку</Button>
+      <div className="text-center py-20" role="alert">
+        <h2 className="font-bold text-lg">{t("tickets.notFound")}</h2>
+        <Button variant="link" onClick={() => navigate("/tickets")}>{t("common.back")}</Button>
       </div>
     )
   }
@@ -84,11 +86,25 @@ export default function TicketDetail() {
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
+  const statusLabel: Record<string, string> = {
+    open: t("tickets.open"),
+    in_progress: t("tickets.inProgress"),
+    resolved: t("tickets.resolved"),
+    closed: t("tickets.closed"),
+  }
+
+  const priorityLabel: Record<string, string> = {
+    low: t("tickets.low"),
+    medium: t("tickets.medium"),
+    high: t("tickets.high"),
+    critical: t("tickets.critical"),
+  }
+
   return (
     <div className="space-y-6">
       <Button variant="ghost" size="sm" onClick={() => navigate("/tickets")} className="gap-1.5">
         <ArrowLeft className="w-4 h-4" />
-        Назад к тикетам
+        {t("tickets.backToTickets")}
       </Button>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -100,13 +116,13 @@ export default function TicketDetail() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <CardTitle className="text-lg">{ticket.title}</CardTitle>
                     <Badge className={`text-[10px] ${ticket.status.replace('_', '-')}`}>
-                      {{ open: "Открытые", in_progress: "В работе", resolved: "Решённые", closed: "Закрытые" }[ticket.status]}
+                      {statusLabel[ticket.status]}
                     </Badge>
                     <Badge className={`text-[10px] priority-${ticket.priority}`}>
-                      {{ low: "Низкий", medium: "Средний", high: "Высокий", critical: "Критичный" }[ticket.priority]}
+                      {priorityLabel[ticket.priority]}
                     </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">Создан {formatDate(ticket.createdAt)}</p>
+                  <p className="text-xs text-muted-foreground">{t("tickets.createdAt", { date: formatDate(ticket.createdAt) })}</p>
                 </div>
               </div>
             </CardHeader>
@@ -127,7 +143,7 @@ export default function TicketDetail() {
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-primary" />
-                Переписка ({ticket.messages.length})
+                {t("tickets.messages")} ({ticket.messages.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -143,7 +159,7 @@ export default function TicketDetail() {
                         <span className="text-[10px] text-muted-foreground">{formatTime(msg.createdAt)}</span>
                         {msg.isInternal && (
                           <Badge variant="secondary" className="text-[8px] gap-0.5">
-                            <Lock className="w-2.5 h-2.5" /> Внутреннее
+                            <Lock className="w-2.5 h-2.5" /> {t("tickets.internalBadge")}
                           </Badge>
                         )}
                       </div>
@@ -170,8 +186,9 @@ export default function TicketDetail() {
                 <Textarea
                   value={messageText}
                   onChange={e => setMessageText(e.target.value)}
-                  placeholder="Напишите сообщение..."
+                  placeholder={t("tickets.messagePlaceholder")}
                   className="min-h-[80px]"
+                  id="ticket-message"
                 />
                 {attachments.length > 0 && (
                   <div className="flex flex-wrap gap-2">
@@ -186,15 +203,16 @@ export default function TicketDetail() {
                 )}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                    <label htmlFor="ticket-internal" className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
                       <input
+                        id="ticket-internal"
                         type="checkbox"
                         checked={isInternal}
                         onChange={e => setIsInternal(e.target.checked)}
                         className="rounded"
                       />
                       <Lock className="w-3 h-3" />
-                      Внутренняя заметка
+                      {t("tickets.internalNote")}
                     </label>
                     <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} />
                     <Button variant="ghost" size="sm" type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
@@ -203,7 +221,7 @@ export default function TicketDetail() {
                   </div>
                   <Button size="sm" onClick={handleSend} disabled={!messageText.trim() && attachments.length === 0}>
                     <Send className="w-4 h-4 mr-1.5" />
-                    Отправить
+                    {t("tickets.sendBtn")}
                   </Button>
                 </div>
               </div>
@@ -215,53 +233,53 @@ export default function TicketDetail() {
           {canManage && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Управление</CardTitle>
+              <CardTitle className="text-sm">{t("tickets.management")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Статус</label>
+                <label htmlFor="ticket-status" className="text-xs font-bold text-muted-foreground">{t("tickets.status")}</label>
                 <Select
                   value={ticket.status}
                   onValueChange={v => updateTicketStatus(ticket.id, v as TicketStatus)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="ticket-status">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="open">Открытые</SelectItem>
-                    <SelectItem value="in_progress">В работе</SelectItem>
-                    <SelectItem value="resolved">Решённые</SelectItem>
-                    <SelectItem value="closed">Закрытые</SelectItem>
+                    <SelectItem value="open">{t("tickets.open")}</SelectItem>
+                    <SelectItem value="in_progress">{t("tickets.inProgress")}</SelectItem>
+                    <SelectItem value="resolved">{t("tickets.resolved")}</SelectItem>
+                    <SelectItem value="closed">{t("tickets.closed")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Приоритет</label>
+                <label htmlFor="ticket-priority" className="text-xs font-bold text-muted-foreground">{t("tickets.priority")}</label>
                 <Select
                   value={ticket.priority}
                   onValueChange={v => updateTicketPriority(ticket.id, v as TicketPriority)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="ticket-priority">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Низкий</SelectItem>
-                    <SelectItem value="medium">Средний</SelectItem>
-                    <SelectItem value="high">Высокий</SelectItem>
-                    <SelectItem value="critical">Критичный</SelectItem>
+                    <SelectItem value="low">{t("tickets.low")}</SelectItem>
+                    <SelectItem value="medium">{t("tickets.medium")}</SelectItem>
+                    <SelectItem value="high">{t("tickets.high")}</SelectItem>
+                    <SelectItem value="critical">{t("tickets.critical")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">Назначить</label>
+                <label htmlFor="ticket-assign" className="text-xs font-bold text-muted-foreground">{t("tickets.assignedTo")}</label>
                 <Select
                   value={ticket.assignedTo ? String(ticket.assignedTo.id) : ""}
                   onValueChange={v => assignTicket(ticket.id, Number(v))}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Выберите сотрудника" />
+                  <SelectTrigger id="ticket-assign">
+                    <SelectValue placeholder={t("tickets.selectEmployee")} />
                   </SelectTrigger>
                   <SelectContent>
                     {employees.map(emp => (
@@ -278,13 +296,13 @@ export default function TicketDetail() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Детали</CardTitle>
+              <CardTitle className="text-sm">{t("tickets.details")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex items-center gap-2">
                 <User className="w-4 h-4 text-muted-foreground" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Создатель</p>
+                  <p className="text-xs text-muted-foreground">{t("tickets.createdBy")}</p>
                   <p className="text-sm font-bold">{ticket.createdBy.name}</p>
                 </div>
               </div>
@@ -292,29 +310,29 @@ export default function TicketDetail() {
                 <div className="flex items-center gap-2">
                   <ExternalLink className="w-4 h-4 text-muted-foreground" />
                   <div>
-                    <p className="text-xs text-muted-foreground">Назначен</p>
+                    <p className="text-xs text-muted-foreground">{t("tickets.assignedNotify")}</p>
                     <p className="text-sm font-bold">{ticket.assignedTo.name}</p>
                   </div>
                 </div>
               )}
               <div>
-                <p className="text-xs text-muted-foreground">Обновлён</p>
+                <p className="text-xs text-muted-foreground">{t("tickets.updatedAt")}</p>
                 <p className="text-sm">{formatDate(ticket.updatedAt)}</p>
               </div>
               {(ticket.computerName || ticket.userAccount) && (
                 <div className="pt-3 border-t space-y-2">
                   <p className="text-xs font-bold text-muted-foreground flex items-center gap-1">
-                    <Monitor className="w-3 h-3" /> Система
+                    <Monitor className="w-3 h-3" /> {t("tickets.systemInfo")}
                   </p>
                   {ticket.computerName && (
                     <div className="flex items-center gap-2">
-                      <p className="text-xs text-muted-foreground">Компьютер:</p>
+                      <p className="text-xs text-muted-foreground">{t("tickets.computerName")}:</p>
                       <p className="text-sm font-medium">{ticket.computerName}</p>
                     </div>
                   )}
                   {ticket.userAccount && (
                     <div className="flex items-center gap-2">
-                      <p className="text-xs text-muted-foreground">Учётная запись:</p>
+                      <p className="text-xs text-muted-foreground">{t("tickets.userAccount")}:</p>
                       <p className="text-sm font-mono text-xs">{ticket.userAccount}</p>
                     </div>
                   )}
