@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { LayoutDashboard, Ticket, MessageCircle, Users, Menu, MoreHorizontal } from "lucide-react"
+import { LayoutDashboard, Ticket, MessageCircle, Users, Menu, MoreHorizontal, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { Sidebar, SidebarContent } from "./sidebar"
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt"
 import { cn } from "@/lib/utils"
 import NotificationBell from "@/components/NotificationBell"
+import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 const bottomNavItems = [
   { to: "/", icon: LayoutDashboard, label: "Дашборд" },
@@ -51,6 +52,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 }
 
 function MobileHeader({ onMenuClick }: { onMenuClick: () => void }) {
+  const { logout } = useAuth()
   return (
     <div className="flex items-center justify-between p-4 border-b bg-background md:pl-6">
       <div className="flex items-center gap-2">
@@ -61,6 +63,16 @@ function MobileHeader({ onMenuClick }: { onMenuClick: () => void }) {
       </div>
       <div className="flex items-center gap-1">
         <NotificationBell />
+        <span className="md:hidden"><LanguageSwitcher /></span>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => { logout(); window.location.href = '/login' }}
+          className="text-muted-foreground hover:text-destructive"
+          title="Выйти"
+        >
+          <LogOut className="w-5 h-5" />
+        </Button>
         <Button variant="ghost" size="icon" onClick={onMenuClick} className="md:hidden">
           <Menu className="w-5 h-5" />
         </Button>

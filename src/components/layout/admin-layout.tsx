@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom"
 import { Shield, LayoutDashboard, Users, Bell, Settings, History, ArrowLeft, LogOut } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/context/AuthContext"
 import { useTranslation } from "react-i18next"
@@ -98,6 +99,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
 function MobileAdminHeader() {
   const navigate = useNavigate()
+  const { logout } = useAuth()
   const { t } = useTranslation()
   return (
     <div className="md:hidden flex items-center justify-between p-4 border-b bg-background">
@@ -107,17 +109,26 @@ function MobileAdminHeader() {
         </div>
         <span className="font-bold text-sm">{t("admin.title")}</span>
       </div>
-      <div className="flex gap-1">
-        {adminNavItems.map((item) => (
-          <button
-            key={item.to}
-            onClick={() => navigate(item.to)}
-            className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-muted-foreground"
-          >
-            <item.icon className="w-4 h-4" />
-            <span className="text-[8px] font-medium">{t(item.labelKey)}</span>
-          </button>
-        ))}
+      <div className="flex items-center gap-1">
+        <LanguageSwitcher />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/")}
+          className="text-muted-foreground hover:text-foreground"
+          title={t("common.back")}
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => { logout(); window.location.href = "/login" }}
+          className="text-muted-foreground hover:text-destructive"
+          title={t("auth.logout")}
+        >
+          <LogOut className="w-4 h-4" />
+        </Button>
       </div>
     </div>
   )
