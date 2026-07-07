@@ -1,4 +1,4 @@
-exports.up = function(knex) {
+export function up(knex) {
   return knex.schema.createTable('password_resets', (table) => {
     table.string('email').primary()
     table.string('token').notNullable().index()
@@ -7,6 +7,6 @@ exports.up = function(knex) {
   })
 }
 
-exports.down = function(knex) {
+export function down(knex) {
   return knex.schema.dropTable('password_resets')
 }

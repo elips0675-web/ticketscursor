@@ -1,4 +1,4 @@
-exports.up = function(knex) {
+export function up(knex) {
   return knex.schema.createTable('audit_log', (table) => {
     table.increments('id').primary()
     table.integer('user_id').unsigned().references('id').inTable('employees')
@@ -13,6 +13,6 @@ exports.up = function(knex) {
   })
 }
 
-exports.down = function(knex) {
+export function down(knex) {
   return knex.schema.dropTable('audit_log')
 }

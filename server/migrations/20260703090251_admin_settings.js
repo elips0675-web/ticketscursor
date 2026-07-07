@@ -1,4 +1,4 @@
-exports.up = function(knex) {
+export function up(knex) {
   return knex.schema.createTable('admin_settings', (table) => {
     table.string('key').primary()
     table.text('value')
@@ -6,6 +6,6 @@ exports.up = function(knex) {
   })
 }
 
-exports.down = function(knex) {
+export function down(knex) {
   return knex.schema.dropTable('admin_settings')
 }

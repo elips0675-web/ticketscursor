@@ -49,17 +49,17 @@ CREATE TABLE IF NOT EXISTS ticket_messages (
 
 -- Demo employees (password: 123456)
 INSERT INTO employees (name, email, password_hash, role, department, online, active_tickets, resolved_today) VALUES
-('Алексей Петров', 'alexey@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'admin', 'IT', TRUE, 3, 5),
-('Мария Иванова', 'maria@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'senior_agent', 'Поддержка', TRUE, 2, 8),
-('Дмитрий Сидоров', 'dmitry@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'agent', 'Поддержка', FALSE, 4, 3),
-('Елена Козлова', 'elena@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'agent', 'Разработка', TRUE, 1, 2),
-('Сергей Новиков', 'sergey@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'agent', 'Поддержка', FALSE, 0, 6);
+('Алексей Петров', 'alexey@example.com', '$2a$10$lumiKw.5JxpcyKarKLxGqu1TxqRYGo1asFB4XaQinHTONwY6v5TeC', 'admin', 'IT', TRUE, 3, 5),
+('Мария Иванова', 'maria@example.com', '$2a$10$lumiKw.5JxpcyKarKLxGqu1TxqRYGo1asFB4XaQinHTONwY6v5TeC', 'senior_agent', 'Поддержка', TRUE, 2, 8),
+('Дмитрий Сидоров', 'dmitry@example.com', '$2a$10$lumiKw.5JxpcyKarKLxGqu1TxqRYGo1asFB4XaQinHTONwY6v5TeC', 'agent', 'Поддержка', FALSE, 4, 3),
+('Елена Козлова', 'elena@example.com', '$2a$10$lumiKw.5JxpcyKarKLxGqu1TxqRYGo1asFB4XaQinHTONwY6v5TeC', 'agent', 'Разработка', TRUE, 1, 2),
+('Сергей Новиков', 'sergey@example.com', '$2a$10$lumiKw.5JxpcyKarKLxGqu1TxqRYGo1asFB4XaQinHTONwY6v5TeC', 'agent', 'Поддержка', FALSE, 0, 6);
 
 -- Demo tickets
 INSERT INTO tickets (title, description, status, priority, category, created_by, assigned_to) VALUES
 ('Не работает отправка email', 'После обновления сервера перестала работать отправка писем через SMTP', 'in_progress', 'high', 'bug', 10, 1),
 ('Добавить экспорт в Excel', 'Необходимо добавить кнопку экспорта списка пользователей в Excel', 'open', 'medium', 'feature', 11, NULL),
-('Сбой авторизации через Telegram', 'При входе через Telegram выдает ошибку 500', 'critical', 'critical', 'incident', 12, 2),
+('Сбой авторизации через Telegram', 'При входе через Telegram выдает ошибку 500', 'open', 'critical', 'incident', 12, 2),
 ('Обновить документацию API', 'Старая документация не соответствует актуальным эндпоинтам', 'open', 'low', 'other', 13, NULL),
 ('Медленная загрузка чатов', 'При открытии списка чатов загрузка более 10 секунд', 'resolved', 'high', 'bug', 10, 4);
 
@@ -247,19 +247,19 @@ INSERT INTO ticket_messages (ticket_id, sender_id, sender_name, text, created_at
 (5, 4, 'Елена Козлова', 'Оптимизировала запросы, добавила индексы.', '2026-06-29 16:00:00');
 
 -- Performance indexes
-CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
-CREATE INDEX IF NOT EXISTS idx_tickets_priority ON tickets(priority);
-CREATE INDEX IF NOT EXISTS idx_tickets_assigned_to ON tickets(assigned_to);
-CREATE INDEX IF NOT EXISTS idx_tickets_created_by ON tickets(created_by);
-CREATE INDEX IF NOT EXISTS idx_tickets_updated_at ON tickets(updated_at);
-CREATE INDEX IF NOT EXISTS idx_tickets_created_at ON tickets(created_at);
-CREATE INDEX IF NOT EXISTS idx_ticket_messages_ticket ON ticket_messages(ticket_id, created_at);
-CREATE INDEX IF NOT EXISTS idx_wiki_articles_category ON wiki_articles(category);
-CREATE INDEX IF NOT EXISTS idx_wiki_articles_updated ON wiki_articles(updated_at);
-CREATE INDEX IF NOT EXISTS idx_news_posts_important ON news_posts(important, created_at);
-CREATE INDEX IF NOT EXISTS idx_files_folder ON files(folder_id);
-CREATE INDEX IF NOT EXISTS idx_events_date ON events(date);
-CREATE INDEX IF NOT EXISTS idx_chat_messages_chat ON chat_messages(chat_id, created_at);
-CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, created_at);
-CREATE INDEX IF NOT EXISTS idx_audit_log_entity ON audit_log(entity_type, entity_id);
-CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log(created_at);
+CREATE INDEX idx_tickets_status ON tickets(status);
+CREATE INDEX idx_tickets_priority ON tickets(priority);
+CREATE INDEX idx_tickets_assigned_to ON tickets(assigned_to);
+CREATE INDEX idx_tickets_created_by ON tickets(created_by);
+CREATE INDEX idx_tickets_updated_at ON tickets(updated_at);
+CREATE INDEX idx_tickets_created_at ON tickets(created_at);
+CREATE INDEX idx_ticket_messages_ticket ON ticket_messages(ticket_id, created_at);
+CREATE INDEX idx_wiki_articles_category ON wiki_articles(category);
+CREATE INDEX idx_wiki_articles_updated ON wiki_articles(updated_at);
+CREATE INDEX idx_news_posts_important ON news_posts(important, created_at);
+CREATE INDEX idx_files_folder ON files(folder_id);
+CREATE INDEX idx_events_date ON events(date);
+CREATE INDEX idx_chat_messages_chat ON chat_messages(chat_id, created_at);
+CREATE INDEX idx_notifications_user ON notifications(user_id, created_at);
+CREATE INDEX idx_audit_log_entity ON audit_log(entity_type, entity_id);
+CREATE INDEX idx_audit_log_created ON audit_log(created_at);
