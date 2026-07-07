@@ -2,17 +2,16 @@ import { Router } from 'express'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
+import { body } from 'express-validator'
 import pool from '../db.js'
 import { JWT_SECRET, authenticateToken, requireRole } from '../middleware.js'
 import { sendTicketNotification } from '../email.js'
+import { loginValidation, registerValidation, handleErrors } from '../validate.js'
 
 const router = Router()
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginValidation, async (req, res) => {
   const { email, password } = req.body
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password required' })
-  }
   try {
     const [rows] = await pool.query(
       'SELECT id, email, name, role, password_hash FROM employees WHERE email = ? AND is_active = 1',
@@ -42,11 +41,8 @@ router.post('/login', async (req, res) => {
   }
 })
 
-router.post('/register', authenticateToken, requireRole('admin'), async (req, res) => {
+router.post('/register', authenticateToken, requireRole('admin'), registerValidation, async (req, res) => {
   const { name, email, password, department, title } = req.body
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: 'Имя, email и пароль обязательны' })
-  }
   try {
     const [existing] = await pool.query('SELECT id FROM employees WHERE email = ?', [email])
     if (existing.length > 0) {
@@ -74,9 +70,8 @@ router.post('/dev-login', async (req, res) => {
   res.json({ token, employee: { id: 1, name: 'Алексей Петров', email: 'alexey@example.com', role: 'admin' } })
 })
 
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', body('email').isEmail(), handleErrors, async (req, res) => {
   const { email } = req.body
-  if (!email) return res.status(400).json({ message: 'Email required' })
   try {
     const [rows] = await pool.query('SELECT id, name FROM employees WHERE email = ?', [email])
     if (rows.length === 0) return res.json({ message: 'If the email exists, a reset link has been sent' })
@@ -101,10 +96,8 @@ router.post('/forgot-password', async (req, res) => {
   }
 })
 
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', body('token').isLength({ min: 1 }), body('password').isLength({ min: 6 }), handleErrors, async (req, res) => {
   const { token, password } = req.body
-  if (!token || !password) return res.status(400).json({ message: 'Token and password required' })
-  if (password.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' })
   try {
     const [rows] = await pool.query(
       'SELECT email FROM password_resets WHERE token = ? AND expires_at > NOW()',

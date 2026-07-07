@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import pool from '../db.js'
 import { authenticateToken, requireRole } from '../middleware.js'
+import { createCalendarValidation, deleteEventValidation } from '../validate.js'
 
 const router = Router()
 router.use(authenticateToken)
@@ -23,9 +24,8 @@ router.get('/', async (req, res) => {
   }
 })
 
-router.post('/', async (req, res) => {
+router.post('/', createCalendarValidation, async (req, res) => {
   const { title, date, time, description } = req.body
-  if (!title || !date) return res.status(400).json({ message: 'Title and date required' })
   try {
     const [result] = await pool.query(
       'INSERT INTO events (title, date, time, description, creator_id) VALUES (?, ?, ?, ?, ?)',
@@ -42,7 +42,7 @@ router.post('/', async (req, res) => {
   }
 })
 
-router.delete('/:id', requireRole('admin', 'senior_agent'), async (req, res) => {
+router.delete('/:id', requireRole('admin', 'senior_agent'), deleteEventValidation, async (req, res) => {
   try {
     await pool.query('DELETE FROM events WHERE id = ?', [req.params.id])
     res.json({ ok: true })

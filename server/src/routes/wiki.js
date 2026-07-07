@@ -1,10 +1,11 @@
 import { Router } from 'express'
+import multer from 'multer'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
-import multer from 'multer'
 import pool from '../db.js'
 import { authenticateToken, requireRole } from '../middleware.js'
+import { createWikiValidation } from '../validate.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const wikiUploads = path.join(__dirname, '..', '..', 'uploads', 'wiki')
@@ -44,9 +45,8 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-router.post('/', requireRole('admin', 'senior_agent'), async (req, res) => {
+router.post('/', requireRole('admin', 'senior_agent'), createWikiValidation, async (req, res) => {
   const { title, content, category, tags } = req.body
-  if (!title?.trim() || !content?.trim()) return res.status(400).json({ message: 'Title and content required' })
   try {
     const [result] = await pool.query(
       'INSERT INTO wiki_articles (title, content, category, tags, author_id, author_name) VALUES (?, ?, ?, ?, ?, ?)',

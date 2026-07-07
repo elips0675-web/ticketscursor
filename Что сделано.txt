@@ -11,6 +11,7 @@
     • JWT-логин / регистрация / dev-login
     • Три роли: admin, senior_agent, agent
     • requireRole() middleware на бэкенде
+    • express-validator на 7 роутах
     • ProtectedRoute + скрытие UI элементов по роли
     • Восстановление пароля (nodemailer)
 
@@ -138,7 +139,7 @@
 
   • Клиентские тесты: 14 (vitest + jsdom) — ✅ все пройдены
   • Серверные тесты: 17 (vitest + supertest) — ✅ все пройдены
-  • Сборка (vite build): ✅ успешно
+  • Сборка (vite build + PWA): ✅ успешно
 
 ────────────────────────────────────────────────────────────────────────────
 
@@ -166,41 +167,76 @@
 
 ────────────────────────────────────────────────────────────────────────────
 
-ПЛАН ДОРАБОТКИ ДЛЯ ПРОДАКШЕНА
+АУДИТ ПРОЕКТА (2026-07)
+
+  Проверка по типовому чек-листу корпоративного Service Desk — сделано 7
+  специализированных поисков по коду параллельно.
 
   Безопасность:
-    • Убрать fallback JWT_SECRET — ошибка при старте, если не задан
-    • CORS — белый список доменов
-    • Rate limit по-роутно (10/мин на login, 100/мин на API)
-    • Отдельный пользователь MySQL (не root)
-    • express-validator на body всех POST/PUT
-    • HTTPS через reverse proxy (nginx + Let's Encrypt)
+    ✅ bcrypt (10 раундов), параметризованные SQL-запросы, rate-limit,
+       helmet, express-validator (7 роутов)
+    🔴 /uploads — express.static БЕЗ аутентификации (любой файл по URL)
+    🔴 /dev-login не отключается в production (выдаёт admin без пароля)
+    🟡 /api/system-info без auth (раскрывает имя ПК/домен)
 
-  Docker:
-    • non-root USER в Dockerfile
-    • uploads volume для файлов
-    • .env.production вне репозитория
+  Тестирование:
+    ✅ 14 клиентских + 17 серверных тестов, Playwright + Chromium
+    🔴 Нет отдельной тестовой БД (тесты ходят в реальную servicedesk)
+    🔴 CI не гоняет клиентские тесты и не поднимает MySQL
+    🟡 Клиентские тесты — 3/20 страниц, без MSW, E2E только Login
 
-  Тесты:
-    • Добавить API-тесты (валидация, пагинация, поиск)
-    • Добавить клиентские тесты (Tickets, Login, ProtectedRoute)
-    • Добавить E2E тесты (создание тикета, смена статуса)
-    • CI: добавить клиентские тесты, линтинг, проверку зависимостей
-    • Покрытие 80% через c8
+  Обработка ошибок:
+    ✅ Глобальный error handler на сервере, console.error во всех catch
+    🔴 Нет Error Boundary на клиенте (render crash → белый экран)
+    🔴 Нет единого API-интерцептора (API в 16 местах, ошибки глотаются)
 
-  RBAC:
-    • senior_agent — видит только свой отдел
-    • Логировать failed login в audit_log
+  UI / a11y / i18n:
+    ✅ Нижняя мобильная навигация, тёмная тема, i18n-файлы полные
+    🔴 i18n не используется в 80% страниц (весь UI хардкод на русском)
+    🔴 Ноль aria-label, label без htmlFor/id, кликабельные div без keyboard
+    🟡 Tabs — кастом без Radix, Drag-and-drop без клавиатуры
 
-  WebSocket:
-    • Rate limit на message:send (5/сек)
-    • Exponential backoff при reconnection
+  Функциональные дыры:
+    ✅ Email, Telegram, WebPush, WebSocket, аудит, PDF/CSV на тикетах
+    🟡 Нет LDAP/AD/SSO — аутентификация только email+password
+    🟡 Экспорт только на странице тикетов (нет для Wiki/News/Calendar/etc)
 
-  Уведомления:
-    • Очистка записей старше 90 дней
+  Производительность:
+    ✅ Redis для Socket.io (опционально, fallback in-memory)
+    🔴 Нет серверной пагинации на 9/12 эндпоинтов (возвращают всё)
+    🔴 Нет ни одного CREATE INDEX (только PK + 2 UNIQUE)
+    🟡 N+1 в polls.js и files.js, client-side пагинация
 
-  Экспорт:
-    • Лимит 10 000 записей, иначе пагинация
+  Инфраструктура:
+    ✅ Docker, K8s, Vercel, Tauri, CI/CD, Swagger, Playwright
+    🔴 Server Dockerfile не multi-stage, нет non-root USER
+    🔴 JWT_SECRET по умолчанию в compose, нет server/.dockerignore
+
+────────────────────────────────────────────────────────────────────────────
+
+ПЛАН ДОРАБОТКИ
+
+  P0 — Безопасность (срочно):
+    • Отключить /dev-login в production (NODE_ENV !== 'production')
+    • Закрыть /uploads JWT-аутентификацией (middleware на статику)
+    • Client Error Boundary — обернуть <App> в <ErrorBoundary>
+
+  P1 — Инфраструктура и тесты:
+    • Серверная пагинация LIMIT/OFFSET на tickets, news, wiki, files
+    • CREATE INDEX на status, created_at, assigned_to, folder_id, date
+    • CI: npm test для клиента, MySQL для серверных тестов
+    • Docker: multi-stage server, non-root USER, server/.dockerignore
+
+  P2 — UI / Доступность:
+    • i18n — пройти по всем страницам, заменить хардкод на t()
+    • a11y — aria-label на иконки, htmlFor на label, keyboard для карточек
+
+  P3 — Опционально:
+    • LDAP/AD интеграция для SSO
+    • Redis-кэш для API-ответов
+    • Экспорт данных с других страниц (Wiki, Calendar, Employees)
+    • Отдельная тестовая БД (DB_NAME=servicedesk_test)
+    • Покрытие тестами 80% (c8), MSW на клиенте
 
 ────────────────────────────────────────────────────────────────────────────
 

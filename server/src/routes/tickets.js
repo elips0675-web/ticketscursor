@@ -10,6 +10,7 @@ import { sendTicketNotification } from '../email.js'
 import { sendTelegramNotification } from '../telegram.js'
 import { logAudit } from '../audit.js'
 import { createNotification } from './notifications.js'
+import { createTicketValidation, updateStatusValidation, updatePriorityValidation, assignTicketValidation, addMessageValidation } from '../validate.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ticketUploads = path.join(__dirname, '..', '..', 'uploads', 'tickets')
@@ -78,11 +79,8 @@ router.get('/:id', async (req, res) => {
 })
 
 // POST /api/tickets — create ticket
-router.post('/', async (req, res) => {
+router.post('/', createTicketValidation, async (req, res) => {
   const { title, description, priority, category } = req.body
-  if (!title || !description) {
-    return res.status(400).json({ message: 'Title and description required' })
-  }
   try {
     const [result] = await pool.query(
       'INSERT INTO tickets (title, description, status, priority, category, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
@@ -106,10 +104,8 @@ router.post('/', async (req, res) => {
 })
 
 // PUT /api/tickets/:id/status
-router.put('/:id/status', requireRole('admin', 'senior_agent'), async (req, res) => {
+router.put('/:id/status', requireRole('admin', 'senior_agent'), updateStatusValidation, async (req, res) => {
   const { status } = req.body
-  const allowed = ['open', 'in_progress', 'resolved', 'closed']
-  if (!allowed.includes(status)) return res.status(400).json({ message: 'Invalid status' })
   try {
     const [[old]] = await pool.query('SELECT status FROM tickets WHERE id = ?', [req.params.id])
     if (!old) return res.status(404).json({ message: 'Ticket not found' })
@@ -118,7 +114,6 @@ router.put('/:id/status', requireRole('admin', 'senior_agent'), async (req, res)
     const labels = { open: 'Открыт', in_progress: 'В работе', resolved: 'Решён', closed: 'Закрыт' }
     logAudit({ userId: req.user.userId, userName: req.user.name, action: 'status_changed', entityType: 'ticket', entityId: Number(req.params.id), details: { from: old.status, to: status } })
     sendTelegramNotification(`📋 Статус тикета #${req.params.id} изменён на: ${labels[status] || status}`)
-
     const [[ticket]] = await pool.query(
       'SELECT t.title, e.email, e.name FROM tickets t JOIN employees e ON t.created_by = e.id WHERE t.id = ?',
       [req.params.id],
@@ -130,7 +125,6 @@ router.put('/:id/status', requireRole('admin', 'senior_agent'), async (req, res)
         text: `Тикет "${ticket.title}" (#${req.params.id})\nНовый статус: ${labels[status] || status}\n\nService Desk`,
       })
     }
-
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ message: 'Failed to update status' })
@@ -138,10 +132,8 @@ router.put('/:id/status', requireRole('admin', 'senior_agent'), async (req, res)
 })
 
 // PUT /api/tickets/:id/priority
-router.put('/:id/priority', requireRole('admin', 'senior_agent'), async (req, res) => {
+router.put('/:id/priority', requireRole('admin', 'senior_agent'), updatePriorityValidation, async (req, res) => {
   const { priority } = req.body
-  const allowed = ['low', 'medium', 'high', 'critical']
-  if (!allowed.includes(priority)) return res.status(400).json({ message: 'Invalid priority' })
   try {
     const [[old]] = await pool.query('SELECT priority FROM tickets WHERE id = ?', [req.params.id])
     await pool.query('UPDATE tickets SET priority = ?, updated_at = NOW() WHERE id = ?', [priority, req.params.id])
@@ -154,7 +146,7 @@ router.put('/:id/priority', requireRole('admin', 'senior_agent'), async (req, re
 })
 
 // PUT /api/tickets/:id/assign
-router.put('/:id/assign', requireRole('admin', 'senior_agent'), async (req, res) => {
+router.put('/:id/assign', requireRole('admin', 'senior_agent'), assignTicketValidation, async (req, res) => {
   const { employeeId } = req.body
   try {
     const [[emp]] = employeeId ? await pool.query('SELECT name FROM employees WHERE id = ?', [employeeId]) : []
@@ -182,9 +174,8 @@ router.post('/upload', upload.single('file'), (req, res) => {
 })
 
 // POST /api/tickets/:id/messages
-router.post('/:id/messages', async (req, res) => {
+router.post('/:id/messages', addMessageValidation, async (req, res) => {
   const { text, isInternal, attachments } = req.body
-  if (!text?.trim()) return res.status(400).json({ message: 'Text required' })
   try {
     const [result] = await pool.query(
       'INSERT INTO ticket_messages (ticket_id, sender_id, sender_name, text, attachments, is_internal, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())',

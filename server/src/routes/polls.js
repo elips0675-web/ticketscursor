@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import pool from '../db.js'
 import { authenticateToken, requireRole } from '../middleware.js'
+import { createPollValidation, voteValidation } from '../validate.js'
 
 const router = Router()
 router.use(authenticateToken)
@@ -39,9 +40,8 @@ router.get('/', async (req, res) => {
   }
 })
 
-router.post('/', requireRole('admin', 'senior_agent'), async (req, res) => {
+router.post('/', requireRole('admin', 'senior_agent'), createPollValidation, async (req, res) => {
   const { title, description, options, multipleChoice } = req.body
-  if (!title || !options?.length) return res.status(400).json({ message: 'Title and options required' })
   const conn = await pool.getConnection()
   try {
     await conn.beginTransaction()
@@ -65,9 +65,8 @@ router.post('/', requireRole('admin', 'senior_agent'), async (req, res) => {
   }
 })
 
-router.post('/:id/vote', async (req, res) => {
+router.post('/:id/vote', voteValidation, async (req, res) => {
   const { optionId } = req.body
-  if (!optionId) return res.status(400).json({ message: 'optionId required' })
   const conn = await pool.getConnection()
   try {
     await conn.beginTransaction()
