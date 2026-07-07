@@ -28,29 +28,40 @@ import knexConfig from '../knexfile.js'
 
 const app = express()
 const server = createServer(app)
-const limiter = rateLimit({ windowMs: 60_000, max: 200, message: { message: 'Too many requests' } })
 
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }))
+const authLimiter = rateLimit({ windowMs: 60_000, max: 10, message: { message: 'Too many auth requests' } })
+const apiLimiter = rateLimit({ windowMs: 60_000, max: 100, message: { message: 'Too many requests' } })
+const adminLimiter = rateLimit({ windowMs: 60_000, max: 30, message: { message: 'Too many admin requests' } })
+
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
+  : ['http://localhost:5173', 'http://localhost:4000']
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true)
+    cb(new Error('Not allowed by CORS'))
+  },
+  credentials: true,
+}))
 app.use(helmet())
 app.use(express.json())
-app.use('/api/', limiter)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')))
 
-app.use('/api/auth', authRouter)
-app.use('/api/tickets', ticketsRouter)
-app.use('/api/employees', employeesRouter)
-app.use('/api/calendar', calendarRouter)
-app.use('/api/polls', pollsRouter)
-app.use('/api/files', filesRouter)
-app.use('/api/chats', chatsRouter)
-app.use('/api/wiki', wikiRouter)
-app.use('/api/news', newsRouter)
-app.use('/api/notifications', notificationsRouter)
-app.use('/api/push', pushRouter)
-app.use('/api/search', searchRouter)
-app.use('/api/admin', adminRouter)
+app.use('/api/auth', authLimiter, authRouter)
+app.use('/api/tickets', apiLimiter, ticketsRouter)
+app.use('/api/employees', apiLimiter, employeesRouter)
+app.use('/api/calendar', apiLimiter, calendarRouter)
+app.use('/api/polls', apiLimiter, pollsRouter)
+app.use('/api/files', apiLimiter, filesRouter)
+app.use('/api/chats', apiLimiter, chatsRouter)
+app.use('/api/wiki', apiLimiter, wikiRouter)
+app.use('/api/news', apiLimiter, newsRouter)
+app.use('/api/notifications', apiLimiter, notificationsRouter)
+app.use('/api/push', apiLimiter, pushRouter)
+app.use('/api/search', apiLimiter, searchRouter)
+app.use('/api/admin', adminLimiter, adminRouter)
 
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customCss: '.swagger-ui .topbar { display: none }' }))
 

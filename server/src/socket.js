@@ -2,8 +2,7 @@ import { Server } from 'socket.io'
 import { createAdapter } from '@socket.io/redis-adapter'
 import jwt from 'jsonwebtoken'
 import pool from './db.js'
-
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production'
+import { JWT_SECRET } from './middleware.js'
 
 let io
 
