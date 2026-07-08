@@ -25,6 +25,7 @@ import { fileURLToPath } from 'url'
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET, authenticateToken } from './middleware.js'
 import { cacheMiddleware } from './cache.js'
+import { auditLogMiddleware } from './audit.js'
 import multer from 'multer'
 import knex from 'knex'
 import knexConfig from '../knexfile.js'
@@ -65,18 +66,18 @@ app.use('/uploads', (req, res, next) => {
 })
 
 app.use('/api/auth', authLimiter, authRouter)
-app.use('/api/tickets', apiLimiter, cacheMiddleware(120), ticketsRouter)
-app.use('/api/employees', apiLimiter, cacheMiddleware(300), employeesRouter)
-app.use('/api/calendar', apiLimiter, calendarRouter)
-app.use('/api/polls', apiLimiter, pollsRouter)
-app.use('/api/files', apiLimiter, filesRouter)
-app.use('/api/chats', apiLimiter, chatsRouter)
-app.use('/api/wiki', apiLimiter, wikiRouter)
-app.use('/api/news', apiLimiter, newsRouter)
-app.use('/api/notifications', apiLimiter, notificationsRouter)
-app.use('/api/push', apiLimiter, pushRouter)
-app.use('/api/search', apiLimiter, searchRouter)
-app.use('/api/admin', adminLimiter, adminRouter)
+app.use('/api/tickets', apiLimiter, cacheMiddleware(120), auditLogMiddleware, ticketsRouter)
+app.use('/api/employees', apiLimiter, cacheMiddleware(300), auditLogMiddleware, employeesRouter)
+app.use('/api/calendar', apiLimiter, auditLogMiddleware, calendarRouter)
+app.use('/api/polls', apiLimiter, auditLogMiddleware, pollsRouter)
+app.use('/api/files', apiLimiter, auditLogMiddleware, filesRouter)
+app.use('/api/chats', apiLimiter, auditLogMiddleware, chatsRouter)
+app.use('/api/wiki', apiLimiter, auditLogMiddleware, wikiRouter)
+app.use('/api/news', apiLimiter, auditLogMiddleware, newsRouter)
+app.use('/api/notifications', apiLimiter, auditLogMiddleware, notificationsRouter)
+app.use('/api/push', apiLimiter, auditLogMiddleware, pushRouter)
+app.use('/api/search', apiLimiter, auditLogMiddleware, searchRouter)
+app.use('/api/admin', adminLimiter, auditLogMiddleware, adminRouter)
 
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customCss: '.swagger-ui .topbar { display: none }' }))
 

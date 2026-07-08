@@ -10,3 +10,27 @@ export async function logAudit({ userId, userName, action, entityType, entityId,
     console.error('Audit log error:', err)
   }
 }
+
+// Автоматический audit-log middleware для POST/PUT/DELETE
+const ACTION_MAP = { POST: 'created', PUT: 'updated', DELETE: 'deleted' }
+
+export function auditLogMiddleware(req, res, next) {
+  const originalJson = res.json.bind(res)
+  res.json = function (body) {
+    if (res.statusCode < 400) {
+      const action = ACTION_MAP[req.method]
+      if (action) {
+        logAudit({
+          userId: req.user?.userId,
+          userName: req.user?.name || 'System',
+          action,
+          entityType: req.baseUrl?.replace('/api/', '') || req.path?.split('/')[1] || 'unknown',
+          entityId: req.params?.id || body?.id || null,
+          details: { body: req.body, path: req.originalUrl },
+        })
+      }
+    }
+    return originalJson(body)
+  }
+  next()
+}
