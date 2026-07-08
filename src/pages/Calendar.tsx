@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -7,7 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { ChevronLeft, ChevronRight, Plus, Bell, Clock, Trash2, Loader2, Download } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { ChevronLeft, ChevronRight, Plus, Bell, Clock, Trash2, Download } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import type { CalendarEvent } from '@/types'
 import { useAuth } from '@/context/AuthContext'
@@ -28,12 +30,19 @@ const MONTHS_RU = [
   'Декабрь',
 ]
 
+async function fetchCalendar(token: string, year: number, month: number): Promise<CalendarEvent[]> {
+  const res = await fetch(`${API_URL}/calendar?year=${year}&month=${month + 1}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error('Failed to fetch events')
+  return res.json()
+}
+
 export default function CalendarPage() {
   const { t } = useTranslation()
   const { canManage, token } = useAuth()
+  const queryClient = useQueryClient()
   const [date, setDate] = useState(new Date())
-  const [events, setEvents] = useState<CalendarEvent[]>([])
-  const [loading, setLoading] = useState(true)
   const [selDay, setSelDay] = useState<number | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ title: '', time: '', description: '' })
@@ -41,16 +50,41 @@ export default function CalendarPage() {
   const year = date.getFullYear()
   const month = date.getMonth()
 
-  useEffect(() => {
-    setLoading(true)
-    fetch(`${API_URL}/calendar?year=${year}&month=${month + 1}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) => {
-        setEvents(data)
-        setLoading(false)
+  const { data: events = [], isLoading } = useQuery({
+    queryKey: ['calendar', year, month],
+    queryFn: () => fetchCalendar(token!, year, month),
+    enabled: !!token,
+  })
+
+  const addMutation = useMutation({
+    mutationFn: async (body: { title: string; date: string; time: string | null; description: string | null }) => {
+      const res = await fetch(`${API_URL}/calendar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
       })
-      .catch(() => setLoading(false))
-  }, [token, year, month])
+      if (!res.ok) throw new Error('Failed to create event')
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar'] })
+      setForm({ title: '', time: '', description: '' })
+      setShowAdd(false)
+    },
+    onError: () => toast.error(t('common.error')),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`${API_URL}/calendar/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error('Failed to delete event')
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['calendar'] }),
+    onError: () => toast.error(t('common.error')),
+  })
 
   const firstDay = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
@@ -66,56 +100,23 @@ export default function CalendarPage() {
 
   const isToday = (day: number) => today.getDate() === day && today.getMonth() === month && today.getFullYear() === year
 
-  const addEvent = async () => {
+  const addEvent = () => {
     if (!form.title.trim() || !selDay) return
     const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(selDay).padStart(2, '0')}`
-    try {
-      const res = await fetch(`${API_URL}/calendar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          title: form.title,
-          date: dayStr,
-          time: form.time || null,
-          description: form.description || null,
-        }),
-      })
-      if (!res.ok) {
-        toast.error(t('common.error'))
-        return
-      }
-      const evt = await res.json()
-      setEvents((prev) => [...prev, evt])
-      setForm({ title: '', time: '', description: '' })
-      setShowAdd(false)
-    } catch {
-      toast.error(t('common.error'))
-    }
-  }
-
-  const deleteEvent = async (id: number) => {
-    try {
-      const res = await fetch(`${API_URL}/calendar/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) {
-        toast.error(t('common.error'))
-        return
-      }
-      setEvents((prev) => prev.filter((e) => e.id !== id))
-    } catch {
-      toast.error(t('common.error'))
-    }
+    addMutation.mutate({
+      title: form.title,
+      date: dayStr,
+      time: form.time || null,
+      description: form.description || null,
+    })
   }
 
   const prevMonth = () => setDate(new Date(year, month - 1, 1))
   const nextMonth = () => setDate(new Date(year, month + 1, 1))
 
   const exportCSV = () => {
-    const data = events
     const headers = ['ID', 'Название', 'Дата', 'Время', 'Описание']
-    const rows = data.map((e) => [
+    const rows = events.map((e) => [
       e.id,
       `"${e.title.replace(/"/g, '""')}"`,
       e.date,
@@ -163,9 +164,11 @@ export default function CalendarPage() {
 
           <Card>
             <CardContent className="p-4">
-              {loading ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              {isLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-6 w-3/4" />
                 </div>
               ) : (
                 <div className="calendar-grid">
@@ -258,7 +261,7 @@ export default function CalendarPage() {
                           variant="ghost"
                           size="icon"
                           className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 shrink-0"
-                          onClick={() => deleteEvent(e.id)}
+                          onClick={() => deleteMutation.mutate(e.id)}
                           aria-label={t('common.delete')}
                         >
                           <Trash2 className="w-3 h-3 text-destructive" />
@@ -344,8 +347,8 @@ export default function CalendarPage() {
             <Button variant="outline" onClick={() => setShowAdd(false)}>
               {t('common.cancel')}
             </Button>
-            <Button onClick={addEvent} disabled={!form.title.trim()}>
-              {t('calendar.submitBtn')}
+            <Button onClick={addEvent} disabled={!form.title.trim() || addMutation.isPending}>
+              {addMutation.isPending ? t('common.loading') : t('calendar.submitBtn')}
             </Button>
           </DialogFooter>
         </DialogContent>
