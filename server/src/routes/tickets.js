@@ -6,6 +6,7 @@ import multer from 'multer'
 import pool from '../db.js'
 import { authenticateToken, requireRole } from '../middleware.js'
 import { getIO } from '../socket.js'
+import { invalidateCache } from '../cache.js'
 import { sendTicketNotification } from '../email.js'
 import { sendTelegramNotification } from '../telegram.js'
 import { logAudit } from '../audit.js'
@@ -107,6 +108,7 @@ router.post('/', createTicketValidation, async (req, res) => {
     logAudit({ userId: req.user.userId, userName: req.user.name, action: 'created', entityType: 'ticket', entityId: ticketId, details: { title } })
     createNotification({ userId: req.user.userId, type: 'ticket_created', title: 'Тикет создан', body: title, link: `/tickets/${ticketId}` })
     sendTelegramNotification(`🆕 Новый тикет #${ticketId}: ${title}\nПриоритет: ${priority || 'medium'}\nКатегория: ${category || 'support'}`)
+    invalidateCache('cache:/api/tickets*')
     res.status(201).json(ticket[0])
   } catch (err) {
     console.error('Create ticket error:', err)
@@ -136,6 +138,7 @@ router.put('/:id/status', requireRole('admin', 'senior_agent'), updateStatusVali
         text: `Тикет "${ticket.title}" (#${req.params.id})\nНовый статус: ${labels[status] || status}\n\nService Desk`,
       })
     }
+    invalidateCache('cache:/api/tickets*')
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ message: 'Failed to update status' })
@@ -150,6 +153,7 @@ router.put('/:id/priority', requireRole('admin', 'senior_agent'), updatePriority
     await pool.query('UPDATE tickets SET priority = ?, updated_at = NOW() WHERE id = ?', [priority, req.params.id])
     getIO()?.emit('ticket:updated', { id: Number(req.params.id), priority, updatedBy: req.user.userId })
     logAudit({ userId: req.user.userId, userName: req.user.name, action: 'priority_changed', entityType: 'ticket', entityId: Number(req.params.id), details: { from: old?.priority, to: priority } })
+    invalidateCache('cache:/api/tickets*')
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ message: 'Failed to update priority' })
@@ -168,6 +172,7 @@ router.put('/:id/assign', requireRole('admin', 'senior_agent'), assignTicketVali
       const [[t]] = await pool.query('SELECT title FROM tickets WHERE id = ?', [req.params.id])
       createNotification({ userId: employeeId, type: 'ticket_assigned', title: 'Назначен тикет', body: t?.title, link: `/tickets/${req.params.id}` })
     }
+    invalidateCache('cache:/api/tickets*')
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ message: 'Failed to assign ticket' })

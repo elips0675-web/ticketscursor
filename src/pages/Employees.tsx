@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { Card, CardContent } from "@/components/ui/card"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,7 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import {
   Search, Phone, Mail, CheckCircle2, Clock, Users,
-  LayoutGrid, List, Shield, UserCog, User,
+  LayoutGrid, List, Shield, UserCog, User, Download,
 } from "lucide-react"
 import { useTickets } from "@/context/ticket-context"
 import type { Employee } from "@/types"
@@ -80,6 +81,27 @@ export default function Employees() {
   }, [filtered])
 
   const onlineCount = employees.filter(e => e.online).length
+
+  const exportCSV = () => {
+    const data = filtered
+    const headers = ["ID", "Имя", "Email", "Роль", "Отдел", "Тикетов", "Решено"]
+    const rows = data.map(e => [
+      e.id,
+      `"${e.name.replace(/"/g, '""')}"`,
+      e.email,
+      roleLabels[e.role] || e.role,
+      e.department,
+      e.activeTickets,
+      e.resolvedToday,
+    ])
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n")
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url; a.download = `employees-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click(); URL.revokeObjectURL(url)
+  }
+
   const roleCounts = useMemo(() => ({
     agent: employees.filter(e => e.role === "agent").length,
     senior_agent: employees.filter(e => e.role === "senior_agent").length,
@@ -94,12 +116,17 @@ export default function Employees() {
           <p className="text-sm text-muted-foreground mt-1">{employees.length} человек · {onlineCount} {t("employees.online")}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant={view === "cards" ? "default" : "outline"} size="icon" onClick={() => setView("cards")} aria-label={t("employees.cardsView")}>
-            <LayoutGrid className="w-4 h-4" />
-          </Button>
-          <Button variant={view === "table" ? "default" : "outline"} size="icon" onClick={() => setView("table")} aria-label={t("employees.tableView")}>
-            <List className="w-4 h-4" />
-          </Button>
+          <Button variant="outline" size="sm" onClick={exportCSV}><Download className="w-4 h-4 mr-1" />{t("employees.exportCSV")}</Button>
+          <Tabs value={view} onValueChange={(v) => setView(v as "cards" | "table")}>
+          <TabsList className="h-9">
+            <TabsTrigger value="cards" className="px-2" aria-label={t("employees.cardsView")}>
+              <LayoutGrid className="w-4 h-4" />
+            </TabsTrigger>
+            <TabsTrigger value="table" className="px-2" aria-label={t("employees.tableView")}>
+              <List className="w-4 h-4" />
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
         </div>
       </div>
 

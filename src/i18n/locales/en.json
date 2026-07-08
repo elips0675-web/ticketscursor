@@ -95,6 +95,7 @@
     "showMore": "Show more",
     "exportCSV": "CSV",
     "exportPDF": "PDF",
+    "exportLimitWarn": "Export limited to {{limit}} records",
     "newTicketTitle": "New ticket",
     "newTicketDesc": "Create a support request",
     "subject": "Subject",
@@ -182,7 +183,8 @@
     "tableView": "Table",
     "sortName": "By name",
     "sortTickets": "By tickets",
-    "sortResolved": "By resolved"
+    "sortResolved": "By resolved",
+    "exportCSV": "CSV"
   },
   "chats": {
     "title": "Chats",
@@ -215,7 +217,8 @@
     "eventBtn": "Event",
     "at": "at",
     "created": "Event created",
-    "deleted": "Event deleted"
+    "deleted": "Event deleted",
+    "exportCSV": "CSV"
   },
   "polls": {
     "title": "Polls",
@@ -239,6 +242,20 @@
     "uploadSuccess": "File uploaded: {name}",
     "uploadError": "Upload error"
   },
+  "news": {
+    "title": "News",
+    "create": "New Post",
+    "createTitle": "Create news post",
+    "titleLabel": "Title",
+    "contentLabel": "Content",
+    "importantLabel": "Important",
+    "submitBtn": "Publish",
+    "searchPlaceholder": "Search news...",
+    "important": "Important",
+    "empty": "No news yet",
+    "showMore": "Show more",
+    "exportCSV": "CSV"
+  },
   "wiki": {
     "title": "Wiki",
     "description": "Articles, instructions and documentation",
@@ -254,7 +271,8 @@
     "noArticles": "Articles not found",
     "allCategories": "All",
     "contentPlaceholder": "Content (Markdown)",
-    "tagsPlaceholder": "Tags (comma separated)"
+    "tagsPlaceholder": "Tags (comma separated)",
+    "exportCSV": "CSV"
   },
   "profile": {
     "title": "Profile",

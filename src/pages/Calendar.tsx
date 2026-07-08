@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { ChevronLeft, ChevronRight, Plus, Bell, Clock, Trash2, Loader2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus, Bell, Clock, Trash2, Loader2, Download } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import type { CalendarEvent } from "@/types"
 import { useAuth } from "@/context/AuthContext"
@@ -78,6 +78,24 @@ export default function CalendarPage() {
   const prevMonth = () => setDate(new Date(year, month - 1, 1))
   const nextMonth = () => setDate(new Date(year, month + 1, 1))
 
+  const exportCSV = () => {
+    const data = events
+    const headers = ["ID", "Название", "Дата", "Время", "Описание"]
+    const rows = data.map(e => [
+      e.id,
+      `"${e.title.replace(/"/g, '""')}"`,
+      e.date,
+      e.time || "",
+      `"${(e.description || '').replace(/"/g, '""')}"`,
+    ])
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n")
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url; a.download = `calendar-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click(); URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -85,6 +103,7 @@ export default function CalendarPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t("calendar.title")}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t("calendar.subtitle")}</p>
         </div>
+        <Button variant="outline" size="sm" onClick={exportCSV}><Download className="w-4 h-4 mr-1" />{t("calendar.exportCSV")}</Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -194,8 +213,9 @@ export default function CalendarPage() {
                       <Trash2 className="w-3 h-3 text-destructive" />
                     </Button>
                     )}
-                  </div>
-                </div>
+        </div>
+          <Button variant="outline" size="sm" onClick={exportCSV}><Download className="w-4 h-4 mr-1" />{t("calendar.exportCSV")}</Button>
+        </div>
               ))}
             </CardContent>
           </Card>

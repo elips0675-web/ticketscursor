@@ -24,6 +24,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET, authenticateToken } from './middleware.js'
+import { cacheMiddleware } from './cache.js'
 import multer from 'multer'
 import knex from 'knex'
 import knexConfig from '../knexfile.js'
@@ -64,8 +65,8 @@ app.use('/uploads', (req, res, next) => {
 })
 
 app.use('/api/auth', authLimiter, authRouter)
-app.use('/api/tickets', apiLimiter, ticketsRouter)
-app.use('/api/employees', apiLimiter, employeesRouter)
+app.use('/api/tickets', apiLimiter, cacheMiddleware(120), ticketsRouter)
+app.use('/api/employees', apiLimiter, cacheMiddleware(300), employeesRouter)
 app.use('/api/calendar', apiLimiter, calendarRouter)
 app.use('/api/polls', apiLimiter, pollsRouter)
 app.use('/api/files', apiLimiter, filesRouter)

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, BookOpen, Plus, Clock, User, Tag, Layers, Loader2, ImageIcon } from "lucide-react"
+import { Search, BookOpen, Plus, Clock, User, Tag, Layers, Loader2, ImageIcon, Download } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import type { WikiArticle } from "@/types"
 import { useAuth } from "@/context/AuthContext"
@@ -109,6 +109,26 @@ export default function WikiPage() {
     setNewTags("")
   }
 
+  const exportCSV = () => {
+    const data = filtered
+    const headers = ["ID", "Название", "Категория", "Теги", "Автор", "Создано", "Обновлено"]
+    const rows = data.map(a => [
+      a.id,
+      `"${a.title.replace(/"/g, '""')}"`,
+      a.category,
+      `"${(a.tags || []).join(', ')}"`,
+      a.authorName,
+      new Date(a.createdAt).toLocaleDateString(),
+      new Date(a.updatedAt).toLocaleDateString(),
+    ])
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n")
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url; a.download = `wiki-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click(); URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center justify-between">
@@ -119,8 +139,10 @@ export default function WikiPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">{t("wiki.description")}</p>
         </div>
-        {canManage && (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={exportCSV}><Download className="w-4 h-4 mr-1" />{t("wiki.exportCSV")}</Button>
+          {canManage && (
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2"><Plus className="w-4 h-4" />{t("wiki.create")}</Button>
           </DialogTrigger>

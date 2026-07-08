@@ -68,9 +68,12 @@ export default function Tickets() {
 
   const resetPage = () => setPage(1)
 
+  const EXPORT_LIMIT = 10000
   const exportCSV = () => {
+    const data = filtered.slice(0, EXPORT_LIMIT)
+    if (filtered.length > EXPORT_LIMIT) toast.warning(t("tickets.exportLimitWarn", { limit: EXPORT_LIMIT }))
     const headers = [t("tickets.csvHeaderId"), t("tickets.csvHeaderTitle"), t("tickets.csvHeaderStatus"), t("tickets.csvHeaderPriority"), t("tickets.csvHeaderCategory"), t("tickets.csvHeaderAssignee"), t("tickets.csvHeaderCreated")]
-    const rows = filtered.map(t => [
+    const rows = data.map(t => [
       t.id,
       `"${t.title.replace(/"/g, '""')}"`,
       statusLabels[t.status] || t.status,
@@ -88,6 +91,8 @@ export default function Tickets() {
   }
 
   const exportPDF = async () => {
+    const data = filtered.slice(0, EXPORT_LIMIT)
+    if (filtered.length > EXPORT_LIMIT) toast.warning(t("tickets.exportLimitWarn", { limit: EXPORT_LIMIT }))
     const { default: jsPDF } = await import("jspdf")
     const doc = new jsPDF()
     const pageW = doc.internal.pageSize.getWidth()
@@ -101,7 +106,7 @@ export default function Tickets() {
     doc.text([t("tickets.csvHeaderId"), t("tickets.csvHeaderTitle"), t("tickets.csvHeaderStatus"), t("tickets.csvHeaderPriority"), t("tickets.csvHeaderCategory"), t("tickets.csvHeaderAssignee")], 8, y)
     y += 5
     doc.setFont("helvetica", "normal")
-    filtered.forEach((t, i) => {
+    data.forEach((t, i) => {
       if (y > 275) { doc.addPage(); y = 15 }
       doc.text([
         String(t.id),

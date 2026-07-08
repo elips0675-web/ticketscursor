@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
-import { Search, Newspaper, Plus, Clock, User, AlertTriangle, Pin, Loader2 } from "lucide-react"
+import { Search, Newspaper, Plus, Clock, User, AlertTriangle, Pin, Loader2, Download } from "lucide-react"
 import type { NewsPost } from "@/types"
 import { useAuth } from "@/context/AuthContext"
 
@@ -52,6 +52,25 @@ export default function NewsPage() {
   const paged = news
   const resetPage = () => setPage(1)
 
+  const exportCSV = () => {
+    const data = news
+    const headers = ["ID", "Заголовок", "Содержание", "Важная", "Автор", "Дата"]
+    const rows = data.map(n => [
+      n.id,
+      `"${n.title.replace(/"/g, '""')}"`,
+      `"${n.content.replace(/"/g, '""').substring(0, 200)}"`,
+      n.important ? "Да" : "",
+      n.authorName,
+      new Date(n.createdAt).toLocaleDateString(),
+    ])
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n")
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url; a.download = `news-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click(); URL.revokeObjectURL(url)
+  }
+
   const handleCreate = async () => {
     if (!newTitle.trim() || !newContent.trim()) return
     try {
@@ -81,7 +100,9 @@ export default function NewsPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Объявления и обновления системы</p>
         </div>
-        {canManage && (
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={exportCSV}><Download className="w-4 h-4 mr-1" />{t("news.exportCSV")}</Button>
+          {canManage && (
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2"><Plus className="w-4 h-4" />{t("news.create")}</Button>
@@ -108,6 +129,7 @@ export default function NewsPage() {
           </DialogContent>
         </Dialog>
         )}
+      </div>
       </div>
 
       <div className="flex gap-3">

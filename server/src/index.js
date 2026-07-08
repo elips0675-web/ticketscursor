@@ -28,6 +28,20 @@ initTelegram()
   }
 })()
 
+// Удаление уведомлений старше 90 дней (каждые 6 часов)
+import pool from './db.js'
+
+async function cleanupOldNotifications() {
+  try {
+    const [r] = await pool.query("DELETE FROM notifications WHERE created_at < NOW() - INTERVAL 90 DAY")
+    if (r.affectedRows > 0) console.log(`Cleaned ${r.affectedRows} old notifications`)
+  } catch (e) {
+    console.error('Notification cleanup error:', e.message)
+  }
+}
+cleanupOldNotifications()
+setInterval(cleanupOldNotifications, 6 * 60 * 60 * 1000)
+
 server.listen(PORT, () => {
   console.log(`Service Desk API running on port ${PORT}`)
 })

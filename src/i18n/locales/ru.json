@@ -94,6 +94,7 @@
     "showMore": "Показать ещё",
     "exportCSV": "CSV",
     "exportPDF": "PDF",
+    "exportLimitWarn": "Экспорт ограничен {{limit}} записями",
     "newTicketTitle": "Новый тикет",
     "newTicketDesc": "Создайте обращение в службу поддержки",
     "subject": "Тема",
@@ -181,7 +182,8 @@
     "tableView": "Таблица",
     "sortName": "По имени",
     "sortTickets": "По тикетам",
-    "sortResolved": "По решённым"
+    "sortResolved": "По решённым",
+    "exportCSV": "CSV"
   },
   "chats": {
     "title": "Чаты",
@@ -213,8 +215,9 @@
     "clickDay": "Нажмите на день в календаре",
     "eventBtn": "Событие",
     "at": "в",
-    "created": "Событие создано",
-    "deleted": "Событие удалено"
+    "created": "Создано",
+    "deleted": "Удалено",
+    "exportCSV": "CSV"
   },
   "polls": {
     "title": "Опросы",
@@ -238,6 +241,20 @@
     "uploadSuccess": "Файл загружен: {name}",
     "uploadError": "Ошибка загрузки"
   },
+  "news": {
+    "title": "Новости",
+    "create": "Новость",
+    "createTitle": "Новая новость",
+    "titleLabel": "Заголовок",
+    "contentLabel": "Содержание",
+    "importantLabel": "Важная",
+    "submitBtn": "Опубликовать",
+    "searchPlaceholder": "Поиск новостей...",
+    "important": "Важные",
+    "empty": "Новостей пока нет",
+    "showMore": "Показать ещё",
+    "exportCSV": "CSV"
+  },
   "wiki": {
     "title": "База знаний",
     "description": "Статьи, инструкции и документация",
@@ -253,7 +270,8 @@
     "noArticles": "Статьи не найдены",
     "allCategories": "Все",
     "contentPlaceholder": "Содержание (Markdown)",
-    "tagsPlaceholder": "Теги через запятую"
+    "tagsPlaceholder": "Теги через запятую",
+    "exportCSV": "CSV"
   },
   "profile": {
     "title": "Профиль",
