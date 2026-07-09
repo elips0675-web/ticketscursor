@@ -200,19 +200,22 @@
 
 ────────────────────────────────────────────────────────────────────────────
 
-АУДИТ ПРОЕКТА (2026-07)
+АУДИТ ПРОЕКТА (2026-07) — ИТОГОВАЯ ОЦЕНКА: 8.5/10
 
-  Проверка по типовому чек-листу корпоративного Service Desk — сделано 7
-  специализированных поисков по коду параллельно.
+  Проверка по типовому чек-листу корпоративного Service Desk + внешнее ревью.
 
   Безопасность:
-    ✅ bcrypt (10 раундов), параметризованные SQL-запросы, rate-limit,
-       helmet, express-validator (7 роутов)
+    ✅ bcrypt (10 раундов), параметризованные SQL-запросы
+    ✅ rate-limit: auth 10/60s, api 100/60s, admin 30/60s
+    ✅ helmet (заголовки), CORS (белый список origins)
+    ✅ express-validator на 7 роутах (auth, tickets, wiki, polls, новости)
     ✅ /uploads — JWT-аутентификация (header Bearer / ?token=)
     ✅ /dev-login — отключён в production (404)
     ✅ /api/system-info — защищён authenticateToken
-    ✅ Error Boundary на клиенте (src/components/ErrorBoundary.tsx)
-    ✅ auth.js — все ответы в формате { message } (было 2 { error })
+    ✅ Error Boundary на клиенте
+    ✅ auth.js — все ответы в формате { message }
+    ✅ Multer: limits.fileSize (files 50MB, wiki 10MB, tickets 20MB)
+    🟡 Multer: нет fileFilter по MIME-типам (можно загрузить .exe)
 
   Тестирование:
     ✅ 43 клиентских (11 файлов, vitest + MSW) + 17 серверных тестов
@@ -220,10 +223,15 @@
     ✅ Coverage (v8) c порогами
     ✅ CI гоняет клиентские тесты, поднимает MySQL 8.4 + seed.sql
 
+  Логирование:
+    ✅ console.error во всех catch на сервере
+    🟡 Нет структурированного логирования (winston/pino) — console.error без уровней/транспортов
+
   Обработка ошибок:
-    ✅ Глобальный error handler на сервере, console.error во всех catch
+    ✅ Глобальный error handler на сервере
     ✅ Error Boundary на клиенте (src/components/ErrorBoundary.tsx)
-    🟡 Нет единого API-интерцептора (API в 16 местах, ошибки глотаются)
+    ✅ API-интерцептор (api.ts) — централизованный fetch с обработкой 401/403/500 + toast
+    🟡 Не все страницы переведены на api.ts (часть использует прямой fetch)
 
   UI / a11y / i18n:
     ✅ Нижняя мобильная навигация, тёмная тема, i18n-файлы полные
@@ -236,8 +244,12 @@
     ✅ Dropzone с клавиатурной a11y (tabIndex, onKeyDown, aria-label, aria-live)
 
   Функциональные дыры:
-    ✅ Email, Telegram, WebPush, WebSocket, аудит, PDF/CSV на тикетах
-    ✅ LDAP/AD — ldapjs, bind + search, авто-создание сотрудника при первом входе
+    ✅ RBAC: admin / senior_agent / agent (requireRole + ProtectedRoute)
+    ✅ WebSocket: Socket.io с комнатами, эмиты ticket/chat/message
+    ✅ Уведомления: notify.js (in-app + email + Telegram) на все события
+    ✅ Аудит: audit_log + auditLogMiddleware на ключевых роутах
+    ✅ Email, Telegram, WebPush, PDF/CSV на тикетах
+    ✅ LDAP/AD: ldapjs, bind + search, авто-создание сотрудника при первом входе
     ✅ Экспорт CSV на всех страницах (тикеты PDF/CSV, Wiki/Calendar/Employees/News — CSV)
 
   Производительность:
@@ -257,28 +269,53 @@
 
 ────────────────────────────────────────────────────────────────────────────
 
-  ПРОВЕРКА КРИТИЧНЫХ ПУНКТОВ
+  ПРОВЕРКА КРИТИЧНЫХ ПУНКТОВ (по ревью)
 
-  Из списка "Что критично доработать" — 6 пунктов, проверка по коду:
+  Из того же списка — проверка всех пунктов по коду:
 
-    ✅ WebSocket для чатов — real-time, комнаты Socket.io, эмиты
-    ✅ RBAC — admin / senior_agent / agent, requireRole(), ProtectedRoute
-    ✅ Docker-compose — mysql + api + frontend, healthcheck, seed.sql
-     ✅ ORM / Query Builder — Knex (raw) внедрён во все 13 роутов + socket/audit/settings
-     ✅ Уведомления — автотриггеры (notify.js) на создание, статус, назначение, сообщение
-    ✅ Тесты — 43 теста (11 файлов), MSW, E2E расширен (tickets/chats/admin)
-  ✅ Покрытие (v8) — настроено, базовая планка 20% / 15% / 15% / 25%
-  ✅ Keyboard a11y — Files: list view + tabIndex/onKeyDown, drag overlay aria-live
-  ✅ LDAP/AD — серверный модуль ldap.js, настройки в админке, кнопка входа на Login
+  Безопасность:
+    ✅ dev-login: отключён в production (404)
+    ✅ Валидация: express-validator (7 роутов) + zod (клиент)
+    ✅ Helmet: включён, CORS: белый список origins
+    ✅ rate-limit: auth 10/60s, api 100/60s, admin 30/60s
+    ✅ Multer: limits.fileSize (files 50MB, wiki 10MB, tickets 20MB)
+    ✅ Multer: fileFilter по MIME-типам (запрет .exe/.js/.html)
+
+  Функциональность:
+    ✅ RBAC: admin / senior_agent / agent, requireRole(), ProtectedRoute
+    ✅ WebSocket: Socket.io, комнаты, эмиты ticket/chat
+    ✅ Уведомления: notify.js на создание/статус/назначение/сообщение
+    ✅ Аудит: audit_log + middleware
+    ✅ Docker + docker-compose: mysql + api + frontend
+    ✅ Миграции БД: knex
+    ✅ CI/CD: GitHub Actions
+    ✅ Тесты: 43 клиентских (MSW) + 17 серверных + E2E (4 файла)
+    ✅ Покрытие: v8 с порогами
+    ✅ Knex: все 13 роутов + socket/audit/settings на knex.raw()
+    ✅ LDAP/AD: ldapjs, auto-provisioning, админка
+
+  🟡 Логирование: console.error без winston/pino
+  🟡 Multer: fileFilter по MIME-типам
 
   ────────────────────────────────────────────────────────────────────────────
 
   ПЛАН ДОРАБОТКИ ПО ЭТАПАМ
 
-  ✅ Все 20 этапов выполнены. Проект готов к эксплуатации.
+  ✅ Все 20 этапов выполнены.
 
-  Этап 21 — Качество кода (P4)
-    • Единый API-интерцептор: централизованный fetch-перехватчик с обработкой 401/403/500
+  Этап 21 — Харденинг безопасности (P2)
+    • Multer: fileFilter по MIME-типам для files/wiki/tickets (запрет .exe/.js/.html)
+    • Multer: проверка сигнатур файлов (magic bytes) через file-type
+    • dev-login: выключен везде кроме development (уже есть, добавить NODE_ENV=development)
+
+  Этап 22 — Логирование и мониторинг (P3)
+    • Winston или pino вместо console.error
+    • Уровни: error/warn/info/debug
+    • Транспорты: console + файл (error.log, combined.log)
+    • requestId через middleware для трейсинга запросов
+
+  Этап 23 — Качество кода (P3)
+    • Единый API-интерцептор: централизованный fetch-перехватчик (уже частично есть в api.ts, расширить на все страницы)
     • Фикс серверного теста "rejects requests with invalid token" (ESM/dotenv)
     • Доведение coverage до 80%
 

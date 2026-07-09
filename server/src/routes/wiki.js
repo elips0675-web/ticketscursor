@@ -18,7 +18,15 @@ const storage = multer.diskStorage({
     cb(null, unique + '-' + file.originalname)
   },
 })
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } })
+const WIKI_ALLOWED = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'text/plain', 'application/pdf']
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (WIKI_ALLOWED.includes(file.mimetype)) return cb(null, true)
+    cb(new Error(`Недопустимый тип файла: ${file.mimetype}`))
+  },
+})
 
 const router = Router()
 router.use(authenticateToken)
