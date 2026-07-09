@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
-import NotificationBell from '@/components/NotificationBell'
+
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard', roles: ['admin', 'senior_agent', 'agent'] },
@@ -95,9 +95,6 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         ))}
       </nav>
 
-      <div className="px-3 py-1.5">
-        <NotificationBell inSidebar />
-      </div>
       <div className="p-3 border-t border-sidebar-border space-y-1">
         {filterByRole(bottomItems).map((item) => (
           <NavLink
