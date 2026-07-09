@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/react"
 import { lazy, Suspense } from "react"
 import { BrowserRouter, Route, Routes } from "react-router-dom"
 import { Toaster } from "sonner"
@@ -38,54 +39,66 @@ const SearchPage = lazy(() => import("@/pages/Search"))
 const FilesPage = lazy(() => import("@/pages/Files"))
 import ProtectedRoute from "@/components/ProtectedRoute"
 
+if (import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    integrations: [Sentry.browserTracingIntegration(), Sentry.replayIntegration()],
+    tracesSampleRate: parseFloat(import.meta.env.VITE_SENTRY_SAMPLE_RATE || "0.1"),
+    replaysSessionSampleRate: 0.1,
+    replaysOnErrorSampleRate: 1.0,
+  })
+}
+
+const SentryRoutes = typeof Sentry.withSentryReactRouterV6Routing === 'function'
+  ? Sentry.withSentryReactRouterV6Routing(Routes)
+  : Routes
+
 export default function App() {
   return (
     <TooltipProvider>
       <AuthProvider>
       <SocketProvider>
       <TicketProvider>
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <BrowserRouter>
           <Suspense fallback={<div className="flex items-center justify-center h-screen text-muted-foreground text-sm">Загрузка…</div>}>
-          <Routes>
+          <Toaster position="top-right" richColors closeButton />
+          <SentryRoutes>
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/register" element={<ProtectedRoute adminOnly><Register /></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute adminOnly><AdminLayout><Admin /></AdminLayout></ProtectedRoute>} />
-            <Route path="/admin/users" element={<ProtectedRoute adminOnly><AdminLayout><AdminUsers /></AdminLayout></ProtectedRoute>} />
-            <Route path="/admin/push" element={<ProtectedRoute adminOnly><AdminLayout><AdminPush /></AdminLayout></ProtectedRoute>} />
-            <Route path="/admin/settings" element={<ProtectedRoute adminOnly><AdminLayout><AdminSettings /></AdminLayout></ProtectedRoute>} />
-            <Route path="/admin/audit" element={<ProtectedRoute adminOnly><AdminLayout><AdminAudit /></AdminLayout></ProtectedRoute>} />
-            <Route path="/*" element={
-              <AppLayout>
-                <ProtectedRoute>
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/tickets" element={<Tickets />} />
-                  <Route path="/tickets/new" element={<NewTicket />} />
-                  <Route path="/tickets/:id" element={<TicketDetail />} />
-                  <Route path="/employees" element={<Employees />} />
-                  <Route path="/calendar" element={<CalendarPage />} />
-                  <Route path="/polls" element={<PollsPage />} />
-                  <Route path="/files" element={<FilesPage />} />
-                  <Route path="/chats" element={<ChatsPage />} />
-                  <Route path="/chats/:id" element={<ChatDetail />} />
-                  <Route path="/profile" element={<ProfilePage />} />
-                  <Route path="/search" element={<SearchPage />} />
-                  <Route path="/wiki" element={<WikiPage />} />
-                  <Route path="/news" element={<NewsPage />} />
-                  <Route path="/notifications" element={<NotificationsPage />} />
-                  <Route path="/calculator" element={<CalculatorPage />} />
-                  <Route path="/kanban" element={<KanbanPage />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-                </ProtectedRoute>
-              </AppLayout>
-            } />
-          </Routes>
+            <Route path="/register" element={<Register />} />
+
+            <Route path="/admin" element={<ProtectedRoute adminOnly><AdminLayout /></ProtectedRoute>}>
+              <Route index element={<Admin />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="push" element={<AdminPush />} />
+              <Route path="settings" element={<AdminSettings />} />
+              <Route path="audit" element={<AdminAudit />} />
+            </Route>
+
+            <Route element={<AppLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="tickets" element={<Tickets />} />
+              <Route path="tickets/new" element={<NewTicket />} />
+              <Route path="tickets/:id" element={<TicketDetail />} />
+              <Route path="employees" element={<Employees />} />
+              <Route path="calendar" element={<CalendarPage />} />
+              <Route path="polls" element={<PollsPage />} />
+              <Route path="chats" element={<ChatsPage />} />
+              <Route path="chats/:id" element={<ChatDetail />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="news" element={<NewsPage />} />
+              <Route path="notifications" element={<NotificationsPage />} />
+              <Route path="calculator" element={<CalculatorPage />} />
+              <Route path="kanban" element={<KanbanPage />} />
+              <Route path="wiki" element={<WikiPage />} />
+              <Route path="files" element={<FilesPage />} />
+              <Route path="search" element={<SearchPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+          </SentryRoutes>
           </Suspense>
         </BrowserRouter>
-        <Toaster position="top-right" richColors />
       </TicketProvider>
       </SocketProvider>
       </AuthProvider>

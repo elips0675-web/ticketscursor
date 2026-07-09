@@ -20,9 +20,16 @@ export function authenticateToken(req, res, next) {
   }
 }
 
+const ROLE_HIERARCHY = ['agent', 'senior_agent', 'admin', 'super_admin']
+
 export function requireRole(...roles) {
   return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
+    if (!req.user) {
+      return res.status(403).json({ message: 'Forbidden: insufficient rights' })
+    }
+    const userLevel = ROLE_HIERARCHY.indexOf(req.user.role)
+    const requiredLevel = Math.max(...roles.map(r => ROLE_HIERARCHY.indexOf(r)))
+    if (userLevel < requiredLevel || userLevel === -1) {
       return res.status(403).json({ message: 'Forbidden: insufficient rights' })
     }
     next()

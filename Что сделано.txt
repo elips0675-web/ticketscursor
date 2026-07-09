@@ -396,3 +396,21 @@ Backend:
 [ ] Файлы загружаются в S3/MinIO, не на локальный диск
 [ ] Sentry ловит ошибки
 [ ] CI/CD pipeline зелёный
+
+────────────────────────────────────────────────────────────────────────────
+
+PRODUCTION PROMPT ДОРАБОТАТЬ
+
+Реализовано (текущий статус):
+
+  ✅ Роль super_admin — middleware с иерархией (super_admin > admin > senior_agent > agent)
+  ✅ Zod на бэкенде — заменён express-validator на Zod (все 15 схем)
+  ✅ Refresh-токены JWT — access 15мин + refresh 7дней (httpOnly cookie, /api/auth/refresh)
+  ✅ Полнотекстовый поиск — FULLTEXT INDEX + MATCH AGAINST с fallback на LIKE
+  ✅ Sentry — SDK на фронт (@sentry/react) и бэк (@sentry/node), опционально через SENTRY_DSN
+  ✅ S3/MinIO — storage.js адаптер (S3 при S3_ENDPOINT, иначе локальный диск)
+  ✅ ClamAV — интеграция в validateUpload (опционально, CLAMAV_ENABLED=true)
+
+Не реализовано (требует внешних сервисов или дальнейшей доработки):
+
+  ❌ Prisma ORM — knex.raw остаётся, замена на Prisma требует полного рефакторинга

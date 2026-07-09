@@ -4,9 +4,15 @@ import { createServer } from 'http'
 import cors from 'cors'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
+import cookieParser from 'cookie-parser'
 import os from 'os'
+import * as Sentry from '@sentry/node'
 import logger from './logger.js'
 import { requestId } from './middleware/requestId.js'
+
+if (process.env.SENTRY_DSN) {
+  Sentry.init({ dsn: process.env.SENTRY_DSN, tracesSampleRate: parseFloat(process.env.SENTRY_SAMPLE_RATE || '0.1') })
+}
 import ticketsRouter from './routes/tickets.js'
 import employeesRouter from './routes/employees.js'
 import calendarRouter from './routes/calendar.js'
@@ -49,6 +55,12 @@ app.use(cors({
 app.use(helmet())
 app.use(requestId)
 app.use(express.json())
+app.use(cookieParser())
+
+if (process.env.SENTRY_DSN) {
+  app.use(Sentry.Handlers.requestHandler())
+  app.use(Sentry.Handlers.tracingHandler())
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const uploadsDir = path.join(__dirname, '..', 'uploads')
@@ -97,6 +109,10 @@ app.get('/api/system-info', authenticateToken, (req, res) => {
     domain: process.env.USERDOMAIN || '',
   })
 })
+
+if (process.env.SENTRY_DSN) {
+  app.use(Sentry.Handlers.errorHandler())
+}
 
 app.use((err, req, res, next) => {
   logger.error('Unhandled error', { error: err.message, stack: err.stack, requestId: req.id })

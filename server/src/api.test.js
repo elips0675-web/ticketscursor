@@ -25,7 +25,7 @@ describe('POST /api/auth/dev-login', () => {
     expect(res.status).toBe(200)
     expect(res.body).toHaveProperty('token')
     expect(res.body.employee).toHaveProperty('id', 1)
-    expect(res.body.employee).toHaveProperty('role', 'admin')
+    expect(res.body.employee).toHaveProperty('role', 'super_admin')
   })
 })
 

@@ -17,7 +17,7 @@ export async function seed(knex) {
   await knex('employees').del()
 
   await knex('employees').insert([
-    { id: 1, name: 'Алексей Петров', email: 'alexey@example.com', password_hash: PASSWORD_HASH, role: 'admin', department: 'IT', online: true, active_tickets: 3, resolved_today: 5 },
+    { id: 1, name: 'Алексей Петров', email: 'alexey@example.com', password_hash: PASSWORD_HASH, role: 'super_admin', department: 'IT', online: true, active_tickets: 3, resolved_today: 5 },
     { id: 2, name: 'Мария Иванова', email: 'maria@example.com', password_hash: PASSWORD_HASH, role: 'senior_agent', department: 'Поддержка', online: true, active_tickets: 2, resolved_today: 8 },
     { id: 3, name: 'Дмитрий Сидоров', email: 'dmitry@example.com', password_hash: PASSWORD_HASH, role: 'agent', department: 'Поддержка', online: false, active_tickets: 4, resolved_today: 3 },
     { id: 4, name: 'Елена Козлова', email: 'elena@example.com', password_hash: PASSWORD_HASH, role: 'agent', department: 'Разработка', online: true, active_tickets: 1, resolved_today: 2 },

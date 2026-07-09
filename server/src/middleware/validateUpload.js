@@ -1,5 +1,7 @@
 import { fileTypeFromFile } from 'file-type'
 import fs from 'fs'
+import logger from '../logger.js'
+import { scanFile, CLAMAV_ENABLED } from '../clamav.js'
 
 const ALLOWED = new Set([
   'jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf',
@@ -36,8 +38,16 @@ async function checkFile(file) {
       fs.unlink(file.path, () => {})
       return { ok: false, name: file.originalname }
     }
+    if (CLAMAV_ENABLED) {
+      const result = await scanFile(file.path)
+      if (!result.ok) {
+        fs.unlink(file.path, () => {})
+        return { ok: false, name: file.originalname }
+      }
+    }
     return { ok: true }
-  } catch {
+  } catch (err) {
+    logger.warn('File check error:', err.message)
     fs.unlink(file.path, () => {})
     return { ok: false, name: file.originalname }
   }

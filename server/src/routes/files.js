@@ -7,13 +7,16 @@ import knex from '../db.js'
 import { authenticateToken } from '../middleware.js'
 import logger from '../logger.js'
 import { validateUpload } from '../middleware/validateUpload.js'
+import { saveFile, S3_ENABLED } from '../storage.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const fileUploads = path.join(__dirname, '..', '..', 'uploads', 'files')
 fs.mkdirSync(fileUploads, { recursive: true })
 
 const storage = multer.diskStorage({
-  destination: fileUploads,
+  destination: (req, file, cb) => {
+    cb(null, fileUploads)
+  },
   filename: (req, file, cb) => {
     const unique = Date.now() + '-' + Math.round(Math.random() * 1E9)
     cb(null, unique + '-' + file.originalname)
@@ -84,9 +87,11 @@ router.post('/upload', upload.single('file'), validateUpload, async (req, res) =
     ? (req.file.size / 1024 / 1024).toFixed(1) + ' MB'
     : (req.file.size / 1024).toFixed(req.file.size > 1024 ? 1 : 0) + ' KB'
   try {
+    const buffer = fs.readFileSync(req.file.path)
+    const { url } = await saveFile('files', req.file.filename, buffer)
     const [result] = await knex.raw(
       'INSERT INTO files (name, size, type, folder_id, path, user_id) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, sizeKB, fileType, folderId || null, `/uploads/files/${req.file.filename}`, req.user.userId],
+      [name, sizeKB, fileType, folderId || null, url, req.user.userId],
     )
     const [[file]] = await knex.raw(
       'SELECT id, name, size, type, folder_id as folderId, path, created_at as createdAt FROM files WHERE id = ?',

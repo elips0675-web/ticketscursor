@@ -60,7 +60,7 @@ router.put('/users/:id', async (req, res) => {
   const { role, isActive, department, title } = req.body
   const updates = []
   const params = []
-  if (role && ['admin', 'senior_agent', 'agent'].includes(role)) {
+  if (role && ['super_admin', 'admin', 'senior_agent', 'agent'].includes(role)) {
     updates.push('role = ?')
     params.push(role)
   }

@@ -36,7 +36,7 @@ interface User {
   id: number
   name: string
   email: string
-  role: "admin" | "senior_agent" | "agent"
+  role: "super_admin" | "admin" | "senior_agent" | "agent"
 }
 
 interface AuthContextType {
@@ -46,6 +46,7 @@ interface AuthContextType {
   logout: () => void
   isAdmin: boolean
   isSenior: boolean
+  isSuperAdmin: boolean
   canManage: boolean
 }
 
@@ -69,12 +70,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
-  const isAdmin = user?.role === "admin"
-  const isSenior = user?.role === "senior_agent"
+  const isAdmin = user?.role === "admin" || user?.role === "super_admin"
+  const isSenior = user?.role === "senior_agent" || user?.role === "admin" || user?.role === "super_admin"
+  const isSuperAdmin = user?.role === "super_admin"
   const canManage = isAdmin || isSenior
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAdmin, isSenior, canManage }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isAdmin, isSenior, isSuperAdmin, canManage }}>
       {children}
     </AuthContext.Provider>
   )

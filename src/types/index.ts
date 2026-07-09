@@ -1,7 +1,7 @@
 export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed'
 export type TicketPriority = 'low' | 'medium' | 'high' | 'critical'
 export type TicketCategory = 'bug' | 'feature' | 'support' | 'incident' | 'other'
-export type EmployeeRole = 'agent' | 'senior_agent' | 'admin'
+export type EmployeeRole = 'agent' | 'senior_agent' | 'admin' | 'super_admin'
 
 export interface Employee {
   id: number
