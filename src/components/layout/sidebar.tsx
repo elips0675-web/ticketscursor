@@ -17,6 +17,7 @@ import {
   Shield,
   Columns3,
   Languages,
+  Calculator,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
@@ -36,6 +37,7 @@ const navItems = [
   { to: '/polls', icon: BarChart3, labelKey: 'nav.polls', roles: ['admin', 'senior_agent', 'agent'] },
   { to: '/wiki', icon: BookOpen, labelKey: 'nav.wiki', roles: ['admin', 'senior_agent', 'agent'] },
   { to: '/news', icon: Newspaper, labelKey: 'nav.news', roles: ['admin', 'senior_agent', 'agent'] },
+  { to: '/calculator', icon: Calculator, labelKey: 'nav.calculator', roles: ['admin', 'senior_agent', 'agent'] },
   { to: '/files', icon: FileText, labelKey: 'nav.files', roles: ['admin', 'senior_agent', 'agent'] },
   { to: '/tickets/new', icon: PlusCircle, labelKey: 'tickets.new', roles: ['admin', 'senior_agent', 'agent'] },
 ]
