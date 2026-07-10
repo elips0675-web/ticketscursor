@@ -77,21 +77,28 @@ app.use('/uploads', (req, res, next) => {
   }
 })
 
-app.use('/api/auth', authLimiter, authRouter)
-app.use('/api/tickets', apiLimiter, cacheMiddleware(120), auditLogMiddleware, ticketsRouter)
-app.use('/api/employees', apiLimiter, cacheMiddleware(300), auditLogMiddleware, employeesRouter)
-app.use('/api/calendar', apiLimiter, auditLogMiddleware, calendarRouter)
-app.use('/api/polls', apiLimiter, auditLogMiddleware, pollsRouter)
-app.use('/api/files', apiLimiter, auditLogMiddleware, filesRouter)
-app.use('/api/chats', apiLimiter, auditLogMiddleware, chatsRouter)
-app.use('/api/wiki', apiLimiter, auditLogMiddleware, wikiRouter)
-app.use('/api/news', apiLimiter, auditLogMiddleware, newsRouter)
-app.use('/api/notifications', apiLimiter, auditLogMiddleware, notificationsRouter)
-app.use('/api/push', apiLimiter, auditLogMiddleware, pushRouter)
-app.use('/api/search', apiLimiter, auditLogMiddleware, searchRouter)
-app.use('/api/admin', adminLimiter, auditLogMiddleware, adminRouter)
+const V1 = '/api/v1'
 
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customCss: '.swagger-ui .topbar { display: none }' }))
+function mount(prefix, router, ...mw) {
+  app.use(`/api${prefix}`, ...mw, router)
+  app.use(`${V1}${prefix}`, ...mw, router)
+}
+
+mount('/auth', authRouter, authLimiter)
+mount('/tickets', ticketsRouter, apiLimiter, cacheMiddleware(120), auditLogMiddleware)
+mount('/employees', employeesRouter, apiLimiter, cacheMiddleware(300), auditLogMiddleware)
+mount('/calendar', calendarRouter, apiLimiter, auditLogMiddleware)
+mount('/polls', pollsRouter, apiLimiter, auditLogMiddleware)
+mount('/files', filesRouter, apiLimiter, auditLogMiddleware)
+mount('/chats', chatsRouter, apiLimiter, auditLogMiddleware)
+mount('/wiki', wikiRouter, apiLimiter, auditLogMiddleware)
+mount('/news', newsRouter, apiLimiter, auditLogMiddleware)
+mount('/notifications', notificationsRouter, apiLimiter, auditLogMiddleware)
+mount('/push', pushRouter, apiLimiter, auditLogMiddleware)
+mount('/search', searchRouter, apiLimiter, auditLogMiddleware)
+mount('/admin', adminRouter, adminLimiter, auditLogMiddleware)
+
+app.use([`/api/docs`, `${V1}/docs`], swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customCss: '.swagger-ui .topbar { display: none }' }))
 
 app.get('/', (req, res) => {
   res.json({ app: 'Service Desk API', version: '1.0.0' })

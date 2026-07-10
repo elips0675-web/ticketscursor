@@ -31,6 +31,11 @@ if (process.env.REDIS_URL) {
     try {
       const { default: Redis } = await import('ioredis')
       const client = new Redis(process.env.REDIS_URL)
+      const delScript = `
+        local keys = redis.call('keys', KEYS[1])
+        for _, k in ipairs(keys) do redis.call('del', k) end
+        return #keys
+      `
       cache = {
         async get(key) {
           const val = await client.get(key)
@@ -40,8 +45,7 @@ if (process.env.REDIS_URL) {
           await client.set(key, JSON.stringify(value), 'EX', ttl)
         },
         async invalidate(pattern) {
-          const keys = await client.keys(pattern)
-          if (keys.length > 0) await client.del(keys)
+          await client.eval(delScript, 1, pattern)
         },
       }
       console.log('Cache using Redis')

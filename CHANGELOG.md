@@ -345,7 +345,6 @@
 
 - Проведён комплексный внешний аудит кода и архитектуры — **общая оценка 7.7/10**
 - Большинство рекомендаций выполнено в рамках предыдущих этапов
-- **Остались:** API versioning (`/api/v1/`), замена `setInterval` на BullMQ для фоновых задач
 
 ---
 
@@ -450,12 +449,37 @@
 - [x] `mysql/init-replica.sh` — автонастройка репликации при старте
 - [x] `db_backup` — alpine-контейнер: mysqldump ежедневно, хранение 7 дней
 
+### ⚙️ BullMQ — фоновые задачи (Этап K1) ✅
+- [x] Установлен `bullmq`, создан `server/src/background.js`
+- [x] При `REDIS_URL`: BullMQ Queue + Worker с repeatable jobs (SLA каждые 15 мин, cleanup каждые 6 ч)
+- [x] Без Redis: setInterval fallback (как было)
+- [x] Graceful shutdown через закрытие очередей
+
+### 🗄️ Cache race condition fix (Этап K2) ✅
+- [x] Redis `invalidate()` переписан на Lua-скрипт (атомарное `keys` + `del`)
+- [x] Устранена гонка между `delPattern` и новыми записями
+
+### 🔖 API versioning (Этап K3) ✅
+- [x] Все роуты доступны по `/api/v1/...` в дополнение к `/api/...`
+- [x] `/api/...` сохранён для обратной совместимости
+- [x] `/api/v1/docs` + `/api/docs` — Swagger
+
 ### 🔍 Meilisearch Fuzzy Search ✅
 - [x] `meilisearch` сервис в docker-compose (v1.8, порт 7700)
 - [x] `search-sync.js` — fullSync при старте + syncEntity для CRUD
 - [x] 6 индексов: tickets, employees, wiki, news, chats, files
 - [x] Прозрачный fallback: Meilisearch → FULLTEXT → LIKE
 - [x] `MEILISEARCH_URL` + `MEILI_MASTER_KEY` в env
+
+### Этап K1 — BullMQ ✅
+- [x] Замена `setInterval` на BullMQ очереди (SLA, cleanup)
+- [x] Fallback на setInterval при отсутствии Redis
+
+### Этап K2 — Cache race condition ✅
+- [x] Атомарная инвалидация кэша через Lua-скрипт
+
+### Этап K3 — API versioning ✅
+- [x] `/api/v1/*` + обратная совместимость `/api/*`
 
 ---
 

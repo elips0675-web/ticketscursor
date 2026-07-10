@@ -1065,8 +1065,8 @@ spec:
 | J | Volume для MySQL-бэкапов в docker-compose | Low | ✅ Выполнено |
 | J | Healthcheck всех сервисов | Low | ✅ Выполнено |
 | J | Prometheus/Grafana метрики | Low | ✅ Выполнено |
-| K | API versioning (/api/v1/) | Low | ❌ Не реализовано |
-| K | BullMQ вместо setInterval (фоновые задачи) | Medium | ❌ Не реализовано |
+| K | API versioning (/api/v1/) | Low | ✅ Выполнено |
+| K | BullMQ вместо setInterval (фоновые задачи) | Medium | ✅ Выполнено |
 
 ---
 
