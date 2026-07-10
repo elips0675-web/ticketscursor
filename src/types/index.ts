@@ -43,6 +43,7 @@ export interface Ticket {
   }
   assignedTo?: Employee
   messages: TicketMessage[]
+  messages_count?: number
   createdAt: string
   updatedAt: string
   tags: string[]

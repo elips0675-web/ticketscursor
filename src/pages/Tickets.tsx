@@ -280,7 +280,7 @@ export default function Tickets() {
               </span>
               <span className="flex items-center gap-1">
                 <MessageSquare className="w-3 h-3" />
-                {ticket.messages.length}
+                {ticket.messages_count ?? ticket.messages.length}
               </span>
               <span className="ml-auto">{formatRelativeTime(ticket.updatedAt)}</span>
             </div>

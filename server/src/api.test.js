@@ -165,7 +165,8 @@ describe('RBAC — admin endpoints', () => {
       .set('Authorization', `Bearer ${adminToken}`)
     expect([200, 500]).toContain(res.status)
     if (res.status === 200) {
-      expect(Array.isArray(res.body)).toBe(true)
+      const data = res.body.data || res.body
+      expect(Array.isArray(data)).toBe(true)
     }
   })
 

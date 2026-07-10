@@ -44,6 +44,7 @@ function mapTicket(raw: any): Ticket {
       createdAt: m.created_at,
       isInternal: !!m.is_internal,
     })) : [],
+    messages_count: raw.messages_count || (Array.isArray(raw.messages) ? raw.messages.length : 0),
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
   }
@@ -59,7 +60,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     if (!token) return
     try {
       const [tRes, eRes] = await Promise.all([
-        fetch(`${API}/tickets?limit=1000`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API}/tickets?limit=500`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API}/employees`, { headers: { Authorization: `Bearer ${token}` } }),
       ])
       if (tRes.ok) {
@@ -154,7 +155,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ text, isInternal, attachments }),
       })
       if (res.ok) {
-        const msg = await res.json()
+        const { data: msg } = await res.json()
         setTickets(prev => prev.map(t => {
           if (t.id !== ticketId) return t
           const newMsg = {
@@ -182,7 +183,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify(data),
       })
       if (res.ok) {
-        const created = mapTicket(await res.json())
+        const { data } = await res.json()
+        const created = mapTicket(data)
         setTickets(prev => [created, ...prev])
       }
     } catch { /* ignore */ }

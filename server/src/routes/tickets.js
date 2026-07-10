@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url'
 import multer from 'multer'
 import prisma from '../prisma.js'
 import { authenticateToken, requireRole } from '../middleware.js'
+import { hasRole, ROLE_HIERARCHY } from '../utils/roleUtils.js'
 import { getIO } from '../socket.js'
 import { invalidateCache } from '../cache.js'
 import { logAudit } from '../audit.js'
@@ -19,8 +20,12 @@ import {
   listTickets,
   listOverdueSlaTickets,
   getTicketById,
+  getTicketMessages,
   createTicket,
   updateTicketStatus,
+  updateTicketPriority,
+  updateTicketAssignee,
+  generateTicketFilename,
 } from '../services/tickets.service.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -30,8 +35,7 @@ fs.mkdirSync(ticketUploads, { recursive: true })
 const storage = multer.diskStorage({
   destination: ticketUploads,
   filename: (req, file, cb) => {
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1E9)
-    cb(null, unique + '-' + file.originalname)
+    cb(null, generateTicketFilename(file.originalname))
   },
 })
 const TICKET_ALLOWED = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/plain', 'application/zip', 'application/x-rar-compressed']
@@ -50,7 +54,7 @@ router.use(authenticateToken)
 
 router.get('/', async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page) || 1)
-  const limit = Math.min(10000, Math.max(1, parseInt(req.query.limit) || 1000))
+  const limit = Math.min(500, Math.max(1, parseInt(req.query.limit) || 50))
   try {
     const payload = await listTickets({ page, limit })
     res.json({ success: true, ...payload })
@@ -73,12 +77,17 @@ router.get('/sla/overdue', requireRole('admin', 'senior_agent'), async (req, res
 
 router.get('/:id', async (req, res) => {
   try {
-    const mapped = await getTicketById(Number(req.params.id))
+    const ticketId = Number(req.params.id)
+    if (!Number.isFinite(ticketId)) return res.status(400).json({ success: false, message: 'Invalid ticket ID' })
+    const mapped = await getTicketById(ticketId)
     if (!mapped) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    const canView = hasRole(req.user.role, 'senior_agent') ||
+      mapped.created_by === req.user.userId ||
+      mapped.assigned_to === req.user.userId
+    if (!canView) return res.status(403).json({ success: false, message: 'Forbidden' })
     res.json({
       success: true,
       data: mapped,
-      ...mapped,
     })
   } catch (err) {
     logger.error('Ticket detail error:', err)
@@ -104,7 +113,12 @@ router.post('/', createTicketValidation, async (req, res) => {
         text: description,
       },
     })
-    getIO()?.emit('ticket:created', { ...ticket, messages: [] })
+    const io = getIO()
+    if (io) {
+      io.emit('ticket:created', { ...ticket, messages: [] })
+    } else {
+      logger.warn('Socket.io not available, ticket:created not emitted')
+    }
     logAudit({
       userId: req.user.userId,
       userName: req.user.name,
@@ -113,12 +127,16 @@ router.post('/', createTicketValidation, async (req, res) => {
       entityId: ticket.id,
       details: { title, dueAt, autoAssignedTo },
     })
-    notifyTicketCreated(ticket.id, req.user.name)
-    if (autoAssignedTo) {
-      notifyTicketAssigned(ticket.id, autoAssignedTo, req.user.name)
+    try {
+      await notifyTicketCreated(ticket.id, req.user.name)
+      if (autoAssignedTo) {
+        await notifyTicketAssigned(ticket.id, autoAssignedTo, req.user.name)
+      }
+    } catch (notifyErr) {
+      logger.warn('Notification failed on ticket create:', notifyErr.message)
     }
     invalidateCache('cache:/api/tickets*')
-    res.status(201).json({ success: true, data: ticket, ...ticket })
+    res.status(201).json({ success: true, data: ticket })
   } catch (err) {
     logger.error('Create ticket error:', err)
     res.status(500).json({ success: false, message: 'Failed to create ticket' })
@@ -126,49 +144,79 @@ router.post('/', createTicketValidation, async (req, res) => {
 })
 
 router.put('/:id/status', requireRole('admin', 'senior_agent'), updateStatusValidation, async (req, res) => {
+  const ticketId = Number(req.params.id)
   const { status } = req.body
   try {
-    const old = await updateTicketStatus(Number(req.params.id), status)
+    const old = await updateTicketStatus(ticketId, status)
     if (!old) return res.status(404).json({ success: false, message: 'Ticket not found' })
-    getIO()?.emit('ticket:updated', { id: Number(req.params.id), status, updatedBy: req.user.userId })
-    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'status_changed', entityType: 'ticket', entityId: Number(req.params.id), details: { from: old.status, to: status } })
-    notifyStatusChanged(Number(req.params.id), old.status, status, req.user.name)
+    const io = getIO()
+    if (io) {
+      io.emit('ticket:updated', { id: ticketId, status, updatedBy: req.user.userId })
+    } else {
+      logger.warn('Socket.io not available, ticket:updated not emitted')
+    }
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'status_changed', entityType: 'ticket', entityId: ticketId, details: { from: old.status, to: status } })
+    try {
+      await notifyStatusChanged(ticketId, old.status, status, req.user.name)
+    } catch (notifyErr) {
+      logger.warn('notifyStatusChanged failed:', notifyErr.message)
+    }
     invalidateCache('cache:/api/tickets*')
-    res.json({ success: true, data: { id: Number(req.params.id), status } })
+    res.json({ success: true, data: { id: ticketId, status } })
   } catch (err) {
+    logger.error('Update status error:', err)
     res.status(500).json({ success: false, message: 'Failed to update status' })
   }
 })
 
 router.put('/:id/priority', requireRole('admin', 'senior_agent'), updatePriorityValidation, async (req, res) => {
+  const ticketId = Number(req.params.id)
   const { priority } = req.body
   try {
-    const old = await prisma.tickets.findUnique({ where: { id: Number(req.params.id) }, select: { priority: true } })
-    await prisma.tickets.update({ where: { id: Number(req.params.id) }, data: { priority, updated_at: new Date() } })
-    getIO()?.emit('ticket:updated', { id: Number(req.params.id), priority, updatedBy: req.user.userId })
-    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'priority_changed', entityType: 'ticket', entityId: Number(req.params.id), details: { from: old?.priority, to: priority } })
-    notifyPriorityChanged(Number(req.params.id), old?.priority, priority, req.user.name)
+    const result = await updateTicketPriority(ticketId, priority)
+    if (!result) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    const io = getIO()
+    if (io) {
+      io.emit('ticket:updated', { id: ticketId, priority, updatedBy: req.user.userId })
+    } else {
+      logger.warn('Socket.io not available, ticket:updated not emitted')
+    }
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'priority_changed', entityType: 'ticket', entityId: ticketId, details: { from: result.oldPriority, to: priority } })
+    try {
+      await notifyPriorityChanged(ticketId, result.oldPriority, priority, req.user.name)
+    } catch (notifyErr) {
+      logger.warn('notifyPriorityChanged failed:', notifyErr.message)
+    }
     invalidateCache('cache:/api/tickets*')
-    res.json({ success: true, data: { id: Number(req.params.id), priority } })
+    res.json({ success: true, data: { id: ticketId, priority } })
   } catch (err) {
+    logger.error('Update priority error:', err)
     res.status(500).json({ success: false, message: 'Failed to update priority' })
   }
 })
 
 router.put('/:id/assign', requireRole('admin', 'senior_agent'), assignTicketValidation, async (req, res) => {
+  const ticketId = Number(req.params.id)
   const { employeeId } = req.body
   try {
-    let emp = null
-    if (employeeId) {
-      emp = await prisma.employees.findUnique({ where: { id: Number(employeeId) }, select: { name: true } })
+    const result = await updateTicketAssignee(ticketId, employeeId)
+    if (!result) return res.status(404).json({ success: false, message: 'Ticket or employee not found' })
+    const io = getIO()
+    if (io) {
+      io.emit('ticket:updated', { id: ticketId, assignedTo: employeeId, updatedBy: req.user.userId })
+    } else {
+      logger.warn('Socket.io not available, ticket:updated not emitted')
     }
-    await prisma.tickets.update({ where: { id: Number(req.params.id) }, data: { assigned_to: employeeId || null, updated_at: new Date() } })
-    getIO()?.emit('ticket:updated', { id: Number(req.params.id), assignedTo: employeeId, updatedBy: req.user.userId })
-    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'assigned', entityType: 'ticket', entityId: Number(req.params.id), details: { assignedTo: employeeId || null, assignedName: emp?.name || null } })
-    notifyTicketAssigned(Number(req.params.id), employeeId, req.user.name)
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'assigned', entityType: 'ticket', entityId: ticketId, details: { assignedTo: employeeId || null, assignedName: result.employeeName } })
+    try {
+      await notifyTicketAssigned(ticketId, employeeId, req.user.name)
+    } catch (notifyErr) {
+      logger.warn('notifyTicketAssigned failed:', notifyErr.message)
+    }
     invalidateCache('cache:/api/tickets*')
-    res.json({ success: true, data: { id: Number(req.params.id), assignedTo: employeeId || null } })
+    res.json({ success: true, data: { id: ticketId, assignedTo: employeeId || null } })
   } catch (err) {
+    logger.error('Assign ticket error:', err)
     res.status(500).json({ success: false, message: 'Failed to assign ticket' })
   }
 })
@@ -184,11 +232,14 @@ router.post('/upload', upload.single('file'), validateUpload, (req, res) => {
 })
 
 router.post('/:id/messages', addMessageValidation, async (req, res) => {
+  const ticketId = Number(req.params.id)
   const { text, isInternal, attachments } = req.body
   try {
+    const ticketExists = await prisma.tickets.count({ where: { id: ticketId } })
+    if (!ticketExists) return res.status(404).json({ success: false, message: 'Ticket not found' })
     const msg = await prisma.ticket_messages.create({
       data: {
-        ticket_id: Number(req.params.id),
+        ticket_id: ticketId,
         sender_id: req.user.userId,
         sender_name: req.user.name || 'User',
         text,
@@ -196,12 +247,35 @@ router.post('/:id/messages', addMessageValidation, async (req, res) => {
         is_internal: isInternal ? true : false,
       },
     })
-    await prisma.tickets.update({ where: { id: Number(req.params.id) }, data: { updated_at: new Date() } })
-    getIO()?.emit('ticket:message', { ticketId: Number(req.params.id), message: msg })
-    notifyTicketMessage(Number(req.params.id), req.user.userId, req.user.name, text)
-    res.status(201).json({ success: true, data: msg, ...msg })
+    await prisma.tickets.update({ where: { id: ticketId }, data: { updated_at: new Date() } })
+    const io = getIO()
+    if (io) {
+      io.emit('ticket:message', { ticketId, message: msg })
+    } else {
+      logger.warn('Socket.io not available, ticket:message not emitted')
+    }
+    try {
+      await notifyTicketMessage(ticketId, req.user.userId, req.user.name, text)
+    } catch (notifyErr) {
+      logger.warn('notifyTicketMessage failed:', notifyErr.message)
+    }
+    res.status(201).json({ success: true, data: msg })
   } catch (err) {
+    logger.error('Add message error:', err)
     res.status(500).json({ success: false, message: 'Failed to add message' })
+  }
+})
+
+router.get('/:id/messages', async (req, res) => {
+  const ticketId = Number(req.params.id)
+  const page = Math.max(1, parseInt(req.query.page) || 1)
+  const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 50))
+  try {
+    const result = await getTicketMessages(ticketId, page, limit)
+    res.json({ success: true, ...result })
+  } catch (err) {
+    logger.error('Ticket messages error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch messages' })
   }
 })
 
@@ -209,11 +283,16 @@ router.delete('/:id/messages/:msgId', async (req, res) => {
   try {
     const msg = await prisma.ticket_messages.findUnique({ where: { id: Number(req.params.msgId) } })
     if (!msg) return res.status(404).json({ success: false, message: 'Message not found' })
-    const isAdmin = req.user.role === 'admin' || req.user.role === 'senior_agent'
+    const isAdmin = hasRole(req.user.role, 'senior_agent')
     const isOwner = msg.sender_id === req.user.userId
     if (!isAdmin && !isOwner) return res.status(403).json({ success: false, message: 'Forbidden' })
     await prisma.ticket_messages.delete({ where: { id: Number(req.params.msgId) } })
-    getIO()?.emit('ticket:message-removed', { ticketId: Number(req.params.id), msgId: Number(req.params.msgId) })
+    const io = getIO()
+    if (io) {
+      io.emit('ticket:message-removed', { ticketId: Number(req.params.id), msgId: Number(req.params.msgId) })
+    } else {
+      logger.warn('Socket.io not available, ticket:message-removed not emitted')
+    }
     res.json({ success: true, data: { msgId: Number(req.params.msgId) } })
   } catch (err) {
     logger.error('Delete message error:', err)

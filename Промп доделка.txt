@@ -1,0 +1,109 @@
+Промпт: Доделка tickets-модуля (Code Review Fixes)
+Контекст: Существующий проект Service Desk (Helpdesk) на React 18 + TypeScript + Vite + Express + Prisma + MySQL. Модуль тикетов частично переведён на сервисный слой (tickets.service.js), но роуты (tickets.js) всё ещё содержат бизнес-логику и имеют архитектурные проблемы.
+Задача: Исправить все критичные проблемы, найденные в code review. Работать поэтапно, каждый пункт — отдельный коммит.
+Этап 1. Исправить формат API-ответов (Критично)
+Проблема: В роутах GET /:id, POST /, POST /:id/messages используется spread-оператор ...ticket, ...msg, ...mapped, что дублирует данные в ответе:
+JavaScript
+res.json({ success: true, data: mapped, ...mapped }) // ← мусор
+Что сделать:
+Убрать ...mapped, ...ticket, ...msg из всех res.json() в tickets.js
+Единый формат ответа: { success: boolean, data: T } или { success: boolean, message: string }
+Проверить, что фронтенд не ломается (он должен читать response.data.data, а не response.data.id)
+Если фронт использует поля с верхнего уровня — исправить фронтенд-компоненты тикетов
+Этап 2. Обработать ошибки уведомлений (Критично)
+Проблема: notifyTicketCreated, notifyTicketAssigned, notifyStatusChanged, notifyPriorityChanged, notifyTicketMessage вызываются без await — ошибки теряются, тикет может создаться, но уведомление не отправится без логов.
+Что сделать:
+Обёрнуть все вызовы notify* в try/catch с logger.warn
+Уведомления НЕ должны ломать основную операцию (создание/обновление тикета)
+Добавить await перед уведомлениями
+JavaScript
+try {
+  await notifyTicketCreated(ticket.id, req.user.name)
+} catch (err) {
+  logger.warn('notifyTicketCreated failed:', err.message)
+}
+Этап 3. Вынести бизнес-логику из роутов в сервисный слой (Критично)
+Проблема: Роуты PUT /:id/priority, PUT /:id/assign содержат прямые запросы Prisma.
+Что сделать:
+Создать в tickets.service.js:
+updateTicketPriority(id, priority) — возвращает { oldPriority, newPriority }
+updateTicketAssignee(id, employeeId) — возвращает { oldAssignee, newAssignee, employeeName }
+Перенести логику findUnique + update + logAudit + invalidateCache в сервис (или оставить logAudit/invalidateCache в роуте, но Prisma-запросы — только в сервисе)
+Роуты должны вызывать сервис-функции и эмитить WebSocket-события
+Этап 4. Добавить проверку прав на чтение тикета (Критично)
+Проблема: GET /:id позволяет любому аутентифицированному пользователю читать любой тикет.
+Что сделать:
+Добавить функцию canViewTicket(user, ticket) в сервисный слой или middleware
+Правила:
+super_admin, admin, senior_agent — видят все
+agent — видит только назначенные на него или созданные им
+(опционально) добавить роль requester — видит только свои
+Вернуть 403 если доступ запрещён
+Добавить тесты на эти сценарии
+Этап 5. Исправить super_admin в проверке прав (Критично)
+Проблема: В DELETE /:id/messages/:msgId проверка:
+JavaScript
+const isAdmin = req.user.role === 'admin' || req.user.role === 'senior_agent'
+// super_admin не включён!
+Что сделать:
+Создать утилиту isAdminRole(role) или hasRole(user, minRole) с иерархией:
+plain
+super_admin > admin > senior_agent > agent
+Заменить все inline-проверки ролей на вызов утилиты
+Проверить все файлы роутов на эту же проблему
+Этап 6. Защитить getLeastLoadedAssignee от SQL-инъекции (Критично)
+Проблема: prisma.$queryRaw без параметров.
+Что сделать:
+Переписать на чистый Prisma-запрос с include: { _count: ... } (см. мой пример в review)
+Если raw SQL необходим — использовать prisma.$queryRaw с параметрами: prisma.$queryRaw`... WHERE x = ${param}`
+Добавить тест на getLeastLoadedAssignee
+Этап 7. Оптимизировать загрузку сообщений (Критично)
+Проблема: listTickets и getTicketById загружают ВСЕ сообщения тикета.
+Что сделать:
+В listTickets: убрать ticket_messages из include, добавить messages_count через _count
+В getTicketById: оставить сообщения, но добавить take: 50 с пагинацией (offset/limit параметры)
+Создать отдельный эндпоинт GET /:id/messages?page=&limit= для подгрузки истории
+Обновить фронтенд: список тикетов показывает только messages_count, детали подгружают сообщения постранично
+Этап 8. Исправить getResolvedAt для reopened (Средне)
+Проблема: При статусе reopened поле resolved_at остаётся старым.
+Что сделать:
+JavaScript
+function getResolvedAt(status, currentResolvedAt) {
+  if (status === 'resolved' || status === 'closed') return new Date()
+  if (status === 'reopened') return null
+  return currentResolvedAt
+}
+Этап 9. Улучшить createTicket — fallback настроек (Средне)
+Проблема: await getSettings() блокирует создание тикета.
+Что сделать:
+Добавить in-memory кэш для настроек с TTL (например, 60 секунд)
+При ошибке getSettings() — использовать дефолтные значения:
+JavaScript
+const settings = await getSettings().catch(() => ({}))
+const base = Number(settings.SLA_RESPONSE_HOURS) || 4
+Этап 10. Исправить имена файлов — crypto вместо Math.random() (Средне)
+Что сделать:
+JavaScript
+import { randomUUID } from 'crypto'
+// filename: randomUUID() + '-' + file.originalname
+Этап 11. Добавить await и логирование в оставшиеся роуты (Мелочи)
+Проблема: Роуты updateStatus, updatePriority, updateAssign, addMessage не логируют ошибки.
+Что сделать:
+Добавить logger.error(...) во все catch блоки
+Убедиться, что все асинхронные операции (уведомления, кэш-инвалидация) имеют await или .catch()
+Этап 12. Проверка существования тикета перед созданием сообщения (Мелочи)
+Что сделать:
+JavaScript
+const ticketExists = await prisma.tickets.count({ where: { id: ticketId } })
+if (!ticketExists) return res.status(404).json({ success: false, message: 'Ticket not found' })
+Критерии готовности
+[ ] Все API-ответы в формате { success, data } без дублирования
+[ ] Все notify* вызовы с await и try/catch
+[ ] updatePriority и updateAssign используют сервисные функции
+[ ] GET /:id проверяет права доступа, super_admin видит всё
+[ ] DELETE message включает super_admin
+[ ] getLeastLoadedAssignee без raw SQL или с параметризацией
+[ ] listTickets не загружает сообщения, getTicketById пагинирует их
+[ ] resolved_at сбрасывается при reopened
+[ ] Все catch блоки логируют ошибки через logger.error
+[ ] Тесты проходят (coverage не падает)

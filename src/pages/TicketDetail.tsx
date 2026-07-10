@@ -31,6 +31,36 @@ import {
 import type { TicketStatus, TicketPriority } from '@/types'
 import { API_URL } from '@/lib/api'
 
+function mapTicketDetail(raw: any): Ticket {
+  return {
+    id: raw.id,
+    title: raw.title,
+    description: raw.description,
+    status: raw.status,
+    priority: raw.priority,
+    category: raw.category,
+    tags: [],
+    computerName: raw.computer_name,
+    userAccount: raw.user_account,
+    createdBy: { id: raw.created_by, name: raw.created_by_name || 'User', email: '', avatar: '' },
+    assignedTo: raw.assigned_to ? { id: raw.assigned_to, name: raw.assigned_name || '', email: raw.assigned_email || '', avatar: raw.assigned_avatar || '' } : undefined,
+    messages: Array.isArray(raw.messages) ? raw.messages.map((m: any) => ({
+      id: m.id,
+      ticketId: m.ticket_id,
+      senderId: m.sender_id,
+      senderName: m.sender_name,
+      senderAvatar: m.sender_avatar || '',
+      text: m.text,
+      attachments: m.attachments ? (typeof m.attachments === 'string' ? JSON.parse(m.attachments) : m.attachments) : [],
+      createdAt: m.created_at,
+      isInternal: !!m.is_internal,
+    })) : [],
+    messages_count: raw.messages_count || (Array.isArray(raw.messages) ? raw.messages.length : 0),
+    createdAt: raw.created_at,
+    updatedAt: raw.updated_at,
+  }
+}
+
 export default function TicketDetail() {
   const { t } = useTranslation()
   const { id } = useParams()
@@ -38,7 +68,24 @@ export default function TicketDetail() {
   const { tickets, employees, updateTicketStatus, updateTicketPriority, assignTicket, addMessage } = useTickets()
   const { canManage, token } = useAuth()
   const { socket } = useSocket()
-  const ticket = tickets.find((t) => t.id === Number(id))
+  const [detailTicket, setDetailTicket] = useState<Ticket | null>(null)
+  const [detailLoading, setDetailLoading] = useState(true)
+  const ctxTicket = tickets.find((t) => t.id === Number(id))
+  const ticket = detailTicket || ctxTicket
+
+  useEffect(() => {
+    if (!id || !token) return
+    setDetailLoading(true)
+    fetch(`${API_URL}/tickets/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(json => {
+        if (json?.data) {
+          setDetailTicket(mapTicketDetail(json.data))
+        }
+      })
+      .catch(() => {})
+      .finally(() => setDetailLoading(false))
+  }, [id, token])
 
   const [messageText, setMessageText] = useState('')
   const [isInternal, setIsInternal] = useState(false)
@@ -63,6 +110,14 @@ export default function TicketDetail() {
       socket.off('ticket:message', onMessage)
     }
   }, [socket, ticket])
+
+  if (detailLoading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    )
+  }
 
   if (!ticket) {
     return (

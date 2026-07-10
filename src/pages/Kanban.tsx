@@ -106,7 +106,7 @@ export default function KanbanPage() {
                     <div className="flex items-center gap-2">
                       <span className="flex items-center gap-1">
                         <MessageSquare className="w-3 h-3" />
-                        {ticket.messages.length}
+                        {ticket.messages_count ?? ticket.messages.length}
                       </span>
                       {ticket.assignedTo && (
                         <span className="flex items-center gap-1">

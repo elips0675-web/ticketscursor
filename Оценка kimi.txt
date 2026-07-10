@@ -1,0 +1,202 @@
+Вот детальный code review tickets.js и tickets.service.js.
+tickets.js — Code Review
+🔴 Критичные проблемы
+1. Неконсистентный формат API-ответов
+JavaScript
+// Строка 59: дублирование данных
+res.json({
+  success: true,
+  data: mapped,
+  ...mapped,  // ← data и поля тикета на одном уровне — мусор в ответе
+})
+
+// Строка 81: аналогично
+res.status(201).json({ success: true, data: ticket, ...ticket })
+
+// Строка 178: тоже
+res.status(201).json({ success: true, data: msg, ...msg })
+Проблема: ...ticket/...msg/...mapped разворачивает все поля объекта в корень ответа. Получается { success, data, id, title, description, ... } — клиент получает данные дважды (в data и на верхнем уровне). Это баг, не фича.
+Фикс:
+JavaScript
+res.json({ success: true, data: mapped })  // убрать spread
+2. Отсутствие await при асинхронных операциях без обработки
+JavaScript
+// Строка 75: notifyTicketCreated — fire-and-forget без await
+notifyTicketCreated(ticket.id, req.user.name)
+if (autoAssignedTo) {
+  notifyTicketAssigned(ticket.id, autoAssignedTo, req.user.name)
+}
+Проблема: Если уведомление упадёт (SMTP недоступен, Telegram API лагает) — ошибка не поймается, но и не обработается. Лучше await с try/catch или .catch() для логирования.
+Фикс:
+JavaScript
+try {
+  await notifyTicketCreated(ticket.id, req.user.name)
+  if (autoAssignedTo) {
+    await notifyTicketAssigned(ticket.id, autoAssignedTo, req.user.name)
+  }
+} catch (notifyErr) {
+  logger.warn('Notification failed:', notifyErr)
+  // не ломаем создание тикета из-за уведомления
+}
+3. getIO()?.emit() — silent fail
+JavaScript
+// Везде: getIO()?.emit('ticket:created', ...)
+Проблема: Если Socket.io не инициализирован (getIO() вернёт null/undefined), эмит просто пропустится без лога. Клиент не узнает об обновлении.
+Фикс:
+JavaScript
+const io = getIO()
+if (io) {
+  io.emit('ticket:created', { ...ticket, messages: [] })
+} else {
+  logger.warn('Socket.io not available, ticket:created not emitted')
+}
+4. Нет проверки прав на чтение тикета
+JavaScript
+// Строка 51: router.get('/:id', ...)
+// Нет проверки: может ли текущий пользователь видеть ЭТОТ тикет?
+Проблема: Любой аутентифицированный пользователь может прочитать любой тикет по ID. Нет проверки:
+Является ли пользователь создателем?
+Назначен ли он на тикет?
+Есть ли у него роль admin/senior_agent?
+Фикс: Добавить middleware или проверку в getTicketById:
+JavaScript
+// В сервисе или роуте:
+if (req.user.role === 'agent' && ticket.assigned_to !== req.user.userId && ticket.created_by !== req.user.userId) {
+  return res.status(403).json({ success: false, message: 'Forbidden' })
+}
+5. updateStatus — нет await на notifyStatusChanged
+JavaScript
+// Строка 96: notifyStatusChanged без await
+notifyStatusChanged(Number(req.params.id), old.status, status, req.user.name)
+Та же проблема, что и п.2.
+6. updatePriority — прямой доступ к Prisma в роуте
+JavaScript
+// Строка 104-108: бизнес-логика в роуте
+const old = await prisma.tickets.findUnique(...)
+await prisma.tickets.update(...)
+Проблема: Нарушение принципа controllers → services → repositories. Этот код должен быть в tickets.service.js.
+7. updateAssign — та же проблема
+JavaScript
+// Строка 120-130: прямые запросы Prisma в роуте
+8. delete message — нет проверки роли super_admin
+JavaScript
+// Строка 186:
+const isAdmin = req.user.role === 'admin' || req.user.role === 'senior_agent'
+Проблема: super_admin не может удалять чужие сообщения? Иерархия ролей нарушена.
+Фикс:
+JavaScript
+const isAdmin = ['super_admin', 'admin', 'senior_agent'].includes(req.user.role)
+9. upload — нет authenticateToken?
+JavaScript
+// Строка 140: router.post('/upload', upload.single('file'), validateUpload, ...)
+Проблема: Между router.use(authenticateToken) и router.post('/upload'...) нет явной проверки. router.use(authenticateToken) применяется ко всем роутам ниже, так что тут ОК. Но стоит проверить, что req.user доступен в validateUpload.
+10. addMessage — нет проверки существования тикета
+JavaScript
+// Строка 149: создаём сообщение без проверки, существует ли тикет
+const msg = await prisma.ticket_messages.create({...})
+Проблема: Можно создать сообщение для несуществующего ticket_id — внешний ключ кинет ошибку, но это 500, а не 404.
+🟡 Средние проблемы
+11. limit до 10 000 — потенциальная DDoS-уязвимость
+JavaScript
+// Строка 45: limit = Math.min(10000, ...)
+Проблема: 10 000 записей за раз — это много. Для API лучше жёсткий лимит 100-500, а для экспорта — отдельный эндпоинт.
+12. Math.random() в имени файла — не криптографически безопасен
+JavaScript
+// Строка 32: Math.round(Math.random() * 1E9)
+Проблема: Коллизии возможны при высокой нагрузке. Лучше crypto.randomUUID() или crypto.randomBytes(16).toString('hex').
+13. res.status(500) без логирования в некоторых роутах
+JavaScript
+// Строка 100: updateStatus — нет logger.error
+// Строка 112: updatePriority — нет logger.error
+// Строка 135: updateAssign — нет logger.error
+// Строка 170: addMessage — нет logger.error
+// Строка 195: deleteMessage — есть logger.error (хорошо)
+🟢 Мелочи
+14. Number(req.params.id) повторяется 10+ раз
+Фикс: Вынести в middleware или в начало обработчика:
+JavaScript
+const ticketId = Number(req.params.id)
+if (!Number.isFinite(ticketId)) return res.status(400).json(...)
+tickets.service.js — Code Review
+🔴 Критичные проблемы
+1. getLeastLoadedAssignee — raw SQL без параметризации
+JavaScript
+// Строка 35-46: prisma.$queryRaw`...`
+Проблема: Хотя здесь нет пользовательского ввода, prisma.$queryRaw без параметров — риск. Если когда-то добавите фильтр — SQL-инъекция.
+Фикс: Использовать prisma.$queryRawUnsafe только если нужно, или переписать на Prisma query:
+JavaScript
+// Альтернатива без raw SQL:
+const employees = await prisma.employees.findMany({
+  where: { is_active: true, role: { in: ['agent', 'senior_agent'] } },
+  include: { _count: { select: { assigned_tickets: { where: { status: { in: ['open', 'in_progress'] } } } } } },
+  orderBy: { assigned_tickets: { _count: 'asc' } },
+  take: 1,
+})
+2. listTickets — N+1 потенциально
+JavaScript
+// Строка 50-66: findMany с include ticket_messages
+Проблема: Каждый тикет загружает ВСЕ свои сообщения. Если у тикета 1000 сообщений — это огромная нагрузка. Лучше:
+Отдельный эндпоинт для сообщений тикета
+Или take: 5 для preview
+3. getTicketById — та же проблема с сообщениями
+JavaScript
+// Строка 79-91: загружает все сообщения
+4. createTicket — getSettings() блокирует создание
+JavaScript
+// Строка 95: const settings = await getSettings()
+Проблема: Если getSettings() упадёт (Redis недоступен, БД лагает) — тикет не создастся. Настройки лучше кэшировать в памяти с fallback.
+5. updateTicketStatus — race condition
+JavaScript
+// Строка 116-128:
+const old = await prisma.tickets.findUnique(...)
+// ...логика...
+await prisma.tickets.update({ where: { id }, data: updateData })
+Проблема: Между findUnique и update статус могут изменить. Лучше использовать транзакцию или update с where проверкой.
+🟡 Средние проблемы
+6. getSlaHours — magic numbers
+JavaScript
+// Строка 15-25: base * 0.5, base * 4, base * 2
+Проблема: Коэффициенты захардкожены. Лучше вынести в настройки.
+7. getResolvedAt — не учитывает reopened
+JavaScript
+// Строка 27-29:
+function getResolvedAt(status) {
+  return status === 'resolved' || status === 'closed' ? new Date() : null
+}
+Проблема: Если тикет был resolved, потом reopened — resolved_at останется старым. Нужно сбрасывать в null при reopened.
+8. mapTicketRow — мутирует объект
+JavaScript
+// Строка 31-39:
+return {
+  ...r,
+  assigned_to_employee: undefined,  // ← мутирует структуру
+  ticket_messages: undefined,
+}
+Проблема: undefined поля всё равно присутствуют в объекте (со значением undefined). Лучше деструктуризация:
+JavaScript
+const { assigned_to_employee, ticket_messages, ...rest } = r
+return {
+  ...rest,
+  assigned_name: assigned_to_employee?.name || null,
+  // ...
+}
+📊 Итоговая сводка
+Table
+Файл	Критично	Средне	Мелочи	Итог
+tickets.js	10	3	1	6.5/10
+tickets.service.js	5	3	0	7/10
+Главные проблемы:
+Дублирование данных в API-ответах (...ticket, ...msg, ...mapped) — баг
+Fire-and-forget уведомления — без await и обработки ошибок
+Бизнес-логика в роутах (updatePriority, updateAssign) — нарушение архитектуры
+Нет проверки прав на чтение тикета — любой видит любой
+Raw SQL без параметризации — риск SQL-инъекции при расширении
+Загрузка всех сообщений в списке тикетов — потенциальная DDoS-уязвимость
+Что хорошо:
+Есть сервисный слой (начат)
+Prisma используется корректно (типобезопасность)
+Логирование присутствует (не везде, но есть)
+Кэш-инвалидация на мутациях
+Audit log на ключевых операциях
+Рекомендация:
+Перед production нужно закрыть пункты 1-5. Остальное — рефакторинг
