@@ -280,7 +280,7 @@
 
 - **E2E (Playwright)**
   - 5 файлов: login, tickets, chats, admin, sla-autoassign-export
-  - 22 теста
+  - 14 тестов
 
 - **Coverage (v8)**
   - Пороги: statements 20%, branches 15%, functions 15%, lines 25%
@@ -497,4 +497,4 @@
 ---
 
 *Автор: [elips0675-web](https://github.com/elips0675-web)*
-*Репозиторий: [ticketsCursor](https://github.com/elips0675-web/ticketsCursor)*
+*Репозиторий: [ticketscursor](https://github.com/elips0675-web/ticketscursor)*

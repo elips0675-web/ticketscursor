@@ -32,7 +32,7 @@
 | **Frontend** | React | 18.3 | UI фреймворк, Concurrent Features |
 | | TypeScript | 5.x | Типобезопасность, strict mode |
 | | Vite | 5.x | Сборка, HMR, PWA |
-| | Tailwind CSS | 4.x | CSS-first подход, @theme |
+| | Tailwind CSS | 3.x | CSS-first подход, @theme |
 | | shadcn/ui | latest | Компоненты на Radix UI |
 | | Framer Motion | latest | Анимации |
 | | Recharts | 2.x | Графики дашборда |
@@ -834,38 +834,28 @@ Sentry.init({
 ### Docker Compose (Production)
 
 ```yaml
-version: '3.8'
-
 services:
   mysql:
     image: mysql:8.4
+    container_name: sd-mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: service_desk
+      MYSQL_DATABASE: servicedesk
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./server/prisma/seed.sql:/docker-entrypoint-initdb.d/seed.sql
+      - ./server/seed.sql:/docker-entrypoint-initdb.d/seed.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis_data:/data
-
   api:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-      target: production
+    build: ./server
+    container_name: sd-api
     environment:
-      - NODE_ENV=production
-      - DATABASE_URL=mysql://root:${MYSQL_ROOT_PASSWORD}@mysql:3306/service_desk
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=${JWT_SECRET}
+      NODE_ENV: production
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
       mysql:
         condition: service_healthy
@@ -876,9 +866,8 @@ services:
       retries: 3
 
   frontend:
-    build:
-      context: .
-      dockerfile: server/docker/Dockerfile.nginx
+    build: .
+    container_name: sd-frontend
     ports:
       - "80:80"
     depends_on:
@@ -886,7 +875,7 @@ services:
 
 volumes:
   mysql_data:
-  redis_data:
+  uploads_data:
 ```
 
 ### Kubernetes

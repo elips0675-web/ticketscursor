@@ -1,13 +1,13 @@
 # Service Desk — корпоративная система тикетов
 
-[![CI](https://github.com/elips0675-web/ticketsCursor/actions/workflows/ci.yml/badge.svg)](https://github.com/elips0675-web/ticketsCursor/actions)
-[![Coverage](https://img.shields.io/badge/coverage-25%25-yellow)](https://github.com/elips0675-web/ticketsCursor)
+[![CI](https://github.com/elips0675-web/ticketscursor/actions/workflows/ci.yml/badge.svg)](https://github.com/elips0675-web/ticketscursor/actions)
+[![Coverage](https://img.shields.io/badge/coverage-25%25-yellow)](https://github.com/elips0675-web/ticketscursor)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)]()
 [![Docker](https://img.shields.io/badge/docker-ready-green.svg)]()
 
 > Production-ready helpdesk с real-time чатами, SLA-эскалацией, RBAC и полнотекстовым поиском
 
-[🚀 Live Demo](https://...) • [📖 API Docs](https://.../api/docs) • [📸 Screenshots](#screenshots)
+[📖 API Docs](/api/docs) • [📸 Screenshots](#screenshots)
 
 ---
 
@@ -66,7 +66,7 @@
 ### Docker (Production)
 
 ```bash
-git clone https://github.com/elips0675-web/ticketsCursor.git
+git clone https://github.com/elips0675-web/ticketscursor.git
 cd ticketsCursor
 cp server/.env.example server/.env
 # Отредактируйте DATABASE_URL, JWT_SECRET, REDIS_URL
@@ -92,7 +92,7 @@ cd .. && npm run dev          # → http://localhost:5173
 ### E2E тесты
 
 ```bash
-npx playwright install chromium
+npx playwright install
 npm run test:e2e
 ```
 
@@ -169,16 +169,16 @@ npm run test:e2e
 ## 📁 Структура проекта
 
 ```
-ticketsCursor/
-├── client/                    # React 18 + Vite + Tailwind
-│   ├── src/
-│   │   ├── components/        # UI компоненты (shadcn/ui)
-│   │   ├── pages/             # Страницы приложения
-│   │   ├── hooks/             # Кастомные хуки
-│   │   ├── contexts/          # React Context (auth, tickets, etc.)
-│   │   ├── __tests__/         # Unit тесты (Vitest + MSW)
-│   │   └── i18n/              # Русский / Английский
-│   └── playwright/            # E2E тесты
+ticketscursor/
+├── src/                       # React 18 + Vite + Tailwind
+│   ├── components/            # UI компоненты (shadcn/ui)
+│   ├── pages/                 # Страницы приложения
+│   ├── hooks/                 # Кастомные хуки
+│   ├── contexts/              # React Context (auth, tickets, etc.)
+│   ├── __tests__/             # Unit тесты (Vitest + MSW)
+│   └── i18n/                  # Русский / Английский
+│
+├── e2e/                       # Playwright E2E тесты
 │
 ├── server/                    # Express + Prisma + MySQL
 │   ├── src/
@@ -220,4 +220,4 @@ MIT © 2026
 
 ---
 
-**Стек:** React 18 · TypeScript 5 · Vite · Tailwind CSS v4 · shadcn/ui · Express · Prisma · MySQL 8 · Socket.io · Redis · Docker · Kubernetes · Playwright
+**Стек:** React 18 · TypeScript 5 · Vite · Tailwind CSS 3 · shadcn/ui · Express · Prisma · MySQL 8 · Socket.io · Redis · Docker · Kubernetes · Playwright
