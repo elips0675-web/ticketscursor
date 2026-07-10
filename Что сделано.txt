@@ -228,7 +228,8 @@
     ✅ Multer: limits.fileSize (files 50MB, wiki 10MB, tickets 20MB) + fileFilter по MIME-типам + file-type magic bytes
 
   Тестирование:
-    ✅ 47 клиентских (14 файлов, vitest + MSW) + 17 серверных тестов
+    ✅ 47 клиентских (14 файлов, vitest + MSW) + 93 серверных тестов (5 файлов)
+    ✅ 4 сервисных теста: chats, employees, news, calendar
     ✅ E2E: login, tickets, chats, admin (Playwright)
     ✅ Coverage (v8) c порогами
     ✅ CI гоняет клиентские тесты, поднимает MySQL 8.4 + seed.sql
@@ -297,7 +298,7 @@
     ✅ Миграции БД: knex
     ✅ Prisma: все 13 роутов + socket/audit/settings на Prisma
     ✅ CI/CD: GitHub Actions
-    ✅ Тесты: 47 клиентских (14 файлов, MSW) + 17 серверных + E2E (4 файла)
+    ✅ Тесты: 47 клиентских (14 файлов, MSW) + 93 серверных (5 файлов) + E2E (4 файла)
     ✅ Покрытие: v8 с порогами
     ✅ LDAP/AD: ldapjs, auto-provisioning, админка
 
@@ -384,9 +385,11 @@
    🟢 Этап H — Skeleton loaders
      [ ] Tickets, News, Wiki, Files, Employees, Chats — skeleton-компоненты
 
-   🔴 Этап I — Покрытие тестов 50%+
-     [ ] Серверные тесты: 17 → 50 (auth, tickets, chats, files, admin)
-     [ ] Клиентские тесты: 47 → 70+
+   🔴 🔄 Этап I — Покрытие тестов 50%+
+     ✅ Серверные тесты: 17 → 93 (5 файлов: 4 сервисных + api.test.js)
+     ✅ 4 сервисных теста: chats, employees, news, calendar
+     ✅ API тесты расширены: auth, RBAC, поиск, уведомления, push, валидация
+     🔄 Клиентские тесты: 47 → 70+
      [ ] E2E: эскалация SLA, автоназначение, экспорт
 
    🟡 Этап J — CI/CD + инфраструктура
