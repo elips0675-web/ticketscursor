@@ -75,7 +75,7 @@
   - `updateTicketStatus`, `updateTicketPriority`, `assignTicket`: rollback при ошибке
   - Все мутации с `onSettled: () => queryClient.invalidateQueries`
 
-### 🧪 Клиентские тесты 47 → 70+ (Этап I)
+### 🧪 Клиентские тесты 47 → 71+ (Этап I)
 
 - 9 новых тестовых файлов:
   - `NewTicket.test.tsx`, `Register.test.tsx`, `Files.test.tsx`
@@ -268,7 +268,7 @@
 ### 🧪 Тестирование
 
 - **Клиентские тесты**
-  - 70 тестов, 23 файла
+  - 71 тест, 23 файла
   - Vitest + jsdom + MSW
   - ✅ Все пройдены
 
@@ -279,8 +279,8 @@
   - ✅ Все пройдены
 
 - **E2E (Playwright)**
-  - 4 файла: login, tickets, chats, admin
-  - 13 тестов
+  - 5 файлов: login, tickets, chats, admin, sla-autoassign-export
+  - 22 теста
 
 - **Coverage (v8)**
   - Пороги: statements 20%, branches 15%, functions 15%, lines 25%
@@ -340,6 +340,12 @@
 - Keyboard + `role="button"` + `tabIndex` на кликабельных карточках
 - Radix Tabs (Employees)
 - Dropzone с клавиатурной a11y
+
+### 📋 Внешний аудит (Kimi AI)
+
+- Проведён комплексный внешний аудит кода и архитектуры — **общая оценка 7.7/10**
+- Большинство рекомендаций выполнено в рамках предыдущих этапов
+- **Остались:** API versioning (`/api/v1/`), замена `setInterval` на BullMQ для фоновых задач
 
 ---
 
@@ -420,7 +426,7 @@
 
 ### Этап I — Покрытие тестов 50%+ ✅
 - [x] Серверные: 17 → 93 теста (5 файлов, 4 сервисных)
-- [x] Клиентские: 47 → 70 (23 файла)
+- [x] Клиентские: 47 → 71 (23 файла)
 - [x] E2E: эскалация SLA, автоназначение, экспорт (e2e/sla-autoassign-export.spec.ts)
 
 ### Этап J — Инфраструктура ✅

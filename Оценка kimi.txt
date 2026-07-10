@@ -1,0 +1,121 @@
+Проведу комплексную оценку проекта Service Desk по архитектуре, стеку, качеству кода и готовности к production.
+🔍 Общая оценка
+Table
+Критерий	Оценка	Комментарий
+Архитектура	⭐⭐⭐⭐☆ (8/10)	Чистая архитектура routes→services→repositories, хорошая структура
+Безопасность	⭐⭐⭐⭐☆ (8/10)	JWT+refresh, RBAC, rate limiting, Helmet, Zod, аудит — всё на месте
+Качество кода	⭐⭐⭐⭐☆ (7.5/10)	Strict TS, тонкие контроллеры, но покрытие тестов низкое
+Real-time	⭐⭐⭐⭐☆ (8/10)	Socket.IO с JWT handshake, комнаты, Redis adapter
+Инфраструктура	⭐⭐⭐⭐☆ (8/10)	Docker, K8s, CI/CD, graceful shutdown — production-ready
+Документация	⭐⭐⭐⭐⭐ (9/10)	Отличная документация: TECHNICAL, README, CONTRIBUTING, CHANGELOG
+Готовность к prod	⭐⭐⭐⭐☆ (7.5/10)	Хорошо, но нужно доработать покрытие тестов и некоторые моменты
+Итог: 7.7/10 — Солидный production-ready проект с хорошей архитектурой и документацией. Основные риски: низкое покрытие тестами и несколько архитектурных компромиссов.
+✅ Сильные стороны
+1. Архитектура backend
+Чистая архитектура с разделением routes → services → repositories (Prisma)
+Тонкие контроллеры — только валидация + вызов сервиса + форматирование ответа
+Единый формат API-ответов { success, data } / { success: false, message } — удобно для фронтенда
+Централизованная обработка ошибок через middleware вместо try-catch в каждом контроллере
+RBAC с иерархией — hasRole() utility, super_admin проходит все проверки
+2. Безопасность
+JWT dual-token: access (15min) + refresh (7d, httpOnly cookie) — правильно
+Zod валидация на всех 15 схемах — защита от инъекций и невалидных данных
+Rate limiting по уровням: auth (10/мин), API (100/мин), admin (30/мин)
+Helmet + CORS whitelist — базовая защита HTTP-заголовков
+Файлы: MIME-фильтр + magic bytes + опциональный ClamAV — хорошая глубина защиты
+Аудит логирование всех действий с IP-адресами
+3. Real-time
+Socket.IO с JWT handshake — правильная аутентификация WebSocket
+Комнаты по сущностям (chat:{id}, ticket:{id}, employee:{id})
+Redis adapter для масштабирования + in-memory fallback
+Rate limiting WebSocket (5 msg/sec) с exponential backoff
+4. Инфраструктура
+Docker multi-stage с non-root user
+Docker Compose с healthcheck для всех сервисов
+Kubernetes manifests — ConfigMap, Secret, Deployment (2 replicas), Ingress
+Graceful shutdown — SIGTERM/SIGINT обработка, закрытие соединений
+GitHub Actions CI/CD — lint → typecheck → test → build
+Winston логирование с ротацией + Request ID проброс
+5. Фичи
+SLA с эскалацией — фоновая проверка каждые 15 мин, дедупликация 24ч
+Автоназначение — наименее загруженный агент через Prisma count
+FULLTEXT поиск по 6 таблицам с fallback на LIKE
+Storage Adapter Pattern — S3/MinIO или локальный диск
+Унифицированные уведомления — in-app + email + telegram + push
+⚠️ Зоны риска и замечания
+1. Покрытие тестами — КРИТИЧНО
+plain
+Клиент:  47 тестов, 14 файлов  → покрытие ~20%
+Сервер:  93 теста, 5 файлов    → покрытие ~25%
+E2E:     13 тестов, 4 файла
+Пороги установлены заведомо низкими (20% statements, 15% branches) — это признание проблемы, не решение
+Нет тестов на UI-компоненты, WebSocket, SLA-эскалацию, автоназначение, файловую загрузку
+Рекомендация: приоритет Этапу I — довести до 50%+
+2. Стек frontend — устаревшие паттерны
+Table
+Документация	Реальность	Проблема
+Zustand / Context	Context для всего	Context API не масштабируется для большого state, нет кэширования, нет optimistic updates
+fetch напрямую	Без TanStack Query	Ручное управление loading/error/cache, дублирование кода
+Нет useTransition	Упоминается в стеке	Не используется для неблокирующих обновлений
+Контраст с вашим основным стеком (Next.js 15, App Router, TanStack Query) — здесь Vite + Context, что для корпоративного приложения с 17 моделями — узкое место.
+3. Backend — Express в 2026 году
+Express 4.x — устаревший. В 2026 году предпочтительнее:
+Fastify — в 2-3 раза быстрее, встроенная валидация, лучше с async/await
+NestJS — модульная архитектура, DI, готовые решения для микросервисов
+Hono — лёгкий, edge-ready
+Express 4 не имеет встроенной поддержки async error handling (нужен express-async-errors или обёртки)
+4. MySQL FULLTEXT — ограничения
+MySQL FULLTEXT хорош для простого поиска, но:
+Нет fuzzy search (опечатки)
+Нет ранжирования по релевантности с кастомными весами
+Для 100k+ записей производительность падает
+Рекомендация: заложить миграцию на Meilisearch или Elasticsearch (Этап K?)
+5. Фоновые задачи — setInterval
+JavaScript
+// Проверка SLA каждые 15 мин
+setInterval(async () => { ... }, 15 * 60 * 1000);
+
+// Очистка уведомлений каждые 6 часов
+setInterval(async () => { ... }, 6 * 60 * 60 * 1000);
+setInterval — ненадёжно для production: при ошибке в callback таймер останавливается, нет retry, нет распределённого выполнения
+Рекомендация: BullMQ (Redis-based queue) или node-cron + Agenda для фоновых задач
+6. Кэширование — потенциальные race conditions
+JavaScript
+// Инвалидация: delPattern('tickets:*')
+await cache.delPattern('tickets:*');
+delPattern на Redis — SCAN + DEL, не атомарно
+При высокой нагрузке возможно чтение stale data между delPattern и set
+Рекомендация: cache-aside с TTL + версионирование, или использование Redis Streams для инвалидации
+7. Prisma — N+1 риски
+getLeastLoadedAssignee использует tickets: { _count: 'asc' } — Prisma делает подзапрос, ок
+Но в listTickets с пагинацией + связями (assignee, requester, messages) — возможен N+1
+Рекомендация: include с осторожностью, использовать findMany + select вместо тяжёлых include
+8. Отсутствие API versioning
+Все роуты /api/* без версии — при breaking changes сломается фронтенд
+Рекомендация: /api/v1/* или /api/v2/* с самого начала
+📊 Сравнение с best practices
+Table
+Аспект	Проект	Best Practice 2026	Статус
+Frontend state	Context API	TanStack Query + Zustand	⚠️ Устарело
+Backend framework	Express 4	Fastify / NestJS / Elysia	⚠️ Устарело
+Тесты	25% покрытие	70%+ unit, 80%+ critical paths	❌ Ниже нормы
+Фоновые задачи	setInterval	BullMQ / Temporal / Agenda	⚠️ Риск
+Поиск	MySQL FULLTEXT	Meilisearch / Elasticsearch	⚠️ Масштаб
+API версионирование	Нет	/api/v1/	⚠️ Техдолг
+ORM	Prisma 5.22	Prisma 6+ (производительность)	✅ Актуально
+🎯 Рекомендации по приоритетам
+🔴 High (до production)
+Покрытие тестов 50%+ — критично для корпоративного ПО
+Заменить setInterval на BullMQ — надёжность фоновых задач
+Добавить API versioning (/api/v1/)
+🟡 Medium (первые 3 месяца после релиза)
+Миграция state management на TanStack Query — кэширование, optimistic updates, deduping
+Рассмотреть Fastify вместо Express для новых сервисов
+Meilisearch для глобального поиска (fuzzy, typo-tolerance)
+🟢 Low (техдолг)
+Skeleton loaders для всех списков (Этап H)
+Prometheus + Grafana метрики (Этап J)
+Роль requester (Этап F)
+🏁 Вывод
+Service Desk — это зрелый, хорошо спроектированный проект с продуманной архитектурой, безопасностью и инфраструктурой. Документация на высшем уровне. Основные проблемы — низкое покрытие тестами и устаревшие паттерны на фронтенде (Context вместо TanStack Query). Backend на Express в 2026 году — допустимо, но не оптимально.
+Готовность к production: условная — можно деплоить, но с планом доведения тестов до 50%+ в первый месяц.
