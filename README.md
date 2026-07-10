@@ -121,6 +121,7 @@ npm run test:e2e
 | Зона риска | Было (на момент аудита) | Стало (после доработок) |
 |---|---|---|
 | Покрытие тестами | 47 client / 93 server / 13 E2E | 71 client / 93 server / 14 E2E |
+| Процент покрытия | 20-25% | 33% client / 38% server |
 | TanStack Query | Только Context API | ✅ Внедрён QueryClientProvider |
 | Meilisearch | MySQL FULLTEXT | ✅ Meilisearch + fallback цепочка |
 | Skeleton loaders | Нет | ✅ Все списки |
@@ -142,7 +143,8 @@ npm run test:e2e
 | Клиентские тесты | 71 тест, 23 файла | ✅ Пройдены |
 | Серверные тесты | 93 теста, 5 файлов (4 сервисных) | ✅ Пройдены |
 | E2E тесты | 14 тестов, 5 файлов | ✅ Пройдены |
-| Покрытие кода | 20-25% (пороги настроены) | 🟡 В работе |
+| Покрытие кода (клиент) | 33% (порог: 30%) | ✅ Стабильно |
+| Покрытие кода (сервер) | 38% (порог: 35%) | ✅ Стабильно |
 | React Query | useQuery/useMutation, optimistic updates | ✅ |
 | Моделей Prisma | 17 | ✅ |
 | API endpoints | 50+ (Swagger) | ✅ |

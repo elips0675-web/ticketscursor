@@ -6,5 +6,17 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.js'],
     testTimeout: 10000,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      include: ['src/**/*.js'],
+      exclude: ['src/**/*.test.js', 'src/prisma/**', 'src/__tests__/**'],
+      thresholds: {
+        statements: 35,
+        branches: 25,
+        functions: 35,
+        lines: 38,
+      },
+    },
   },
 })

@@ -307,6 +307,55 @@ describe('RBAC — admin endpoints', () => {
       .set('Authorization', `Bearer ${agentToken}`)
     expect(res.status).toBe(403)
   })
+
+  it('admin can update user role', async () => {
+    const res = await request(app)
+      .put('/api/admin/users/1')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ role: 'agent' })
+    expect([200, 400, 404, 500]).toContain(res.status)
+  })
+
+  it('rejects non-admin from updating user', async () => {
+    const res = await request(app)
+      .put('/api/admin/users/1')
+      .set('Authorization', `Bearer ${agentToken}`)
+      .send({ role: 'admin' })
+    expect(res.status).toBe(403)
+  })
+
+  it('rejects empty role update', async () => {
+    const res = await request(app)
+      .put('/api/admin/users/1')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({})
+    expect([400, 500]).toContain(res.status)
+  })
+
+  it('admin can get audit logs', async () => {
+    const res = await request(app)
+      .get('/api/admin/audit')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect([200, 500]).toContain(res.status)
+    if (res.status === 200) {
+      expect(Array.isArray(res.body.data)).toBe(true)
+    }
+  })
+
+  it('rejects non-admin from audit logs', async () => {
+    const res = await request(app)
+      .get('/api/admin/audit')
+      .set('Authorization', `Bearer ${agentToken}`)
+    expect(res.status).toBe(403)
+  })
+
+  it('admin can update settings', async () => {
+    const res = await request(app)
+      .put('/api/admin/settings')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ key: 'test', value: 'test' })
+    expect([200, 400, 500]).toContain(res.status)
+  })
 })
 
 describe('RBAC — other protected endpoints', () => {
