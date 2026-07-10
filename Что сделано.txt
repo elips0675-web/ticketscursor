@@ -179,7 +179,7 @@
 
    • Клиентские тесты: 70 (23 файла, vitest + jsdom + MSW) — ✅ все пройдены
   • Серверные тесты: 93 (5 файлов, vitest + supertest, 4 сервисных) — ✅ все пройдены
-  • E2E (Playwright): 4 файла (login, tickets, chats, admin) — 13 тестов
+  • E2E (Playwright): 5 файлов (login, tickets, chats, admin, sla-autoassign-export) — 22 теста
   • Coverage: v8, пороги 20%/15%/15%/25% (statements/branches/functions/lines)
   • Сборка (vite build + PWA): ✅ успешно
 
@@ -230,7 +230,7 @@
   Тестирование:
     ✅ 47 клиентских (14 файлов, vitest + MSW) + 93 серверных тестов (5 файлов)
     ✅ 4 сервисных теста: chats, employees, news, calendar
-    ✅ E2E: login, tickets, chats, admin (Playwright)
+    ✅ E2E: login, tickets, chats, admin, sla-autoassign-export (Playwright) — 22 теста
     ✅ Coverage (v8) c порогами
     ✅ CI гоняет клиентские тесты, поднимает MySQL 8.4 + seed.sql
 
@@ -395,7 +395,7 @@
      ✅ 4 сервисных теста: chats, employees, news, calendar
      ✅ API тесты расширены: auth, RBAC, поиск, уведомления, push, валидация
       ✅ Клиентские тесты: 47 → 70 (23 файла)
-      [ ] E2E: эскалация SLA, автоназначение, экспорт
+      ✅ E2E: эскалация SLA, автоназначение, экспорт (e2e/sla-autoassign-export.spec.ts — 9 тестов)
 
    ✅ Этап J — CI/CD + инфраструктура
       ✅ mysql_backup volume для бэкапов в docker-compose
