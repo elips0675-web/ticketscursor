@@ -7,10 +7,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, BarChart3, CheckCheck, Loader2, X, Clock, Trash2 } from 'lucide-react'
+import { Plus, BarChart3, CheckCheck, X, Clock, Trash2 } from 'lucide-react'
 import type { Poll } from '@/types'
 import { useAuth } from '@/context/AuthContext'
 import { api } from '@/lib/api'
+import { SkeletonCardGrid } from '@/components/skeletons'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 
@@ -150,9 +151,7 @@ export default function PollsPage() {
         </Card>
       )}
 
-      {loading ? (
-        <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
-      ) : (
+      {loading ? <SkeletonCardGrid count={6} /> : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {polls.map((poll) => {
             const hasVoted = (poll.myVotes?.length || 0) > 0

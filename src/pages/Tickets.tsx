@@ -9,6 +9,7 @@ import { Search, ArrowUpDown, Filter, Plus, MessageSquare, User, Download, FileT
 import { toast } from 'sonner'
 import { useSocket } from '@/context/SocketContext'
 import { useTickets } from '@/context/ticket-context'
+import { SkeletonCardGrid } from '@/components/skeletons'
 import { useDebounce } from '@/lib/use-debounce'
 import { formatRelativeTime } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
@@ -30,7 +31,7 @@ export default function Tickets() {
     high: t('tickets.high'),
     critical: t('tickets.critical'),
   }
-  const { tickets } = useTickets()
+  const { tickets, loading } = useTickets()
   const { socket } = useSocket()
 
   useEffect(() => {
@@ -248,6 +249,7 @@ export default function Tickets() {
         </div>
       </Card>
 
+      {loading ? <SkeletonCardGrid count={PER_PAGE} /> : (
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {paged.map((ticket) => (
           <div
@@ -286,13 +288,14 @@ export default function Tickets() {
             </div>
           </div>
         ))}
-        {filtered.length === 0 && (
+        {!loading && filtered.length === 0 && (
           <div className="col-span-full text-center py-16 text-muted-foreground">
             <p className="font-bold text-sm">{t('tickets.notFound')}</p>
             <p className="text-xs mt-1">{t('tickets.tryAdjust')}</p>
           </div>
         )}
       </div>
+      )}
 
       {totalPages > 1 && page < totalPages && (
         <div className="flex justify-center pt-2">

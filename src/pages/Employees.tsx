@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTickets } from '@/context/ticket-context'
+import { SkeletonCardGrid, SkeletonTableRow } from '@/components/skeletons'
 import { useAuth } from '@/context/AuthContext'
 import { api } from '@/lib/api'
 import type { Employee } from '@/types'
@@ -44,7 +45,7 @@ const roleColors: Record<string, string> = {
 
 export default function Employees() {
   const { t } = useTranslation()
-  const { employees } = useTickets()
+  const { employees, loading } = useTickets()
   const navigate = useNavigate()
   const { token } = useAuth()
   const [search, setSearch] = useState('')
@@ -205,7 +206,9 @@ export default function Employees() {
         </span>
       </div>
 
-      {view === 'cards' ? (
+      {loading ? (
+        view === 'cards' ? <SkeletonCardGrid count={6} cols={3} /> : <div className="space-y-1"><SkeletonTableRow /><SkeletonTableRow /><SkeletonTableRow /><SkeletonTableRow /></div>
+      ) : view === 'cards' ? (
         <div className="space-y-8">
           {groupedByDept.map(([dept, emps]) => (
             <div key={dept}>

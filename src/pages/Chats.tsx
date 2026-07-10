@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
+import { Search, MessageCircle, Users, User, Clock } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Search, MessageCircle, Users, Hash, Loader2 } from 'lucide-react'
-import { formatRelativeTime } from '@/lib/utils'
-import type { ChatRoom } from '@/types'
 import { useAuth } from '@/context/AuthContext'
+import { useTranslation } from 'react-i18next'
+import { formatRelativeTime } from '@/lib/utils'
+import { SkeletonChatRow } from '@/components/skeletons'
+import type { ChatRoom } from '@/types'
 import { API_URL } from '@/lib/api'
 
 function mapChatRoom(raw: any): ChatRoom {
@@ -141,8 +140,8 @@ export default function ChatsPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <div className="space-y-1">
+          {Array.from({ length: 6 }).map((_, i) => <SkeletonChatRow key={i} />)}
         </div>
       ) : (
         <div className="space-y-1">

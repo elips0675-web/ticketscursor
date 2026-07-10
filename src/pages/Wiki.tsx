@@ -5,12 +5,13 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Search, BookOpen, Plus, Clock, User, Tag, Layers, Loader2, ImageIcon, Download } from 'lucide-react'
+import { Search, BookOpen, Plus, Clock, User, Tag, Layers, ImageIcon, Download } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import type { WikiArticle } from '@/types'
 import { useAuth } from '@/context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { api } from '@/lib/api'
+import { SkeletonCardGrid } from '@/components/skeletons'
 
 function mapArticle(raw: any): WikiArticle {
   return {
@@ -250,11 +251,7 @@ export default function WikiPage() {
         </Select>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : article ? (
+      {loading ? <SkeletonCardGrid count={6} cols={2} /> : article ? (
         <div className="rounded-xl border bg-card p-6 space-y-4">
           <div className="flex items-start justify-between">
             <div>

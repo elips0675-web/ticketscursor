@@ -4,11 +4,12 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Search, Grid3X3, List, FileText, Image, FileCode, File, Folder, Loader2, Upload, X } from 'lucide-react'
+import { Search, Grid3X3, List, FileText, Image, FileCode, File, Folder, Upload, X } from 'lucide-react'
 import type { FileItem, FileFolder } from '@/types'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { api, API_URL } from '@/lib/api'
+import { SkeletonCardGrid } from '@/components/skeletons'
 
 export default function FilesPage() {
   const { t } = useTranslation()
@@ -160,11 +161,7 @@ export default function FilesPage() {
         </CardContent>
       </Card>
 
-      {loading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
+      {loading ? <SkeletonCardGrid count={6} cols={2} /> : (
         <>
           <div className="flex flex-wrap gap-2">
             {folders.map((f) => (
