@@ -175,6 +175,9 @@ router.put('/:id/status', requireRole('admin', 'senior_agent'), updateStatusVali
     invalidateCache('cache:/api/tickets*')
     res.json({ success: true, data: { id: ticketId, status } })
   } catch (err) {
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({ success: false, message: err.message })
+    }
     logger.error('Update status error:', err)
     res.status(500).json({ success: false, message: 'Failed to update status' })
   }

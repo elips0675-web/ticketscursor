@@ -16,6 +16,14 @@ function getSlaHours(priority, category, settings) {
   return Math.max(1, Math.round(base * categoryMult * priorityMult))
 }
 
+const VALID_TRANSITIONS = {
+  open: ['open', 'in_progress', 'closed'],
+  in_progress: ['in_progress', 'resolved', 'closed'],
+  resolved: ['resolved', 'closed', 'reopened'],
+  closed: ['closed', 'reopened'],
+  reopened: ['reopened', 'in_progress', 'closed'],
+}
+
 function getResolvedAt(status, currentResolvedAt) {
   if (status === 'resolved' || status === 'closed') return new Date()
   if (status === 'reopened') return null
@@ -58,6 +66,11 @@ export async function listTickets({ page, limit, userId, role }) {
   const where = {}
   if (role === 'requester') {
     where.created_by = userId
+  } else if (role === 'agent') {
+    where.OR = [
+      { assigned_to: userId },
+      { assigned_to: null },
+    ]
   }
   const offset = (page - 1) * limit
   const total = await prisma.tickets.count({ where })
@@ -172,6 +185,12 @@ export async function updateTicketStatus(id, status) {
     select: { status: true, first_response_at: true, resolved_at: true },
   })
   if (!old) return null
+  const allowed = VALID_TRANSITIONS[old.status]
+  if (!allowed || !allowed.includes(status)) {
+    const err = new Error(`Invalid status transition: ${old.status} → ${status}`)
+    err.statusCode = 400
+    throw err
+  }
   const updateData = {
     status,
     updated_at: new Date(),
@@ -187,10 +206,13 @@ export async function updateTicketStatus(id, status) {
 export async function updateTicketPriority(id, priority) {
   const old = await prisma.tickets.findUnique({
     where: { id },
-    select: { priority: true },
+    select: { priority: true, category: true },
   })
   if (!old) return null
-  await prisma.tickets.update({ where: { id }, data: { priority, updated_at: new Date() } })
+  const settings = await getSettings().catch(() => ({}))
+  const slaHours = getSlaHours(priority, old.category, settings)
+  const dueAt = new Date(Date.now() + slaHours * 60 * 60 * 1000)
+  await prisma.tickets.update({ where: { id }, data: { priority, due_at: dueAt, updated_at: new Date() } })
   return { oldPriority: old.priority, newPriority: priority }
 }
 

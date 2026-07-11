@@ -100,6 +100,20 @@ router.post('/refresh', async (req, res) => {
   }
 })
 
+router.post('/logout', authenticateToken, async (req, res) => {
+  try {
+    const token = req.cookies?.refreshToken
+    if (token) {
+      await prisma.refresh_tokens.deleteMany({ where: { token } })
+    }
+    res.clearCookie('refreshToken', { path: '/api/auth' })
+    res.json({ success: true, message: 'Logged out' })
+  } catch (err) {
+    logger.error('Logout error:', err)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+})
+
 router.post('/ldap-login', authenticateLDAP)
 
 router.post('/dev-login', (req, res) => {

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
+import { API_URL } from '@/lib/api'
 
 function getInitialToken(): string | null {
   const t = localStorage.getItem('token')
@@ -68,6 +69,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('user')
     setToken(null)
     setUser(null)
+    fetch(`${API_URL}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { Authorization: `Bearer ${token}` },
+    }).catch(() => {})
   }
 
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin'
