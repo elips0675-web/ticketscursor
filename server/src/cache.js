@@ -32,9 +32,18 @@ if (process.env.REDIS_URL) {
       const { default: Redis } = await import('ioredis')
       const client = new Redis(process.env.REDIS_URL)
       const delScript = `
-        local keys = redis.call('keys', KEYS[1])
-        for _, k in ipairs(keys) do redis.call('del', k) end
-        return #keys
+        local cursor = '0'
+        local count = 0
+        repeat
+          local result = redis.call('scan', cursor, 'match', KEYS[1], 'count', 1000)
+          cursor = result[1]
+          local keys = result[2]
+          if #keys > 0 then
+            redis.call('del', unpack(keys))
+            count = count + #keys
+          end
+        until cursor == '0'
+        return count
       `
       cache = {
         async get(key) {

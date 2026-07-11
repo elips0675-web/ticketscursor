@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -8,7 +9,7 @@ import { ArrowLeft, Send, Smile, Users, CheckCheck, Trash2, Search, ImagePlus, X
 import { cn, formatTime } from '@/lib/utils'
 import { api } from '@/lib/api'
 import type { ChatMessage } from '@/types'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useSocket } from '@/context/SocketContext'
 import { useAuth } from '@/context/AuthContext'
 
@@ -33,6 +34,7 @@ export default function ChatDetail() {
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const msgEndRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   const mapMessage = (m: Record<string, unknown>): ChatMessage => ({
     id: m.id as number,
@@ -48,7 +50,8 @@ export default function ChatDetail() {
   useEffect(() => {
     if (!chatId) return
     setLoading(true)
-    api.get(`/chats/${chatId}`)
+    api
+      .get(`/chats/${chatId}`)
       .then((data) => {
         if (data) {
           setChatInfo({ name: data.name, type: data.type })
@@ -71,7 +74,7 @@ export default function ChatDetail() {
     if (!socket) return
     const onNew = (msg: Record<string, unknown>) => {
       setMessages((prev) => [...prev, mapMessage(msg)])
-      setTypingUsers((prev) => prev.filter((id) => id !== (msg.senderId ?? msg.sender_id) as number))
+      setTypingUsers((prev) => prev.filter((id) => id !== ((msg.senderId ?? msg.sender_id) as number)))
     }
     const onRemove = (msgId: number) => setMessages((prev) => prev.filter((m) => m.id !== msgId))
     const onTyping = ({ userId }: { userId: number }) => {
@@ -111,7 +114,9 @@ export default function ChatDetail() {
       } else {
         try {
           await api.post(`/chats/${chatId}/messages`, { text: input.trim() })
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
     }
     setInput('')
@@ -156,8 +161,119 @@ export default function ChatDetail() {
 
   const filteredMsgs = messages.filter((m) => !searchQuery || m.text.toLowerCase().includes(searchQuery.toLowerCase()))
 
+  const virtualizer = useVirtualizer({
+    count: filteredMsgs.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 80,
+    overscan: 5,
+  })
+
+  useEffect(() => {
+    if (virtualizer.getTotalSize() > 0) {
+      virtualizer.scrollToIndex(filteredMsgs.length - 1, { align: 'end' })
+    }
+  }, [filteredMsgs.length])
+
   const isGroup = chatInfo.type === 'group' || chatInfo.type === 'channel'
   const currentUserId = user?.id ?? 0
+
+  const renderMsg = (msg: ChatMessage) => {
+    const isMe = msg.senderId === currentUserId || msg.senderName === 'Я'
+    const msgReactions = msg.reactions
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={cn('flex', isMe ? 'justify-end' : 'justify-start')}
+      >
+        <div className={cn('max-w-[75%] group', isMe ? 'items-end' : 'items-start')}>
+          {!isMe && isGroup && (
+            <p className="text-[10px] font-bold text-muted-foreground mb-1 ml-1">{msg.senderName}</p>
+          )}
+          <div
+            className={cn(
+              'relative px-3 py-2 rounded-xl text-sm shadow-sm overflow-hidden',
+              isMe ? 'bg-primary text-primary-foreground rounded-br-md' : 'bg-card border rounded-bl-md',
+            )}
+          >
+            {msg.image && (
+              <img
+                src={msg.image}
+                alt=""
+                onClick={() => setPreviewImg(msg.image!)}
+                className="max-w-full max-h-60 rounded-lg mb-2 cursor-pointer hover:opacity-90 transition-opacity object-cover"
+              />
+            )}
+            {msg.text && <p className="leading-snug">{msg.text}</p>}
+            <div className={cn('flex items-center gap-1 mt-1', isMe ? 'justify-end' : 'justify-start')}>
+              <span className="text-[9px] opacity-60">{formatTime(msg.createdAt)}</span>
+              {isMe && <CheckCheck className="w-3 h-3 opacity-60" />}
+            </div>
+          </div>
+
+          {msgReactions && Object.keys(msgReactions).length > 0 && (
+            <div className={cn('flex gap-1 mt-1', isMe ? 'justify-end' : 'justify-start')}>
+              {Object.entries(msgReactions).map(([emoji, users]) => (
+                <button
+                  key={emoji}
+                  onClick={() => toggleReaction(msg.id, emoji)}
+                  className={cn(
+                    'flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs border text-muted-foreground hover:bg-muted/50 transition-all',
+                    users.includes(0) && 'bg-primary/10 border-primary/30 text-primary',
+                  )}
+                >
+                  {emoji} <span className="text-[9px] font-bold">{users.length}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div
+            className={cn(
+              'absolute -top-6 gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex',
+              isMe ? 'right-0' : 'left-0',
+            )}
+          >
+            <div className="relative">
+              <button
+                onClick={() => setShowReactions(showReactions === msg.id ? null : msg.id)}
+                className="p-1 hover:bg-muted rounded-full text-muted-foreground"
+              >
+                <Smile className="w-3 h-3" />
+              </button>
+              {showReactions === msg.id && (
+                <div
+                  className={cn(
+                    'absolute bottom-full mb-1 flex gap-0.5 p-1 bg-popover border rounded-xl shadow-lg z-10',
+                    isMe ? 'right-0' : 'left-0',
+                  )}
+                >
+                  {QUICK_REACTIONS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => toggleReaction(msg.id, emoji)}
+                      className="w-7 h-7 flex items-center justify-center hover:bg-muted rounded-lg text-sm transition-all active:scale-90"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {isMe && (
+              <button
+                onClick={() => delMsg(msg.id)}
+                className="p-1 hover:bg-muted rounded-full text-muted-foreground"
+                aria-label="Удалить"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    )
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] max-w-3xl mx-auto">
@@ -212,107 +328,34 @@ export default function ChatDetail() {
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto space-y-2 pr-1" style={{ scrollBehavior: 'smooth' }}>
-          <AnimatePresence initial={false}>
-            {filteredMsgs.map((msg) => {
-              const isMe = msg.senderId === currentUserId || msg.senderName === 'Я'
-              const msgReactions = msg.reactions
-              return (
-                <motion.div
-                  key={msg.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={cn('flex', isMe ? 'justify-end' : 'justify-start')}
-                >
-                  <div className={cn('max-w-[75%] group', isMe ? 'items-end' : 'items-start')}>
-                    {!isMe && isGroup && (
-                      <p className="text-[10px] font-bold text-muted-foreground mb-1 ml-1">{msg.senderName}</p>
-                    )}
-                    <div
-                      className={cn(
-                        'relative px-3 py-2 rounded-xl text-sm shadow-sm overflow-hidden',
-                        isMe ? 'bg-primary text-primary-foreground rounded-br-md' : 'bg-card border rounded-bl-md',
-                      )}
-                    >
-                      {msg.image && (
-                        <img
-                          src={msg.image}
-                          alt=""
-                          onClick={() => setPreviewImg(msg.image!)}
-                          className="max-w-full max-h-60 rounded-lg mb-2 cursor-pointer hover:opacity-90 transition-opacity object-cover"
-                        />
-                      )}
-                      {msg.text && <p className="leading-snug">{msg.text}</p>}
-                      <div className={cn('flex items-center gap-1 mt-1', isMe ? 'justify-end' : 'justify-start')}>
-                        <span className="text-[9px] opacity-60">{formatTime(msg.createdAt)}</span>
-                        {isMe && <CheckCheck className="w-3 h-3 opacity-60" />}
-                      </div>
-                    </div>
-
-                    {msgReactions && Object.keys(msgReactions).length > 0 && (
-                      <div className={cn('flex gap-1 mt-1', isMe ? 'justify-end' : 'justify-start')}>
-                        {Object.entries(msgReactions).map(([emoji, users]) => (
-                          <button
-                            key={emoji}
-                            onClick={() => toggleReaction(msg.id, emoji)}
-                            className={cn(
-                              'flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs border text-muted-foreground hover:bg-muted/50 transition-all',
-                              users.includes(0) && 'bg-primary/10 border-primary/30 text-primary',
-                            )}
-                          >
-                            {emoji} <span className="text-[9px] font-bold">{users.length}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    <div
-                      className={cn(
-                        'absolute -top-6 gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex',
-                        isMe ? 'right-0' : 'left-0',
-                      )}
-                    >
-                      <div className="relative">
-                        <button
-                          onClick={() => setShowReactions(showReactions === msg.id ? null : msg.id)}
-                          className="p-1 hover:bg-muted rounded-full text-muted-foreground"
-                        >
-                          <Smile className="w-3 h-3" />
-                        </button>
-                        {showReactions === msg.id && (
-                          <div
-                            className={cn(
-                              'absolute bottom-full mb-1 flex gap-0.5 p-1 bg-popover border rounded-xl shadow-lg z-10',
-                              isMe ? 'right-0' : 'left-0',
-                            )}
-                          >
-                            {QUICK_REACTIONS.map((emoji) => (
-                              <button
-                                key={emoji}
-                                onClick={() => toggleReaction(msg.id, emoji)}
-                                className="w-7 h-7 flex items-center justify-center hover:bg-muted rounded-lg text-sm transition-all active:scale-90"
-                              >
-                                {emoji}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      {isMe && (
-                        <button
-                          onClick={() => delMsg(msg.id)}
-                          className="p-1 hover:bg-muted rounded-full text-muted-foreground"
-                          aria-label="Удалить"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
+        <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-2 pr-1">
+          {virtualizer.getVirtualItems().length > 0 ? (
+            <div style={{ height: `${virtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
+              {virtualizer.getVirtualItems().map((virtualItem) => {
+                const msg = filteredMsgs[virtualItem.index]
+                return (
+                  <div
+                    key={msg.id}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${virtualItem.start}px)`,
+                    }}
+                  >
+                    {renderMsg(msg)}
                   </div>
-                </motion.div>
-              )
-            })}
-          </AnimatePresence>
+                )
+              })}
+            </div>
+          ) : (
+            filteredMsgs.map((msg) => (
+              <div key={msg.id} className="mb-2">
+                {renderMsg(msg)}
+              </div>
+            ))
+          )}
           {typingUsers.length > 0 && (
             <div className="flex items-center gap-2 px-1 py-1.5 text-xs text-muted-foreground">
               <span className="flex gap-0.5">

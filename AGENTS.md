@@ -180,3 +180,20 @@ docker compose up -d --build
 - **E2E (Playwright)**: настройка `playwright.config.ts`, тест логина (`e2e/login.spec.ts`), скрипты `npm run test:e2e`
 - **Redis**: Socket.io Redis adapter (`@socket.io/redis-adapter` + `ioredis`), на `REDIS_URL` — адаптер включён, без Redis — fallback на in-memory
 - **Kubernetes**: полные манифесты в `k8s/` (namespace, ConfigMap, Secrets, MySQL + PVC, Redis, API (2 реплики), Frontend (2 реплики), Ingress)
+
+### Этап 13 — Prisma read replicas
+- **server/src/prisma.js**: `replicas: [{ url }]` + `datasourceUrl`, `REPLICA_DATABASE_URL` env
+- **schema.prisma**: `directUrl` для миграций
+- **docker-compose.yml**: `DATABASE_URL`, `DIRECT_DATABASE_URL`, `REPLICA_DATABASE_URL` в api-контейнер
+
+### Этап 14 — Виртуализация списков (@tanstack/react-virtual)
+- **TicketDetail.tsx**: `useVirtualizer` для сообщений, fallback в jsdom
+- **ChatDetail.tsx**: `useVirtualizer` для сообщений + вынесен `renderMsg()`
+- При >100 сообщений рендерятся только видимые + 5 overscan
+
+### Этап 15 — Code review fixes (Kimi AI)
+- **README**: версии React 19, Vite 8, Tailwind v4, coverage 51%; метрики тестов обновлены
+- **cache.js**: Redis `SCAN` вместо `KEYS` — не блокирует Redis
+- **seed.sql**: `idx_employees_role_active` для `getLeastLoadedAssignee`
+- **k8s/hpa.yaml**: HPA api 2→8, frontend 2→6, CPU 70% / Memory 80%
+- **use-push.ts**: `.catch()` на unhandled rejection

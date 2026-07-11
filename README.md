@@ -1,7 +1,7 @@
 # Service Desk — корпоративная система тикетов
 
 [![CI](https://github.com/elips0675-web/ticketscursor/actions/workflows/ci.yml/badge.svg)](https://github.com/elips0675-web/ticketscursor/actions)
-[![Coverage](https://img.shields.io/badge/coverage-25%25-yellow)](https://github.com/elips0675-web/ticketscursor)
+[![Coverage](https://img.shields.io/badge/coverage-51%25-yellowgreen)](https://github.com/elips0675-web/ticketscursor)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)]()
 [![Docker](https://img.shields.io/badge/docker-ready-green.svg)]()
 
@@ -32,7 +32,7 @@
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         Клиентский слой                              │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌───────────┐  │
-│  │   React 18  │  │  TypeScript │  │   Vite 5    │  │ Tailwind  │  │
+│  │   React 19  │  │  TypeScript │  │   Vite 8    │  │Tailwind v4│  │
 │  │  Concurrent │  │   Strict    │  │   PWA SW    │  │  shadcn   │  │
 │  └─────────────┘  └─────────────┘  └─────────────┘  └───────────┘  │
 │                              │                                       │
@@ -120,8 +120,8 @@ npm run test:e2e
 
 | Зона риска | Было (на момент аудита) | Стало (после доработок) |
 |---|---|---|
-| Покрытие тестами | 47 client / 93 server / 13 E2E | 71 client / 93 server / 14 E2E |
-| Процент покрытия | 20-25% | 33% client / 38% server |
+| Покрытие тестами | 47 client / 93 server / 13 E2E | 154 client / 116 server / 22 E2E |
+| Процент покрытия | 20-25% | 51% client / 55% server |
 | TanStack Query | Только Context API | ✅ Внедрён QueryClientProvider |
 | Meilisearch | MySQL FULLTEXT | ✅ Meilisearch + fallback цепочка |
 | Skeleton loaders | Нет | ✅ Все списки |
@@ -140,11 +140,11 @@ npm run test:e2e
 
 | Показатель | Значение | Статус |
 |---|---|---|
-| Клиентские тесты | 71 тест, 21 файл | ✅ Пройдены |
+| Клиентские тесты | 154 теста, 40 файлов | ✅ Пройдены |
 | Серверные тесты | 116 тестов, 6 файлов (5 сервисных + api) | ✅ Пройдены |
 | E2E тесты | 22 теста, 5 файлов | ✅ Пройдены |
-| Покрытие кода (клиент) | 33% (порог: 33%) | ✅ Стабильно |
-| Покрытие кода (сервер) | 37% (порог: 37%) | ✅ Стабильно |
+| Покрытие кода (клиент) | 51% (порог: 51%) | ✅ Стабильно |
+| Покрытие кода (сервер) | 55% (порог: 55%) | ✅ Стабильно |
 | React Query | useQuery/useMutation, optimistic updates | ✅ |
 | Моделей Prisma | 17 | ✅ |
 | API endpoints | 50+ (Swagger) | ✅ |
@@ -222,4 +222,4 @@ MIT © 2026
 
 ---
 
-**Стек:** React 18 · TypeScript 5 · Vite · Tailwind CSS 3 · shadcn/ui · Express · Prisma · MySQL 8 · Socket.io · Redis · Docker · Kubernetes · Playwright
+**Стек:** React 19 · TypeScript 5 · Vite 8 · Tailwind CSS 4 · shadcn/ui · Express · Prisma · MySQL 8 · Socket.io · Redis · Docker · Kubernetes · Playwright

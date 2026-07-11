@@ -20,7 +20,9 @@ export function usePush() {
 
   useEffect(() => {
     if (!supported) return
-    navigator.serviceWorker.ready.then((reg) => reg.pushManager.getSubscription().then((sub) => setSubscribed(!!sub)))
+    navigator.serviceWorker.ready
+      .then((reg) => reg.pushManager.getSubscription().then((sub) => setSubscribed(!!sub)))
+      .catch(() => {})
   }, [supported])
 
   const subscribe = useCallback(async () => {

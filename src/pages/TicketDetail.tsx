@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { toast } from 'sonner'
 import { useSocket } from '@/context/SocketContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -43,18 +44,31 @@ function mapTicketDetail(raw: any): Ticket {
     computerName: raw.computer_name,
     userAccount: raw.user_account,
     createdBy: { id: raw.created_by, name: raw.created_by_name || 'User', email: '', avatar: '' },
-    assignedTo: raw.assigned_to ? { id: raw.assigned_to, name: raw.assigned_name || '', email: raw.assigned_email || '', avatar: raw.assigned_avatar || '' } : undefined,
-    messages: Array.isArray(raw.messages) ? raw.messages.map((m: any) => ({
-      id: m.id,
-      ticketId: m.ticket_id,
-      senderId: m.sender_id,
-      senderName: m.sender_name,
-      senderAvatar: m.sender_avatar || '',
-      text: m.text,
-      attachments: m.attachments ? (typeof m.attachments === 'string' ? JSON.parse(m.attachments) : m.attachments) : [],
-      createdAt: m.created_at,
-      isInternal: !!m.is_internal,
-    })) : [],
+    assignedTo: raw.assigned_to
+      ? {
+          id: raw.assigned_to,
+          name: raw.assigned_name || '',
+          email: raw.assigned_email || '',
+          avatar: raw.assigned_avatar || '',
+        }
+      : undefined,
+    messages: Array.isArray(raw.messages)
+      ? raw.messages.map((m: any) => ({
+          id: m.id,
+          ticketId: m.ticket_id,
+          senderId: m.sender_id,
+          senderName: m.sender_name,
+          senderAvatar: m.sender_avatar || '',
+          text: m.text,
+          attachments: m.attachments
+            ? typeof m.attachments === 'string'
+              ? JSON.parse(m.attachments)
+              : m.attachments
+            : [],
+          createdAt: m.created_at,
+          isInternal: !!m.is_internal,
+        }))
+      : [],
     messages_count: raw.messages_count || (Array.isArray(raw.messages) ? raw.messages.length : 0),
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
@@ -77,8 +91,8 @@ export default function TicketDetail() {
     if (!id || !token) return
     setDetailLoading(true)
     fetch(`${API_URL}/tickets/${id}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : null)
-      .then(json => {
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
         if (json?.data) {
           setDetailTicket(mapTicketDetail(json.data))
         }
@@ -93,10 +107,20 @@ export default function TicketDetail() {
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  const virtualizer = useVirtualizer({
+    count: ticket?.messages.length ?? 0,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 72,
+    overscan: 5,
+  })
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [ticket?.messages])
+    if (virtualizer.getTotalSize() > 0) {
+      virtualizer.scrollToIndex((ticket?.messages.length ?? 1) - 1, { align: 'end' })
+    }
+  }, [ticket?.messages.length])
 
   useEffect(() => {
     if (!socket || !ticket) return
@@ -226,46 +250,101 @@ export default function TicketDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4 max-h-[400px] overflow-y-auto mb-4 pr-2">
-                {ticket.messages.map((msg) => (
-                  <div key={msg.id} className={`flex gap-3 ${msg.isInternal ? 'opacity-70' : ''}`}>
-                    <Avatar className="w-8 h-8 mt-0.5">
-                      <AvatarFallback className="text-[10px]">{msg.senderName[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-bold">{msg.senderName}</span>
-                        <span className="text-[10px] text-muted-foreground">{formatTime(msg.createdAt)}</span>
-                        {msg.isInternal && (
-                          <Badge variant="secondary" className="text-[8px] gap-0.5">
-                            <Lock className="w-2.5 h-2.5" /> {t('tickets.internalBadge')}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-foreground/80">{msg.text}</p>
-                      {msg.attachments && msg.attachments.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {msg.attachments.map((att: any, i: number) => (
-                            <a
-                              key={i}
-                              href={att.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1.5 text-xs bg-muted rounded-md px-2 py-1 hover:bg-muted/80 transition-colors"
-                            >
-                              {att.url.match(/\.(png|jpg|jpeg|gif|svg)$/i) ? (
-                                <ImageIcon className="w-3 h-3" />
-                              ) : (
-                                <FileText className="w-3 h-3" />
+              <div ref={scrollRef} className="max-h-[400px] overflow-y-auto mb-4 pr-2">
+                <div style={{ height: `${virtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
+                  {virtualizer.getVirtualItems().length > 0
+                    ? virtualizer.getVirtualItems().map((virtualItem) => {
+                        const msg = ticket.messages[virtualItem.index]
+                        return (
+                          <div
+                            key={msg.id}
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              width: '100%',
+                              transform: `translateY(${virtualItem.start}px)`,
+                            }}
+                            className={`flex gap-3 ${msg.isInternal ? 'opacity-70' : ''}`}
+                          >
+                            <Avatar className="w-8 h-8 mt-0.5">
+                              <AvatarFallback className="text-[10px]">{msg.senderName[0]}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-sm font-bold">{msg.senderName}</span>
+                                <span className="text-[10px] text-muted-foreground">{formatTime(msg.createdAt)}</span>
+                                {msg.isInternal && (
+                                  <Badge variant="secondary" className="text-[8px] gap-0.5">
+                                    <Lock className="w-2.5 h-2.5" /> {t('tickets.internalBadge')}
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-foreground/80">{msg.text}</p>
+                              {msg.attachments && msg.attachments.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  {msg.attachments.map((att: any, i: number) => (
+                                    <a
+                                      key={i}
+                                      href={att.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-1.5 text-xs bg-muted rounded-md px-2 py-1 hover:bg-muted/80 transition-colors"
+                                    >
+                                      {att.url.match(/\.(png|jpg|jpeg|gif|svg)$/i) ? (
+                                        <ImageIcon className="w-3 h-3" />
+                                      ) : (
+                                        <FileText className="w-3 h-3" />
+                                      )}
+                                      {att.name || att.url.split('/').pop()}
+                                    </a>
+                                  ))}
+                                </div>
                               )}
-                              {att.name || att.url.split('/').pop()}
-                            </a>
-                          ))}
+                            </div>
+                          </div>
+                        )
+                      })
+                    : ticket.messages.map((msg) => (
+                        <div key={msg.id} className={`flex gap-3 mb-4 ${msg.isInternal ? 'opacity-70' : ''}`}>
+                          <Avatar className="w-8 h-8 mt-0.5">
+                            <AvatarFallback className="text-[10px]">{msg.senderName[0]}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-sm font-bold">{msg.senderName}</span>
+                              <span className="text-[10px] text-muted-foreground">{formatTime(msg.createdAt)}</span>
+                              {msg.isInternal && (
+                                <Badge variant="secondary" className="text-[8px] gap-0.5">
+                                  <Lock className="w-2.5 h-2.5" /> {t('tickets.internalBadge')}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-foreground/80">{msg.text}</p>
+                            {msg.attachments && msg.attachments.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {msg.attachments.map((att: any, i: number) => (
+                                  <a
+                                    key={i}
+                                    href={att.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 text-xs bg-muted rounded-md px-2 py-1 hover:bg-muted/80 transition-colors"
+                                  >
+                                    {att.url.match(/\.(png|jpg|jpeg|gif|svg)$/i) ? (
+                                      <ImageIcon className="w-3 h-3" />
+                                    ) : (
+                                      <FileText className="w-3 h-3" />
+                                    )}
+                                    {att.name || att.url.split('/').pop()}
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                      ))}
+                </div>
                 <div ref={messagesEndRef} />
               </div>
 

@@ -263,3 +263,4 @@ CREATE INDEX idx_chat_messages_chat ON chat_messages(chat_id, created_at);
 CREATE INDEX idx_notifications_user ON notifications(user_id, created_at);
 CREATE INDEX idx_audit_log_entity ON audit_log(entity_type, entity_id);
 CREATE INDEX idx_audit_log_created ON audit_log(created_at);
+CREATE INDEX idx_employees_role_active ON employees(role, is_active);

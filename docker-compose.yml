@@ -97,6 +97,9 @@ services:
       DB_USER: ${DB_USER:-sduser}
       DB_PASSWORD: ${DB_PASSWORD:-sdpassword}
       DB_NAME: servicedesk
+      DATABASE_URL: mysql://${DB_USER:-sduser}:${DB_PASSWORD:-sdpassword}@mysql:3306/servicedesk
+      DIRECT_DATABASE_URL: mysql://${DB_USER:-sduser}:${DB_PASSWORD:-sdpassword}@mysql:3306/servicedesk
+      REPLICA_DATABASE_URL: mysql://${DB_USER:-sduser}:${DB_PASSWORD:-sdpassword}@mysql_replica:3306/servicedesk
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
       MEILISEARCH_URL: http://meilisearch:7700

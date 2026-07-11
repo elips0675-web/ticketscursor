@@ -411,6 +411,24 @@
       ✅ Обновлены пороги покрытия под актуальные значения
       ✅ npm run build — успешно
 
+   ✅ Этап M — Prisma read replicas + виртуализация списков
+      ✅ Prisma read replicas: server/src/prisma.js — replicas: [{ url }] + datasourceUrl
+      ✅ schema.prisma — directUrl для миграций (always primary)
+      ✅ docker-compose.yml — REPLICA_DATABASE_URL (mysql_replica:3306) + DIRECT_DATABASE_URL
+      ✅ Установлен @tanstack/react-virtual
+      ✅ TicketDetail.tsx — виртуализация списка сообщений (useVirtualizer, overscan 5)
+      ✅ ChatDetail.tsx — виртуализация списка сообщений (render только видимых)
+      ✅ Fallback на обычный рендер в тестовом окружении (jsdom без layout)
+
+   ✅ Этап N — Code review fixes (Kimi AI)
+      ✅ README — версии синхронизированы: React 19, Vite 8, Tailwind v4, coverage 51%
+      ✅ cache.js — Redis SCAN вместо KEYS (не блокирует Redis на больших базах)
+      ✅ seed.sql — добавлен индекс idx_employees_role_active для getLeastLoadedAssignee
+      ✅ k8s/hpa.yaml — HPA для api (2→8 реплик, CPU 70%) и frontend (2→6 реплик)
+      ✅ src/lib/use-push.ts — .catch() на serviceWorker.ready (unhandled rejection)
+
+   ✅ Тесты: клиент 154/154 (40 файлов), сервер 116/116 (6 файлов), type-check + build
+
 ────────────────────────────────────────────────────────────────────────────
 
 РЕПОЗИТОРИЙ
