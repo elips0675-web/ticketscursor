@@ -66,9 +66,13 @@ router.get('/users', async (req, res) => {
 })
 
 router.put('/users/:id', async (req, res) => {
+  const targetId = Number(req.params.id)
+  if (targetId === req.user.userId) {
+    return res.status(400).json({ success: false, message: 'Cannot modify your own account' })
+  }
   const { role, isActive, department, title } = req.body
   const data = {}
-  if (role && ['super_admin', 'admin', 'senior_agent', 'agent'].includes(role)) {
+  if (role && ['admin', 'senior_agent', 'agent', 'requester'].includes(role)) {
     data.role = role
   }
   if (isActive !== undefined) {
@@ -82,7 +86,7 @@ router.put('/users/:id', async (req, res) => {
   }
   if (Object.keys(data).length === 0) return res.status(400).json({ success: false, message: 'No fields to update' })
   try {
-    await prisma.employees.update({ where: { id: Number(req.params.id) }, data })
+    await prisma.employees.update({ where: { id: targetId }, data })
     res.json({ success: true, data: { updated: true } })
   } catch (err) {
     logger.error('Admin user update error:', err)
