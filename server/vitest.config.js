@@ -12,9 +12,9 @@ export default defineConfig({
       include: ['src/**/*.js'],
       exclude: ['src/**/*.test.js', 'src/prisma/**', 'src/__tests__/**'],
       thresholds: {
-        statements: 35,
-        branches: 25,
-        functions: 35,
+        statements: 37,
+        branches: 29,
+        functions: 36,
         lines: 38,
       },
     },

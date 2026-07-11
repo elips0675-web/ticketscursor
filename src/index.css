@@ -1,121 +1,355 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
-    --radius: 0.75rem;
+@custom-variant dark (&:is(.dark *));
 
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 221 83% 53%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 221 83% 53%;
+@theme {
+  --font-body: 'Inter', sans-serif;
+  --font-headline: 'Inter', sans-serif;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-sidebar: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+}
+
+@keyframes accordion-down {
+  from {
+    height: 0;
   }
-
-  .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 224 76% 48%;
+  to {
+    height: var(--radix-accordion-content-height);
   }
 }
 
-@layer base {
-  * {
-    border-color: hsl(var(--border));
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
   }
-  body {
-    @apply bg-background text-foreground antialiased;
-    -webkit-tap-highlight-color: transparent;
+  to {
+    height: 0;
   }
+}
+
+@keyframes enter {
+  from {
+    opacity: var(--tw-enter-opacity, 1);
+    transform: translate3d(var(--tw-enter-translate-x, 0), var(--tw-enter-translate-y, 0), 0)
+      scale3d(var(--tw-enter-scale, 1), var(--tw-enter-scale, 1), 1) rotate(var(--tw-enter-rotate, 0));
+  }
+}
+
+@keyframes exit {
+  to {
+    opacity: var(--tw-exit-opacity, 1);
+    transform: translate3d(var(--tw-exit-translate-x, 0), var(--tw-exit-translate-y, 0), 0)
+      scale3d(var(--tw-exit-scale, 1), var(--tw-exit-scale, 1), 1) rotate(var(--tw-exit-rotate, 0));
+  }
+}
+
+@utility animate-in {
+  animation: enter 150ms ease-out;
+}
+
+@utility animate-out {
+  animation: exit 150ms ease-out;
+}
+
+@utility fade-in-0 {
+  --tw-enter-opacity: 0;
+}
+
+@utility fade-out-0 {
+  --tw-exit-opacity: 0;
+}
+
+@utility zoom-in-95 {
+  --tw-enter-scale: 0.95;
+}
+
+@utility zoom-out-95 {
+  --tw-exit-scale: 0.95;
+}
+
+@utility slide-in-from-top-2 {
+  --tw-enter-translate-y: -0.5rem;
+}
+
+@utility slide-in-from-bottom-2 {
+  --tw-enter-translate-y: 0.5rem;
+}
+
+@utility slide-in-from-left-2 {
+  --tw-enter-translate-x: -0.5rem;
+}
+
+@utility slide-in-from-right-2 {
+  --tw-enter-translate-x: 0.5rem;
+}
+
+@utility slide-out-to-right {
+  --tw-exit-translate-x: 100%;
+}
+
+@utility slide-in-from-right {
+  --tw-enter-translate-x: 100%;
+}
+
+@utility slide-out-to-left {
+  --tw-exit-translate-x: -100%;
+}
+
+@utility slide-in-from-left {
+  --tw-enter-translate-x: -100%;
+}
+
+@utility slide-out-to-left-50 {
+  --tw-exit-translate-x: -50%;
+}
+
+@utility slide-in-from-left-50 {
+  --tw-enter-translate-x: -50%;
+}
+
+@utility slide-in-from-top-48 {
+  --tw-enter-translate-y: -48%;
+}
+
+@utility slide-out-to-top-48 {
+  --tw-exit-translate-y: -48%;
+}
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 221 83% 53%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 221 83% 53%;
+  --radius: 0.75rem;
+
+  --sidebar-background: 222 47% 11%;
+  --sidebar-foreground: 210 40% 98%;
+  --sidebar-primary: 221 83% 53%;
+  --sidebar-primary-foreground: 210 40% 98%;
+  --sidebar-accent: 217 33% 17%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-border: 217 33% 17%;
+  --sidebar-ring: 221 83% 53%;
+}
+
+.dark {
+  --background: 222 47% 11%;
+  --foreground: 210 40% 98%;
+  --card: 222 47% 11%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222 47% 11%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 217 91% 60%;
+  --primary-foreground: 222 47% 11%;
+  --secondary: 217 33% 17%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217 33% 17%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 217 33% 17%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 63% 31%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217 33% 17%;
+  --input: 217 33% 17%;
+  --ring: 224 76% 48%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
 }
 
 .app-shadow {
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .status-open {
-  @apply bg-blue-100 text-blue-700;
+  background-color: color-mix(in srgb, hsl(var(--primary)) 15%, transparent);
+  color: hsl(var(--primary));
 }
+
 .status-in_progress {
-  @apply bg-amber-100 text-amber-700;
+  background-color: color-mix(in srgb, hsl(35 92% 49%) 15%, transparent);
+  color: hsl(35 92% 49%);
 }
+
 .status-resolved {
-  @apply bg-green-100 text-green-700;
+  background-color: color-mix(in srgb, hsl(142 76% 36%) 15%, transparent);
+  color: hsl(142 76% 36%);
 }
+
 .status-closed {
-  @apply bg-gray-100 text-gray-600;
+  background-color: color-mix(in srgb, hsl(var(--muted-foreground)) 15%, transparent);
+  color: hsl(var(--muted-foreground));
 }
 
 .priority-low {
-  @apply bg-slate-100 text-slate-600;
-}
-.priority-medium {
-  @apply bg-amber-100 text-amber-700;
-}
-.priority-high {
-  @apply bg-orange-100 text-orange-700;
-}
-.priority-critical {
-  @apply bg-red-100 text-red-700;
+  background-color: color-mix(in srgb, hsl(215 16% 47%) 10%, transparent);
+  color: hsl(215 16% 47%);
 }
 
-/* Calendar */
-.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-.calendar-header { text-align: center; font-size: 10px; font-weight: 700; color: hsl(var(--muted-foreground)); padding: 6px 0; text-transform: uppercase; letter-spacing: 0.05em; }
-.calendar-day { min-height: 64px; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 4px; cursor: pointer; transition: all 0.15s; position: relative; }
-.calendar-day:hover { border-color: hsl(var(--primary)); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-.calendar-day.empty { background: none; border-color: transparent; cursor: default; box-shadow: none; }
-.calendar-day.today { border: 2px solid hsl(var(--primary)) !important; }
-.calendar-day.selected { background: hsl(var(--primary) / 0.08); border-color: hsl(var(--primary)); }
-.calendar-date { font-size: 12px; font-weight: 700; margin-bottom: 2px; display: block; color: hsl(var(--foreground)); }
-.calendar-day.empty .calendar-date { color: transparent; }
-.calendar-event { font-size: 8px; background: hsl(var(--primary)); color: #fff; padding: 1px 4px; border-radius: 3px; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
-.calendar-more { font-size: 8px; color: hsl(var(--muted-foreground)); padding: 1px 4px; font-weight: 600; }
+.priority-medium {
+  background-color: color-mix(in srgb, hsl(35 92% 49%) 15%, transparent);
+  color: hsl(35 92% 49%);
+}
+
+.priority-high {
+  background-color: color-mix(in srgb, hsl(20 90% 50%) 15%, transparent);
+  color: hsl(20 90% 50%);
+}
+
+.priority-critical {
+  background-color: color-mix(in srgb, hsl(0 84% 60%) 15%, transparent);
+  color: hsl(0 84% 60%);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.calendar-header {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: hsl(var(--muted-foreground));
+  padding: 6px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.calendar-day {
+  min-height: 64px;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+.calendar-day:hover {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.calendar-day.empty {
+  background: none;
+  border-color: transparent;
+  cursor: default;
+  box-shadow: none;
+}
+.calendar-day.today {
+  border: 2px solid hsl(var(--primary)) !important;
+}
+.calendar-day.selected {
+  background: hsl(var(--primary) / 0.08);
+  border-color: hsl(var(--primary));
+}
+.calendar-date {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  display: block;
+  color: hsl(var(--foreground));
+}
+.calendar-day.empty .calendar-date {
+  color: transparent;
+}
+.calendar-event {
+  font-size: 8px;
+  background: hsl(var(--primary));
+  color: #fff;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-bottom: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+.calendar-more {
+  font-size: 8px;
+  color: hsl(var(--muted-foreground));
+  padding: 1px 4px;
+  font-weight: 600;
+}
 
 @media (max-width: 640px) {
-  .calendar-grid { gap: 1px; }
-  .calendar-day { min-height: 44px; padding: 3px; }
-  .calendar-day .calendar-event, .calendar-day .calendar-more { display: none; }
-  .calendar-day.today .calendar-date::after { content: " •"; color: hsl(var(--primary)); }
-  .calendar-date { font-size: 10px; text-align: center; margin-bottom: 0; line-height: 34px; }
-  .calendar-header { font-size: 8px; padding: 4px 0; }
+  .calendar-grid {
+    gap: 1px;
+  }
+  .calendar-day {
+    min-height: 44px;
+    padding: 3px;
+  }
+  .calendar-day .calendar-event,
+  .calendar-day .calendar-more {
+    display: none;
+  }
+  .calendar-day.today .calendar-date::after {
+    content: ' \2022';
+    color: hsl(var(--primary));
+  }
+  .calendar-date {
+    font-size: 10px;
+    text-align: center;
+    margin-bottom: 0;
+    line-height: 34px;
+  }
+  .calendar-header {
+    font-size: 8px;
+    padding: 4px 0;
+  }
 }

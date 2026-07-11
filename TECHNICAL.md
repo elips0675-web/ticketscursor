@@ -1044,18 +1044,21 @@ spec:
 ### Оставшийся технический долг
 
 | Этап | Задача | Приоритет | Статус |
-|---|---|---|---|
+|---|---|---|---|---|
 | E | SLA policy-матрица по категориям (bug/feature/support/incident) | Medium | ✅ Выполнено |
 | F | Роль requester (видит только свои тикеты) | Medium | ✅ Выполнено |
 | G | TanStack Query + optimistic updates | Medium | ✅ Выполнено |
 | H | Skeleton loaders для всех списков | Low | ✅ Выполнено |
-| I | Покрытие тестов 50%+ | High | ✅ (93 серверных ✅ / 71 клиентский ✅) |
+| I | Покрытие тестов 50%+ | High | ✅ (116 серверных / 71 клиентский / 22 E2E) |
 | I | E2E: эскалация SLA, автоназначение, экспорт | Medium | ✅ (покрыто unit-тестами) |
 | J | Volume для MySQL-бэкапов в docker-compose | Low | ✅ Выполнено |
 | J | Healthcheck всех сервисов | Low | ✅ Выполнено |
 | J | Prometheus/Grafana метрики | Low | ✅ Выполнено |
 | K | API versioning (/api/v1/) | Low | ✅ Выполнено |
 | K | BullMQ вместо setInterval (фоновые задачи) | Medium | ✅ Выполнено |
+| L | Исправление клиентских тестов (jsdom localStorage) | High | ✅ Выполнено |
+| L | roleUtils.test.js — 7 тестов на иерархию ролей | Medium | ✅ Выполнено |
+| L | API тесты: /auth/me, /system-info, /tickets POST, /wiki POST, /calendar POST, /news POST, messages | Medium | ✅ Выполнено |
 
 ---
 

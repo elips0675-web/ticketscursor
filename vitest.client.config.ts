@@ -5,6 +5,11 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    environmentOptions: {
+      jsdom: {
+        url: 'http://localhost',
+      },
+    },
     include: ['src/test/**/*.test.{ts,tsx}'],
     setupFiles: ['src/test/setup.ts'],
     css: false,
@@ -21,9 +26,9 @@ export default defineConfig({
       ],
       thresholds: {
         statements: 33,
-        branches: 22,
-        functions: 22,
-        lines: 33,
+        branches: 25,
+        functions: 23,
+        lines: 36,
       },
     },
   },

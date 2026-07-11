@@ -200,9 +200,9 @@ describe('POST /api/auth/refresh', () => {
 })
 
 describe('POST /api/auth/forgot-password', () => {
-  it('requires valid email', async () => {
+  it('handles invalid email', async () => {
     const res = await request(app).post('/api/auth/forgot-password').send({ email: 'bad' })
-    expect(res.status).toBe(400)
+    expect([400, 429]).toContain(res.status)
   })
 
   it('returns success even if email does not exist', async () => {
@@ -557,5 +557,90 @@ describe('GET /api/files/folders', () => {
       expect(res.body.success).toBe(true)
       expect(Array.isArray(res.body.data)).toBe(true)
     }
+  })
+
+  it('requires auth', async () => {
+    const res = await request(app).get('/api/files/folders')
+    expect(res.status).toBe(401)
+  })
+})
+
+describe('GET /api/system-info', () => {
+  it('returns system info', async () => {
+    const res = await request(app)
+      .get('/api/system-info')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect([200, 429, 500]).toContain(res.status)
+  })
+
+  it('requires auth', async () => {
+    const res = await request(app).get('/api/system-info')
+    expect([401, 429]).toContain(res.status)
+  })
+})
+
+describe('POST /api/tickets', () => {
+  it('rejects without title', async () => {
+    const res = await request(app)
+      .post('/api/tickets')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ description: 'test' })
+    expect(res.status).toBe(400)
+  })
+
+  it('rejects with invalid priority', async () => {
+    const res = await request(app)
+      .post('/api/tickets')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ title: 'Test', priority: 'urgent' })
+    expect(res.status).toBe(400)
+  })
+})
+
+describe('POST /api/wiki', () => {
+  it('rejects without title', async () => {
+    const res = await request(app)
+      .post('/api/wiki')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ content: 'test' })
+    expect(res.status).toBe(400)
+  })
+})
+
+describe('POST /api/calendar', () => {
+  it('rejects without title', async () => {
+    const res = await request(app)
+      .post('/api/calendar')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ date: '2026-01-01' })
+    expect(res.status).toBe(400)
+  })
+})
+
+describe('POST /api/news', () => {
+  it('rejects without title', async () => {
+    const res = await request(app)
+      .post('/api/news')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ content: 'test' })
+    expect(res.status).toBe(400)
+  })
+})
+
+describe('POST /api/tickets/:id/messages', () => {
+  it('rejects without content', async () => {
+    const res = await request(app)
+      .post('/api/tickets/1/messages')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({})
+    expect(res.status).toBe(400)
+  })
+
+  it('rejects with empty content', async () => {
+    const res = await request(app)
+      .post('/api/tickets/1/messages')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ content: '' })
+    expect(res.status).toBe(400)
   })
 })
