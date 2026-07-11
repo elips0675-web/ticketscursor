@@ -60,11 +60,11 @@ export async function seed(knex) {
   ])
 
   await knex('files').insert([
-    { name: 'Отчёт Q2.pdf', size: '2.4 MB', type: 'pdf', folder_id: 1, user_id: 1 },
-    { name: 'Договор поставки.docx', size: '845 KB', type: 'doc', folder_id: 1, user_id: 1 },
-    { name: 'Макет главной.png', size: '1.8 MB', type: 'img', folder_id: 2, user_id: 1 },
-    { name: 'Логотип.svg', size: '124 KB', type: 'code', folder_id: 2, user_id: 1 },
-    { name: 'deploy.sh', size: '2 KB', type: 'code', folder_id: 4, user_id: 1 },
+    { name: 'Отчёт Q2.pdf', size: '2.4 MB', type: 'pdf', folder_id: 1, user_id: 1, path: '/uploads/files/otchyot-q2.pdf' },
+    { name: 'Договор поставки.docx', size: '845 KB', type: 'doc', folder_id: 1, user_id: 1, path: '/uploads/files/dogovor-postavki.docx' },
+    { name: 'Макет главной.png', size: '1.8 MB', type: 'img', folder_id: 2, user_id: 1, path: '/uploads/files/maket-glavnoy.png' },
+    { name: 'Логотип.svg', size: '124 KB', type: 'code', folder_id: 2, user_id: 1, path: '/uploads/files/logotip.svg' },
+    { name: 'deploy.sh', size: '2 KB', type: 'code', folder_id: 4, user_id: 1, path: '/uploads/files/deploy.sh' },
   ])
 
   await knex('polls').insert([
