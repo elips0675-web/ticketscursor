@@ -180,10 +180,9 @@ docker compose up -d --build
 - **Redis**: Socket.io Redis adapter (`@socket.io/redis-adapter` + `ioredis`), на `REDIS_URL` — адаптер включён, без Redis — fallback на in-memory
 - **Kubernetes**: полные манифесты в `k8s/` (namespace, ConfigMap, Secrets, MySQL + PVC, Redis, API (2 реплики), Frontend (2 реплики), Ingress)
 
-### Этап 13 — Prisma read replicas
-- **server/src/prisma.js**: `replicas: [{ url }]` + `datasourceUrl`, `REPLICA_DATABASE_URL` env
-- **schema.prisma**: `directUrl` для миграций
-- **docker-compose.yml**: `DATABASE_URL`, `DIRECT_DATABASE_URL`, `REPLICA_DATABASE_URL` в api-контейнер
+### Этап 13 — Prisma read replicas (удалено позже)
+- Было реализовано: prisma.js (replicas), schema.prisma (directUrl), docker-compose (REPLICA_DATABASE_URL)
+- Позже удалено — read replicas не нужны в текущей архитектуре, убран мёртвый код
 
 ### Этап 14 — Виртуализация списков (@tanstack/react-virtual)
 - **TicketDetail.tsx**: `useVirtualizer` для сообщений, fallback в jsdom

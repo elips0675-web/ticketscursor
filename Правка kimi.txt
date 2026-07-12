@@ -1,113 +1,132 @@
-Это объёмный корпоративный Service Desk на React 19 + Express. Вижу много проделанной работы (17 этапов), но есть заметные проблемы. Разберу по слоям.
-🔴 Критические проблемы
-1. Мёртвый код и несостыковки в инфраструктуре
-Table
-Проблема	Где	Почему критично
-mysql_replica удалён из docker-compose, но primary.cnf всё ещё монтируется	docker-compose.yml	Конфиг репликации без реплики — бесполезен, путает
-Prisma read replicas заявлены, но replicas убран из prisma.js	Этап 13 → 17	Документация TECHNICAL.md об этом молчит, обман ожиданий
-@tauri-apps/cli удалён из package.json, но scripts.tauri остался	package.json	npm run tauri упадёт с ошибкой
-check-console.mjs в .gitignore, но в AGENTS.md — обязательный шаг после каждого изменения	.gitignore	Скрипт не закоммитится, новый разработчик не найдёт
-2. Небезопасная работа с токеном в logout
+Критичные проблемы
+1. handleResponse в api.ts — двойной res.json()
 TypeScript
-// src/context/AuthContext.tsx — logout
-fetch(`${API_URL}/auth/logout`, {
-  method: 'POST',
-  credentials: 'include',
-  headers: { Authorization: `Bearer ${token}` }, // token уже null!
-})
-token обнулён через setToken(null) до fetch. Запрос уйдёт без авторизации, refresh token не инвалидируется на сервере.
-Исправление:
+async function handleResponse(res: Response): Promise<any> {
+  // ...
+  const data = res.ok ? null : await res.json().catch(() => null)  // ❌ если !res.ok — читаем тело
+  if (!res.ok) {
+    throw new Error(data?.message || `Ошибка ${res.status}`)
+  }
+  // ...
+  const payload = await res.json().catch(() => null)  // ❌ читаем тело ВТОРОЙ раз
+Проблема: Response можно прочитать только один раз. Если res.ok === true, первый res.json() не вызывается (ternary), но если res.ok === false — тело уже прочитано, а потом пытаемся прочитать снова — будет ошибка.
+Фикс:
 TypeScript
-const logout = () => {
-  const t = token // сохраняем до очистки
-  localStorage.removeItem('token')
-  localStorage.removeItem('user')
-  setToken(null)
-  setUser(null)
-  if (t) {
-    fetch(`${API_URL}/auth/logout`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { Authorization: `Bearer ${t}` },
-    }).catch(() => {})
+async function handleResponse(res: Response): Promise<any> {
+  if (res.status === 401 || res.status === 403) {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    window.location.href = '/login'
+    throw new Error('Сессия истекла')
   }
-}
-3. Race condition в tickets.js — raw SQL без параметризации
-JavaScript
-// server/src/routes/admin.js
-const rows = await prisma.$queryRaw`
-  SELECT ... FROM employees ORDER BY is_active DESC, name
-`
-Хотя Prisma экранирует $queryRaw с template literal, это ломает типобезопасность и переносимость. Лучше prisma.employees.findMany().
-4. Отсутствует requireRole('super_admin') на повышение роли
-JavaScript
-// admin.js — PUT /users/:id
-if (role && ['admin', 'senior_agent', 'agent', 'requester'].includes(role)) {
-  data.role = role
-}
-super_admin нет в списке, но и запрет повышения до super_admin через API проверяется только в одном месте (Этап 16). Если req.user.role === 'super_admin', он может назначить super_admin? Нет, потому что 'super_admin' не проходит includes(). Но это неявно — лучше явный guard:
-JavaScript
-if (role) {
-  if (role === 'super_admin') {
-    return res.status(403).json({ message: 'Cannot assign super_admin via API' })
+  if (res.status === 204) return null
+  
+  const payload = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(payload?.message || `Ошибка ${res.status}`)
   }
-  if (!['admin', 'senior_agent', 'agent', 'requester'].includes(role)) {
-    return res.status(400).json({ message: 'Invalid role' })
+  if (payload && typeof payload === 'object' && typeof payload.success === 'boolean') {
+    if (Object.prototype.hasOwnProperty.call(payload, 'data')) return payload.data
+    return payload
   }
-  data.role = role
+  return payload
 }
+2. tickets.js — getTicketById без проверки прав на чтение сообщений
+В ticket-context.tsx mapTicket мапит messages из ответа API, но в tickets.js роут GET /:id возвращает messages без пагинации. Для тикетов с 1000+ сообщений — огромная нагрузка.
+Фикс: разделить эндпоинты:
+GET /:id — метаданные тикета (без messages)
+GET /:id/messages — уже есть, с пагинацией
+Или добавить ?includeMessages=false по умолчанию.
+3. SocketContext — stale closure на socket
+TypeScript
+const sendMessage = useCallback((chatId: number, text: string) => {
+  socket?.emit('message:send', { chatId, text })  // socket может быть null
+}, [socket])
+Если socket пересоздался между рендерами — callback устарел. Но тут [socket] в deps, так что ок. Настоящая проблема: socket state обновляется, но если компонент использует sendMessage в event listener без cleanup — stale closure.
 🟡 Средние проблемы
-5. Дублирование API префиксов
-JavaScript
-// app.js
-function mount(prefix, router, ...mw) {
-  app.use(`/api${prefix}`, ...mw, router)
-  app.use(`${V1}${prefix}`, ...mw, router) // /api/v1/tickets
-}
-Итог: /api/tickets и /api/v1/tickets — дубль. В production это раздувает поверхность атаки и путает кэш. Лучше оставить один префикс.
-6. Cache middleware ломает SSE/WebSocket upgrade
-JavaScript
-// cache.js — cacheMiddleware
-res.json = (body) => {
-  cache.set(key, body, ttl)
-  originalJson(body)
-}
-Если route использует res.write() или streaming — кэш не сработает, но и не сломает. Однако res.json переопределён навсегда для запроса. Если middleware вызван несколько раз (чего не бывает в Express, но всё же) — будет рекурсия.
-7. Missing error boundary на lazy-loaded админках
-tsx
-// App.tsx
-const Admin = lazy(() => import('@/pages/Admin'))
+4. ProtectedRoute — не проверяет user при adminOnly
+TypeScript
+if (adminOnly && user?.role !== "admin" && user?.role !== "super_admin")
+Ок, но user может быть null при первом рендере после refresh — пока AuthContext восстанавливает из localStorage. Будет редирект на /, потом обратно. Мигание.
+Фикс: добавить loading состояние в AuthContext:
+TypeScript
+const [loading, setLoading] = useState(true)
+useEffect(() => { setLoading(false) }, [])
 // ...
-<Route path="/admin" element={<ProtectedRoute adminOnly><AdminLayout /></ProtectedRoute>}>
-AdminLayout не обёрнут в ErrorBoundary, в отличие от остальных страниц. Если админка упадёт — краш всего приложения.
-8. Zod v4 в package.json, но schemas используют v3 API
+if (loading) return <Spinner />
+5. TicketProvider — authFetch не обрабатывает 401
 TypeScript
-// src/lib/schemas.ts
-import { z } from 'zod'
-z.string().email('...')
-Zod v4 изменил API (z.string().email() без аргументов, сообщения через .message()). Нужно либо понизить до ^3.x, либо мигрировать схемы.
-🟢 Мелочи и полировка
-9. i18n — fallbackLng: "ru", но детектор может выбрать "en"
+async function authFetch(url: string, token: string | null, options?: RequestInit) {
+  const res = await fetch(url, { ...options, headers: { ...options?.headers, Authorization: `Bearer ${token}` } })
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json()
+}
+При 401 не редиректит на логин, просто падает с ошибкой. api.ts это делает, но TicketProvider использует свой authFetch.
+6. usePush — race condition на subscribe
 TypeScript
-// i18n/index.ts
-fallbackLng: "ru",
-detection: { order: ["localStorage", "navigator"], caches: ["localStorage"] },
-Если у пользователя браузер на английском и чистый localStorage — загрузится en. Это ок, но для корп. системы лучше форсировать ru по умолчанию:
+const subscribe = useCallback(async () => {
+  // ...
+  setSubscribed(true)  // внутри try
+  // ...
+  setSubscribed(false)  // в catch
+}, [supported])
+Если пользователь быстро кликнет 2 раза — два параллельных запроса. Нужен AbortController или isSubscribing ref.
+7. Kanban.tsx — DnD без dataTransfer fallback
 TypeScript
-fallbackLng: "ru",
-lng: localStorage.getItem('i18nextLng') || 'ru',
-10. Theme toggle скрыт (Этап 9), но CSS-переменные .dark есть
-В AGENTS.md: «переключатель скрыт». Это фича или баг? Если скрыт намеренно — ThemeContext мёртвый груз. Если временно — нужно раскомментировать в sidebar.
+const handleDrop = (e: React.DragEvent, status: TicketStatus) => {
+  e.preventDefault()
+  const id = Number(e.dataTransfer.getData('text/plain'))
+  if (id) updateTicketStatus(id, status)
+  setDragId(null)
+}
+Если dataTransfer пуст (браузерная quirks) — id будет NaN. Нужен fallback на dragId state:
+TypeScript
+const id = Number(e.dataTransfer.getData('text/plain')) || dragId
+🟢 Мелочи / улучшения
+8. sidebar.tsx — requester роль не видит "Ещё" меню
+В bottomNavItems фильтруется по роли, но мобильное меню (MobileBottomNav) показывает "Ещё" для всех. В SidebarContent bottomItems включает /admin только для admin/super_admin, но /profile для всех. Ок, но нет ссылки на /notifications в сайдбаре.
+9. i18n — дублирующийся ключ hasAccount в en.json
+JSON
+"hasAccount": "Already have an account?",
+// ...
+"hasAccount": "Already have an account?",
+Дважды определён — валидный JSON, но второй перезаписывает первый.
+10. date-fns locale hardcoded в utils.ts
+TypeScript
+import { ru } from 'date-fns/locale'
+// ...
+return format(new Date(dateStr), 'd MMM yyyy', { locale: ru })
+При переключении языка на EN даты остаются русскими. Нужно брать locale из i18n.
+11. App.tsx — SentryRoutes типизация
+TypeScript
+const SentryRoutes =
+  typeof Sentry.withSentryReactRouterV6Routing === 'function' ? Sentry.withSentryReactRouterV6Routing(Routes) : Routes
+Sentry.withSentryReactRouterV6Routing deprecated в новых версиях @sentry/react. Если обновили до 10.x — может не работать.
+12. server/src/socket.js — prisma.employees → prisma.employees?
+JavaScript
+prisma.employees.update({ where: { id: socket.userId }, data: { online: true } })
+В Prisma schema модель называется Employee (PascalCase), но в клиенте — prisma.employee (camelCase)? Проверьте — в schema.prisma model Employee, значит в Prisma Client будет prisma.employee (единственное число, camelCase). Тут prisma.employees — опечатка, будет undefined.
+13. background.js — warnAdminRedisMissing вызывается только при старте
+Если Redis упал во время работы — админы не узнают. Нужен healthcheck в цикле.
+14. files.js — requireRole('admin', 'senior_agent') на DELETE
+В AGENTS.md написано "role check на DELETE (senior_agent+)", а в коде requireRole('admin', 'senior_agent'). requireRole использует Math.max по индексам иерархии, так что senior_agent пройдёт. Ок, но лучше явно requireRole('senior_agent').
+15. ticket-context.tsx — useTickets без проверки token
+TypeScript
+const ticketsQuery = useQuery({
+  queryKey: ['tickets'],
+  queryFn: async () => { /* ... */ },
+  enabled: !!token,
+})
+Если token протух после запроса — authFetch вернёт 401, но useQuery будет ретраить. Нужен глобальный interceptor на 401.
 📋 План доработки (по приоритету)
 Table
 Приоритет	Задача	Файлы
-P0	Исправить logout (токен null)	AuthContext.tsx
-P0	Убрать scripts.tauri или вернуть @tauri-apps/cli	package.json
-P0	Синхронизировать Zod версию	package.json или schemas.ts
-P1	Убрать primary.cnf из docker-compose (мёртвый конфиг реплики)	docker-compose.yml
-P1	Добавить ErrorBoundary на AdminLayout	App.tsx
-P1	Явный guard на super_admin в admin.js	server/src/routes/admin.js
-P2	Унифицировать API prefix (убрать дубль /api/v1)	app.js
-P2	Заменить $queryRaw на типизированный Prisma query	admin.js
-P2	Решить судьбу ThemeToggle (включить/удалить)	sidebar.tsx, ThemeContext
-P3	Вынести check-console.mjs из .gitignore или документировать	.gitignore, AGENTS.md
+🔴 P0	Исправить двойной res.json()	src/lib/api.ts
+🔴 P0	Исправить prisma.employees → prisma.employee	server/src/socket.js
+🟡 P1	Добавить loading в AuthContext	src/context/AuthContext.tsx
+🟡 P1	Унифицировать authFetch с api.ts или добавить 401-обработку	src/context/ticket-context.tsx
+🟡 P1	Убрать messages из GET /:id по умолчанию	server/src/routes/tickets.js, src/context/ticket-context.tsx
+🟢 P2	Исправить дубль hasAccount в EN locale	src/i18n/locales/en.json
+🟢 P2	Динамический locale для date-fns	src/lib/utils.ts
+🟢 P2	Race condition в usePush	src/lib/use-push.ts
+🟢 P2	Fallback DnD в Kanban	src/pages/Kanban.tsx

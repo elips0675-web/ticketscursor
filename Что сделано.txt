@@ -21,7 +21,9 @@
     • Agent видит свои + неназначенные; requester — только свои
     • Чат внутри тикета + внутренние заметки, вложения
     • WebSocket эмиты, фоновая проверка SLA (15 мин), экспорт CSV/PDF
+    • POST /:id/messages — проверка прав (creator/assignee/senior_agent+)
     • Фильтры, пагинация, сортировка
+    • ticket-context.tsx: хардкод localhost:4000 → централизованный API_URL
 
   ✅ Дашборд
     • Статистика, график по статусам (Recharts), виджет сотрудников
@@ -58,6 +60,7 @@
   ✅ Уведомления
     • In-app (Socket.IO + БД) + Email (nodemailer) + Telegram
     • Автотриггеры: создание/статус/приоритет/назначение/сообщение/SLA
+    • SLA per-user dedup — notifySlaBreached не блокирует алерты assignee/admin
     • Очистка >90 дней (фоновая задача, каждые 6ч)
 
 ────────────────────────────────────────────────────────────────────────────
@@ -85,7 +88,7 @@
   ✅ Vercel — SPA routing (vercel.json)
   ✅ Tauri — конфиг + Rust
 
-  ✅ Prisma ORM — 17 моделей, read replicas, directUrl для миграций
+  ✅ Prisma ORM — 17 моделей, directUrl для миграций
   ✅ Redis — кэш (tickets 120s, employees 300s), Socket.IO adapter, BullMQ
   ✅ Логирование — Winston (console + файлы, ротация 10MB), requestId
   ✅ Аудит — audit_log + middleware на ключевых роутах
@@ -122,6 +125,7 @@
         ✅ SLA — first_response_at, resolved_at, due_at, фоновая проверка 15 мин
         ✅ Экспорт CSV/PDF — через фронтенд (jsPDF + html2canvas)
         ✅ WebSocket — эмиты ticket:created/updated/message/message-removed
+        ✅ POST /:id/messages — ДОБАВЛЕНА проверка прав (creator/assignee/senior_agent+)
 
       Раздел 3 — Чаты:
         ✅ Пагинация сообщений — ДОБАВЛЕНА (page/limit, total, totalPages)
@@ -172,7 +176,7 @@
         ✅ VitePWA (injectManifest), beforeinstallprompt
         ✅ Tauri — конфиг + Rust
         ✅ i18n (ru/en), LanguageDetector
-        ✅ Тёмная тема (CSS vars + localStorage)
+        ✅ Тёмная тема — удалена (CSS + i18n keys + ThemeContext очищены)
         ✅ ErrorBoundary на всех страницах
 
       Раздел 11 — Производительность:
@@ -201,4 +205,4 @@
 РЕПОЗИТОРИЙ
 
   https://github.com/elips0675-web/ticketsCursor
-  Последний коммит: 4f091fc — feat: полный аудит 13 разделов, security-фиксы, обновление документации
+  Последний коммит: d224195 — fix(ticket-context): replace hardcoded localhost:4000 with API_URL; fix(notify): per-user SLA dedup; fix(tickets): permission check on POST /:id/messages
