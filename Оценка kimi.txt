@@ -1,53 +1,90 @@
-По контексту проекта вижу 5 блоков проблем — от технического долга до процессных нарушений. Ниже разбор + конкретный план, что допилить.
-🔴 Что не так
-1. Техдолг: осознанный any остался без типизации
-Этап 2 в Что сделано.txt помечен ❌ как пропущенный. any в api.ts/mapTicket напрямую ломает правило «строгий TypeScript, избегать any» из AGENTS.md.
-ESLint no-explicit-any: warn — по факту разрешает мержить код с any. Для strict: true это должен быть error.
-2. Низкое покрытие тестами
-51% клиент / 55% сервер — это жёлтая зона. При 17 моделях Prisma, 50+ эндпоинтах и RBAC такое покрытие не даёт уверенности при рефакторинге.
-Нет прозрачности, что покрыто, а что нет (SLA-пересчёт? LDAP-авторизация? Socket.IO эмиты?).
-3. Нарушение собственных процессных правил
-AGENTS.md требует: «После каждого изменения кода — запускать check-console.mjs, проверять errors: [] и hasRussianText: true». В Что сделано.txt об этом ни слова — скрипт либо не запускается, либо результаты не фиксируются.
-Требование «После завершения этапа — убрать его из ПЛАН ДОРАБОТКИ ПО ЭТАПАМ» — но сам план не приложен, статусы непонятно где обновляются.
-4. Несоответствие версий в документации
-README.md: React 19
-AGENTS.md: React 18
-TECHNICAL.md: React 19
-Это создаёт путаницу при onboarding и в CI.
-5. Риски зависимостей
-Express 4 в 2026 году — устаревший мажор. Express 5 вышел стабильно, в 4-й ветке не закрываются некоторые security-фиксы.
-Zod 4 — если это всё ещё pre-release/beta, в корпоративном ПО это неприемлемый риск. Стабильная линейка — 3.x.
+Вижу обновления — многое уже допилено (any убран, ESLint ужесточен, версии синхронизированы, тесты notify расширены). Осталось 4 конкретных боли. Ниже разбор и пошаговый план.
+🔴 Что сейчас не так
+Table
+Проблема	Почему критично
+Покрытие 51% / 55%	При 17 моделях Prisma, RBAC, SLA, LDAP, Socket.IO, файлах — половина логики не покрыта. Рефакторинг = риск.
+Express 4	В 2026 году это legacy. Express 5 stable, в 4-й ветке не закрываются некоторые security-фиксы.
+~100 ESLint warnings (no-unused-vars)	CI пропускает (--max-warnings 100), но мусор в консоли маскирует реальные проблемы.
+Virtualizer отсутствует	Tickets.tsx без @tanstack/react-virtual. Пока ≤500 тикетов — ок, но при росте будет лагать.
 🛠 Как допилить (по приоритету)
-Немедленно (этот спринт)
+1. Покрытие тестов → 70%+ (этот спринт)
+Сервер (приоритетные области):
 Table
-Задача	Действие
-Закрыть Этап 2	Типизировать mapTicket в api.ts, убрать any. Если тип сложный — вынести интерфейс в src/types/ticket.ts.
-Ужесточить ESLint	В .eslintrc/eslint.config поменять no-explicit-any с warn на error. Исправить все текущие any (или завернуть в @ts-expect-error с комментарием).
-Синхронизить доку	В AGENTS.md проставить React 19, Vite 8, Tailwind v4 — привести к README.md/TECHNICAL.md.
-Интегрировать check-console.mjs	Добавить запуск скрипта в package.json скрипт posttest или в pre-commit hook (через lint-staged или отдельный шаг). Результаты писать в артефакт CI.
-Краткосрочно (1–2 спринта)
+Модуль	Что тестировать	Почему даст прирост
+RBAC	requireRole() на 5 ролях, edge-cases (нет роли, невалидный JWT)	Middleware — вызывается на 50+ роутах
+SLA	Пересчёт due_at/first_response_at при смене приоритета, фоновая проверка (15 мин), notifySlaBreached	Сложная бизнес-логика, сейчас вероятно 0%
+LDAP	Auto-provisioning, fallback при недоступности AD, невалидные credentials	Критичный путь авторизации
+Socket.IO	Эмиты ticket:updated, chat:message, rate-limit (5 msg/sec)	Real-time — тестируется редко, но ломается часто
+Файлы	Multer + magic bytes + ClamAV, S3/MinIO adapter, большие файлы	Security-чувствительно
+Audit	auditLogMiddleware — записывает ли действие при ошибке сервиса?	Compliance
+Клиент (приоритетные области):
 Table
-Задача	Действие
-Довести покрытие до 70%+	Приоритет: 
-• RBAC (requireRole, middleware) 
-• SLA-логика (пересчёт due_at, first_response_at) 
-• Аутентификация (JWT refresh, LDAP auto-provisioning) 
-• notify.js / sendTicketNotification (сейчас покрыт 14 тестами, но нет негативных сценариев)
-E2E в CI	22 Playwright-теста должны запускаться в GitHub Actions на каждый PR. Сейчас badge CI есть, но неясно, включены ли E2E в пайплайн.
-План доработок	Создать/обновить файл ROADMAP.md или PLAN.md со статусами этапов. После закрытия этапа — PR с удалением строки из плана + обновление Что сделано.txt.
-Среднесрочно (техническое обслуживание)
+Модуль	Что тестировать
+Хуки	useTickets, useAuth, useSocket — моки QueryClient + Socket.IO
+Страницы	Login (валидация Zod, ошибки API), Dashboard (рендер графиков Recharts)
+Утилиты	formatDate, formatSLA, cn() (Tailwind merge)
+Компоненты	TicketTable, RoleBadge, FileUploader — интеракции
+Цель: +20% покрытия за счёт сложной логики, а не утилит.
+2. Express 4 → 5 (следующий спринт)
+Breaking changes, которые коснутся проекта:
+Async errors в middleware: Express 5 не падает при throw в async middleware. Нужно проверить, что центральный error-handling middleware всё ещё ловит ошибки.
+Путь роутов: Express 5 строже с regex в путях.
+План миграции:
+bash
+npm install express@^5.0.0
+cd server && npm test        # прогнать 138 тестов
+npm run type-check           # проверить типы
+node check-console.mjs       # 6 страниц, errors: []
+Если тесты падают — не мержить, оставить в отдельной ветке.
+3. ESLint warnings → 0 (можно параллельно)
+Проблема: no-unused-vars ~100 штук. Скорее всего это:
+Неиспользуемые импорты из shadcn/ui
+Аргументы функций, оставленные «на будущее»
+Деструктуризация с неиспользуемыми полями
+Решение:
+bash
+npm run lint -- --fix        # автофикс импортов
+Для осознанных неиспользуемых аргументов — префикс _:
+TypeScript
+// Было
+function handler(req, res, next) { /* next не используется */ }
+
+// Стало
+function handler(req, res, _next) { }
+Или настроить правило:
+JavaScript
+// eslint.config.js
+'@typescript-eslint/no-unused-vars': ['warn', { 
+  argsIgnorePattern: '^_', 
+  varsIgnorePattern: '^_' 
+}]
+После чистки — снизить --max-warnings с 100 до 20 в CI, чтобы не разъезжалось.
+4. Virtualizer в Tickets.tsx (отложенно, если планируется рост)
+Пока пагинация по 9 и ≤500 тикетов — не критично. Но если в будущем появятся «все тикеты» или скролл без пагинации:
+bash
+npm install @tanstack/react-virtual
+Интеграция — заменить <table> на виртуализированный контейнер с estimateSize. Но это только если метрики покажут лаги.
+📋 Чек-лист перед коммитом (актуализировать)
+Добавь в package.json или husky:
+JSON
+{
+  "scripts": {
+    "check:all": "npm run lint && npm run type-check && npm test && cd server && npm test && node check-console.mjs"
+  }
+}
+Или разбить на этапы:
+npm run lint — 0 errors, warnings < 20
+npm run type-check — проходит
+npm test — 154 теста, покрытие не падает
+cd server && npm test — 138 тестов
+node check-console.mjs — errors: [], hasRussianText: true
+npm run build — production без warning'ов
+git add -A && git commit && git push
+🎯 Итоговый план на 2 спринта
 Table
-Задача	Действие
-Express 4 → 5	Мигрировать, проверить breaking changes (обработка async errors в middleware изменилась).
-Prisma 5.22 → 6.x	Проверить changelog, обновить генераторы, прогнать vitest + playwright.
-Zod 4	Если это ещё не stable — откатить на zod@^3.24.0. Если stable — оставить, но зафиксировать в package.json exact version.
-Метрики покрытия	Подключить istanbul/v8 coverage report в PR comments (через GitHub Actions artifact), чтобы динамика была видна в каждом мерж-реквесте.
-📋 Чек-лист перед следующим ответом пользователю
-Если ты сейчас садишься допиливать — проверь по порядку:
-[ ] npm run lint — 0 ошибок, no-explicit-any = error
-[ ] npm run type-check — tsc --noEmit проходит без any в api.ts
-[ ] node check-console.mjs — errors: [], hasRussianText: true на всех 6 страницах
-[ ] npm test + cd server && npm test — проходят, покрытие не падает
-[ ] npm run build — production сборка без warning'ов
-[ ] git add -A && git commit — husky + lint-staged отработали
-[ ] Обновить Что сделано.txt и PLAN.md (или аналог) — убрать закрытые этапы, обновить статусы
+Неделя	Задача	Результат
+1	Тесты: RBAC middleware + SLA пересчёт + LDAP auth	+15% покрытие сервера
+1	Тесты: хуки useTickets, useAuth + страница Login	+10% покрытие клиента
+2	Тесты: Socket.IO handlers + File upload + Audit	+5% сервер, итого ~70%
+2	Чистка ESLint warnings, снижение --max-warnings до 20	0 мусора в консоли
+3	Ветка express-5, прогон тестов, проверка error-handling	Решение о миграции
