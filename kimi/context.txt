@@ -217,6 +217,9 @@ docker compose up -d --build
 - **admin.js**: $queryRaw в†’ findMany(), СЏРІРЅС‹Р№ guard super_admin (403)
 - **schemas.ts/schemas.js**: Zod v4 вЂ” .email({ message: }) РІРјРµСЃС‚Рѕ .email('...')
 - **app.js**: mount() Р±РѕР»СЊС€Рµ РЅРµ РґСѓР±Р»РёСЂСѓРµС‚ /api/v1/, swagger/docs С‚РѕР»СЊРєРѕ /api/docs
+- **ticket-context.tsx**: С…Р°СЂРґРєРѕРґ localhost:4000 в†’ РёРјРїРѕСЂС‚ API_URL РёР· @/lib/api.ts
+- **notify.js**: СЂР°РЅРЅРёР№ return РІ notifySlaBreached в†’ per-user dedup (РЅРµ Р±Р»РѕРєРёСЂСѓРµС‚ Р°Р»РµСЂС‚С‹ assignee/admin)
+- **tickets.js**: POST /:id/messages вЂ” РґРѕР±Р°РІР»РµРЅР° РїСЂРѕРІРµСЂРєР° РїСЂР°РІ (creator/assignee/senior_agent+)
 - **App.tsx**: AdminLayout РѕР±С‘СЂРЅСѓС‚ РІ ErrorBoundary
 - **AuthContext.tsx**: logout вЂ” СЃРѕС…СЂР°РЅРµРЅРёРµ token РґРѕ РѕС‡РёСЃС‚РєРё (fixed race condition)
 - **.gitignore**: СѓР±СЂР°РЅ check-console.mjs (СЃРєСЂРёРїС‚ РЅСѓР¶РµРЅ РЅРѕРІС‹Рј СЂР°Р·СЂР°Р±РѕС‚С‡РёРєР°Рј)
@@ -2192,21 +2195,21 @@ export default function App() {
 
 
 === src/i18n/index.ts ===
-import i18n from "i18next"
-import { initReactI18next } from "react-i18next"
-import LanguageDetector from "i18next-browser-languagedetector"
-import en from "./locales/en.json"
-import ru from "./locales/ru.json"
+import i18n from 'i18next'
+import { initReactI18next } from 'react-i18next'
+import LanguageDetector from 'i18next-browser-languagedetector'
+import en from './locales/en.json'
+import ru from './locales/ru.json'
 
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources: { en: { translation: en }, ru: { translation: ru } },
-    fallbackLng: "ru",
+    fallbackLng: 'ru',
     lng: localStorage.getItem('i18nextLng') || 'ru',
     interpolation: { escapeValue: false },
-    detection: { order: ["localStorage", "navigator"], caches: ["localStorage"] },
+    detection: { order: ['localStorage', 'navigator'], caches: ['localStorage'] },
   })
 
 export default i18n
@@ -3841,8 +3844,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import type { Ticket, TicketStats, Employee, TicketStatus, TicketPriority } from "@/types"
 import { useAuth } from "@/context/AuthContext"
 import { useSocket } from "@/context/SocketContext"
-
-const API = "http://localhost:4000/api"
+import { API_URL } from "@/lib/api"
 
 interface TicketContextType {
   tickets: Ticket[]
@@ -3913,7 +3915,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const ticketsQuery = useQuery({
     queryKey: ['tickets'],
     queryFn: async () => {
-      const body = await authFetch(`${API}/tickets?limit=500`, token)
+      const body = await authFetch(`${API_URL}/tickets?limit=500`, token)
       return (body.data || []).map(mapTicket)
     },
     enabled: !!token,
@@ -3922,7 +3924,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const employeesQuery = useQuery({
     queryKey: ['employees'],
     queryFn: async () => {
-      const body = await authFetch(`${API}/employees`, token)
+      const body = await authFetch(`${API_URL}/employees`, token)
       const raw = body.data || body
       return raw.map(mapEmployee)
     },
@@ -3956,7 +3958,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: TicketStatus }) =>
-      authFetch(`${API}/tickets/${id}/status`, token, {
+      authFetch(`${API_URL}/tickets/${id}/status`, token, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
@@ -3976,7 +3978,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
   const priorityMutation = useMutation({
     mutationFn: ({ id, priority }: { id: number; priority: TicketPriority }) =>
-      authFetch(`${API}/tickets/${id}/priority`, token, {
+      authFetch(`${API_URL}/tickets/${id}/priority`, token, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ priority }),
@@ -3996,7 +3998,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
   const assignMutation = useMutation({
     mutationFn: ({ id, employeeId }: { id: number; employeeId: number }) =>
-      authFetch(`${API}/tickets/${id}/assign`, token, {
+      authFetch(`${API_URL}/tickets/${id}/assign`, token, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ employeeId }),
@@ -4022,7 +4024,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       ticketId: number; text: string; isInternal: boolean;
       attachments?: { url: string; name: string }[]
     }) => {
-      const body = await authFetch(`${API}/tickets/${ticketId}/messages`, token, {
+      const body = await authFetch(`${API_URL}/tickets/${ticketId}/messages`, token, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, isInternal, attachments }),
@@ -4067,7 +4069,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
   const createTicketMutation = useMutation({
     mutationFn: (data: { title: string; description: string; priority: TicketPriority; category: string; computerName?: string; userAccount?: string }) =>
-      authFetch(`${API}/tickets`, token, {
+      authFetch(`${API_URL}/tickets`, token, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -5194,18 +5196,6 @@ export async function notifySlaBreached(ticketId) {
   const dueAt = t.due_at ? new Date(t.due_at).getTime() : null
   if (!dueAt || dueAt > now) return
 
-  const exists = await prisma.notifications.findFirst({
-    where: {
-      user_id: t.creatorId,
-      type: 'ticket_sla_overdue',
-      link: `/tickets/${ticketId}`,
-      created_at: { gte: new Date(now - 24 * 60 * 60 * 1000) },
-    },
-    select: { id: true },
-  })
-  if (exists) return
-
-  const targets = new Set([t.creatorId, t.assigneeId].filter(Boolean))
   const admins = await prisma.employees.findMany({
     where: {
       is_active: true,
@@ -5213,9 +5203,22 @@ export async function notifySlaBreached(ticketId) {
     },
     select: { id: true, email: true, name: true },
   })
+
+  const targets = new Set([t.creatorId, t.assigneeId].filter(Boolean))
   for (const a of admins) targets.add(a.id)
 
+  const recentCutoff = new Date(now - 24 * 60 * 60 * 1000)
   for (const userId of targets) {
+    const alreadyNotified = await prisma.notifications.findFirst({
+      where: {
+        user_id: userId,
+        type: 'ticket_sla_overdue',
+        link: `/tickets/${ticketId}`,
+        created_at: { gte: recentCutoff },
+      },
+      select: { id: true },
+    })
+    if (alreadyNotified) continue
     await createNotification({
       userId,
       type: 'ticket_sla_overdue',
@@ -6071,8 +6074,15 @@ router.post('/:id/messages', addMessageValidation, async (req, res) => {
   const ticketId = Number(req.params.id)
   const { text, isInternal, attachments } = req.body
   try {
-    const ticketExists = await prisma.tickets.count({ where: { id: ticketId } })
-    if (!ticketExists) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    const ticket = await prisma.tickets.findUnique({
+      where: { id: ticketId },
+      select: { id: true, created_by: true, assigned_to: true },
+    })
+    if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    const canWrite = hasRole(req.user.role, 'senior_agent') ||
+      ticket.created_by === req.user.userId ||
+      ticket.assigned_to === req.user.userId
+    if (!canWrite) return res.status(403).json({ success: false, message: 'Forbidden' })
     const msg = await prisma.ticket_messages.create({
       data: {
         ticket_id: ticketId,

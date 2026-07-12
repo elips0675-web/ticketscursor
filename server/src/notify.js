@@ -169,18 +169,6 @@ export async function notifySlaBreached(ticketId) {
   const dueAt = t.due_at ? new Date(t.due_at).getTime() : null
   if (!dueAt || dueAt > now) return
 
-  const exists = await prisma.notifications.findFirst({
-    where: {
-      user_id: t.creatorId,
-      type: 'ticket_sla_overdue',
-      link: `/tickets/${ticketId}`,
-      created_at: { gte: new Date(now - 24 * 60 * 60 * 1000) },
-    },
-    select: { id: true },
-  })
-  if (exists) return
-
-  const targets = new Set([t.creatorId, t.assigneeId].filter(Boolean))
   const admins = await prisma.employees.findMany({
     where: {
       is_active: true,
@@ -188,9 +176,22 @@ export async function notifySlaBreached(ticketId) {
     },
     select: { id: true, email: true, name: true },
   })
+
+  const targets = new Set([t.creatorId, t.assigneeId].filter(Boolean))
   for (const a of admins) targets.add(a.id)
 
+  const recentCutoff = new Date(now - 24 * 60 * 60 * 1000)
   for (const userId of targets) {
+    const alreadyNotified = await prisma.notifications.findFirst({
+      where: {
+        user_id: userId,
+        type: 'ticket_sla_overdue',
+        link: `/tickets/${ticketId}`,
+        created_at: { gte: recentCutoff },
+      },
+      select: { id: true },
+    })
+    if (alreadyNotified) continue
     await createNotification({
       userId,
       type: 'ticket_sla_overdue',

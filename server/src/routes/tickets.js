@@ -251,8 +251,15 @@ router.post('/:id/messages', addMessageValidation, async (req, res) => {
   const ticketId = Number(req.params.id)
   const { text, isInternal, attachments } = req.body
   try {
-    const ticketExists = await prisma.tickets.count({ where: { id: ticketId } })
-    if (!ticketExists) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    const ticket = await prisma.tickets.findUnique({
+      where: { id: ticketId },
+      select: { id: true, created_by: true, assigned_to: true },
+    })
+    if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    const canWrite = hasRole(req.user.role, 'senior_agent') ||
+      ticket.created_by === req.user.userId ||
+      ticket.assigned_to === req.user.userId
+    if (!canWrite) return res.status(403).json({ success: false, message: 'Forbidden' })
     const msg = await prisma.ticket_messages.create({
       data: {
         ticket_id: ticketId,

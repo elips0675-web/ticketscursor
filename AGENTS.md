@@ -216,6 +216,9 @@ docker compose up -d --build
 - **admin.js**: $queryRaw → findMany(), явный guard super_admin (403)
 - **schemas.ts/schemas.js**: Zod v4 — .email({ message: }) вместо .email('...')
 - **app.js**: mount() больше не дублирует /api/v1/, swagger/docs только /api/docs
+- **ticket-context.tsx**: хардкод localhost:4000 → импорт API_URL из @/lib/api.ts
+- **notify.js**: ранний return в notifySlaBreached → per-user dedup (не блокирует алерты assignee/admin)
+- **tickets.js**: POST /:id/messages — добавлена проверка прав (creator/assignee/senior_agent+)
 - **App.tsx**: AdminLayout обёрнут в ErrorBoundary
 - **AuthContext.tsx**: logout — сохранение token до очистки (fixed race condition)
 - **.gitignore**: убран check-console.mjs (скрипт нужен новым разработчикам)

@@ -1,10 +1,9 @@
-import { createContext, useContext, useEffect, useCallback, type ReactNode } from "react"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import type { Ticket, TicketStats, Employee, TicketStatus, TicketPriority } from "@/types"
-import { useAuth } from "@/context/AuthContext"
-import { useSocket } from "@/context/SocketContext"
-
-const API = "http://localhost:4000/api"
+import { createContext, useContext, useEffect, useCallback, type ReactNode } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { Ticket, TicketStats, Employee, TicketStatus, TicketPriority } from '@/types'
+import { useAuth } from '@/context/AuthContext'
+import { useSocket } from '@/context/SocketContext'
+import { API_URL } from '@/lib/api'
 
 interface TicketContextType {
   tickets: Ticket[]
@@ -14,8 +13,20 @@ interface TicketContextType {
   updateTicketStatus: (id: number, status: TicketStatus) => Promise<void>
   updateTicketPriority: (id: number, priority: TicketPriority) => Promise<void>
   assignTicket: (id: number, employeeId: number) => Promise<void>
-  addMessage: (ticketId: number, text: string, isInternal: boolean, attachments?: { url: string; name: string }[]) => Promise<void>
-  createTicket: (data: { title: string; description: string; priority: TicketPriority; category: string; computerName?: string; userAccount?: string }) => Promise<void>
+  addMessage: (
+    ticketId: number,
+    text: string,
+    isInternal: boolean,
+    attachments?: { url: string; name: string }[],
+  ) => Promise<void>
+  createTicket: (data: {
+    title: string
+    description: string
+    priority: TicketPriority
+    category: string
+    computerName?: string
+    userAccount?: string
+  }) => Promise<void>
 }
 
 const TicketContext = createContext<TicketContextType | null>(null)
@@ -31,19 +42,32 @@ function mapTicket(raw: any): Ticket {
     tags: [],
     computerName: raw.computer_name,
     userAccount: raw.user_account,
-    createdBy: { id: raw.created_by, name: raw.created_by_name || "User", email: "", avatar: "" },
-    assignedTo: raw.assigned_to ? { id: raw.assigned_to, name: raw.assigned_name || "", email: raw.assigned_email || "", avatar: raw.assigned_avatar || "" } : undefined,
-    messages: Array.isArray(raw.messages) ? raw.messages.map((m: any) => ({
-      id: m.id,
-      ticketId: m.ticket_id,
-      senderId: m.sender_id,
-      senderName: m.sender_name,
-      senderAvatar: m.sender_avatar || "",
-      text: m.text,
-      attachments: m.attachments ? (typeof m.attachments === 'string' ? JSON.parse(m.attachments) : m.attachments) : [],
-      createdAt: m.created_at,
-      isInternal: !!m.is_internal,
-    })) : [],
+    createdBy: { id: raw.created_by, name: raw.created_by_name || 'User', email: '', avatar: '' },
+    assignedTo: raw.assigned_to
+      ? {
+          id: raw.assigned_to,
+          name: raw.assigned_name || '',
+          email: raw.assigned_email || '',
+          avatar: raw.assigned_avatar || '',
+        }
+      : undefined,
+    messages: Array.isArray(raw.messages)
+      ? raw.messages.map((m: any) => ({
+          id: m.id,
+          ticketId: m.ticket_id,
+          senderId: m.sender_id,
+          senderName: m.sender_name,
+          senderAvatar: m.sender_avatar || '',
+          text: m.text,
+          attachments: m.attachments
+            ? typeof m.attachments === 'string'
+              ? JSON.parse(m.attachments)
+              : m.attachments
+            : [],
+          createdAt: m.created_at,
+          isInternal: !!m.is_internal,
+        }))
+      : [],
     messages_count: raw.messages_count || (Array.isArray(raw.messages) ? raw.messages.length : 0),
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
@@ -52,10 +76,15 @@ function mapTicket(raw: any): Ticket {
 
 function mapEmployee(e: any): Employee {
   return {
-    id: e.id, name: e.name, email: e.email,
-    role: e.role as Employee["role"],
-    department: e.department, avatar: e.avatar || "",
-    online: !!e.online, activeTickets: e.activeTickets || 0, resolvedToday: e.resolvedToday || 0,
+    id: e.id,
+    name: e.name,
+    email: e.email,
+    role: e.role as Employee['role'],
+    department: e.department,
+    avatar: e.avatar || '',
+    online: !!e.online,
+    activeTickets: e.activeTickets || 0,
+    resolvedToday: e.resolvedToday || 0,
   }
 }
 
@@ -75,7 +104,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const ticketsQuery = useQuery({
     queryKey: ['tickets'],
     queryFn: async () => {
-      const body = await authFetch(`${API}/tickets?limit=500`, token)
+      const body = await authFetch(`${API_URL}/tickets?limit=500`, token)
       return (body.data || []).map(mapTicket)
     },
     enabled: !!token,
@@ -84,7 +113,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const employeesQuery = useQuery({
     queryKey: ['employees'],
     queryFn: async () => {
-      const body = await authFetch(`${API}/employees`, token)
+      const body = await authFetch(`${API_URL}/employees`, token)
       const raw = body.data || body
       return raw.map(mapEmployee)
     },
@@ -99,35 +128,37 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!socket) return
     const onStatus = ({ userId, online }: { userId: number; online: boolean }) => {
-      queryClient.setQueryData<Employee[]>(['employees'], prev =>
-        prev?.map(e => e.id === userId ? { ...e, online } : e)
+      queryClient.setQueryData<Employee[]>(['employees'], (prev) =>
+        prev?.map((e) => (e.id === userId ? { ...e, online } : e)),
       )
     }
     socket.on('user:status', onStatus)
-    return () => { socket.off('user:status', onStatus) }
+    return () => {
+      socket.off('user:status', onStatus)
+    }
   }, [socket, queryClient])
 
   const stats: TicketStats = {
     total: tickets.length,
-    open: tickets.filter(t => t.status === 'open').length,
-    inProgress: tickets.filter(t => t.status === 'in_progress').length,
-    resolved: tickets.filter(t => t.status === 'resolved').length,
-    critical: tickets.filter(t => t.priority === 'critical').length,
+    open: tickets.filter((t) => t.status === 'open').length,
+    inProgress: tickets.filter((t) => t.status === 'in_progress').length,
+    resolved: tickets.filter((t) => t.status === 'resolved').length,
+    critical: tickets.filter((t) => t.priority === 'critical').length,
     avgResolutionTime: 4.5,
   }
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: TicketStatus }) =>
-      authFetch(`${API}/tickets/${id}/status`, token, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+      authFetch(`${API_URL}/tickets/${id}/status`, token, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       }),
     onMutate: async ({ id, status }) => {
       await queryClient.cancelQueries({ queryKey: ['tickets'] })
       const prev = queryClient.getQueryData<Ticket[]>(['tickets'])
-      queryClient.setQueryData<Ticket[]>(['tickets'], old =>
-        old?.map(t => t.id === id ? { ...t, status, updatedAt: new Date().toISOString() } : t)
+      queryClient.setQueryData<Ticket[]>(['tickets'], (old) =>
+        old?.map((t) => (t.id === id ? { ...t, status, updatedAt: new Date().toISOString() } : t)),
       )
       return { prev }
     },
@@ -138,16 +169,16 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
   const priorityMutation = useMutation({
     mutationFn: ({ id, priority }: { id: number; priority: TicketPriority }) =>
-      authFetch(`${API}/tickets/${id}/priority`, token, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+      authFetch(`${API_URL}/tickets/${id}/priority`, token, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ priority }),
       }),
     onMutate: async ({ id, priority }) => {
       await queryClient.cancelQueries({ queryKey: ['tickets'] })
       const prev = queryClient.getQueryData<Ticket[]>(['tickets'])
-      queryClient.setQueryData<Ticket[]>(['tickets'], old =>
-        old?.map(t => t.id === id ? { ...t, priority, updatedAt: new Date().toISOString() } : t)
+      queryClient.setQueryData<Ticket[]>(['tickets'], (old) =>
+        old?.map((t) => (t.id === id ? { ...t, priority, updatedAt: new Date().toISOString() } : t)),
       )
       return { prev }
     },
@@ -158,19 +189,25 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
   const assignMutation = useMutation({
     mutationFn: ({ id, employeeId }: { id: number; employeeId: number }) =>
-      authFetch(`${API}/tickets/${id}/assign`, token, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+      authFetch(`${API_URL}/tickets/${id}/assign`, token, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ employeeId }),
       }),
     onMutate: async ({ id, employeeId }) => {
       await queryClient.cancelQueries({ queryKey: ['tickets'] })
       const prev = queryClient.getQueryData<Ticket[]>(['tickets'])
-      const emp = employees.find(e => e.id === employeeId)
-      queryClient.setQueryData<Ticket[]>(['tickets'], old =>
-        old?.map(t => t.id === id ? {
-          ...t, assignedTo: emp || t.assignedTo, updatedAt: new Date().toISOString()
-        } : t)
+      const emp = employees.find((e) => e.id === employeeId)
+      queryClient.setQueryData<Ticket[]>(['tickets'], (old) =>
+        old?.map((t) =>
+          t.id === id
+            ? {
+                ...t,
+                assignedTo: emp || t.assignedTo,
+                updatedAt: new Date().toISOString(),
+              }
+            : t,
+        ),
       )
       return { prev }
     },
@@ -180,13 +217,20 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   })
 
   const addMessageMutation = useMutation({
-    mutationFn: async ({ ticketId, text, isInternal, attachments }: {
-      ticketId: number; text: string; isInternal: boolean;
+    mutationFn: async ({
+      ticketId,
+      text,
+      isInternal,
+      attachments,
+    }: {
+      ticketId: number
+      text: string
+      isInternal: boolean
       attachments?: { url: string; name: string }[]
     }) => {
-      const body = await authFetch(`${API}/tickets/${ticketId}/messages`, token, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const body = await authFetch(`${API_URL}/tickets/${ticketId}/messages`, token, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, isInternal, attachments }),
       })
       return { ticketId, msg: body.data }
@@ -195,15 +239,20 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       await queryClient.cancelQueries({ queryKey: ['tickets'] })
       const prev = queryClient.getQueryData<Ticket[]>(['tickets'])
       const tempMsg = {
-        id: -Date.now(), ticketId,
-        senderId: user?.id || 0, senderName: user?.name || 'User',
-        senderAvatar: '', text, attachments: [],
-        createdAt: new Date().toISOString(), isInternal,
+        id: -Date.now(),
+        ticketId,
+        senderId: user?.id || 0,
+        senderName: user?.name || 'User',
+        senderAvatar: '',
+        text,
+        attachments: [],
+        createdAt: new Date().toISOString(),
+        isInternal,
       }
-      queryClient.setQueryData<Ticket[]>(['tickets'], old =>
-        old?.map(t => t.id === ticketId
-          ? { ...t, messages: [...t.messages, tempMsg], updatedAt: new Date().toISOString() }
-          : t)
+      queryClient.setQueryData<Ticket[]>(['tickets'], (old) =>
+        old?.map((t) =>
+          t.id === ticketId ? { ...t, messages: [...t.messages, tempMsg], updatedAt: new Date().toISOString() } : t,
+        ),
       )
       return { prev }
     },
@@ -211,43 +260,69 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       if (ctx?.prev) queryClient.setQueryData(['tickets'], ctx.prev)
     },
     onSuccess: ({ ticketId, msg }) => {
-      queryClient.setQueryData<Ticket[]>(['tickets'], old =>
-        old?.map(t => {
+      queryClient.setQueryData<Ticket[]>(['tickets'], (old) =>
+        old?.map((t) => {
           if (t.id !== ticketId) return t
           const realMsg = {
-            id: msg.id, ticketId: msg.ticket_id,
-            senderId: msg.sender_id, senderName: msg.sender_name,
-            senderAvatar: msg.sender_avatar || "", text: msg.text,
-            attachments: msg.attachments ? (typeof msg.attachments === 'string' ? JSON.parse(msg.attachments) : msg.attachments) : [],
-            createdAt: msg.created_at, isInternal: !!msg.is_internal,
+            id: msg.id,
+            ticketId: msg.ticket_id,
+            senderId: msg.sender_id,
+            senderName: msg.sender_name,
+            senderAvatar: msg.sender_avatar || '',
+            text: msg.text,
+            attachments: msg.attachments
+              ? typeof msg.attachments === 'string'
+                ? JSON.parse(msg.attachments)
+                : msg.attachments
+              : [],
+            createdAt: msg.created_at,
+            isInternal: !!msg.is_internal,
           }
-          return { ...t, messages: t.messages.map(m => m.id < 0 ? realMsg : m), updatedAt: new Date().toISOString() }
-        })
+          return {
+            ...t,
+            messages: t.messages.map((m) => (m.id < 0 ? realMsg : m)),
+            updatedAt: new Date().toISOString(),
+          }
+        }),
       )
     },
   })
 
   const createTicketMutation = useMutation({
-    mutationFn: (data: { title: string; description: string; priority: TicketPriority; category: string; computerName?: string; userAccount?: string }) =>
-      authFetch(`${API}/tickets`, token, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+    mutationFn: (data: {
+      title: string
+      description: string
+      priority: TicketPriority
+      category: string
+      computerName?: string
+      userAccount?: string
+    }) =>
+      authFetch(`${API_URL}/tickets`, token, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      }).then(body => body.data),
+      }).then((body) => body.data),
     onMutate: async (data) => {
       await queryClient.cancelQueries({ queryKey: ['tickets'] })
       const prev = queryClient.getQueryData<Ticket[]>(['tickets'])
       const tempTicket: Ticket = {
-        id: -Date.now(), title: data.title, description: data.description,
-        status: 'open', priority: data.priority, category: data.category, tags: [],
-        computerName: data.computerName, userAccount: data.userAccount,
+        id: -Date.now(),
+        title: data.title,
+        description: data.description,
+        status: 'open',
+        priority: data.priority,
+        category: data.category,
+        tags: [],
+        computerName: data.computerName,
+        userAccount: data.userAccount,
         createdBy: { id: user?.id || 0, name: user?.name || '', email: '', avatar: '' },
-        assignedTo: undefined, messages: [], messages_count: 0,
-        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+        assignedTo: undefined,
+        messages: [],
+        messages_count: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       }
-      queryClient.setQueryData<Ticket[]>(['tickets'], old =>
-        old ? [tempTicket, ...old] : [tempTicket]
-      )
+      queryClient.setQueryData<Ticket[]>(['tickets'], (old) => (old ? [tempTicket, ...old] : [tempTicket]))
       return { prev }
     },
     onError: (_err, _vars, ctx) => {
@@ -255,33 +330,57 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (raw) => {
       const created = mapTicket(raw)
-      queryClient.setQueryData<Ticket[]>(['tickets'], old =>
-        old?.map(t => t.id < 0 ? created : t)
-      )
+      queryClient.setQueryData<Ticket[]>(['tickets'], (old) => old?.map((t) => (t.id < 0 ? created : t)))
     },
   })
 
-  const updateTicketStatus = useCallback((id: number, status: TicketStatus) =>
-    statusMutation.mutateAsync({ id, status }), [statusMutation])
+  const updateTicketStatus = useCallback(
+    (id: number, status: TicketStatus) => statusMutation.mutateAsync({ id, status }),
+    [statusMutation],
+  )
 
-  const updateTicketPriority = useCallback((id: number, priority: TicketPriority) =>
-    priorityMutation.mutateAsync({ id, priority }), [priorityMutation])
+  const updateTicketPriority = useCallback(
+    (id: number, priority: TicketPriority) => priorityMutation.mutateAsync({ id, priority }),
+    [priorityMutation],
+  )
 
-  const assignTicket = useCallback((id: number, employeeId: number) =>
-    assignMutation.mutateAsync({ id, employeeId }), [assignMutation])
+  const assignTicket = useCallback(
+    (id: number, employeeId: number) => assignMutation.mutateAsync({ id, employeeId }),
+    [assignMutation],
+  )
 
   const addMessage = useCallback(
     (ticketId: number, text: string, isInternal: boolean, attachments?: { url: string; name: string }[]) =>
       addMessageMutation.mutateAsync({ ticketId, text, isInternal, attachments }),
-    [addMessageMutation])
+    [addMessageMutation],
+  )
 
   const createTicket = useCallback(
-    (data: { title: string; description: string; priority: TicketPriority; category: string; computerName?: string; userAccount?: string }) =>
-      createTicketMutation.mutateAsync(data),
-    [createTicketMutation])
+    (data: {
+      title: string
+      description: string
+      priority: TicketPriority
+      category: string
+      computerName?: string
+      userAccount?: string
+    }) => createTicketMutation.mutateAsync(data),
+    [createTicketMutation],
+  )
 
   return (
-    <TicketContext.Provider value={{ tickets, employees, stats, updateTicketStatus, updateTicketPriority, assignTicket, addMessage, createTicket, loading }}>
+    <TicketContext.Provider
+      value={{
+        tickets,
+        employees,
+        stats,
+        updateTicketStatus,
+        updateTicketPriority,
+        assignTicket,
+        addMessage,
+        createTicket,
+        loading,
+      }}
+    >
       {children}
     </TicketContext.Provider>
   )
@@ -289,6 +388,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
 export function useTickets() {
   const ctx = useContext(TicketContext)
-  if (!ctx) throw new Error("useTickets must be used within TicketProvider")
+  if (!ctx) throw new Error('useTickets must be used within TicketProvider')
   return ctx
 }
