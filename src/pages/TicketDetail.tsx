@@ -108,6 +108,7 @@ export default function TicketDetail() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: ticket?.messages.length ?? 0,
     getScrollElement: () => scrollRef.current,
@@ -119,6 +120,7 @@ export default function TicketDetail() {
     if (virtualizer.getTotalSize() > 0) {
       virtualizer.scrollToIndex((ticket?.messages.length ?? 1) - 1, { align: 'end' })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticket?.messages.length])
 
   useEffect(() => {
@@ -132,7 +134,7 @@ export default function TicketDetail() {
     return () => {
       socket.off('ticket:message', onMessage)
     }
-  }, [socket, ticket])
+  }, [socket, ticket, t])
 
   if (detailLoading) {
     return (

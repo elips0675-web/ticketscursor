@@ -51,7 +51,7 @@ export default function FilesPage() {
     queryFn: () => api.get('/files/folders').then((data) => (data || []).map(mapFolder)),
   })
 
-  const folders = foldersQuery.data ?? []
+  const folders = useMemo(() => foldersQuery.data ?? [], [foldersQuery.data])
   const loading = foldersQuery.isLoading
 
   // set active folder to first when data loads

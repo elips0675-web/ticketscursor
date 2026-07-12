@@ -25,6 +25,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     const s = io({ auth: { token } })
     s.on('connect', () => setConnected(true))
     s.on('disconnect', () => setConnected(false))
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSocket(s)
     return () => {
       s.close()

@@ -67,7 +67,7 @@ export default function ChatDetail() {
       leaveChat(chatId)
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
     }
-  }, [chatId])
+  }, [chatId, joinChat, leaveChat])
 
   useEffect(() => {
     if (!socket) return
@@ -89,6 +89,7 @@ export default function ChatDetail() {
       socket.off('message:removed', onRemove)
       socket.off('chat:typing', onTyping)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket])
 
   useEffect(() => {
@@ -160,6 +161,7 @@ export default function ChatDetail() {
 
   const filteredMsgs = messages.filter((m) => !searchQuery || m.text.toLowerCase().includes(searchQuery.toLowerCase()))
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: filteredMsgs.length,
     getScrollElement: () => scrollRef.current,
@@ -171,6 +173,7 @@ export default function ChatDetail() {
     if (virtualizer.getTotalSize() > 0) {
       virtualizer.scrollToIndex(filteredMsgs.length - 1, { align: 'end' })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredMsgs.length])
 
   const isGroup = chatInfo.type === 'group' || chatInfo.type === 'channel'

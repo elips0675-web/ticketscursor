@@ -66,10 +66,10 @@ export default function WikiPage() {
     queryFn: () => api.get('/wiki').then((data) => ((data?.data || data || []) as any[]).map(mapArticle)),
   })
 
-  const articles = articlesQuery.data ?? []
   const loading = articlesQuery.isLoading
 
   const filtered = useMemo(() => {
+    const articles = articlesQuery.data ?? []
     let items = articles
     if (category !== 'Все') items = items.filter((a) => a.category === category)
     if (search.trim()) {
@@ -80,7 +80,7 @@ export default function WikiPage() {
       )
     }
     return items
-  }, [articles, search, category])
+  }, [articlesQuery.data, search, category])
 
   const createMutation = useMutation({
     mutationFn: () => {

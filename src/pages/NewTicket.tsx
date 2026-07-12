@@ -25,6 +25,7 @@ export default function NewTicket() {
     const saved = localStorage.getItem('sysInfo')
     if (saved) {
       const { computerName: cn, userAccount: ua } = JSON.parse(saved)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (cn) setComputerName(cn)
       if (ua) setUserAccount(ua)
     }

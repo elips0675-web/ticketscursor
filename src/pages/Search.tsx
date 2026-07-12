@@ -47,6 +47,7 @@ export default function SearchPage() {
     if (timerRef.current) clearTimeout(timerRef.current)
     const q = query.trim()
     if (q.length < 2) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults({ tickets: [], employees: [], wiki: [], news: [], chats: [], files: [] })
       setSearched(false)
       return
@@ -145,7 +146,7 @@ export default function SearchPage() {
             title="База знаний"
             icon={BookOpen}
             results={results.wiki}
-            href={(r) => `/wiki`}
+            href={(_r) => `/wiki`}
             label={(r) => r.title}
             meta={(r) =>
               r.category ? (

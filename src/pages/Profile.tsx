@@ -23,6 +23,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const saved = localStorage.getItem('sysInfo')
     if (saved) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSysInfo(JSON.parse(saved))
       return
     }

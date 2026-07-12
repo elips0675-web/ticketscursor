@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
 import { AllTheProviders } from './test-utils'
 import Calendar from '@/pages/Calendar'
 import { api } from '@/lib/api'

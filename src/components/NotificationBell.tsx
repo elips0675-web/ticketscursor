@@ -17,7 +17,8 @@ export default function NotificationBell({ inSidebar }: { inSidebar?: boolean })
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    api.get('/notifications')
+    api
+      .get('/notifications')
       .then((data) => {
         setNotifications(data || [])
         setLoading(false)
@@ -42,7 +43,7 @@ export default function NotificationBell({ inSidebar }: { inSidebar?: boolean })
     return () => {
       socket.off(`notification:${user.id}`, handler)
     }
-  }, [socket, user])
+  }, [socket, user, navigate])
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -113,7 +114,10 @@ export default function NotificationBell({ inSidebar }: { inSidebar?: boolean })
           </div>
           <div className="border-t px-4 py-2">
             <button
-              onClick={() => { navigate('/notifications'); setOpen(false) }}
+              onClick={() => {
+                navigate('/notifications')
+                setOpen(false)
+              }}
               className="text-[10px] text-primary hover:underline w-full text-center"
             >
               Все уведомления

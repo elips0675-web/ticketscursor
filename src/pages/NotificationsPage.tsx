@@ -36,6 +36,7 @@ export default function NotificationsPage() {
   const [typeFilter, setTypeFilter] = useState('')
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
     api
       .get('/notifications')

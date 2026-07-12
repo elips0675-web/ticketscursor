@@ -95,6 +95,7 @@ export default function Register() {
               <label htmlFor="reg-department" className="text-sm font-bold">
                 {t('auth.department')}
               </label>
+              {/* eslint-disable-next-line react-hooks/incompatible-library */}
               <Select value={watch('department')} onValueChange={(v) => setValue('department', v)}>
                 <SelectTrigger id="reg-department">
                   <SelectValue placeholder={t('auth.departmentPlaceholder')} />

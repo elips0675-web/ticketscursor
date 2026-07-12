@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { AllTheProviders } from './test-utils'
 import Login from '@/pages/Login'
 

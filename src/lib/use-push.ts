@@ -16,6 +16,7 @@ export function usePush() {
   const isSubscribing = useRef(false)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSupported('serviceWorker' in navigator && 'PushManager' in window)
   }, [])
 
