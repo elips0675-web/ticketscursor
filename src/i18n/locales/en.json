@@ -69,7 +69,6 @@
     "fillRequired": "Fill in required fields",
     "passwordTooShort": "Password must be at least 6 characters",
     "registerError": "Registration error",
-    "hasAccount": "Already have an account?",
     "goToLogin": "Login"
   },
   "tickets": {

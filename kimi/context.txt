@@ -181,10 +181,9 @@ docker compose up -d --build
 - **Redis**: Socket.io Redis adapter (`@socket.io/redis-adapter` + `ioredis`), РЅР° `REDIS_URL` вЂ” Р°РґР°РїС‚РµСЂ РІРєР»СЋС‡С‘РЅ, Р±РµР· Redis вЂ” fallback РЅР° in-memory
 - **Kubernetes**: РїРѕР»РЅС‹Рµ РјР°РЅРёС„РµСЃС‚С‹ РІ `k8s/` (namespace, ConfigMap, Secrets, MySQL + PVC, Redis, API (2 СЂРµРїР»РёРєРё), Frontend (2 СЂРµРїР»РёРєРё), Ingress)
 
-### Р­С‚Р°Рї 13 вЂ” Prisma read replicas
-- **server/src/prisma.js**: `replicas: [{ url }]` + `datasourceUrl`, `REPLICA_DATABASE_URL` env
-- **schema.prisma**: `directUrl` РґР»СЏ РјРёРіСЂР°С†РёР№
-- **docker-compose.yml**: `DATABASE_URL`, `DIRECT_DATABASE_URL`, `REPLICA_DATABASE_URL` РІ api-РєРѕРЅС‚РµР№РЅРµСЂ
+### Р­С‚Р°Рї 13 вЂ” Prisma read replicas (СѓРґР°Р»РµРЅРѕ РїРѕР·Р¶Рµ)
+- Р‘С‹Р»Рѕ СЂРµР°Р»РёР·РѕРІР°РЅРѕ: prisma.js (replicas), schema.prisma (directUrl), docker-compose (REPLICA_DATABASE_URL)
+- РџРѕР·Р¶Рµ СѓРґР°Р»РµРЅРѕ вЂ” read replicas РЅРµ РЅСѓР¶РЅС‹ РІ С‚РµРєСѓС‰РµР№ Р°СЂС…РёС‚РµРєС‚СѓСЂРµ, СѓР±СЂР°РЅ РјС‘СЂС‚РІС‹Р№ РєРѕРґ
 
 ### Р­С‚Р°Рї 14 вЂ” Р’РёСЂС‚СѓР°Р»РёР·Р°С†РёСЏ СЃРїРёСЃРєРѕРІ (@tanstack/react-virtual)
 - **TicketDetail.tsx**: `useVirtualizer` РґР»СЏ СЃРѕРѕР±С‰РµРЅРёР№, fallback РІ jsdom
@@ -220,6 +219,14 @@ docker compose up -d --build
 - **ticket-context.tsx**: С…Р°СЂРґРєРѕРґ localhost:4000 в†’ РёРјРїРѕСЂС‚ API_URL РёР· @/lib/api.ts
 - **notify.js**: СЂР°РЅРЅРёР№ return РІ notifySlaBreached в†’ per-user dedup (РЅРµ Р±Р»РѕРєРёСЂСѓРµС‚ Р°Р»РµСЂС‚С‹ assignee/admin)
 - **tickets.js**: POST /:id/messages вЂ” РґРѕР±Р°РІР»РµРЅР° РїСЂРѕРІРµСЂРєР° РїСЂР°РІ (creator/assignee/senior_agent+)
+- **api.ts**: handleResponse вЂ” РёСЃРїСЂР°РІР»РµРЅ double res.json() (С‡РёС‚Р°РµРј С‚РµР»Рѕ РѕРґРёРЅ СЂР°Р·)
+- **AuthContext.tsx**: РґРѕР±Р°РІР»РµРЅ loading state РґР»СЏ РїСЂРµРґРѕС‚РІСЂР°С‰РµРЅРёСЏ РјРёРіР°РЅРёСЏ ProtectedRoute
+- **ticket-context.tsx**: authFetch вЂ” РґРѕР±Р°РІР»РµРЅ 401/403 СЂРµРґРёСЂРµРєС‚ РЅР° /login
+- **ProtectedRoute.tsx**: spinner РїРѕРєР° loading=true
+- **utils.ts**: date-fns locale РґРёРЅР°РјРёС‡РµСЃРєРёР№ (РёР· localStorage i18nextLng)
+- **use-push.ts**: isSubscribing ref РґР»СЏ Р·Р°С‰РёС‚С‹ race condition
+- **Kanban.tsx**: DnD dataTransfer fallback РЅР° dragId
+- **en.json**: СѓРґР°Р»С‘РЅ РґСѓР±Р»СЊ hasAccount
 - **App.tsx**: AdminLayout РѕР±С‘СЂРЅСѓС‚ РІ ErrorBoundary
 - **AuthContext.tsx**: logout вЂ” СЃРѕС…СЂР°РЅРµРЅРёРµ token РґРѕ РѕС‡РёСЃС‚РєРё (fixed race condition)
 - **.gitignore**: СѓР±СЂР°РЅ check-console.mjs (СЃРєСЂРёРїС‚ РЅСѓР¶РµРЅ РЅРѕРІС‹Рј СЂР°Р·СЂР°Р±РѕС‚С‡РёРєР°Рј)
@@ -2287,7 +2294,6 @@ export default i18n
     "fillRequired": "Fill in required fields",
     "passwordTooShort": "Password must be at least 6 characters",
     "registerError": "Registration error",
-    "hasAccount": "Already have an account?",
     "goToLogin": "Login"
   },
   "tickets": {
@@ -3056,12 +3062,11 @@ async function handleResponse(res: Response): Promise<any> {
     window.location.href = '/login'
     throw new Error('РЎРµСЃСЃРёСЏ РёСЃС‚РµРєР»Р°')
   }
-  const data = res.ok ? null : await res.json().catch(() => null)
-  if (!res.ok) {
-    throw new Error(data?.message || `РћС€РёР±РєР° ${res.status}`)
-  }
   if (res.status === 204) return null
   const payload = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(payload?.message || `РћС€РёР±РєР° ${res.status}`)
+  }
   if (payload && typeof payload === 'object' && typeof payload.success === 'boolean') {
     if (Object.prototype.hasOwnProperty.call(payload, 'data')) return payload.data
     return payload
@@ -3133,14 +3138,21 @@ export type NewTicketFormData = z.infer<typeof newTicketSchema>
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { format, formatDistanceToNow, formatRelative, isToday, isYesterday, differenceInDays } from 'date-fns'
-import { ru } from 'date-fns/locale'
+import { ru, enUS, type Locale } from 'date-fns/locale'
+
+const LOCALE_MAP: Record<string, Locale> = { ru, en: enUS }
+
+function getDateLocale() {
+  const lang = localStorage.getItem('i18nextLng') || 'ru'
+  return LOCALE_MAP[lang] || ru
+}
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
 export function formatDate(dateStr: string): string {
-  return format(new Date(dateStr), 'd MMM yyyy', { locale: ru })
+  return format(new Date(dateStr), 'd MMM yyyy', { locale: getDateLocale() })
 }
 
 export function formatTime(dateStr: string): string {
@@ -3151,7 +3163,7 @@ export function formatRelativeTime(dateStr: string): string {
   const d = new Date(dateStr)
   const diffDays = differenceInDays(new Date(), d)
   if (diffDays < 1) {
-    if (isToday(d)) return formatDistanceToNow(d, { addSuffix: true, locale: ru })
+    if (isToday(d)) return formatDistanceToNow(d, { addSuffix: true, locale: getDateLocale() })
     if (isYesterday(d)) return 'РІС‡РµСЂР°'
     return format(d, 'HH:mm')
   }
@@ -3174,7 +3186,7 @@ export function useDebounce<T>(value: T, delay: number = 300): T {
 
 
 === src/lib/use-push.ts ===
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 
 function urlBase64ToUint8Array(base64: string) {
   const padding = '='.repeat((4 - (base64.length % 4)) % 4)
@@ -3189,6 +3201,7 @@ export function usePush() {
   const [supported, setSupported] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const isSubscribing = useRef(false)
 
   useEffect(() => {
     setSupported('serviceWorker' in navigator && 'PushManager' in window)
@@ -3202,7 +3215,8 @@ export function usePush() {
   }, [supported])
 
   const subscribe = useCallback(async () => {
-    if (!supported) return
+    if (!supported || isSubscribing.current) return
+    isSubscribing.current = true
     setLoading(true)
     setError(null)
     try {
@@ -3229,6 +3243,7 @@ export function usePush() {
       setSubscribed(false)
       setError(e instanceof Error ? e.message : 'Push subscription failed')
     }
+    isSubscribing.current = false
     setLoading(false)
   }, [supported])
 
@@ -3636,7 +3651,8 @@ import { useAuth } from "@/context/AuthContext"
 import type { ReactNode } from "react"
 
 export default function ProtectedRoute({ children, adminOnly }: { children: ReactNode; adminOnly?: boolean }) {
-  const { token, user } = useAuth()
+  const { token, user, loading } = useAuth()
+  if (loading) return <div className="flex items-center justify-center h-screen text-muted-foreground text-sm">Р—Р°РіСЂСѓР·РєР°вЂ¦</div>
   if (!token) return <Navigate to="/login" replace />
   if (adminOnly && user?.role !== "admin" && user?.role !== "super_admin") return <Navigate to="/" replace />
   return <>{children}</>
@@ -3644,7 +3660,7 @@ export default function ProtectedRoute({ children, adminOnly }: { children: Reac
 
 
 === src/context/AuthContext.tsx ===
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { API_URL } from '@/lib/api'
 
 function getInitialToken(): string | null {
@@ -3695,6 +3711,7 @@ interface AuthContextType {
   isSenior: boolean
   isSuperAdmin: boolean
   canManage: boolean
+  loading: boolean
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null)
@@ -3702,6 +3719,9 @@ export const AuthContext = createContext<AuthContextType | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(getInitialUser)
   const [token, setToken] = useState<string | null>(getInitialToken)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => { setLoading(false) }, [])
 
   const login = (t: string, u: User) => {
     localStorage.setItem('token', t)
@@ -3731,7 +3751,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const canManage = isAdmin || isSenior
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAdmin, isSenior, isSuperAdmin, canManage }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isAdmin, isSenior, isSuperAdmin, canManage, loading }}>
       {children}
     </AuthContext.Provider>
   )
@@ -3839,12 +3859,12 @@ export function useSocket() {
 
 
 === src/context/ticket-context.tsx ===
-import { createContext, useContext, useEffect, useCallback, type ReactNode } from "react"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import type { Ticket, TicketStats, Employee, TicketStatus, TicketPriority } from "@/types"
-import { useAuth } from "@/context/AuthContext"
-import { useSocket } from "@/context/SocketContext"
-import { API_URL } from "@/lib/api"
+import { createContext, useContext, useEffect, useCallback, type ReactNode } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { Ticket, TicketStats, Employee, TicketStatus, TicketPriority } from '@/types'
+import { useAuth } from '@/context/AuthContext'
+import { useSocket } from '@/context/SocketContext'
+import { API_URL } from '@/lib/api'
 
 interface TicketContextType {
   tickets: Ticket[]
@@ -3854,8 +3874,20 @@ interface TicketContextType {
   updateTicketStatus: (id: number, status: TicketStatus) => Promise<void>
   updateTicketPriority: (id: number, priority: TicketPriority) => Promise<void>
   assignTicket: (id: number, employeeId: number) => Promise<void>
-  addMessage: (ticketId: number, text: string, isInternal: boolean, attachments?: { url: string; name: string }[]) => Promise<void>
-  createTicket: (data: { title: string; description: string; priority: TicketPriority; category: string; computerName?: string; userAccount?: string }) => Promise<void>
+  addMessage: (
+    ticketId: number,
+    text: string,
+    isInternal: boolean,
+    attachments?: { url: string; name: string }[],
+  ) => Promise<void>
+  createTicket: (data: {
+    title: string
+    description: string
+    priority: TicketPriority
+    category: string
+    computerName?: string
+    userAccount?: string
+  }) => Promise<void>
 }
 
 const TicketContext = createContext<TicketContextType | null>(null)
@@ -3871,19 +3903,32 @@ function mapTicket(raw: any): Ticket {
     tags: [],
     computerName: raw.computer_name,
     userAccount: raw.user_account,
-    createdBy: { id: raw.created_by, name: raw.created_by_name || "User", email: "", avatar: "" },
-    assignedTo: raw.assigned_to ? { id: raw.assigned_to, name: raw.assigned_name || "", email: raw.assigned_email || "", avatar: raw.assigned_avatar || "" } : undefined,
-    messages: Array.isArray(raw.messages) ? raw.messages.map((m: any) => ({
-      id: m.id,
-      ticketId: m.ticket_id,
-      senderId: m.sender_id,
-      senderName: m.sender_name,
-      senderAvatar: m.sender_avatar || "",
-      text: m.text,
-      attachments: m.attachments ? (typeof m.attachments === 'string' ? JSON.parse(m.attachments) : m.attachments) : [],
-      createdAt: m.created_at,
-      isInternal: !!m.is_internal,
-    })) : [],
+    createdBy: { id: raw.created_by, name: raw.created_by_name || 'User', email: '', avatar: '' },
+    assignedTo: raw.assigned_to
+      ? {
+          id: raw.assigned_to,
+          name: raw.assigned_name || '',
+          email: raw.assigned_email || '',
+          avatar: raw.assigned_avatar || '',
+        }
+      : undefined,
+    messages: Array.isArray(raw.messages)
+      ? raw.messages.map((m: any) => ({
+          id: m.id,
+          ticketId: m.ticket_id,
+          senderId: m.sender_id,
+          senderName: m.sender_name,
+          senderAvatar: m.sender_avatar || '',
+          text: m.text,
+          attachments: m.attachments
+            ? typeof m.attachments === 'string'
+              ? JSON.parse(m.attachments)
+              : m.attachments
+            : [],
+          createdAt: m.created_at,
+          isInternal: !!m.is_internal,
+        }))
+      : [],
     messages_count: raw.messages_count || (Array.isArray(raw.messages) ? raw.messages.length : 0),
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
@@ -3892,11 +3937,22 @@ function mapTicket(raw: any): Ticket {
 
 function mapEmployee(e: any): Employee {
   return {
-    id: e.id, name: e.name, email: e.email,
-    role: e.role as Employee["role"],
-    department: e.department, avatar: e.avatar || "",
-    online: !!e.online, activeTickets: e.activeTickets || 0, resolvedToday: e.resolvedToday || 0,
+    id: e.id,
+    name: e.name,
+    email: e.email,
+    role: e.role as Employee['role'],
+    department: e.department,
+    avatar: e.avatar || '',
+    online: !!e.online,
+    activeTickets: e.activeTickets || 0,
+    resolvedToday: e.resolvedToday || 0,
   }
+}
+
+function authLogout() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+  window.location.href = '/login'
 }
 
 async function authFetch(url: string, token: string | null, options?: RequestInit) {
@@ -3904,6 +3960,7 @@ async function authFetch(url: string, token: string | null, options?: RequestIni
     ...options,
     headers: { ...options?.headers, Authorization: `Bearer ${token}` },
   })
+  if (res.status === 401 || res.status === 403) { authLogout(); throw new Error('РЎРµСЃСЃРёСЏ РёСЃС‚РµРєР»Р°') }
   if (!res.ok) throw new Error(`API error: ${res.status}`)
   return res.json()
 }
@@ -3939,35 +3996,37 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!socket) return
     const onStatus = ({ userId, online }: { userId: number; online: boolean }) => {
-      queryClient.setQueryData<Employee[]>(['employees'], prev =>
-        prev?.map(e => e.id === userId ? { ...e, online } : e)
+      queryClient.setQueryData<Employee[]>(['employees'], (prev) =>
+        prev?.map((e) => (e.id === userId ? { ...e, online } : e)),
       )
     }
     socket.on('user:status', onStatus)
-    return () => { socket.off('user:status', onStatus) }
+    return () => {
+      socket.off('user:status', onStatus)
+    }
   }, [socket, queryClient])
 
   const stats: TicketStats = {
     total: tickets.length,
-    open: tickets.filter(t => t.status === 'open').length,
-    inProgress: tickets.filter(t => t.status === 'in_progress').length,
-    resolved: tickets.filter(t => t.status === 'resolved').length,
-    critical: tickets.filter(t => t.priority === 'critical').length,
+    open: tickets.filter((t) => t.status === 'open').length,
+    inProgress: tickets.filter((t) => t.status === 'in_progress').length,
+    resolved: tickets.filter((t) => t.status === 'resolved').length,
+    critical: tickets.filter((t) => t.priority === 'critical').length,
     avgResolutionTime: 4.5,
   }
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: TicketStatus }) =>
       authFetch(`${API_URL}/tickets/${id}/status`, token, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       }),
     onMutate: async ({ id, status }) => {
       await queryClient.cancelQueries({ queryKey: ['tickets'] })
       const prev = queryClient.getQueryData<Ticket[]>(['tickets'])
-      queryClient.setQueryData<Ticket[]>(['tickets'], old =>
-        old?.map(t => t.id === id ? { ...t, status, updatedAt: new Date().toISOString() } : t)
+      queryClient.setQueryData<Ticket[]>(['tickets'], (old) =>
+        old?.map((t) => (t.id === id ? { ...t, status, updatedAt: new Date().toISOString() } : t)),
       )
       return { prev }
     },
@@ -3979,15 +4038,15 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const priorityMutation = useMutation({
     mutationFn: ({ id, priority }: { id: number; priority: TicketPriority }) =>
       authFetch(`${API_URL}/tickets/${id}/priority`, token, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ priority }),
       }),
     onMutate: async ({ id, priority }) => {
       await queryClient.cancelQueries({ queryKey: ['tickets'] })
       const prev = queryClient.getQueryData<Ticket[]>(['tickets'])
-      queryClient.setQueryData<Ticket[]>(['tickets'], old =>
-        old?.map(t => t.id === id ? { ...t, priority, updatedAt: new Date().toISOString() } : t)
+      queryClient.setQueryData<Ticket[]>(['tickets'], (old) =>
+        old?.map((t) => (t.id === id ? { ...t, priority, updatedAt: new Date().toISOString() } : t)),
       )
       return { prev }
     },
@@ -3999,18 +4058,24 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const assignMutation = useMutation({
     mutationFn: ({ id, employeeId }: { id: number; employeeId: number }) =>
       authFetch(`${API_URL}/tickets/${id}/assign`, token, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ employeeId }),
       }),
     onMutate: async ({ id, employeeId }) => {
       await queryClient.cancelQueries({ queryKey: ['tickets'] })
       const prev = queryClient.getQueryData<Ticket[]>(['tickets'])
-      const emp = employees.find(e => e.id === employeeId)
-      queryClient.setQueryData<Ticket[]>(['tickets'], old =>
-        old?.map(t => t.id === id ? {
-          ...t, assignedTo: emp || t.assignedTo, updatedAt: new Date().toISOString()
-        } : t)
+      const emp = employees.find((e) => e.id === employeeId)
+      queryClient.setQueryData<Ticket[]>(['tickets'], (old) =>
+        old?.map((t) =>
+          t.id === id
+            ? {
+                ...t,
+                assignedTo: emp || t.assignedTo,
+                updatedAt: new Date().toISOString(),
+              }
+            : t,
+        ),
       )
       return { prev }
     },
@@ -4020,13 +4085,20 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   })
 
   const addMessageMutation = useMutation({
-    mutationFn: async ({ ticketId, text, isInternal, attachments }: {
-      ticketId: number; text: string; isInternal: boolean;
+    mutationFn: async ({
+      ticketId,
+      text,
+      isInternal,
+      attachments,
+    }: {
+      ticketId: number
+      text: string
+      isInternal: boolean
       attachments?: { url: string; name: string }[]
     }) => {
       const body = await authFetch(`${API_URL}/tickets/${ticketId}/messages`, token, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, isInternal, attachments }),
       })
       return { ticketId, msg: body.data }
@@ -4035,15 +4107,20 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       await queryClient.cancelQueries({ queryKey: ['tickets'] })
       const prev = queryClient.getQueryData<Ticket[]>(['tickets'])
       const tempMsg = {
-        id: -Date.now(), ticketId,
-        senderId: user?.id || 0, senderName: user?.name || 'User',
-        senderAvatar: '', text, attachments: [],
-        createdAt: new Date().toISOString(), isInternal,
+        id: -Date.now(),
+        ticketId,
+        senderId: user?.id || 0,
+        senderName: user?.name || 'User',
+        senderAvatar: '',
+        text,
+        attachments: [],
+        createdAt: new Date().toISOString(),
+        isInternal,
       }
-      queryClient.setQueryData<Ticket[]>(['tickets'], old =>
-        old?.map(t => t.id === ticketId
-          ? { ...t, messages: [...t.messages, tempMsg], updatedAt: new Date().toISOString() }
-          : t)
+      queryClient.setQueryData<Ticket[]>(['tickets'], (old) =>
+        old?.map((t) =>
+          t.id === ticketId ? { ...t, messages: [...t.messages, tempMsg], updatedAt: new Date().toISOString() } : t,
+        ),
       )
       return { prev }
     },
@@ -4051,43 +4128,69 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       if (ctx?.prev) queryClient.setQueryData(['tickets'], ctx.prev)
     },
     onSuccess: ({ ticketId, msg }) => {
-      queryClient.setQueryData<Ticket[]>(['tickets'], old =>
-        old?.map(t => {
+      queryClient.setQueryData<Ticket[]>(['tickets'], (old) =>
+        old?.map((t) => {
           if (t.id !== ticketId) return t
           const realMsg = {
-            id: msg.id, ticketId: msg.ticket_id,
-            senderId: msg.sender_id, senderName: msg.sender_name,
-            senderAvatar: msg.sender_avatar || "", text: msg.text,
-            attachments: msg.attachments ? (typeof msg.attachments === 'string' ? JSON.parse(msg.attachments) : msg.attachments) : [],
-            createdAt: msg.created_at, isInternal: !!msg.is_internal,
+            id: msg.id,
+            ticketId: msg.ticket_id,
+            senderId: msg.sender_id,
+            senderName: msg.sender_name,
+            senderAvatar: msg.sender_avatar || '',
+            text: msg.text,
+            attachments: msg.attachments
+              ? typeof msg.attachments === 'string'
+                ? JSON.parse(msg.attachments)
+                : msg.attachments
+              : [],
+            createdAt: msg.created_at,
+            isInternal: !!msg.is_internal,
           }
-          return { ...t, messages: t.messages.map(m => m.id < 0 ? realMsg : m), updatedAt: new Date().toISOString() }
-        })
+          return {
+            ...t,
+            messages: t.messages.map((m) => (m.id < 0 ? realMsg : m)),
+            updatedAt: new Date().toISOString(),
+          }
+        }),
       )
     },
   })
 
   const createTicketMutation = useMutation({
-    mutationFn: (data: { title: string; description: string; priority: TicketPriority; category: string; computerName?: string; userAccount?: string }) =>
+    mutationFn: (data: {
+      title: string
+      description: string
+      priority: TicketPriority
+      category: string
+      computerName?: string
+      userAccount?: string
+    }) =>
       authFetch(`${API_URL}/tickets`, token, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      }).then(body => body.data),
+      }).then((body) => body.data),
     onMutate: async (data) => {
       await queryClient.cancelQueries({ queryKey: ['tickets'] })
       const prev = queryClient.getQueryData<Ticket[]>(['tickets'])
       const tempTicket: Ticket = {
-        id: -Date.now(), title: data.title, description: data.description,
-        status: 'open', priority: data.priority, category: data.category, tags: [],
-        computerName: data.computerName, userAccount: data.userAccount,
+        id: -Date.now(),
+        title: data.title,
+        description: data.description,
+        status: 'open',
+        priority: data.priority,
+        category: data.category,
+        tags: [],
+        computerName: data.computerName,
+        userAccount: data.userAccount,
         createdBy: { id: user?.id || 0, name: user?.name || '', email: '', avatar: '' },
-        assignedTo: undefined, messages: [], messages_count: 0,
-        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+        assignedTo: undefined,
+        messages: [],
+        messages_count: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       }
-      queryClient.setQueryData<Ticket[]>(['tickets'], old =>
-        old ? [tempTicket, ...old] : [tempTicket]
-      )
+      queryClient.setQueryData<Ticket[]>(['tickets'], (old) => (old ? [tempTicket, ...old] : [tempTicket]))
       return { prev }
     },
     onError: (_err, _vars, ctx) => {
@@ -4095,33 +4198,57 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (raw) => {
       const created = mapTicket(raw)
-      queryClient.setQueryData<Ticket[]>(['tickets'], old =>
-        old?.map(t => t.id < 0 ? created : t)
-      )
+      queryClient.setQueryData<Ticket[]>(['tickets'], (old) => old?.map((t) => (t.id < 0 ? created : t)))
     },
   })
 
-  const updateTicketStatus = useCallback((id: number, status: TicketStatus) =>
-    statusMutation.mutateAsync({ id, status }), [statusMutation])
+  const updateTicketStatus = useCallback(
+    (id: number, status: TicketStatus) => statusMutation.mutateAsync({ id, status }),
+    [statusMutation],
+  )
 
-  const updateTicketPriority = useCallback((id: number, priority: TicketPriority) =>
-    priorityMutation.mutateAsync({ id, priority }), [priorityMutation])
+  const updateTicketPriority = useCallback(
+    (id: number, priority: TicketPriority) => priorityMutation.mutateAsync({ id, priority }),
+    [priorityMutation],
+  )
 
-  const assignTicket = useCallback((id: number, employeeId: number) =>
-    assignMutation.mutateAsync({ id, employeeId }), [assignMutation])
+  const assignTicket = useCallback(
+    (id: number, employeeId: number) => assignMutation.mutateAsync({ id, employeeId }),
+    [assignMutation],
+  )
 
   const addMessage = useCallback(
     (ticketId: number, text: string, isInternal: boolean, attachments?: { url: string; name: string }[]) =>
       addMessageMutation.mutateAsync({ ticketId, text, isInternal, attachments }),
-    [addMessageMutation])
+    [addMessageMutation],
+  )
 
   const createTicket = useCallback(
-    (data: { title: string; description: string; priority: TicketPriority; category: string; computerName?: string; userAccount?: string }) =>
-      createTicketMutation.mutateAsync(data),
-    [createTicketMutation])
+    (data: {
+      title: string
+      description: string
+      priority: TicketPriority
+      category: string
+      computerName?: string
+      userAccount?: string
+    }) => createTicketMutation.mutateAsync(data),
+    [createTicketMutation],
+  )
 
   return (
-    <TicketContext.Provider value={{ tickets, employees, stats, updateTicketStatus, updateTicketPriority, assignTicket, addMessage, createTicket, loading }}>
+    <TicketContext.Provider
+      value={{
+        tickets,
+        employees,
+        stats,
+        updateTicketStatus,
+        updateTicketPriority,
+        assignTicket,
+        addMessage,
+        createTicket,
+        loading,
+      }}
+    >
       {children}
     </TicketContext.Provider>
   )
@@ -4129,7 +4256,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
 
 export function useTickets() {
   const ctx = useContext(TicketContext)
-  if (!ctx) throw new Error("useTickets must be used within TicketProvider")
+  if (!ctx) throw new Error('useTickets must be used within TicketProvider')
   return ctx
 }
 
@@ -4181,7 +4308,7 @@ export default function KanbanPage() {
 
   const handleDrop = (e: React.DragEvent, status: TicketStatus) => {
     e.preventDefault()
-    const id = Number(e.dataTransfer.getData('text/plain'))
+    const id = Number(e.dataTransfer.getData('text/plain')) || dragId
     if (id) updateTicketStatus(id, status)
     setDragId(null)
   }

@@ -218,6 +218,14 @@ docker compose up -d --build
 - **ticket-context.tsx**: хардкод localhost:4000 → импорт API_URL из @/lib/api.ts
 - **notify.js**: ранний return в notifySlaBreached → per-user dedup (не блокирует алерты assignee/admin)
 - **tickets.js**: POST /:id/messages — добавлена проверка прав (creator/assignee/senior_agent+)
+- **api.ts**: handleResponse — исправлен double res.json() (читаем тело один раз)
+- **AuthContext.tsx**: добавлен loading state для предотвращения мигания ProtectedRoute
+- **ticket-context.tsx**: authFetch — добавлен 401/403 редирект на /login
+- **ProtectedRoute.tsx**: spinner пока loading=true
+- **utils.ts**: date-fns locale динамический (из localStorage i18nextLng)
+- **use-push.ts**: isSubscribing ref для защиты race condition
+- **Kanban.tsx**: DnD dataTransfer fallback на dragId
+- **en.json**: удалён дубль hasAccount
 - **App.tsx**: AdminLayout обёрнут в ErrorBoundary
 - **AuthContext.tsx**: logout — сохранение token до очистки (fixed race condition)
 - **.gitignore**: убран check-console.mjs (скрипт нужен новым разработчикам)

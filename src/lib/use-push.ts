@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 
 function urlBase64ToUint8Array(base64: string) {
   const padding = '='.repeat((4 - (base64.length % 4)) % 4)
@@ -13,6 +13,7 @@ export function usePush() {
   const [supported, setSupported] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const isSubscribing = useRef(false)
 
   useEffect(() => {
     setSupported('serviceWorker' in navigator && 'PushManager' in window)
@@ -26,7 +27,8 @@ export function usePush() {
   }, [supported])
 
   const subscribe = useCallback(async () => {
-    if (!supported) return
+    if (!supported || isSubscribing.current) return
+    isSubscribing.current = true
     setLoading(true)
     setError(null)
     try {
@@ -53,6 +55,7 @@ export function usePush() {
       setSubscribed(false)
       setError(e instanceof Error ? e.message : 'Push subscription failed')
     }
+    isSubscribing.current = false
     setLoading(false)
   }, [supported])
 

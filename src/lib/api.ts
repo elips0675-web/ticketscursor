@@ -13,12 +13,11 @@ async function handleResponse(res: Response): Promise<any> {
     window.location.href = '/login'
     throw new Error('Сессия истекла')
   }
-  const data = res.ok ? null : await res.json().catch(() => null)
-  if (!res.ok) {
-    throw new Error(data?.message || `Ошибка ${res.status}`)
-  }
   if (res.status === 204) return null
   const payload = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(payload?.message || `Ошибка ${res.status}`)
+  }
   if (payload && typeof payload === 'object' && typeof payload.success === 'boolean') {
     if (Object.prototype.hasOwnProperty.call(payload, 'data')) return payload.data
     return payload

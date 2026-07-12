@@ -88,11 +88,21 @@ function mapEmployee(e: any): Employee {
   }
 }
 
+function authLogout() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+  window.location.href = '/login'
+}
+
 async function authFetch(url: string, token: string | null, options?: RequestInit) {
   const res = await fetch(url, {
     ...options,
     headers: { ...options?.headers, Authorization: `Bearer ${token}` },
   })
+  if (res.status === 401 || res.status === 403) {
+    authLogout()
+    throw new Error('Сессия истекла')
+  }
   if (!res.ok) throw new Error(`API error: ${res.status}`)
   return res.json()
 }

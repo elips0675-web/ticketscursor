@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { API_URL } from '@/lib/api'
 
 function getInitialToken(): string | null {
@@ -49,6 +49,7 @@ interface AuthContextType {
   isSenior: boolean
   isSuperAdmin: boolean
   canManage: boolean
+  loading: boolean
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null)
@@ -56,6 +57,11 @@ export const AuthContext = createContext<AuthContextType | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(getInitialUser)
   const [token, setToken] = useState<string | null>(getInitialToken)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    setLoading(false)
+  }, [])
 
   const login = (t: string, u: User) => {
     localStorage.setItem('token', t)
@@ -85,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const canManage = isAdmin || isSenior
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAdmin, isSenior, isSuperAdmin, canManage }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isAdmin, isSenior, isSuperAdmin, canManage, loading }}>
       {children}
     </AuthContext.Provider>
   )

@@ -44,7 +44,7 @@ export default function KanbanPage() {
 
   const handleDrop = (e: React.DragEvent, status: TicketStatus) => {
     e.preventDefault()
-    const id = Number(e.dataTransfer.getData('text/plain'))
+    const id = Number(e.dataTransfer.getData('text/plain')) || dragId
     if (id) updateTicketStatus(id, status)
     setDragId(null)
   }
