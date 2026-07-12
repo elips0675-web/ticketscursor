@@ -2,7 +2,6 @@ import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } fro
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import fs from 'fs'
 import path from 'path'
-import logger from './logger.js'
 
 const S3_ENABLED = !!(process.env.S3_ENDPOINT && process.env.S3_BUCKET)
 const S3_REGION = process.env.S3_REGION || 'us-east-1'

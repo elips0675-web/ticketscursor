@@ -54,14 +54,14 @@ import { fileURLToPath } from 'url'
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET, authenticateToken } from './middleware.js'
 import { cacheMiddleware } from './cache.js'
-import { auditLogMiddleware } from './audit.js'
 
 const app = express()
 const server = createServer(app)
 
-const authLimiter = rateLimit({ windowMs: 60_000, max: 10, message: { message: 'Too many auth requests' } })
-const apiLimiter = rateLimit({ windowMs: 60_000, max: 100, message: { message: 'Too many requests' } })
-const adminLimiter = rateLimit({ windowMs: 60_000, max: 30, message: { message: 'Too many admin requests' } })
+const rateLimitConfig = { windowMs: 60_000, skip: () => process.env.NODE_ENV === 'test' }
+const authLimiter = rateLimit({ ...rateLimitConfig, max: 10, message: { message: 'Too many auth requests' } })
+const apiLimiter = rateLimit({ ...rateLimitConfig, max: 100, message: { message: 'Too many requests' } })
+const adminLimiter = rateLimit({ ...rateLimitConfig, max: 30, message: { message: 'Too many admin requests' } })
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
@@ -162,7 +162,7 @@ if (process.env.SENTRY_DSN) {
   app.use(Sentry.Handlers.errorHandler())
 }
 
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   logger.error('Unhandled error', { error: err.message, stack: err.stack, requestId: req.id })
   res.status(500).json({ message: 'Internal server error' })
 })

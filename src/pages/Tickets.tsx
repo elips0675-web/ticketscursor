@@ -13,7 +13,6 @@ import { SkeletonCardGrid } from '@/components/skeletons'
 import { useDebounce } from '@/lib/use-debounce'
 import { formatRelativeTime } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
-import type { TicketStatus, TicketPriority } from '@/types'
 
 const PER_PAGE = 9
 
@@ -249,52 +248,54 @@ export default function Tickets() {
         </div>
       </Card>
 
-      {loading ? <SkeletonCardGrid count={PER_PAGE} /> : (
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        {paged.map((ticket) => (
-          <div
-            key={ticket.id}
-            onClick={() => navigate(`/tickets/${ticket.id}`)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                navigate(`/tickets/${ticket.id}`)
-              }
-            }}
-            className="bg-white rounded-xl border p-5 hover:shadow-md transition-all cursor-pointer flex flex-col"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <Badge className={`text-[9px] ${ticket.status.replace('_', '-')}`}>
-                {statusLabels[ticket.status] || ticket.status}
-              </Badge>
-              <Badge className={`text-[9px] priority-${ticket.priority}`}>
-                {priorityLabels[ticket.priority] || ticket.priority}
-              </Badge>
+      {loading ? (
+        <SkeletonCardGrid count={PER_PAGE} />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          {paged.map((ticket) => (
+            <div
+              key={ticket.id}
+              onClick={() => navigate(`/tickets/${ticket.id}`)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  navigate(`/tickets/${ticket.id}`)
+                }
+              }}
+              className="bg-white rounded-xl border p-5 hover:shadow-md transition-all cursor-pointer flex flex-col"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <Badge className={`text-[9px] ${ticket.status.replace('_', '-')}`}>
+                  {statusLabels[ticket.status] || ticket.status}
+                </Badge>
+                <Badge className={`text-[9px] priority-${ticket.priority}`}>
+                  {priorityLabels[ticket.priority] || ticket.priority}
+                </Badge>
+              </div>
+              <h3 className="font-bold text-sm leading-snug mb-1 line-clamp-2">{ticket.title}</h3>
+              <p className="text-xs text-muted-foreground line-clamp-2 mb-4 flex-1">{ticket.description}</p>
+              <div className="flex items-center gap-3 text-[10px] text-muted-foreground pt-3 border-t">
+                <span className="flex items-center gap-1">
+                  <User className="w-3 h-3" />
+                  {ticket.createdBy.name}
+                </span>
+                <span className="flex items-center gap-1">
+                  <MessageSquare className="w-3 h-3" />
+                  {ticket.messages_count ?? ticket.messages.length}
+                </span>
+                <span className="ml-auto">{formatRelativeTime(ticket.updatedAt)}</span>
+              </div>
             </div>
-            <h3 className="font-bold text-sm leading-snug mb-1 line-clamp-2">{ticket.title}</h3>
-            <p className="text-xs text-muted-foreground line-clamp-2 mb-4 flex-1">{ticket.description}</p>
-            <div className="flex items-center gap-3 text-[10px] text-muted-foreground pt-3 border-t">
-              <span className="flex items-center gap-1">
-                <User className="w-3 h-3" />
-                {ticket.createdBy.name}
-              </span>
-              <span className="flex items-center gap-1">
-                <MessageSquare className="w-3 h-3" />
-                {ticket.messages_count ?? ticket.messages.length}
-              </span>
-              <span className="ml-auto">{formatRelativeTime(ticket.updatedAt)}</span>
+          ))}
+          {!loading && filtered.length === 0 && (
+            <div className="col-span-full text-center py-16 text-muted-foreground">
+              <p className="font-bold text-sm">{t('tickets.notFound')}</p>
+              <p className="text-xs mt-1">{t('tickets.tryAdjust')}</p>
             </div>
-          </div>
-        ))}
-        {!loading && filtered.length === 0 && (
-          <div className="col-span-full text-center py-16 text-muted-foreground">
-            <p className="font-bold text-sm">{t('tickets.notFound')}</p>
-            <p className="text-xs mt-1">{t('tickets.tryAdjust')}</p>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
       )}
 
       {totalPages > 1 && page < totalPages && (

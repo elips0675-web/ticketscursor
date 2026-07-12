@@ -1,16 +1,16 @@
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma
 RUN npm ci --omit=dev && npx prisma generate
 
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate 2>/dev/null || true
 
-FROM node:20-alpine
+FROM node:22-alpine
 RUN apk add --no-cache wget
 WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules

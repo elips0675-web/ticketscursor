@@ -5,6 +5,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['src/**/*.test.js'],
+    globalSetup: ['./vitest.global-setup.js'],
     testTimeout: 10000,
     coverage: {
       provider: 'v8',
@@ -12,10 +13,10 @@ export default defineConfig({
       include: ['src/**/*.js'],
       exclude: ['src/**/*.test.js', 'src/prisma/**', 'src/__tests__/**'],
       thresholds: {
-        statements: 37,
-        branches: 29,
-        functions: 36,
-        lines: 38,
+        statements: 57,
+        branches: 51,
+        functions: 58,
+        lines: 58,
       },
     },
   },

@@ -13,7 +13,7 @@ async function main() {
     const errors = []
 
     page.on('console', (msg) => {
-      if (msg.type() === 'error') errors.push(msg.text())
+      if (msg.type() === 'error' || msg.type() === 'warning') errors.push(`[${msg.type()}] ${msg.text()}`)
     })
     page.on('pageerror', (err) => errors.push(err.message))
 

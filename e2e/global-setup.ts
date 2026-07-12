@@ -1,6 +1,6 @@
 import { chromium, type FullConfig } from '@playwright/test'
 
-async function globalSetup(config: FullConfig) {
+async function globalSetup(_config: FullConfig) {
   const browser = await chromium.launch({ channel: 'chrome' })
   const page = await browser.newPage()
   await page.goto('http://localhost:5173/login', { waitUntil: 'networkidle' })

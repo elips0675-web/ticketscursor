@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import knexLib from 'knex'
 import knexConfig from '../knexfile.js'
-import { app, server } from './app.js'
+import { server } from './app.js'
 import { setupSocket } from './socket.js'
 import { initTelegram } from './telegram.js'
 import logger from './logger.js'

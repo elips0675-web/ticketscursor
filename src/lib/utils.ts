@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { format, formatDistanceToNow, formatRelative, isToday, isYesterday, differenceInDays } from 'date-fns'
+import { format, formatDistanceToNow, isToday, isYesterday, differenceInDays } from 'date-fns'
 import { ru, enUS, type Locale } from 'date-fns/locale'
 
 const LOCALE_MAP: Record<string, Locale> = { ru, en: enUS }

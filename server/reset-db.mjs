@@ -1,5 +1,4 @@
 import mysql from 'mysql2/promise'
-import fs from 'fs'
 
 const conn = await mysql.createConnection({ host: 'localhost', user: 'root', password: '' })
 await conn.execute('DROP DATABASE IF EXISTS servicedesk')

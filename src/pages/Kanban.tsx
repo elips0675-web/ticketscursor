@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, CardContent } from '@/components/ui/card'
+
 import { Badge } from '@/components/ui/badge'
 import { Columns3, MessageSquare, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTickets } from '@/context/ticket-context'
-import type { Ticket, TicketStatus } from '@/types'
+import type { TicketStatus } from '@/types'
 
 const COLUMNS: { key: TicketStatus; label: string; color: string }[] = [
   { key: 'open', label: 'Открытые', color: 'border-t-blue-500' },

@@ -65,7 +65,7 @@ router.put('/:id/read', async (req, res) => {
   try {
     await markRead(Number(req.params.id))
     res.json({ success: true, data: { ok: true } })
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: 'Failed to mark read' })
   }
 })

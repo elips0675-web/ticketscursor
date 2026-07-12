@@ -26,7 +26,6 @@ import {
 } from 'lucide-react'
 import { useTickets } from '@/context/ticket-context'
 import { SkeletonCardGrid, SkeletonTableRow } from '@/components/skeletons'
-import { useAuth } from '@/context/AuthContext'
 import { api } from '@/lib/api'
 import type { Employee } from '@/types'
 

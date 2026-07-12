@@ -34,7 +34,7 @@ export function stopBackgroundJobs() {
 
 export async function setupBackgroundJobs(prisma) {
   if (process.env.REDIS_URL) {
-    const { Queue, Worker, QueueScheduler } = await import('bullmq')
+    const { Queue, Worker } = await import('bullmq')
     const Redis = (await import('ioredis')).default
 
     const connection = new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: null })

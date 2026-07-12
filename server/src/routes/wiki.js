@@ -53,7 +53,7 @@ router.get('/:id', async (req, res) => {
     const article = await getArticleById(Number(req.params.id))
     if (!article) return res.status(404).json({ message: 'Article not found' })
     res.json({ success: true, data: article })
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: 'Failed to fetch article' })
   }
 })

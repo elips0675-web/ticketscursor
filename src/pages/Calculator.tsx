@@ -5,18 +5,28 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CalendarDays, ArrowRight, Calculator, Sunrise } from 'lucide-react'
-import { format, addDays, differenceInCalendarDays, eachDayOfInterval, isWeekend, addBusinessDays, differenceInBusinessDays } from 'date-fns'
+import {
+  format,
+  addDays,
+  differenceInCalendarDays,
+  eachDayOfInterval,
+  isWeekend,
+  differenceInBusinessDays,
+} from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { useTranslation } from 'react-i18next'
 
 function isHoliday(d: Date): boolean {
   const dd = d.getDate()
   const mm = d.getMonth()
   return (
-    (mm === 0 && dd === 1) || (mm === 0 && dd === 7) ||
-    (mm === 1 && dd === 23) || (mm === 2 && dd === 8) ||
-    (mm === 4 && dd === 1) || (mm === 4 && dd === 9) ||
-    (mm === 5 && dd === 12) || (mm === 10 && dd === 4)
+    (mm === 0 && dd === 1) ||
+    (mm === 0 && dd === 7) ||
+    (mm === 1 && dd === 23) ||
+    (mm === 2 && dd === 8) ||
+    (mm === 4 && dd === 1) ||
+    (mm === 4 && dd === 9) ||
+    (mm === 5 && dd === 12) ||
+    (mm === 10 && dd === 4)
   )
 }
 
@@ -24,13 +34,7 @@ function isWorkingDay(d: Date): boolean {
   return !isWeekend(d) && !isHoliday(d)
 }
 
-function countWorkingDays(start: Date, end: Date): number {
-  const days = eachDayOfInterval({ start, end })
-  return days.filter(isWorkingDay).length
-}
-
 export default function CalculatorPage() {
-  const { t } = useTranslation()
   const [tab, setTab] = useState('days-to-date')
 
   const [startDate1, setStartDate1] = useState(format(new Date(), 'yyyy-MM-dd'))
@@ -66,7 +70,7 @@ export default function CalculatorPage() {
 
     const totalDays = differenceInCalendarDays(end, start)
     const wd = differenceInBusinessDays(end, start)
-    const holidays = eachDayOfInterval({ start, end }).filter(d => isHoliday(d) && !isWeekend(d)).length
+    const holidays = eachDayOfInterval({ start, end }).filter((d) => isHoliday(d) && !isWeekend(d)).length
 
     setCalendarDays2(totalDays)
     setWorkDaysCount(wd)
@@ -105,7 +109,13 @@ export default function CalculatorPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="workdays">Рабочих дней</Label>
-                  <Input id="workdays" type="number" min="1" value={workDays} onChange={(e) => setWorkDays(e.target.value)} />
+                  <Input
+                    id="workdays"
+                    type="number"
+                    min="1"
+                    value={workDays}
+                    onChange={(e) => setWorkDays(e.target.value)}
+                  />
                 </div>
               </div>
               <Button onClick={calcDaysToDate} className="gap-2">

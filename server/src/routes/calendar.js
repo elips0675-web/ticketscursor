@@ -57,7 +57,7 @@ router.delete('/:id', requireRole('admin', 'senior_agent'), deleteEventValidatio
   try {
     await deleteEvent(Number(req.params.id))
     res.json({ success: true, data: { ok: true } })
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: 'Failed to delete event' })
   }
 })

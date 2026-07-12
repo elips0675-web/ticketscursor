@@ -39,8 +39,10 @@
 | **При коммите** | Husky → lint-staged | `eslint --fix` + `prettier --write` на изменённых файлах |
 | **В CI (GitHub Actions)** | `tsc --noEmit` | TypeScript strict type-check |
 | | `eslint . --max-warnings 100` | Синтаксис, неисп. переменные, импорты |
-| | `vitest run` | Юнит-тесты (154 клиентских + 138 серверных) |
+| | `vitest run` | Юнит-тесты (163 клиентских + 239 серверных) |
 | | `vite build` | Сборка production |
+| **Тестовая БД** | `vitest.global-setup.js` | Создаёт `servicedesk_test`, мигрирует, сидит, фиксит колонки |
+| **Rate limiter** | `app.js` | Отключён при `NODE_ENV=test` через `skip` |
 | **Ручной запуск** | `npm run lint` | ESLint (warnings: `no-explicit-any`, `no-unused-vars`) |
 | | `npm run type-check` | `tsc --noEmit` |
 | | `npm test` | Vitest (клиент) |
@@ -248,3 +250,14 @@ docker compose up -d --build
 - ✅ Раздел 4: Файлы — role check на DELETE (senior_agent+)
 - ✅ Раздел 9: Админка — super_admin исключён из выбора ролей, запрет self-demotion
 - ✅ Раздел 12: Безопасность — запрет promotion до super_admin через API
+
+### Текущая сессия — Coverage + ESLint + Express 5 + Docker Node 22
+- **Coverage**: сервер 44→57% stmts, routes 47→62%, services 88→94%
+  - auth.js 23→73%, tickets.js 47→75%, files.js 36→54%
+  - `vitest.global-setup.js` — тестовая БД `servicedesk_test`, миграции+сиды
+  - Rate limiter отключён в тестах (`skip: NODE_ENV=test`)
+  - +17 тестов (login cookie/refresh/logout/register/ticket CRUD/files/SLA)
+- **ESLint**: `no-explicit-any: warn`, 0 no-unused-vars, 71 warnings (43 any + 28 react-hooks)
+- **Express 4→5**: 4.22.2→5.2.1, все 239 тестов проходят
+- **Node 20→22**: Dockerfile (client+server) → node:22-alpine
+- **check-console.mjs**: добавлен `console.warn`

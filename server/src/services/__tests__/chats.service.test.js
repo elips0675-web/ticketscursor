@@ -16,7 +16,6 @@ beforeEach(() => { vi.clearAllMocks() })
 describe('getChats', () => {
   it('returns sorted chats with last_message', async () => {
     const now = new Date()
-    const earlier = new Date(Date.now() - 10000)
     prisma.chat_rooms.findMany.mockResolvedValue([
       { id: 1, name: 'Old', type: 'group', chat_messages: [] },
       { id: 2, name: 'New', type: 'personal', chat_messages: [{ text: 'hi', created_at: now }] },

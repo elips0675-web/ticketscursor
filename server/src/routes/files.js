@@ -8,7 +8,7 @@ import { auditLogMiddleware } from '../audit.js'
 import { authenticateToken, requireRole } from '../middleware.js'
 import logger from '../logger.js'
 import { validateUpload } from '../middleware/validateUpload.js'
-import { saveFile, S3_ENABLED } from '../storage.js'
+import { saveFile } from '../storage.js'
 import { getFolders, createFolder, createFile, deleteFile } from '../services/files.service.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -96,7 +96,7 @@ router.delete('/:id', requireRole('admin', 'senior_agent'), async (req, res) => 
     if (!file) return res.status(404).json({ message: 'File not found' })
     await deleteFile(req.params.id)
     res.json({ success: true, data: { ok: true } })
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: 'Failed to delete file' })
   }
 })

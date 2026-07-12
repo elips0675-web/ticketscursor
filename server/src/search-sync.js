@@ -132,10 +132,7 @@ export async function searchMeilisearch(query, limit = 10) {
     const results = {}
     for (const name of Object.keys(INDEXES)) {
       const r = await c.index(name).search(query, { limit })
-      results[name] = r.hits.map(h => {
-        const { _formatted, ...rest } = h
-        return rest
-      })
+      results[name] = r.hits.map(({ _formatted: _, ...rest }) => rest)
     }
     return results
   } catch (err) {

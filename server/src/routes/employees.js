@@ -23,7 +23,7 @@ router.get('/stats', async (req, res) => {
   try {
     const data = await getStats()
     res.json({ success: true, data })
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: 'Failed to fetch stats' })
   }
 })

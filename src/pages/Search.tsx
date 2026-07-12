@@ -37,7 +37,6 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const navigate = useNavigate()
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
 
   useEffect(() => {
@@ -134,7 +133,7 @@ export default function SearchPage() {
             title="Сотрудники"
             icon={User}
             results={results.employees}
-            href={(r) => `/employees`}
+            href={(_r) => `/employees`}
             label={(r) => r.name}
             meta={(r) => (
               <span className="text-xs text-muted-foreground">
@@ -160,7 +159,7 @@ export default function SearchPage() {
             title="Новости"
             icon={Newspaper}
             results={results.news}
-            href={(r) => `/news`}
+            href={(_r) => `/news`}
             label={(r) => r.title}
             meta={() => null}
           />
@@ -176,7 +175,7 @@ export default function SearchPage() {
             title="Файлы"
             icon={FileText}
             results={results.files}
-            href={(r) => `/files`}
+            href={(_r) => `/files`}
             label={(r) => r.original_name || r.name}
             meta={(r) => (
               <span className="text-xs text-muted-foreground">

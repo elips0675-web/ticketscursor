@@ -63,7 +63,7 @@ async function getTicketParticipants(ticketId, excludeUserId) {
   return rows.map(r => r.sender_id)
 }
 
-export async function notifyTicketCreated(ticketId, actorName) {
+export async function notifyTicketCreated(ticketId, _actorName) {
   const t = await getTicketWithUsers(ticketId)
   if (!t) return
 
@@ -109,7 +109,7 @@ export async function notifyStatusChanged(ticketId, oldStatus, newStatus, actorN
   }
 }
 
-export async function notifyPriorityChanged(ticketId, oldPriority, newPriority, actorName) {
+export async function notifyPriorityChanged(ticketId, oldPriority, newPriority, _actorName) {
   const t = await getTicketWithUsers(ticketId)
   if (!t) return
 

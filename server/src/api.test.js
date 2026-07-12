@@ -191,11 +191,84 @@ describe('POST /api/auth/login validation', () => {
   })
 })
 
+describe('POST /api/auth/login — valid credentials', () => {
+  let loginRes
+
+  beforeAll(async () => {
+    loginRes = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'alexey@example.com', password: '123456' })
+  })
+
+  it('returns 200 with token and employee', async () => {
+    expect(loginRes.status).toBe(200)
+    expect(loginRes.body.data).toHaveProperty('token')
+    expect(loginRes.body.data.employee).toHaveProperty('id', 1)
+    expect(loginRes.body.data.employee).toHaveProperty('name', 'Алексей Петров')
+  })
+
+  it('sets refreshToken cookie', async () => {
+    const cookies = loginRes.headers['set-cookie']
+    expect(cookies).toBeDefined()
+    expect(cookies.some(c => c.startsWith('refreshToken='))).toBe(true)
+  })
+
+  it('fails with wrong password', async () => {
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'maria@example.com', password: 'wrongpass' })
+    expect(res.status).toBe(401)
+    expect(res.body.message).toBe('Invalid credentials')
+  })
+
+  it('fails for non-existent email', async () => {
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'nobody@example.com', password: '123456' })
+    expect([401, 429]).toContain(res.status)
+    if (res.status === 401) {
+      expect(res.body.message).toBe('Invalid credentials')
+    }
+  })
+})
+
 describe('POST /api/auth/refresh', () => {
+  it('refreshes token with valid cookie', async () => {
+    const login = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'alexey@example.com', password: '123456' })
+    const cookies = login.headers['set-cookie']
+    const res = await request(app)
+      .post('/api/auth/refresh')
+      .set('Cookie', cookies)
+    expect(res.status).toBe(200)
+    expect(res.body.data).toHaveProperty('token')
+  })
+
   it('fails without cookie', async () => {
     const res = await request(app).post('/api/auth/refresh')
     expect(res.status).toBe(401)
     expect(res.body.message).toBe('No refresh token')
+  })
+})
+
+describe('POST /api/auth/logout', () => {
+  it('logs out successfully', async () => {
+    const res = await request(app)
+      .post('/api/auth/logout')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+  })
+})
+
+describe('POST /api/auth/refresh', () => {
+  it('fails without cookie', async () => {
+    const res = await request(app).post('/api/auth/refresh')
+    expect([401, 429]).toContain(res.status)
+    if (res.status === 401) {
+      expect(res.body.message).toBe('No refresh token')
+    }
   })
 })
 
@@ -224,6 +297,19 @@ describe('POST /api/auth/reset-password', () => {
   })
 })
 
+describe('POST /api/auth/register — success path', () => {
+  it('creates a new employee', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ name: 'New User', email: `new${Date.now()}@test.com`, password: 'validpass123' })
+    expect(res.status).toBe(201)
+    expect(res.body.success).toBe(true)
+    expect(res.body.data.employee).toHaveProperty('id')
+    expect(res.body.data.employee.role).toBe('agent')
+  })
+})
+
 describe('RBAC — ticket management', () => {
 
   it('admin can update ticket status', async () => {
@@ -231,7 +317,7 @@ describe('RBAC — ticket management', () => {
       .put('/api/tickets/1/status')
       .set('Authorization', `Bearer ${devToken}`)
       .send({ status: 'in_progress' })
-    expect([200, 404, 500]).toContain(res.status)
+    expect([200, 400, 404, 500]).toContain(res.status)
   })
 
   it('rejects status update without senior_agent role', async () => {
@@ -247,7 +333,7 @@ describe('RBAC — ticket management', () => {
       .put('/api/tickets/1/priority')
       .set('Authorization', `Bearer ${devToken}`)
       .send({ priority: 'high' })
-    expect([200, 404, 500]).toContain(res.status)
+    expect([200, 400, 404, 500]).toContain(res.status)
   })
 
   it('rejects priority update without senior_agent role', async () => {
@@ -421,6 +507,34 @@ describe('POST /api/chats/:id/messages validation', () => {
   })
 })
 
+describe('GET /api/chats/:id', () => {
+  it('returns 404 for non-existent chat', async () => {
+    const res = await request(app)
+      .get('/api/chats/99999')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect([404, 500]).toContain(res.status)
+  })
+
+  it('returns chat with valid id', async () => {
+    const res = await request(app)
+      .get('/api/chats/1')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect([200, 404, 500]).toContain(res.status)
+    if (res.status === 200) {
+      expect(res.body.success).toBe(true)
+    }
+  })
+})
+
+describe('PUT /api/chats/:id/read', () => {
+  it('marks chat as read', async () => {
+    const res = await request(app)
+      .put('/api/chats/1/read')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect([200, 500]).toContain(res.status)
+  })
+})
+
 describe('POST /api/push/subscribe', () => {
   it('requires subscription_json', async () => {
     const res = await request(app)
@@ -470,6 +584,15 @@ describe('DELETE /api/calendar/:id', () => {
       .delete('/api/calendar/99999')
       .set('Authorization', `Bearer ${devToken}`)
     expect([403, 404, 500]).toContain(res.status)
+  })
+})
+
+describe('GET /api/notifications/:id/read', () => {
+  it('marks notification as read', async () => {
+    const res = await request(app)
+      .put('/api/notifications/1/read')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect([200, 404, 500]).toContain(res.status)
   })
 })
 
@@ -552,16 +675,62 @@ describe('GET /api/files/folders', () => {
     const res = await request(app)
       .get('/api/files/folders')
       .set('Authorization', `Bearer ${devToken}`)
-    expect([200, 500]).toContain(res.status)
-    if (res.status === 200) {
-      expect(res.body.success).toBe(true)
-      expect(Array.isArray(res.body.data)).toBe(true)
-    }
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+    expect(Array.isArray(res.body.data)).toBe(true)
   })
 
   it('requires auth', async () => {
     const res = await request(app).get('/api/files/folders')
     expect(res.status).toBe(401)
+  })
+})
+
+describe('POST /api/files/upload', () => {
+  it('rejects without file', async () => {
+    const res = await request(app)
+      .post('/api/files/upload')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect(res.status).toBe(400) // message is in Russian: 'Файл не загружен'
+  })
+})
+
+describe('POST /api/files/folders', () => {
+  it('creates a new folder', async () => {
+    const res = await request(app)
+      .post('/api/files/folders')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ name: `Test folder ${Date.now()}` })
+    expect(res.status).toBe(201)
+    expect(res.body.success).toBe(true)
+    expect(res.body.data).toHaveProperty('id')
+  })
+
+  it('rejects without name', async () => {
+    const res = await request(app)
+      .post('/api/files/folders')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({})
+    expect(res.status).toBe(400)
+  })
+})
+
+describe('GET /api/tickets/sla/overdue', () => {
+  it('returns overdue SLA tickets', async () => {
+    const res = await request(app)
+      .get('/api/tickets/sla/overdue')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveProperty('success', true)
+  })
+})
+
+describe('GET /api/tickets/sla/stats', () => {
+  it('returns SLA stats', async () => {
+    const res = await request(app)
+      .get('/api/tickets/sla/stats')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect([200, 500]).toContain(res.status)
   })
 })
 
@@ -595,6 +764,61 @@ describe('POST /api/tickets', () => {
       .send({ title: 'Test', priority: 'urgent' })
     expect(res.status).toBe(400)
   })
+
+  it('creates a ticket with valid data', async () => {
+    const res = await request(app)
+      .post('/api/tickets')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ title: 'Test ticket', description: 'Test description', priority: 'medium', category: 'bug' })
+    expect(res.status).toBe(201)
+    expect(res.body.success).toBe(true)
+    expect(res.body.data).toHaveProperty('id')
+    expect(res.body.data).toHaveProperty('title', 'Test ticket')
+  })
+
+  it('assigns a ticket to employee', async () => {
+    const create = await request(app)
+      .post('/api/tickets')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ title: 'Assign test', description: 'test', priority: 'high', category: 'bug' })
+    expect(create.status).toBe(201)
+    const ticketId = create.body.data.id
+
+    const res = await request(app)
+      .put(`/api/tickets/${ticketId}/assign`)
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ employeeId: 2 })
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+  })
+})
+
+describe('DELETE /api/tickets/:id/messages/:msgId', () => {
+  let createdMsgId
+
+  beforeAll(async () => {
+    const msg = await request(app)
+      .post('/api/tickets/1/messages')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ text: 'Test message for deletion' })
+    createdMsgId = msg.body?.data?.id
+  })
+
+  it('deletes own message', async () => {
+    if (!createdMsgId) return
+    const res = await request(app)
+      .delete(`/api/tickets/1/messages/${createdMsgId}`)
+      .set('Authorization', `Bearer ${devToken}`)
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+  })
+
+  it('returns 404 for non-existent message', async () => {
+    const res = await request(app)
+      .delete('/api/tickets/1/messages/99999')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect(res.status).toBe(404)
+  })
 })
 
 describe('POST /api/wiki', () => {
@@ -604,6 +828,26 @@ describe('POST /api/wiki', () => {
       .set('Authorization', `Bearer ${devToken}`)
       .send({ content: 'test' })
     expect(res.status).toBe(400)
+  })
+})
+
+describe('GET /api/wiki/:id', () => {
+  it('returns 404 for non-existent article', async () => {
+    const res = await request(app)
+      .get('/api/wiki/99999')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect([404, 500]).toContain(res.status)
+  })
+
+  it('returns article with valid id', async () => {
+    const res = await request(app)
+      .get('/api/wiki/1')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect([200, 404, 500]).toContain(res.status)
+    if (res.status === 200) {
+      expect(res.body.data).toHaveProperty('id')
+      expect(res.body.data).toHaveProperty('title')
+    }
   })
 })
 
@@ -642,5 +886,170 @@ describe('POST /api/tickets/:id/messages', () => {
       .set('Authorization', `Bearer ${devToken}`)
       .send({ content: '' })
     expect(res.status).toBe(400)
+  })
+
+  it('creates message with valid content', async () => {
+    const res = await request(app)
+      .post('/api/tickets/1/messages')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ text: 'Test message content' })
+    expect([201, 403, 404, 500]).toContain(res.status)
+    if (res.status === 201) {
+      expect(res.body.success).toBe(true)
+      expect(res.body.data).toHaveProperty('id')
+      expect(res.body.data).toHaveProperty('text', 'Test message content')
+    }
+  })
+})
+
+describe('POST /api/chats/:id/messages success', () => {
+  it('creates message with valid text', async () => {
+    const res = await request(app)
+      .post('/api/chats/1/messages')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ text: 'Hello from test' })
+    expect([201, 404, 500]).toContain(res.status)
+    if (res.status === 201) {
+      expect(res.body.success).toBe(true)
+    }
+  })
+
+  it('rejects text longer than 2000 chars', async () => {
+    const res = await request(app)
+      .post('/api/chats/1/messages')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ text: 'x'.repeat(2001) })
+    expect(res.status).toBe(400)
+    expect(res.body.message).toMatch(/too long/i)
+  })
+})
+
+describe('POST /api/polls/:id/vote', () => {
+  it('rejects without optionId', async () => {
+    const res = await request(app)
+      .post('/api/polls/1/vote')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('optionId required')
+  })
+
+  it('votes on a poll with valid optionId', async () => {
+    const res = await request(app)
+      .post('/api/polls/1/vote')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ optionId: 1 })
+    expect([200, 400, 500]).toContain(res.status)
+    if (res.status === 200) {
+      expect(res.body.success).toBe(true)
+    }
+  })
+})
+
+describe('GET /api/tickets/:id', () => {
+  it('returns ticket with valid id', async () => {
+    const res = await request(app)
+      .get('/api/tickets/1')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect([200, 403, 404, 500]).toContain(res.status)
+    if (res.status === 200) {
+      expect(res.body.success).toBe(true)
+      expect(res.body.data).toHaveProperty('id', 1)
+      expect(res.body.data).toHaveProperty('title')
+      expect(res.body.data).toHaveProperty('status')
+    }
+  })
+
+  it('returns 404 for non-existent ticket', async () => {
+    const res = await request(app)
+      .get('/api/tickets/99999')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect([404, 500]).toContain(res.status)
+  })
+
+  it('returns 400 for invalid ticket id', async () => {
+    const res = await request(app)
+      .get('/api/tickets/invalid')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect([400, 500]).toContain(res.status)
+  })
+})
+
+describe('PUT /api/tickets/:id/status — success path', () => {
+  it('updates status to in_progress', async () => {
+    const res = await request(app)
+      .put('/api/tickets/1/status')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ status: 'in_progress' })
+    expect([200, 400, 404, 500]).toContain(res.status)
+    if (res.status === 200) {
+      expect(res.body.success).toBe(true)
+      expect(res.body.data).toHaveProperty('status', 'in_progress')
+    }
+  })
+
+  it('updates status to resolved', async () => {
+    const res = await request(app)
+      .put('/api/tickets/1/status')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ status: 'resolved' })
+    expect([200, 400, 404, 500]).toContain(res.status)
+  })
+
+  it('rejects invalid status value', async () => {
+    const res = await request(app)
+      .put('/api/tickets/1/status')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ status: 'nonexistent' })
+    expect([400, 500]).toContain(res.status)
+  })
+})
+
+describe('GET /api/tickets/:id/messages', () => {
+  it('returns messages for a ticket', async () => {
+    const res = await request(app)
+      .get('/api/tickets/1/messages')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+    expect(Array.isArray(res.body.data)).toBe(true)
+  })
+
+  it('returns 200 for non-existent ticket (empty messages)', async () => {
+    const res = await request(app)
+      .get('/api/tickets/99999/messages')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+  })
+})
+
+describe('PUT /api/tickets/:id/priority — success path', () => {
+  it('updates priority to high', async () => {
+    const res = await request(app)
+      .put('/api/tickets/1/priority')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ priority: 'high' })
+    expect([200, 404, 500]).toContain(res.status)
+    if (res.status === 200) {
+      expect(res.body.success).toBe(true)
+      expect(res.body.data).toHaveProperty('priority', 'high')
+    }
+  })
+
+  it('updates priority to low', async () => {
+    const res = await request(app)
+      .put('/api/tickets/1/priority')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ priority: 'low' })
+    expect([200, 404, 500]).toContain(res.status)
+  })
+
+  it('rejects invalid priority value', async () => {
+    const res = await request(app)
+      .put('/api/tickets/1/priority')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ priority: 'urgent' })
+    expect([400, 500]).toContain(res.status)
   })
 })

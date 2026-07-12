@@ -59,7 +59,7 @@ export async function markRead(chatId) {
   })
 }
 
-export async function findOrCreatePersonalChat(userId, myId) {
+export async function findOrCreatePersonalChat(userId, _myId) {
   const user = await prisma.employees.findUnique({
     where: { id: userId },
     select: { name: true },
