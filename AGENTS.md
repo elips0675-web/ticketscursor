@@ -264,3 +264,10 @@ docker compose up -d --build
 - **Тесты**: 209→**219** (+10 в Dashboard.expanded.test.tsx)
 - **Общий клиент**: 57.33%→**58.5%** Stmts, 48.22%→**49.21%** Branch, 45.64%→**47.36%** Funcs, 60.09%→**61.38%** Lines
 - **Пороги обновлены**: stmts 58, branches 49, functions 47, lines 61
+
+### Этап 21 — Tickets 90% coverage, +11 тестов
+- **Tickets.tsx**: 41%→**90%** Stmts, 41%→**79%** Branch, 41%→**83%** Funcs, 42%→**90%** Lines
+  - Покрыты: фильтры (поиск/статус/приоритет), пагинация, пустое состояние, socket-подписки, export CSV/PDF
+- **Тесты**: 219→**230** (+11 в Tickets.expanded.test.tsx)
+- **Общий клиент**: 58.5%→**60.87%** Stmts, 50.39%→**50.39%** Branch, 47.36%→**48.81%** Funcs, 61.38%→**63.66%** Lines
+- **Пороги обновлены**: stmts 60, branches 50, functions 48, lines 63

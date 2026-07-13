@@ -1,90 +1,66 @@
-Вижу обновления — многое уже допилено (any убран, ESLint ужесточен, версии синхронизированы, тесты notify расширены). Осталось 4 конкретных боли. Ниже разбор и пошаговый план.
-🔴 Что сейчас не так
+Проект серьёзный, но есть конкретные зоны роста. Вот разбор по блокам:
+🔴 Критично — надо допилить
+1. Покрытие тестами (техдолг #1)
+Сейчас 64% сервер / 58.5% клиент, цель >70%. Где конкретно дырки:
 Table
-Проблема	Почему критично
-Покрытие 51% / 55%	При 17 моделях Prisma, RBAC, SLA, LDAP, Socket.IO, файлах — половина логики не покрыта. Рефакторинг = риск.
-Express 4	В 2026 году это legacy. Express 5 stable, в 4-й ветке не закрываются некоторые security-фиксы.
-~100 ESLint warnings (no-unused-vars)	CI пропускает (--max-warnings 100), но мусор в консоли маскирует реальные проблемы.
-Virtualizer отсутствует	Tickets.tsx без @tanstack/react-virtual. Пока ≤500 тикетов — ок, но при росте будет лагать.
-🛠 Как допилить (по приоритету)
-1. Покрытие тестов → 70%+ (этот спринт)
-Сервер (приоритетные области):
-Table
-Модуль	Что тестировать	Почему даст прирост
-RBAC	requireRole() на 5 ролях, edge-cases (нет роли, невалидный JWT)	Middleware — вызывается на 50+ роутах
-SLA	Пересчёт due_at/first_response_at при смене приоритета, фоновая проверка (15 мин), notifySlaBreached	Сложная бизнес-логика, сейчас вероятно 0%
-LDAP	Auto-provisioning, fallback при недоступности AD, невалидные credentials	Критичный путь авторизации
-Socket.IO	Эмиты ticket:updated, chat:message, rate-limit (5 msg/sec)	Real-time — тестируется редко, но ломается часто
-Файлы	Multer + magic bytes + ClamAV, S3/MinIO adapter, большие файлы	Security-чувствительно
-Audit	auditLogMiddleware — записывает ли действие при ошибке сервиса?	Compliance
-Клиент (приоритетные области):
-Table
-Модуль	Что тестировать
-Хуки	useTickets, useAuth, useSocket — моки QueryClient + Socket.IO
-Страницы	Login (валидация Zod, ошибки API), Dashboard (рендер графиков Recharts)
-Утилиты	formatDate, formatSLA, cn() (Tailwind merge)
-Компоненты	TicketTable, RoleBadge, FileUploader — интеракции
-Цель: +20% покрытия за счёт сложной логики, а не утилит.
-2. Express 4 → 5 (следующий спринт)
-Breaking changes, которые коснутся проекта:
-Async errors в middleware: Express 5 не падает при throw в async middleware. Нужно проверить, что центральный error-handling middleware всё ещё ловит ошибки.
-Путь роутов: Express 5 строже с regex в путях.
-План миграции:
+Модуль	Что не покрыто	Действие
+Dashboard.tsx Branch	69% — не покрыт Space+Enter на карточках	Добавить userEvent.keyboard('{space}') и Enter в тесты
+Server routes	62% — не все error-бранчи в контроллерах	Мокать сервисы на throw, проверять 500-ответы
+React hooks warnings	28 штук — exhaustive-deps, set-state-in-effect	Переписать эффекты, вынести state-логику в хуки
+2. ESLint — 3 ошибки + 28 warnings
+3 errors в серверных тестах: beforeEach/afterEach no-undef — добавить 'vitest-globals' в env ESLint
+28 react-hooks warnings — не просто "предупреждения", а потенциальные баги гонки состояний. Нужен рефакторинг, не подавление.
+3. Express 5 + app.router — проверить breaking changes
+Express 5.2.1 требует async ошибки в next(err) — убедиться, что все throw в async-роутах ловит центральный error handler, а не падает процесс.
+🟠 Средний приоритет — улучшит качество
+4. Типизация — добить остатки any
+Хотя no-explicit-any: error и 0 warnings, в контексте написано "осознанный trade-off" — значит где-то всё ещё unknown без guard'ов. Проверить:
+api.ts — generic <T> работает корректно с Zod-схемами?
+socket.js — типизация event payload'ов через Socket<ServerToClientEvents, ClientToServerEvents>
+ticket-context.tsx — типы для optimistic updates
+5. Redis cache — race condition
+В Этапе K2 был Lua-скрипт для атомарной инвалидации, но staleTime 5 мин + gcTime 10 мин на клиенте могут давать несогласованность. Проверить:
+Инвалидация кэша при WebSocket-эмитах (ticket:updated → queryClient.invalidateQueries)
+dedup SLA уведомлений — проверить, что notifySlaBreached не блокирует алерты assignee (Qwen #2)
+6. Безопасность — мелочи
+helmet в Express 5 — проверить, что contentSecurityPolicy не ломает Vite HMR в dev
+rate-limit WebSocket handshake — 10/min per IP, но за NAT'ом в офисе 100 сотрудников = блок. Добавить skipSuccessfulRequests или whitelist для внутренних IP
+🟡 Низкий приоритет — "приятно иметь"
+7. Sentry/APM
+В TECHNICAL.md написано "не приоритетно", но для production-ready системы без мониторинга — слепая зона. Минимум: интегрировать Sentry в error-handling middleware и window.onerror на фронте.
+8. Dark theme
+Удалили осознанно, но если корпоративные пользователи работают ночью — стоит вернуть через prefers-color-scheme без переключателя.
+9. E2E покрытие
+22 теста — мало для 50+ endpoint'ов. Критичные сценарии без E2E:
+LDAP-логин (только unit)
+File upload + ClamAV (опциональный сервис)
+SLA эскалация (фоновый процесс, сложно мокать)
+📋 Конкретный план "допила"
+Этап 21 — Dashboard 100% + тесты
 bash
-npm install express@^5.0.0
-cd server && npm test        # прогнать 138 тестов
-npm run type-check           # проверить типы
-node check-console.mjs       # 6 страниц, errors: []
-Если тесты падают — не мержить, оставить в отдельной ветке.
-3. ESLint warnings → 0 (можно параллельно)
-Проблема: no-unused-vars ~100 штук. Скорее всего это:
-Неиспользуемые импорты из shadcn/ui
-Аргументы функций, оставленные «на будущее»
-Деструктуризация с неиспользуемыми полями
-Решение:
+# Добавить в Dashboard.expanded.test.tsx:
+- userEvent.keyboard('{space}') на карточку статуса
+- userEvent.keyboard('{enter}') на виджет сотрудников
+- Проверить редирект с queryParams (status, priority)
+Этап 22 — ESLint hooks
 bash
-npm run lint -- --fix        # автофикс импортов
-Для осознанных неиспользуемых аргументов — префикс _:
-TypeScript
-// Было
-function handler(req, res, next) { /* next не используется */ }
-
-// Стало
-function handler(req, res, _next) { }
-Или настроить правило:
-JavaScript
-// eslint.config.js
-'@typescript-eslint/no-unused-vars': ['warn', { 
-  argsIgnorePattern: '^_', 
-  varsIgnorePattern: '^_' 
-}]
-После чистки — снизить --max-warnings с 100 до 20 в CI, чтобы не разъезжалось.
-4. Virtualizer в Tickets.tsx (отложенно, если планируется рост)
-Пока пагинация по 9 и ≤500 тикетов — не критично. Но если в будущем появятся «все тикеты» или скролл без пагинации:
-bash
-npm install @tanstack/react-virtual
-Интеграция — заменить <table> на виртуализированный контейнер с estimateSize. Но это только если метрики покажут лаги.
-📋 Чек-лист перед коммитом (актуализировать)
-Добавь в package.json или husky:
-JSON
-{
-  "scripts": {
-    "check:all": "npm run lint && npm run type-check && npm test && cd server && npm test && node check-console.mjs"
-  }
-}
-Или разбить на этапы:
-npm run lint — 0 errors, warnings < 20
-npm run type-check — проходит
-npm test — 154 теста, покрытие не падает
-cd server && npm test — 138 тестов
-node check-console.mjs — errors: [], hasRussianText: true
-npm run build — production без warning'ов
-git add -A && git commit && git push
-🎯 Итоговый план на 2 спринта
+# 1. Переписать set-state-in-effect:
+#    Плохо: useEffect(() => setState(x), [x])
+#    Хорошо: useEffect(() => { if (x !== state) setState(x) }, [x])
+# 2. exhaustive-deps: добавить недостающие deps или вынести в useCallback
+Этап 23 — Server coverage 64% → 70%
+Добавить тесты на throw в tickets.service.js (85% → 95%)
+Покрыть background.js — мок BullMQ, проверить setInterval fallback
+Покрыть search.js — FULLTEXT fallback, LIKE fallback, SQL-injection guard
+Этап 24 — Интеграционные тесты
+check-console.mjs — расширить до 10 страниц (добавить /admin, /calendar, /polls)
+Playwright: добавить сценарий "agent назначает тикет → проверяет дашборд"
+🎯 Итоговая оценка
 Table
-Неделя	Задача	Результат
-1	Тесты: RBAC middleware + SLA пересчёт + LDAP auth	+15% покрытие сервера
-1	Тесты: хуки useTickets, useAuth + страница Login	+10% покрытие клиента
-2	Тесты: Socket.IO handlers + File upload + Audit	+5% сервер, итого ~70%
-2	Чистка ESLint warnings, снижение --max-warnings до 20	0 мусора в консоли
-3	Ветка express-5, прогон тестов, проверка error-handling	Решение о миграции
+Метрика	Сейчас	Цель	Сложность
+Server coverage	64%	70%	Средняя (2-3 дня)
+Client coverage	58.5%	65%	Средняя (2-3 дня)
+ESLint errors	3	0	Легко (2 часа)
+React hooks warnings	28	0	Сложная (3-5 дней)
+E2E тесты	22	35+	Средняя (2-3 дня)
+Главный риск: 28 react-hooks warnings — это не "стиль", а потенциальные баги в продакшене (race conditions, infinite loops). Их надо чинить первыми, а не coverage.
