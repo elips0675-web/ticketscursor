@@ -277,3 +277,12 @@
   - Login.expanded.test.tsx (11 тестов: API, LDAP, dev-login, валидация), Search.expanded.test.tsx (9)
   - Coverage pages: 46%→**53%** Stmts, общий клиент: 52%→**57%**
   - Пороги обновлены: stmts 57, branches 48, functions 45, lines 60
+
+### Этап 8 — Dashboard 100%, +10 тестов (завершён)
+- **Dashboard.tsx**: 32%→**100%** Stmts, 22%→**69%** Branch, 32%→**100%** Funcs, 32%→**100%** Lines
+  - Выявлено: V8 coverage не трекает JSX-строки, трекает только statement-узлы (function, const, arrow fn, if)
+  - Покрыты onClick/onKeyDown хендлеры через userEvent.click/type
+  - TicketProvider замокан через vi.mock('@/context/ticket-context')
+- **Тесты**: 209→**219** (+10 в Dashboard.expanded.test.tsx)
+- **Общий клиент**: 57.33%→**58.5%** Stmts, 48.22%→**49.21%** Branch, 45.64%→**47.36%** Funcs, 60.09%→**61.38%** Lines
+- **Пороги обновлены**: stmts 58, branches 49, functions 47, lines 61
