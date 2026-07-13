@@ -271,3 +271,19 @@ docker compose up -d --build
 - **Тесты**: 219→**230** (+11 в Tickets.expanded.test.tsx)
 - **Общий клиент**: 58.5%→**60.87%** Stmts, 50.39%→**50.39%** Branch, 47.36%→**48.81%** Funcs, 61.38%→**63.66%** Lines
 - **Пороги обновлены**: stmts 60, branches 50, functions 48, lines 63
+
+### Этап 22 — Calendar 84% coverage, +18 тестов
+- **Calendar.tsx**: 43%→**83.69%** Stmts, 38.37%→**80.23%** Branch, 33.33%→**80.55%** Funcs, 45.34%→**86.04%** Lines
+  - Покрыты: клик по дню, события, пустое состояние, create/edit/delete, RBAC, CSV export, навигация, skeleton
+- **Тесты**: 230→**261** (+18 в Calendar.expanded.test.tsx)
+- **Общий клиент**: 60.87%→**63.76%** Stmts, 50.39%→**53.21%** Branch, 48.81%→**52.77%** Funcs, 63.66%→**66.61%** Lines
+- **Пороги обновлены**: stmts 63, branches 53, functions 52, lines 66
+
+### Этап 23 — Admin 98% coverage, +22 теста
+- **Admin.tsx**: 41%→**97.82%** Stmts, 13.15%→**86.84%** Branch, 30.76%→**100%** Funcs, 44.18%→**100%** Lines
+  - Покрыты: stat cards (employees/online/tickets/active), employee list, role stats, SLA stats, refresh, API errors
+  - Mock fetch напрямую (Admin использует fetch, не api-сервис)
+  - Покрыт unwrapApiData с null data
+- **Тесты**: 261→**283** (+22 в Admin.expanded.test.tsx)
+- **Общий клиент**: 63.76%→**64.97%** Stmts, 53.21%→**55.05%** Branch, 52.77%→**53.95%** Funcs, 66.61%→**67.85%** Lines
+- **Пороги обновлены**: stmts 64, branches 55, functions 53, lines 67
