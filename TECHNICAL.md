@@ -29,18 +29,18 @@
 
 | Слой | Технология | Версия | Назначение |
 |---|---|---|---|
-| **Frontend** | React | 18.3 | UI фреймворк, Concurrent Features |
+| **Frontend** | React | 19.1 | UI фреймворк, Concurrent Features |
 | | TypeScript | 5.x | Типобезопасность, strict mode |
-| | Vite | 5.x | Сборка, HMR, PWA |
-| | Tailwind CSS | 3.x | CSS-first подход, @theme |
+| | Vite | 8.x | Сборка, HMR, PWA |
+| | Tailwind CSS | 4.x | CSS-first подход, @theme |
 | | shadcn/ui | latest | Компоненты на Radix UI |
 | | Framer Motion | latest | Анимации |
 | | Recharts | 2.x | Графики дашборда |
 | | i18next | latest | Интернационализация (RU/EN) |
 | | Zustand / Context | — | State management |
-| **Backend** | Express | 4.x | HTTP сервер |
+| **Backend** | Express | 5.2.1 | HTTP сервер |
 | | Prisma ORM | 5.22.0 | Типобезопасный доступ к БД |
-| | Zod | 3.x | Валидация входных данных |
+| | Zod | 4.x | Валидация входных данных |
 | | Socket.io | 4.x | Real-time коммуникации |
 | | JWT (jsonwebtoken) | 9.x | Аутентификация |
 | | bcrypt | 5.x | Хеширование паролей |
@@ -55,7 +55,7 @@
 | | FULLTEXT INDEX | — | Полнотекстовый поиск |
 | **Кэш / Real-time** | Redis | 7.x | Кэш, Socket.io adapter |
 | | In-memory Map | — | Fallback при отсутствии Redis |
-| **Тестирование** | Vitest | 1.x | Unit / Integration тесты |
+| **Тестирование** | Vitest | 2.x | Unit / Integration тесты |
 | | jsdom | — | DOM для клиентских тестов |
 | | MSW | — | Mock Service Worker |
 | | Supertest | — | HTTP тесты |
@@ -748,14 +748,12 @@ server/__tests__/
 
 ```json
 {
-  "statements": 20,
-  "branches": 15,
-  "functions": 15,
-  "lines": 25
+  "client": { "statements": 71.68, "branches": 61.15, "functions": 61.21, "lines": 74.63 },
+  "server": { "statements": 70.97, "branches": 62, "functions": 68, "lines": 72 }
 }
 ```
 
-> **Примечание**: Пороги установлены низкими из-за отсутствия тестов на UI-компоненты. Этап I выполнен: 154 клиентских + 116 серверных тестов.
+> **Примечание**: 360 клиентских / 336 серверных тестов. Пороги заданы в `vitest.client.config.ts` и `server/vitest.config.ts`.
 
 ---
 
@@ -1036,7 +1034,7 @@ spec:
 | F | Роль requester (видит только свои тикеты) | Medium | ✅ Выполнено |
 | G | TanStack Query + optimistic updates | Medium | ✅ Выполнено |
 | H | Skeleton loaders для всех списков | Low | ✅ Выполнено |
-| I | Покрытие тестов 50%+ | High | ✅ (116 серверных / 154 клиентских / 22 E2E) |
+| I | Покрытие тестов 70%+ | High | ✅ (360 клиентских / 336 серверных) |
 | I | E2E: эскалация SLA, автоназначение, экспорт | Medium | ✅ (покрыто unit-тестами) |
 | J | Volume для MySQL-бэкапов в docker-compose | Low | ✅ Выполнено |
 | J | Healthcheck всех сервисов | Low | ✅ Выполнено |
@@ -1046,7 +1044,11 @@ spec:
 | L | Исправление клиентских тестов (jsdom localStorage) | High | ✅ Выполнено |
 | L | roleUtils.test.js — 7 тестов на иерархию ролей | Medium | ✅ Выполнено |
 | L | API тесты: /auth/me, /system-info, /tickets POST, /wiki POST, /calendar POST, /news POST, messages | Medium | ✅ Выполнено |
+| A | ESLint hooks: 28 warnings → 0 (set-state-in-effect, exhaustive-deps) | High | ❌ Открыто |
+| B | Server coverage: background.js (BullMQ mock), search.js (FULLTEXT/LIKE fallback) | Medium | ❌ Открыто |
+| D | Интеграционные тесты: check-console.mjs (6→12 страниц), Playwright (22→35) | Medium | ❌ Открыто |
+| — | Files.tsx Branch 72.5% (mapFolder fallback, emoji-иконки, folder/createdAt display) | Low | ❌ Открыто |
 
 ---
 
-*Документация актуальна на 2026-07-10. Версия проекта: 1.0.0*
+*Документация актуальна на 2026-07-14. Версия проекта: 1.0.0*

@@ -1,64 +1,13 @@
-Проанализировал предоставленный контекст — это Service Desk (корпоративная система тикетов). Вижу, что проект полностью рабочий, но есть несколько областей для улучшения. Давай разберём по категориям:
-🔴 Критичные (безопасность / стабильность)
-1. Race condition в AuthContext.logout()
-tsx
-// Сейчас: token очищается ДО fetch
-const logout = () => {
-  const t = token        // читаем
-  localStorage.removeItem('token')  // чистим
-  setToken(null)         // state = null
-  if (t) { fetch(..., { headers: { Authorization: `Bearer ${t}` } }) } // t ещё жив, но race возможен
-}
-Фикс: сохранить t в замыкание, но уже исправлено в Этапе 17. Проверь, что у тебя именно такая версия.
-2. Missing import prisma в files.js
-В Этапе 17 указано, что добавлен import prisma — проверь, что он на месте:
-JavaScript
-import prisma from '../prisma.js'  // должен быть в начале files.js
-3. Zod v4 несовместимость
-В src/lib/schemas.ts используется:
-TypeScript
-email: z.string().email({ message: '...' })
-В Zod v4 (который в package.json) .email() не принимает объект с message.
-Фикс:
-TypeScript
-email: z.string().email('Введите корректный email')
-🟡 Средние (UX / производительность)
-4. TanStack Query — staleTime слишком агрессивный
-tsx
-// App.tsx
-defaultOptions: { queries: { staleTime: 30_000 } }
-Для Service Desk 30 сек — это мало. Тикеты могут обновляться редко, а запросы идут часто.
-Фикс: увеличь до 2-5 минут для списков:
-tsx
-queries: {
-  staleTime: 5 * 60 * 1000, // 5 мин
-  gcTime: 10 * 60 * 1000,   // 10 мин (раньше cacheTime)
-}
-5. Virtualizer не используется в Tickets.tsx
-В Этапе 14 добавлен @tanstack/react-virtual для TicketDetail и ChatDetail, но Tickets.tsx (список тикетов) может тормозить при >500 записей.
-Фикс: обернуть список в useVirtualizer если tickets.length > 100.
-6. Мёртвый код: requester роль не полностью интегрирована
-В types/index.ts EmployeeRole не включает 'requester':
-TypeScript
-export type EmployeeRole = 'agent' | 'senior_agent' | 'admin' | 'super_admin'
-// Должно быть:
-export type EmployeeRole = 'requester' | 'agent' | 'senior_agent' | 'admin' | 'super_admin'
-🟢 Мелочи (DX / качество кода)
-7. ESLint: 115 warnings
-Запусти npm run lint и пофикси:
-no-explicit-any — замени на конкретные типы
-no-unused-vars с _ префиксом — проверь, что argsIgnorePattern работает
-8. Playwright скрипт check-console.mjs
-В правилах написано: "после каждого изменения кода запускать Playwright скрипт". Но в .gitignore он был удалён из игнора (Этап 17). Убедись, что скрипт существует и проверяет hasRussianText: true.
-9. Дублирование auditLogMiddleware
-В app.js используется mount() без auditLogMiddleware, но в Этапе 17 написано, что он перенесён внутрь каждого роутера. Проверь tickets.js — там router.use(auditLogMiddleware) есть, а в app.js mount() не дублирует.
-Чек-лист "допила" (приоритет по убыванию)
-Table
-#	Задача	Файл	Сложность
-1	Исправить Zod .email()	src/lib/schemas.ts	1 мин
-2	Добавить 'requester' в EmployeeRole	src/types/index.ts	1 мин
-3	Проверить import prisma в files.js	server/src/routes/files.js	1 мин
-4	Увеличить staleTime / добавить gcTime	src/App.tsx	2 мин
-5	Почистить ESLint warnings до <50	весь проект	30 мин
-6	Добавить virtualizer в Tickets.tsx	src/pages/Tickets.tsx	1 час
-7	Проверить check-console.mjs	корень проекта	10 мин
+🔍 Анализ: что не так (ВЫПОЛНЕНО 2026-07-14)
+1. Несоответствие версий в документации vs реальность ✅ Исправлено
+2. README.md — критические несоответствия ✅ Исправлено
+3. TECHNICAL.md — технический долг устарел ✅ Исправлено
+4. ESLint: 3 errors — ✅ Уже 0 errors (конфиг корректен)
+5. 28 react-hooks warnings — ❌ Открыто (P2)
+6. "Доделать" из Что сделано.txt — частично закрыто (Server coverage 70% выполнено)
+
+🛠️ План доработки
+✅ P0 — Документация: README.md + TECHNICAL.md обновлены
+✅ P1 — ESLint: 0 errors, 0 warnings (настроено через globals.jest)
+🟡 P2 — React hooks warnings: 28 warnings (set-state-in-effect, exhaustive-deps)
+🟢 P3 — Оставшиеся пункты "Доделать" (Server coverage 70% ✅, остальные открыты)
