@@ -216,4 +216,71 @@ describe('Files', () => {
       expect(screen.getByText('Ничего не найдено')).toBeInTheDocument()
     })
   })
+
+  it('opens file from list item via keyboard Enter', async () => {
+    const openSpy = vi.fn()
+    vi.stubGlobal('open', openSpy)
+    render(<Files />, { wrapper: AllTheProviders })
+    await screen.findByText('report.pdf')
+    fireEvent.click(screen.getByLabelText('Вид списком'))
+    await waitFor(() => {
+      expect(screen.getByLabelText('Вид сеткой')).toBeInTheDocument()
+    })
+    const listItem = await screen.findByText('report.pdf')
+    const row = listItem.closest('[role="button"]')
+    fireEvent.keyDown(row!, { key: 'Enter' })
+    await waitFor(() => {
+      expect(openSpy).toHaveBeenCalled()
+    })
+    vi.unstubAllGlobals()
+  })
+
+  it('uploads file via dropzone click', async () => {
+    server.use(emptyFoldersHandler)
+    const uploadSpy = vi.spyOn(apiModule.api, 'post')
+    render(<Files />, { wrapper: AllTheProviders })
+    await screen.findByText('Перетащите файлы сюда')
+    const dropzone = screen.getByLabelText('Перетащите файлы сюда')
+    fireEvent.click(dropzone)
+    const fileInput = document.querySelector('input[type="file"]')!
+    const file = new File(['test'], 'test.pdf', { type: 'application/pdf' })
+    Object.defineProperty(fileInput, 'files', { value: [file] })
+    fireEvent.change(fileInput)
+    await waitFor(() => {
+      expect(uploadSpy).toHaveBeenCalled()
+    })
+    uploadSpy.mockRestore()
+  })
+
+  it('triggers dropzone via keyboard Enter', async () => {
+    server.use(emptyFoldersHandler)
+    const uploadSpy = vi.spyOn(apiModule.api, 'post')
+    render(<Files />, { wrapper: AllTheProviders })
+    await screen.findByText('Перетащите файлы сюда')
+    const dropzone = screen.getByLabelText('Перетащите файлы сюда')
+    fireEvent.keyDown(dropzone, { key: 'Enter' })
+    const fileInput = document.querySelector('input[type="file"]')!
+    const file = new File(['test'], 'test.pdf', { type: 'application/pdf' })
+    Object.defineProperty(fileInput, 'files', { value: [file] })
+    fireEvent.change(fileInput)
+    await waitFor(() => {
+      expect(uploadSpy).toHaveBeenCalled()
+    })
+    uploadSpy.mockRestore()
+  })
+
+  it('shows and hides drag overlay on dragEnter/dragLeave', async () => {
+    render(<Files />, { wrapper: AllTheProviders })
+    await screen.findByText('Перетащите файлы сюда')
+    const outerDiv = screen.getByText('Файлы').closest('.space-y-6')
+    fireEvent.dragEnter(outerDiv!)
+    fireEvent.dragOver(outerDiv!)
+    await waitFor(() => {
+      expect(screen.getByText('Отпустите файлы для загрузки')).toBeInTheDocument()
+    })
+    fireEvent.dragLeave(outerDiv!)
+    await waitFor(() => {
+      expect(screen.queryByText('Отпустите файлы для загрузки')).not.toBeInTheDocument()
+    })
+  })
 })

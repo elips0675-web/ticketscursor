@@ -288,16 +288,16 @@ docker compose up -d --build
 - **Общий клиент**: 63.76%→**64.97%** Stmts, 53.21%→**55.05%** Branch, 52.77%→**53.95%** Funcs, 66.61%→**67.85%** Lines
 - **Пороги обновлены**: stmts 64, branches 55, functions 53, lines 67
 
-### Этап 24 — Client coverage 64.97%→70%, +65 тестов
+### Этап 24 — Client coverage 64.97%→71.02%, +73 теста
 - **News.tsx**: 43%→**79.74%** Stmts (+11 тестов: поиск, фильтр, создание, CSV, пустое)
 - **Polls.tsx**: 44%→**74.07%** Stmts (+14 тестов: форма, голосование, empty, closed, delete)
-- **Files.tsx**: 46%→**52.22%** Stmts (+9 тестов: empty, search, view, category, file click)
+- **Files.tsx**: 46%→**84.44%** Stmts (+17 тестов: empty, search, view, category, upload, drag-drop, keyboard, folder switch, list view, drag overlay)
 - **AdminPush.tsx**: 38%→**91.66%** Stmts (+13 тестов: подписка, отправка, loading, error)
 - **ForgotPassword.tsx**: 46%→**~85%** (+6 тестов: submit, sent, loading, validation)
 - **ResetPassword.tsx**: 33%→**~85%** (+8 тестов: no token, валидация, API error, loading)
 - **pwa-install-prompt.tsx**: 45%→**~100%** (+5 тестов: beforeinstallprompt, install, dismiss)
 - **AppLayout**: Ctrl+K shortcut (+1 тест)
-- **Тесты**: 283→**348** (+65), **51** файл
-- **Общий клиент**: 64.97%→**69.67%** Stmts, 55.05%→**60.1%** Branch, 53.95%→**59.1%** Funcs, 67.85%→**72.67%** Lines
+- **Тесты**: 283→**356** (+73), **51** файл
+- **Общий клиент**: 64.97%→**71.02%** Stmts, 55.05%→**60.76%** Branch, 53.95%→**60.55%** Funcs, 67.85%→**73.96%** Lines
 - **Сервер**: 336 тестов, **70.97%** Stmts (не изменён)
-- **Пороги обновлены**: stmts 69, branches 60, functions 59, lines 72
+- **Пороги обновлены**: stmts 70, branches 60, functions 60, lines 73

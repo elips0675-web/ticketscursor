@@ -316,6 +316,13 @@
 - **Общий клиент**: 63.76%→**64.97%** Stmts, 53.21%→**55.05%** Branch, 52.77%→**53.95%** Funcs, 66.61%→**67.85%** Lines
 - **Пороги обновлены**: stmts 64, branches 55, functions 53, lines 67
 
+### Этап 24 — Client coverage 64.97%→71.02%, +73 теста (завершён)
+- **Files.tsx**: 46%→**84.44%** (+17 тестов: upload, drag-drop, keyboard nav, folder switch, list view, drag overlay, search empty)
+- **PwaInstallPrompt**: 45%→**~100%** (+5 тестов)
+- **Общий клиент**: 64.97%→**71.02%** Stmts, 55.05%→**60.76%** Branch, 53.95%→**60.55%** Funcs, 67.85%→**73.96%** Lines
+- **Тесты**: 283→**356**, **51** файл
+- **Пороги обновлены**: stmts 70, branches 60, functions 60, lines 73
+
 ────────────────────────────────────────────────────────────────────────────
 
 ДОДЕЛАТЬ (из Оценка kimi.txt)
@@ -329,11 +336,6 @@
 - tickets.service.js (85%→95%): мокать сервисы на throw, проверять 500-ответы
 - background.js: мок BullMQ, проверить setInterval fallback
 - search.js: FULLTEXT fallback, LIKE fallback, SQL-injection guard
-
-### Этап C — Client coverage 58.5%→70% (выполнено)
-- News.tsx 43%→80%, Polls.tsx 44%→74%, Files.tsx 46%→52%, AdminPush.tsx 38%→92%
-- ForgotPassword.tsx 46%→~85%, ResetPassword.tsx 33%→~85%, pwa-install-prompt 45%→100%
-- +65 тестов (283→348), +4 файла (47→51), порог: stmts 69
 
 ### Этап D — Интеграционные тесты
 - check-console.mjs: расширить до 12+ страниц (/admin, /calendar, /polls, /wiki, /chats, /employees, /search, /files, /profile, /kanban, /notifications, /register)
