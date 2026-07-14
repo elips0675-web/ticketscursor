@@ -121,7 +121,7 @@ npm run test:e2e
 
 | Зона риска | Было (на момент аудита) | Стало (после доработок) |
 |---|---|---|
-| Покрытие тестами | 47 client / 93 server / 13 E2E | 360 client / 336 server / 25 E2E |
+| Покрытие тестами | 47 client / 93 server / 13 E2E | 360 client / 336 server / 36 E2E |
 | Процент покрытия | 20-25% | 70% client / 71% server |
 | TanStack Query | Только Context API | ✅ Внедрён QueryClientProvider |
 | Meilisearch | MySQL FULLTEXT | ✅ Meilisearch + fallback цепочка |
@@ -143,7 +143,7 @@ npm run test:e2e
 |---|---|---|
 | Клиентские тесты | 360 тестов, 51 файл | ✅ Пройдены |
 | Серверные тесты | 336 тестов, 24 файла | ✅ Пройдены |
-| E2E тесты | 25 тестов, 7 файлов | ✅ Пройдены |
+| E2E тесты | 36 тестов, 14 файлов | ✅ Пройдены |
 | Покрытие кода (клиент) | 71.62% (порог: 71%) | ✅ Стабильно |
 | Покрытие кода (сервер) | 70.97% (порог: 70%) | ✅ Стабильно |
 | React Query | useQuery/useMutation, optimistic updates, staleTime 5min | ✅ |

@@ -65,12 +65,18 @@ export async function setupSocket(server) {
 
   io.use((socket, next) => {
     const ip = socket.handshake.address
-    const now = Date.now()
-    const attempts = connAttempts.get(ip) || []
-    const recent = attempts.filter(t => now - t < 60000)
-    if (recent.length >= 10) return next(new Error('Too many connections'))
-    recent.push(now)
-    connAttempts.set(ip, recent)
+    // Skip rate-limit for internal NAT subnets (office 100+ users behind 1 IP)
+    const isInternal = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(ip) ||
+      ip.startsWith('10.') || ip.startsWith('192.168.') ||
+      (ip.startsWith('172.') && /^172\.(1[6-9]|2\d|3[01])\./.test(ip))
+    if (!isInternal) {
+      const now = Date.now()
+      const attempts = connAttempts.get(ip) || []
+      const recent = attempts.filter(t => now - t < 60000)
+      if (recent.length >= 10) return next(new Error('Too many connections'))
+      recent.push(now)
+      connAttempts.set(ip, recent)
+    }
 
     const token = socket.handshake.auth?.token
     if (!token) return next(new Error('No token'))

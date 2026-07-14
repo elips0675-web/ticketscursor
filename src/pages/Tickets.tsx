@@ -51,7 +51,7 @@ export default function Tickets() {
       socket.off('ticket:created', onCreated)
       socket.off('ticket:updated', onUpdated)
     }
-  }, [socket, t])
+  }, [socket, t, queryClient])
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [search, setSearch] = useState('')

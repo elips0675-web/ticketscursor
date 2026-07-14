@@ -433,6 +433,9 @@ const MAX_BACKOFF = 60000; // 60s
 // При превышении: socket.emit('rateLimit:warning', { retryAfter })
 ```
 
+**NAT fix**: Connection rate-limit (10 handshake/min per IP) пропускает внутренние подсети (10.x, 192.168.x, 172.16-31.x)
+чтобы не блокировать 100+ сотрудников за одним офисным IP. Для внешних IP лимит остаётся.
+
 ---
 
 ## SLA и эскалация
@@ -753,7 +756,7 @@ server/__tests__/
 }
 ```
 
-> **Примечание**: 360 клиентских / 336 серверных / 25 E2E тестов. Пороги заданы в `vitest.client.config.ts` и `server/vitest.config.ts`.
+> **Примечание**: 360 клиентских / 336 серверных / 36 E2E тестов. Пороги заданы в `vitest.client.config.ts` и `server/vitest.config.ts`.
 
 ---
 
@@ -1052,9 +1055,9 @@ spec:
 | L | Исправление клиентских тестов (jsdom localStorage) | High | ✅ Выполнено |
 | L | roleUtils.test.js — 7 тестов на иерархию ролей | Medium | ✅ Выполнено |
 | L | API тесты: /auth/me, /system-info, /tickets POST, /wiki POST, /calendar POST, /news POST, messages | Medium | ✅ Выполнено |
-| A | ESLint hooks: 28 warnings → 0 (set-state-in-effect, exhaustive-deps) | High | ❌ Открыто |
-| B | Server coverage: background.js (BullMQ mock), search.js (FULLTEXT/LIKE fallback) | Medium | ❌ Открыто |
-| D | Интеграционные тесты: check-console.mjs (17 страниц), Playwright (25→35) | Medium | ❌ Открыто |
+| A | ESLint hooks: 28 warnings → 0 (set-state-in-effect, exhaustive-deps) | High | ✅ 0/0 (финал: queryClient dep, chats.spec.ts parsing) |
+| B | Server coverage: background.js (BullMQ mock), search.js (FULLTEXT/LIKE fallback) | Medium | ❌ Открыто (70.97% — цель >70% достигнута) |
+| D | Интеграционные тесты: check-console.mjs (17 страниц), E2E 36→40+ | Medium | ❌ Открыто |
 | — | Files.tsx Branch 72.5% (mapFolder fallback, emoji-иконки, folder/createdAt display) | Low | ❌ Открыто |
 
 ---

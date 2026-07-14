@@ -16,4 +16,3 @@ test.describe('Chats', () => {
     await expect(page.locator('h1, h2').first()).toBeVisible()
   })
 })
-})
