@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser'
 import os from 'os'
 import * as Sentry from '@sentry/node'
 import logger from './logger.js'
+import prisma from './prisma.js'
 import { requestId } from './middleware/requestId.js'
 import { trackRequest, getMetricsLines } from './middleware/metrics.js'
 
@@ -126,6 +127,15 @@ app.get('/', (req, res) => {
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
+})
+
+app.get('/api/health/ready', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    res.json({ status: 'ok', db: true, timestamp: new Date().toISOString() })
+  } catch {
+    res.status(503).json({ status: 'error', db: false, timestamp: new Date().toISOString() })
+  }
 })
 
 app.get('/api/metrics', (req, res) => {

@@ -194,7 +194,7 @@ E2E (critical flows):     14 Playwright spec'ов
 |---|---------|-----------|--------|--------|
 | 33 | Soft Deletes | ✅ Реализовано | — | Tickets, ticket_messages, chat_messages, files |
 | 34 | Idempotency Keys | ✅ Реализовано | — | POST /chats/:id/messages, /tickets, /tickets/:id/messages |
-| 54 | Readiness Probe | 🟠 Средний | 30 мин | K8s/Docker корректный restart |
+| 54 | Readiness Probe | ✅ Реализовано | — | GET /api/health/ready проверяет DB |
 | 30 | a11y: skip-link, aria-live | 🟠 Средний | 1 час | Доступность для screen reader |
 | 55 | Load Testing (k6) | 🟡 Низкий | 2 часа | Знать предел нагрузки |
 | 27 | Performance Budget в CI | 🟡 Низкий | 1 час | Контроль bundle size в PR |
@@ -299,7 +299,7 @@ app.get('/api/health/ready', async (req, res) => {
 })
 ```
 
-❌ **Не реализовано.** Есть только `GET /api/health`.
+✅ **Реализовано:** `GET /api/health/ready` — проверяет DB + возвращает 200/503.
 
 ### 55. Load Testing (k6)
 
