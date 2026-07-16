@@ -200,7 +200,7 @@ E2E (critical flows):     14 Playwright spec'ов
 | 34 | Idempotency Keys | ✅ Реализовано | — | POST /chats/:id/messages, /tickets, /tickets/:id/messages |
 | 54 | Readiness Probe | ✅ Реализовано | — | GET /api/health/ready проверяет DB |
 | 30 | a11y: skip-link, aria-live | ✅ Реализовано | — | skip-link + aria-live + aria-label на nav |
-| 55 | Load Testing (k6) | 🟡 Низкий | 2 часа | Знать предел нагрузки |
+| 55 | Load Testing (k6) | ✅ Реализовано | — | 2 скрипта: чат + тикеты |
 | 27 | Performance Budget в CI | ✅ Реализовано | — | `scripts/check-bundle-size.js` в CI |
 | 53 | Grafana Dashboard | ✅ Реализовано | — | 6 панелей: rate, duration, memory, CPU, event loop |
 | 4 | Strict CSP | ✅ Реализовано | — | Helmet с кастомными директивами |
@@ -310,19 +310,12 @@ app.get('/api/health/ready', async (req, res) => {
 
 ### 55. Load Testing (k6)
 
-```js
-// test/load/chat.k6.js
-import http from 'k6/http'
-export const options = { vus: 50, duration: '30s' }
-export default () => {
-  http.post('http://localhost:4000/api/chats/1/messages',
-    JSON.stringify({ text: 'load test' }),
-    { headers: { Authorization: `Bearer ${__ENV.TOKEN}` } }
-  )
-}
-```
+✅ **Созданы скрипты** в `test/load/`:
+- `chat.k6.js` — отправка сообщений (50→100 concurrent, порог ошибок < 5%)
+- `tickets.k6.js` — список + создание тикетов (100→200 concurrent, порог < 1%)
+- `README.md` — инструкция: `k6 run -e TOKEN=$TOKEN test/load/chat.k6.js`
 
-❌ **Не реализовано.** Нет к6-скриптов для нагрузки чатов/тикетов.
+Пороги p(95) < 500ms для чата, < 1s для тикетов.
 
 ---
 
