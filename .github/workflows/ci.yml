@@ -24,6 +24,7 @@ jobs:
       - run: npx eslint . --max-warnings 50
       - run: npx vitest run --config vitest.client.config.ts
       - run: npx vite build
+      - run: node scripts/check-bundle-size.js
 
   backend:
     runs-on: ubuntu-latest

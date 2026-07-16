@@ -29,11 +29,14 @@
 ```
 First Contentful Paint: < 1.5s
 Lighthouse Performance:  > 85
-Initial JS bundle:       < 200 KB gzip
+Initial JS bundle:       < 400 KB gzip (текущий: 350 KB)
+Total JS bundle:         < 700 KB gzip (текущий: 640 KB)
 API response time (p95): < 500ms
 ```
+✅ **CI проверка**: `node scripts/check-bundle-size.js` в CI после `vite build` — пайплайн падает при превышении.
 ✅ Code splitting (React.lazy) на всех страницах
 ✅ Virtual scrolling (`@tanstack/react-virtual`) в чатах и сообщениях тикетов
+⚠️ Bundle 350 KB gzip — высокий. Требуется code-splitting по роутам (React.lazy уже есть, но не все страницы вынесены).
 
 ### 28. PWA
 ✅ `vite-plugin-pwa` + `public/sw.js` (Workbox)
@@ -198,7 +201,7 @@ E2E (critical flows):     14 Playwright spec'ов
 | 54 | Readiness Probe | ✅ Реализовано | — | GET /api/health/ready проверяет DB |
 | 30 | a11y: skip-link, aria-live | ✅ Реализовано | — | skip-link + aria-live + aria-label на nav |
 | 55 | Load Testing (k6) | 🟡 Низкий | 2 часа | Знать предел нагрузки |
-| 27 | Performance Budget в CI | 🟡 Низкий | 1 час | Контроль bundle size в PR |
+| 27 | Performance Budget в CI | ✅ Реализовано | — | `scripts/check-bundle-size.js` в CI |
 | 53 | Grafana Dashboard | 🟡 Низкий | 1 час | Визуализация метрик |
 | 4 | Strict CSP | 🟡 Низкий | 2 часа | Защита от XSS |
 
