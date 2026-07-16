@@ -5,6 +5,33 @@
 
 ---
 
+## [1.1.0] — 2026-07-17
+
+### 🚀 Добавлено (merge from ticketscursordom)
+
+- **Outbox Pattern** — `event_outbox` таблица + Worker для гарантированной доставки WS-событий
+- **Soft Delete** — `deleted_at` колонки на tickets, ticket_messages, files, chat_messages
+- **Load Testing** — k6 сценарии в `k6/` (tickets, chats, search)
+- **Grafana Dashboard** — метрики API, WebSocket, Redis, бизнес-показатели
+- **Health / Readiness Probes** — `/api/health`, `/api/ready` для K8s
+- **Bundle-size check** — CI проверка размера сборки (лимит 2MB)
+- **a11y** — `prefers-reduced-motion` для вестибулярных пользователей
+- **CSP strict** — Helmet connect-src с `http://localhost:*` для dev-режима
+- **Graceful Shutdown** — SIGTERM/SIGINT обработчики (close DB, stop timers)
+
+### 🐛 Исправлено
+
+- **MySQL не запускался** — перезапущен Laragon, MySQL поднят
+- **Prisma client устарел** — `npx prisma generate` после мержа (не хватало `deleted_at`, `event_outbox`, `last_active`)
+- **500 на всех API** — добавлены колонки `deleted_at` в tickets/ticket_messages/files/chat_messages, создана таблица `event_outbox`, добавлена колонка `last_active` в employees
+- **Null id в консоли** — guard `if (!raw) return` в ticket-context.tsx и `if (chat) navigate(...)` в Employees.tsx
+- **Документация** — context.txt и PLAYBOOK.md синхронизированы с паттернами из Промты.txt
+
+### 🔧 Технический долг
+
+- Добавлено `last_active` в Prisma schema employees model
+- Prisma моделей: 17 → 18 (+ event_outbox)
+
 ## [1.0.0] — 2026-07-10
 
 ### 🎉 Релиз production-ready версии

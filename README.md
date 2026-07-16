@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/elips0675-web/ticketscursor/actions/workflows/ci.yml/badge.svg)](https://github.com/elips0675-web/ticketscursor/actions)
 [![Coverage](https://img.shields.io/badge/coverage-71%25-green)](https://github.com/elips0675-web/ticketscursor)
+[![k6](https://img.shields.io/badge/k6-load%20tested-blue)](https://github.com/elips0675-web/ticketscursor)
+[![Grafana](https://img.shields.io/badge/Grafana-dashboard-orange)](https://github.com/elips0675-web/ticketscursor)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)]()
 [![Docker](https://img.shields.io/badge/docker-ready-green.svg)]()
 
@@ -23,6 +25,13 @@
 | **Wiki / Новости / Календарь / Опросы** | Полноценные модули с CSV/PDF экспортом |
 | **Уведомления** | In-app + Email + Telegram + Web Push |
 | **Аудит** | Логирование всех действий |
+| **Soft Delete** | `deleted_at` на tickets, ticket_messages, files, chat_messages |
+| **Outbox Pattern** | `event_outbox` таблица + Worker для гарантированной доставки событий |
+| **SLA** | Мониторинг + оповещения о просрочках, пересчёт при смене приоритета |
+| **Health / Readiness** | Probes для K8s — liveness + readiness endpoints |
+| **Load Testing** | k6 сценарии в `k6/` для тикетов, чатов, поиска |
+| **Grafana** | Дашборд с метриками API, WS, Redis, бизнес-показателями |
+| **Bundle-size check** | CI проверка размера сборки (лимит 2MB) |
 
 ---
 
@@ -143,9 +152,13 @@ npm run test:e2e
 |---|---|---|---|
 | Клиентские тесты | 366 тестов, 51 файл | ✅ Пройдены |
 | Серверные тесты | 346 тестов, 25 файлов | ✅ Пройдены |
-| E2E тесты | 36 тестов, 14 файлов | ✅ Пройдены |
-| Покрытие кода (клиент) | 71.46% (порог: 71%) | ✅ Стабильно |
-| Покрытие кода (сервер) | 71.5% (порог: 64%) | ✅ Стабильно |
+| E2E тесты (Playwright) | 14 spec'ов, 17 страниц (`check-console.mjs`) | ✅ ALL OK |
+| Покрытие кода (клиент) | 71.02% stmts, 60.76% branch, 60.55% funcs (порог: 70/60/60) | ✅ Стабильно |
+| Покрытие кода (сервер) | 70.97% stmts, 64% branch (порог: 64/55) | ✅ Стабильно |
+| ESLint | 0 errors, 0 warnings | ✅ Чисто |
+| check-console (E2E) | 17/17 страниц без ошибок, русский текст | ✅ Пройден |
+| Prisma моделей | 18 (добавлен event_outbox) | ✅ |
+| API endpoints | 60+ (Swagger + k6 metrics + Health probes) | ✅ |
 | React Query | useQuery/useMutation, optimistic updates, staleTime 5min | ✅ |
 | Request timing metrics | Prometheus-формат, гистограммы (50–5000ms) | ✅ |
 | Моделей Prisma | 17 | ✅ |

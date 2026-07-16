@@ -23,6 +23,7 @@ model employees {
   title          String?   @default("") @db.VarChar(100)
   is_active      Boolean?  @default(true)
   created_at     DateTime? @default(now())
+  last_active    DateTime?
 
   tickets_created_by  tickets[]          @relation("tickets_created_by")
   tickets_assigned_to tickets[]          @relation("tickets_assigned_to")

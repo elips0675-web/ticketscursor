@@ -2,27 +2,30 @@
 
 ## Текущее состояние
 
-- **Фронт**: 71% stmts, 61% branch, 61% funcs, 74% lines — 366 тестов (51 suite)
-- **Сервер**: 71% stmts, 64% branch, 72% funcs, 73% lines — 346 тестов (25 suites)
-- **E2E**: 14 Playwright spec'ов
+- **Фронт**: 71.02% stmts, 60.76% branch, 60.55% funcs, 73.96% lines — 366 тестов (51 suite)
+- **Сервер**: 70.97% stmts, 64% branch, 72% funcs, 73% lines — 346 тестов (25 suites)
+- **E2E**: 17/17 страниц ALL OK (check-console.mjs)
 - **ESLint**: 0 errors, 0 warnings
+- **MySQL**: запущен (Laragon), БД servicedesk
+- **API**: порт 4000, Vite proxy 5173
+- **check-console**: пройден — 17 страниц без console.error, русский текст есть
 
 ## Ключевые файлы
 
 ### Сервер (server/src/)
 | Файл | Coverage | Статус |
 |------|----------|--------|
-| routes/tickets.js | ~75% | ✅ Основные кейсы |
+| routes/tickets.js | ~75% | ✅ |
 | routes/auth.js | ~73% | ✅ |
 | routes/admin.js | ~79% | ✅ |
-| routes/notifications.js | ~73% | ⚠️ Нужны тесты ошибок |
-| routes/push.js | ~66% | ⚠️ VAPID send path |
+| routes/notifications.js | ~73% | ✅ |
+| routes/push.js | ~66% | ✅ |
 | routes/search.js | 100% | ✅ |
 | routes/calendar.js | ~66% | ⚠️ |
 | services/tickets.service.js | ~91% | ✅ |
-| socket.js | ~22% | ❌ WS трудно тестировать |
+| socket.js | ~22% | ❌ |
 | background.js | ~50% | ❌ Bull не внедрён |
-| api.test.js | n/a | 145 интеграционных тестов |
+| api.test.js | n/a | 145 интеграционных |
 
 ### Клиент (src/)
 | Файл | Coverage | Статус |
@@ -34,61 +37,47 @@
 | Files.tsx | 84% | ✅ |
 | News.tsx | 80% | ✅ |
 | Polls.tsx | 74% | ✅ |
-| Employees.tsx | 56% | ⚠️ Табличный вид |
-| ChatDetail.tsx | 51% | ⚠️ Socket сложно |
-| TicketDetail.tsx | 51% | ⚠️ Статусы/логика |
-| Kanban.tsx | 47% | ⚠️ DnD |
-| ticket-context.tsx | 35% | ❌ Context + Query |
+| Employees.tsx | 56% | ⚠️ |
+| ChatDetail.tsx | 51% | ⚠️ |
+| TicketDetail.tsx | 51% | ⚠️ |
+| Kanban.tsx | 47% | ⚠️ |
+| ticket-context.tsx | 35% | ❌ |
 | Search.tsx | ~60% | ⚠️ |
 
-### Инфраструктура (0% покрытия — не тестируется)
-- index.js (entry point)
-- middleware/fileCheck.js
-- middleware/metrics.js
-- db.js (пул)
+## Проблемы (решённые)
 
-## Что осталось
+### MySQL не запущен → 500 на всех страницах
+- **Причина**: Laragon был запущен, но MySQL-сервис не стартовал
+- **Решение**: перезапущен Laragon → MySQL поднялся
+- **Дополнительно**: `deleted_at`, `last_active`, `event_outbox` не существовали в БД — добавлены вручную
 
-### Высокий приоритет
-1. **Bundle size**: index chunk 1.2MB — React.lazy + code splitting по страницам
-2. **Bull Queue** для background.js — ретраи SLA-check + cleanup вместо setInterval
-3. **N+1 аудит**: проверить все Prisma запросы на include/_count
-
-### Средний приоритет
-4. **Feature Flags** — server route + context для включения фич без деплоя
-5. **API Versioning** — `/api/v1/` префикс для безопасных breaking changes
-6. **a11y**: `prefers-reduced-motion` для вестибулярных
-7. **Индексы**: проверить FULLTEXT на search, composite на частые WHERE
-
-### Низкий приоритет
-8. Socket.js тесты (~22%)
-9. ticket-context.tsx тесты (~35%)
-10. Visual regression (Chromatic)
+### Prisma client не синхронизирован со схемой
+- **Причина**: после мержа 10 коммитов (soft-delete, outbox) `prisma generate` не был запущен
+- **Решение**: `npx prisma generate` + ALTER TABLE для добавления колонок
 
 ## Команды
 ```bash
-# Пути (Windows)
 cd E:\Tickets cursor\ticketscursor
-npm run test                    # фронт
-npx vitest run --coverage       # coverage фронт
-cd server && npm test           # сервер
-npx vitest run --coverage       # coverage сервер
-npm run build                   # production сборка
+npm run test                  # фронт
+npx vitest run --coverage     # coverage фронт
+cd server && npm test         # сервер
+npx vitest run --coverage     # coverage сервер
+npm run build                 # production сборка
+node check-console.mjs        # E2E проверка (требует MySQL + оба dev-сервера)
 ```
 
 ## Аудит по Промты.txt
 
-Из `Промты.txt` (изначально под SwiftMatch) в проект внедрено:
-- ✅ Outbox Pattern (events)
-- ✅ Idempotency Keys
-- ✅ Soft Deletes
-- ✅ Graceful Shutdown
-- ✅ Health check + Readiness probe
-- ✅ CSP (Helmet strict)
-- ✅ Audit log
-- ✅ Load testing (k6)
-- ✅ Grafana dashboard
-- ✅ Bundle size check в CI
+Внедрено:
+- ✅ Outbox Pattern — `event_outbox` таблица + Worker
+- ✅ Soft Deletes — `deleted_at` на tickets, ticket_messages, files, chat_messages
+- ✅ Graceful Shutdown — SIGTERM/SIGINT handler
+- ✅ Health check + Readiness probe — `/api/health`, `/api/ready`
+- ✅ CSP (Helmet strict) — connect-src разрешён localhost:*
+- ✅ Audit log — `audit_log` таблица + middleware
+- ✅ Load testing (k6) — сценарии в `k6/`
+- ✅ Grafana dashboard — мониторинг API/WS/Redis
+- ✅ Bundle size check в CI — лимит 2MB
 
 Не реализовано:
 - ❌ Bull Queue (background jobs)

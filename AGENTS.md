@@ -311,3 +311,13 @@ docker compose up -d --build
 - **tickets.service.js**: stmts 85.22%→**90.9%** (+6 тестов: getLeastLoadedAssignee, listTickets, generateTicketFilename)
 - **Фронт**: 366 тестов, 0 failures
 - **Сервер**: 346 тестов, 0 failures
+
+### Этап 26 — Merge ticketscursordom (10 коммитов) + фикс MySQL/Prisma
+- **Merge**: 10 коммитов из dom-репозитория (Outbox Pattern, k6, CSP, Grafana, a11y, soft-delete, health probe, bundle-size check)
+- **MySQL**: был остановлен → перезапущен Laragon
+- **Prisma**: добавлены `deleted_at` (4 таблицы), `last_active` (employees), создана `event_outbox`, regenerated client
+- **500 исправлены**: все API endpoints работают, `check-console.mjs` — 17/17 OK
+- **CSP fix**: `connect-src` добавлен `http://localhost:*` (был только `'self'`)
+- **Null guards**: ticket-context.tsx (`if (!raw) return`), Employees.tsx (`if (chat) navigate(...)`)
+- **schema.prisma**: добавлено `last_active` в модель employees
+- **Документация**: README, context.txt, CHANGELOG, AGENTS.md обновлены
