@@ -11,6 +11,7 @@ interface SocketContextType {
   leaveChat: (chatId: number) => void
   notifyAll: (data: { title: string; body: string; url?: string }) => void
   sendTyping: (chatId: number) => void
+  markRead: (chatId: number) => void
 }
 
 export const SocketContext = createContext<SocketContextType | null>(null)
@@ -76,9 +77,16 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     [socket],
   )
 
+  const markRead = useCallback(
+    (chatId: number) => {
+      socket?.emit('message:read', { chatId })
+    },
+    [socket],
+  )
+
   return (
     <SocketContext.Provider
-      value={{ socket, connected, sendMessage, deleteMessage, joinChat, leaveChat, notifyAll, sendTyping }}
+      value={{ socket, connected, sendMessage, deleteMessage, joinChat, leaveChat, notifyAll, sendTyping, markRead }}
     >
       {children}
     </SocketContext.Provider>

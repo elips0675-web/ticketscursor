@@ -99,6 +99,31 @@ export async function setupSocket(server) {
       .then(() => io.emit('user:status', { userId: socket.userId, online: true }))
       .catch(() => {})
 
+    // Offline message delivery — найти непрочитанные сообщения с момента последней активности
+    prisma.employees.findUnique({
+      where: { id: socket.userId },
+      select: { last_active: true },
+    }).then((user) => {
+      if (!user?.last_active) return
+      const since = new Date(user.last_active)
+      // Найти чаты, где пользователь участвовал (отправлял сообщения)
+      prisma.chat_messages.findMany({
+        where: {
+          chat: {
+            chat_messages: { some: { sender_id: socket.userId } },
+          },
+          created_at: { gt: since },
+          sender_id: { not: socket.userId },
+        },
+        orderBy: { created_at: 'asc' },
+        take: 100,
+      }).then((missed) => {
+        for (const msg of missed) {
+          socket.emit('message:new', msg)
+        }
+      }).catch(() => {})
+    }).catch(() => {})
+
     socket.on('join:chat', (chatId) => {
       socket.join(`chat:${chatId}`)
     })
@@ -145,6 +170,10 @@ export async function setupSocket(server) {
 
     socket.on('chat:typing', ({ chatId }) => {
       socket.to(`chat:${chatId}`).emit('chat:typing', { userId: socket.userId })
+    })
+
+    socket.on('message:read', ({ chatId }) => {
+      socket.to(`chat:${chatId}`).emit('chat:read', { chatId, userId: socket.userId })
     })
 
     socket.on('message:delete', async ({ chatId, msgId }) => {

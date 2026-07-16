@@ -18,7 +18,7 @@ export default function ChatDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const chatId = Number(id)
-  const { sendMessage, deleteMessage, joinChat, leaveChat, socket, connected, sendTyping } = useSocket()
+  const { sendMessage, deleteMessage, joinChat, leaveChat, socket, connected, sendTyping, markRead } = useSocket()
   const { user } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [chatInfo, setChatInfo] = useState<{ name: string; type: string }>({ name: 'Чат', type: 'personal' })
@@ -30,6 +30,7 @@ export default function ChatDetail() {
   const [imageFile, setImageFile] = useState<string | null>(null)
   const [previewImg, setPreviewImg] = useState<string | null>(null)
   const [typingUsers, setTypingUsers] = useState<number[]>([])
+  const [readByUsers, setReadByUsers] = useState<Set<number>>(new Set())
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const msgEndRef = useRef<HTMLDivElement>(null)
@@ -63,11 +64,13 @@ export default function ChatDetail() {
 
   useEffect(() => {
     joinChat(chatId)
+    markRead(chatId)
+    api.put(`/chats/${chatId}/read`, {}).catch(() => {})
     return () => {
       leaveChat(chatId)
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
     }
-  }, [chatId, joinChat, leaveChat])
+  }, [chatId, joinChat, leaveChat, markRead])
 
   useEffect(() => {
     if (!socket) return
@@ -81,13 +84,18 @@ export default function ChatDetail() {
       setTypingUsers((prev) => (prev.includes(userId) ? prev : [...prev, userId]))
       setTimeout(() => setTypingUsers((prev) => prev.filter((id) => id !== userId)), 3000)
     }
+    const onRead = ({ userId }: { userId: number }) => {
+      setReadByUsers((prev) => new Set(prev).add(userId))
+    }
     socket.on('message:new', onNew)
     socket.on('message:removed', onRemove)
     socket.on('chat:typing', onTyping)
+    socket.on('chat:read', onRead)
     return () => {
       socket.off('message:new', onNew)
       socket.off('message:removed', onRemove)
       socket.off('chat:typing', onTyping)
+      socket.off('chat:read', onRead)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket])
@@ -209,7 +217,14 @@ export default function ChatDetail() {
             {msg.text && <p className="leading-snug">{msg.text}</p>}
             <div className={cn('flex items-center gap-1 mt-1', isMe ? 'justify-end' : 'justify-start')}>
               <span className="text-[9px] opacity-60">{formatTime(msg.createdAt)}</span>
-              {isMe && <CheckCheck className="w-3 h-3 opacity-60" />}
+              {isMe && (
+                <CheckCheck
+                  className={cn(
+                    'w-3 h-3 transition-colors',
+                    readByUsers.size > 0 ? 'text-blue-400' : 'opacity-60',
+                  )}
+                />
+              )}
             </div>
           </div>
 

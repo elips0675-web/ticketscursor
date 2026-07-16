@@ -25,6 +25,9 @@ import {
   updateTicketPriority,
   getSlaStats,
   listOverdueSlaTickets,
+  listTickets,
+  getLeastLoadedAssignee,
+  generateTicketFilename,
 } from '../tickets.service.js'
 
 const NOW = Date.now()
@@ -142,5 +145,55 @@ describe('listOverdueSlaTickets', () => {
     const rows = await listOverdueSlaTickets(10)
     expect(rows).toHaveLength(1)
     expect(rows[0].id).toBe(1)
+  })
+})
+
+describe('listTickets', () => {
+  it('filters by requester role', async () => {
+    const mockTickets = [{ id: 1, title: 'My ticket', assigned_to_employee: null, _count: { ticket_messages: 0 } }]
+    prisma.tickets.count.mockResolvedValue(1)
+    prisma.tickets.findMany.mockResolvedValue(mockTickets)
+    const result = await listTickets({ page: 1, limit: 20, userId: 5, role: 'requester' })
+    expect(result.data).toHaveLength(1)
+    expect(result.total).toBe(1)
+    expect(prisma.tickets.count).toHaveBeenCalledWith(expect.objectContaining({ where: { created_by: 5 } }))
+  })
+
+  it('filters by agent role', async () => {
+    prisma.tickets.count.mockResolvedValue(0)
+    prisma.tickets.findMany.mockResolvedValue([])
+    await listTickets({ page: 1, limit: 20, userId: 5, role: 'agent' })
+    expect(prisma.tickets.count).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { OR: [{ assigned_to: 5 }, { assigned_to: null }] } }),
+    )
+  })
+
+  it('does not filter for admin/super_admin', async () => {
+    prisma.tickets.count.mockResolvedValue(0)
+    prisma.tickets.findMany.mockResolvedValue([])
+    await listTickets({ page: 1, limit: 20, userId: 1, role: 'super_admin' })
+    expect(prisma.tickets.count).toHaveBeenCalledWith(expect.objectContaining({ where: {} }))
+  })
+})
+
+describe('getLeastLoadedAssignee', () => {
+  it('returns the least loaded agent id', async () => {
+    prisma.employees.findMany.mockResolvedValue([{ id: 42 }])
+    const result = await getLeastLoadedAssignee()
+    expect(result).toBe(42)
+  })
+
+  it('returns null when no agents available', async () => {
+    prisma.employees.findMany.mockResolvedValue([])
+    const result = await getLeastLoadedAssignee()
+    expect(result).toBeNull()
+  })
+})
+
+describe('generateTicketFilename', () => {
+  it('generates uuid-based filename', () => {
+    const result = generateTicketFilename('report.pdf')
+    expect(result).toMatch(/^[0-9a-f-]+-report\.pdf$/)
+    expect(result.length).toBeGreaterThan('report.pdf'.length)
   })
 })

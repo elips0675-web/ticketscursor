@@ -1,7 +1,7 @@
 # Service Desk — корпоративная система тикетов
 
 [![CI](https://github.com/elips0675-web/ticketscursor/actions/workflows/ci.yml/badge.svg)](https://github.com/elips0675-web/ticketscursor/actions)
-[![Coverage](https://img.shields.io/badge/coverage-70%25-green)](https://github.com/elips0675-web/ticketscursor)
+[![Coverage](https://img.shields.io/badge/coverage-71%25-green)](https://github.com/elips0675-web/ticketscursor)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)]()
 [![Docker](https://img.shields.io/badge/docker-ready-green.svg)]()
 
@@ -140,12 +140,12 @@ npm run test:e2e
 ## 📊 Метрики проекта
 
 | Показатель | Значение | Статус |
-|---|---|---|
-| Клиентские тесты | 360 тестов, 51 файл | ✅ Пройдены |
-| Серверные тесты | 336 тестов, 24 файла | ✅ Пройдены |
+|---|---|---|---|
+| Клиентские тесты | 366 тестов, 51 файл | ✅ Пройдены |
+| Серверные тесты | 346 тестов, 25 файлов | ✅ Пройдены |
 | E2E тесты | 36 тестов, 14 файлов | ✅ Пройдены |
-| Покрытие кода (клиент) | 71.62% (порог: 71%) | ✅ Стабильно |
-| Покрытие кода (сервер) | 70.97% (порог: 70%) | ✅ Стабильно |
+| Покрытие кода (клиент) | 71.46% (порог: 71%) | ✅ Стабильно |
+| Покрытие кода (сервер) | 71.5% (порог: 64%) | ✅ Стабильно |
 | React Query | useQuery/useMutation, optimistic updates, staleTime 5min | ✅ |
 | Request timing metrics | Prometheus-формат, гистограммы (50–5000ms) | ✅ |
 | Моделей Prisma | 17 | ✅ |

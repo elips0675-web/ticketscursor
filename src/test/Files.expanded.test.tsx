@@ -283,4 +283,108 @@ describe('Files', () => {
       expect(screen.queryByText('Отпустите файлы для загрузки')).not.toBeInTheDocument()
     })
   })
+
+  it('shows loading spinner during upload', async () => {
+    server.use(
+      http.get('http://localhost:4000/api/files/folders', () => {
+        return HttpResponse.json([{ id: 1, name: 'Документы', user_id: 1, is_shared: true, files: [], totalFiles: 0 }])
+      }),
+      http.post('http://localhost:4000/api/files/upload', async () => {
+        await new Promise((r) => setTimeout(r, 500))
+        return HttpResponse.json({ id: 3, name: 'test.pdf', size: '1 MB', type: 'pdf', folderId: 1, path: '/uploads/files/test.pdf', createdAt: '2026-07-09T10:00:00Z' })
+      }),
+    )
+    render(<Files />, { wrapper: AllTheProviders })
+    await screen.findByText('Перетащите файлы сюда')
+    const file = new File(['test'], 'test.pdf', { type: 'application/pdf' })
+    const outerDiv = screen.getByText('Файлы').closest('.space-y-6')
+    fireEvent.drop(outerDiv!, { dataTransfer: { files: [file] } })
+    await waitFor(() => {
+      expect(document.querySelector('.animate-spin')).toBeInTheDocument()
+    })
+  })
+
+  it('filters by category and shows no results', async () => {
+    server.use(
+      http.get('http://localhost:4000/api/files/folders', () => {
+        return HttpResponse.json([
+          { id: 1, name: 'Документы', user_id: 1, is_shared: true, files: [
+            { id: 1, name: 'report.pdf', size: '1.2 MB', type: 'pdf', folderId: 1, path: '/uploads/files/report.pdf', createdAt: '2026-07-01T10:00:00Z' },
+          ], totalFiles: 1 },
+        ])
+      }),
+    )
+    const user = userEvent.setup()
+    render(<Files />, { wrapper: AllTheProviders })
+    await screen.findByText('report.pdf')
+    const imgTab = screen.getByText('Картинки')
+    await user.click(imgTab)
+    await waitFor(() => {
+      expect(screen.getByText('Нет файлов')).toBeInTheDocument()
+    })
+  })
+
+  it('does not open file on click when path is missing', async () => {
+    server.use(
+      http.get('http://localhost:4000/api/files/folders', () => {
+        return HttpResponse.json([
+          { id: 1, name: 'Документы', user_id: 1, is_shared: true, files: [
+            { id: 1, name: 'readme.txt', size: '500 B', type: 'doc', folderId: 1, path: null, createdAt: '2026-07-01T10:00:00Z' },
+          ], totalFiles: 1 },
+        ])
+      }),
+    )
+    const openSpy = vi.fn()
+    vi.stubGlobal('open', openSpy)
+    render(<Files />, { wrapper: AllTheProviders })
+    await screen.findByText('readme.txt')
+    await userEvent.setup().click(screen.getByText('readme.txt'))
+    await waitFor(() => {
+      expect(openSpy).not.toHaveBeenCalled()
+    })
+    vi.unstubAllGlobals()
+  })
+
+  it('searches across all files when search is active', async () => {
+    const user = userEvent.setup()
+    render(<Files />, { wrapper: AllTheProviders })
+    await screen.findByText('report.pdf')
+    const input = screen.getByPlaceholderText('Поиск в папке')
+    await user.type(input, 'image')
+    await waitFor(() => {
+      expect(screen.getByText('image.png')).toBeInTheDocument()
+    })
+  })
+
+  it('shows upload success toast on successful upload', async () => {
+    server.use(
+      http.get('http://localhost:4000/api/files/folders', () => {
+        return HttpResponse.json([{ id: 1, name: 'Документы', user_id: 1, is_shared: true, files: [], totalFiles: 0 }])
+      }),
+    )
+    const uploadSpy = vi.spyOn(apiModule.api, 'post')
+    vi.spyOn(toast, 'success').mockImplementation(() => '')
+    render(<Files />, { wrapper: AllTheProviders })
+    await screen.findByText('Перетащите файлы сюда')
+    const file = new File(['test'], 'test.pdf', { type: 'application/pdf' })
+    const outerDiv = screen.getByText('Файлы').closest('.space-y-6')
+    fireEvent.drop(outerDiv!, { dataTransfer: { files: [file] } })
+    await waitFor(() => {
+      expect(uploadSpy).toHaveBeenCalled()
+    })
+    uploadSpy.mockRestore()
+    vi.restoreAllMocks()
+  })
+
+  it('shows empty folders list when API returns empty array', async () => {
+    server.use(
+      http.get('http://localhost:4000/api/files/folders', () => {
+        return HttpResponse.json([])
+      }),
+    )
+    render(<Files />, { wrapper: AllTheProviders })
+    await waitFor(() => {
+      expect(screen.getByText('Нет файлов')).toBeInTheDocument()
+    })
+  })
 })

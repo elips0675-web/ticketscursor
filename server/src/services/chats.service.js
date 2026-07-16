@@ -39,9 +39,16 @@ export async function getChatById(id, page = 1, limit = 50) {
 }
 
 export async function createMessage({ chatId, userId, userName, text }) {
-  return prisma.chat_messages.create({
-    data: { chat_id: chatId, sender_id: userId, sender_name: userName, text },
-  })
+  const [msg] = await Promise.all([
+    prisma.chat_messages.create({
+      data: { chat_id: chatId, sender_id: userId, sender_name: userName, text },
+    }),
+    prisma.chat_rooms.update({
+      where: { id: chatId },
+      data: { unread: { increment: 1 } },
+    }),
+  ])
+  return msg
 }
 
 export async function getChatParticipants(chatId, excludeUserId) {

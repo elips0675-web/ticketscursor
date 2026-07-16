@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { auditLogMiddleware } from '../audit.js'
 import { authenticateToken, requireRole } from '../middleware.js'
+import { getIO } from '../socket.js'
 import logger from '../logger.js'
 import { getChats, getChatById, createMessage, getChatParticipants, markRead, findOrCreatePersonalChat } from '../services/chats.service.js'
 
@@ -54,6 +55,7 @@ router.post('/:id/messages', async (req, res) => {
         link: `/chats/${req.params.id}`,
       })
     }
+    getIO()?.to(`chat:${req.params.id}`).emit('message:new', msg)
     res.status(201).json({ success: true, data: msg })
   } catch (err) {
     logger.error('Send message error:', err)
@@ -64,6 +66,7 @@ router.post('/:id/messages', async (req, res) => {
 router.put('/:id/read', async (req, res) => {
   try {
     await markRead(Number(req.params.id))
+    getIO()?.to(`chat:${req.params.id}`).emit('chat:read', { chatId: Number(req.params.id), userId: req.user.userId })
     res.json({ success: true, data: { ok: true } })
   } catch {
     res.status(500).json({ message: 'Failed to mark read' })

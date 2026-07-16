@@ -1,0 +1,57 @@
+# Service Desk — технический долг (июль 2026)
+
+## Что сделано в этой сессии
+
+### Read receipts & WebSocket фиксы
+- **chats.service.js**: `createMessage` инкрементит `unread` в `chat_rooms` (ранее не инкрементилось)
+- **chats.js**: REST `POST /:id/messages` эмитит `message:new` через WebSocket; `PUT /:id/read` эмитит `chat:read`
+- **socket.js**: доставка undelivered сообщений при connect (queryRaw по `last_active`); новый хендлер `message:read`
+- **SocketContext.tsx**: добавлен `markRead(chatId)`
+- **ChatDetail.tsx**: вызов `markRead` + REST PUT при входе в чат; слушает `chat:read`; CheckCheck становится синим при прочтении
+
+### Files.tsx coverage: 72.5% → 75% branches
+- Добавлено 5 тестов: upload spinner, category filter без результатов, клик без path, поиск по всем папкам, пустой API
+
+### Server coverage: thresholds достигнуты
+- **search.js**: 59.37% → **100%** stmts (4 новых теста: Meilisearch success, FULLTEXT→LIKE fallback, двойной fallback→500, короткий запрос)
+- **tickets.service.js**: 85.22% → **90.9%** stmts (6 новых тестов: getLeastLoadedAssignee, listTickets requester/agent/admin, generateTicketFilename)
+
+### Итоговые метрики
+- **Фронт**: 51 suite, 366 tests, 0 failures, coverage 71.46% stmts / 61.14% branch / 60.89% funcs / 74.46% lines
+- **Сервер**: 25 suites, 346 tests, 0 failures, coverage 71.5% stmts / 63.68% branch / 71.94% funcs / 72.59% lines
+- Все coverage thresholds проходятся
+
+## Что осталось (низкий приоритет)
+
+### Клиент
+- **ChatDetail.tsx**: 50.92% stmts — нужна мока для socket/API
+- **TicketDetail.tsx**: 50.52% stmts — сложная логика статусов
+- **Kanban.tsx**: 46.66% stmts — DnD сложно тестировать
+- **Employees.tsx**: 56.25% stmts — табличный вид
+- **ticket-context.tsx**: 34.95% stmts — Context + Query
+
+### Сервер
+- **socket.js**: 21.66% stmts — тестирование WS интеграционное
+- **files.js**: 54.38% stmts — multer upload сложно мокать
+- **wiki.js**: 57.14% stmts — CRUD статьи
+- **notifications.js**: 72.72% stmts
+- **push.js**: 66.07% stmts
+
+### Инфра (0% покрытия)
+- **index.js**: entry point (Express listen) — не тестируется
+- **auth/ldap.js**: LDAP — нет тестов
+- **middleware/fileCheck.js**: проверка файлов
+- **db.js**: пул соединений
+
+## Команды
+```bash
+# Клиент
+cd D:\Tickets Cursor nout\repo
+npm run test                          # 366 тестов
+npx vitest run --coverage             # coverage
+
+# Сервер
+cd D:\Tickets Cursor nout\repo\server
+npm run test                          # 346 тестов
+npx vitest run --coverage             # coverage
+```

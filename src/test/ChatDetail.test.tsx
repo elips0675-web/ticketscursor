@@ -53,6 +53,7 @@ function TestProviders({
               leaveChat: vi.fn(),
               notifyAll: vi.fn(),
               sendTyping: vi.fn(),
+              markRead: vi.fn(),
             }}
           >
             <MemoryRouter initialEntries={['/chats/1']}>

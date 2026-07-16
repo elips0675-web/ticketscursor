@@ -301,3 +301,13 @@ docker compose up -d --build
 - **Общий клиент**: 64.97%→**71.02%** Stmts, 55.05%→**60.76%** Branch, 53.95%→**60.55%** Funcs, 67.85%→**73.96%** Lines
 - **Сервер**: 336 тестов, **70.97%** Stmts (не изменён)
 - **Пороги обновлены**: stmts 70, branches 60, functions 60, lines 73
+
+### Этап 25 — Read receipts, WebSocket фиксы, coverage
+- **Read receipts**: unread counter в `chats.service.js`, WS `chat:read` эмит, `markRead` в SocketContext
+- **Offline message queue**: доставка undelivered сообщений при WS connect
+- **REST POST WS emit**: `POST /:id/messages` + `PUT /:id/read` теперь эмитят через WebSocket
+- **Files.tsx**: branch coverage 72.5%→**75%** (+5 тестов)
+- **search.js**: stmts 59.37%→**100%** (+4 теста: Meilisearch, FULLTEXT→LIKE fallback, двойной fallback→500)
+- **tickets.service.js**: stmts 85.22%→**90.9%** (+6 тестов: getLeastLoadedAssignee, listTickets, generateTicketFilename)
+- **Фронт**: 366 тестов, 0 failures
+- **Сервер**: 346 тестов, 0 failures
