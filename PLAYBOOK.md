@@ -193,8 +193,12 @@ E2E (critical flows):     14 Playwright spec'ов
 | # | Паттерн | Приоритет | Усилия | Эффект |
 |---|---------|-----------|--------|--------|
 | 33 | Soft Deletes | ✅ Реализовано | — | Tickets, ticket_messages, chat_messages, files |
+| 34 | Idempotency Keys | ✅ Реализовано | — | POST /chats/:id/messages, /tickets, /tickets/:id/messages |
+| 54 | Readiness Probe | 🟠 Средний | 30 мин | K8s/Docker корректный restart |
 | 30 | a11y: skip-link, aria-live | 🟠 Средний | 1 час | Доступность для screen reader |
+| 55 | Load Testing (k6) | 🟡 Низкий | 2 часа | Знать предел нагрузки |
 | 27 | Performance Budget в CI | 🟡 Низкий | 1 час | Контроль bundle size в PR |
+| 53 | Grafana Dashboard | 🟡 Низкий | 1 час | Визуализация метрик |
 | 4 | Strict CSP | 🟡 Низкий | 2 часа | Защита от XSS |
 
 ---
@@ -257,6 +261,61 @@ export function down(knex) {
 
 Сервисы обновить: все `findMany`/`count` с `where: { deleted_at: null }`.
 `DELETE` → `update({ data: { deleted_at: new Date() } })`.
+
+---
+
+## 📡 Monitoring & Observability
+
+### 53. Prometheus + Grafana (уже в docker-compose)
+
+```yaml
+# docker-compose.yml — сервисы уже есть:
+prometheus:
+  image: prom/prometheus
+  volumes: ['./prometheus.yml:/etc/prometheus/prometheus.yml']
+  
+grafana:
+  image: grafana/grafana
+  ports: ['3000:3000']
+```
+
+**Метрики**: `GET /api/metrics` (Prometheus format) — request duration, memory, event loop lag.
+**Дашборды**: Grafana на localhost:3000, admin/admin.
+⚠️ Дашборды не настроены — нужно импортировать JSON-дашборд для Node.js + MySQL.
+
+### 54. Readiness Probe (/health/ready)
+
+```js
+// Отличается от /health (liveness):
+// /health/live — сервер запущен (always 200)
+// /health/ready — DB + Redis + S3 доступны (200/503)
+app.get('/api/health/ready', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    res.json({ status: 'ok', db: true })
+  } catch {
+    res.status(503).json({ status: 'error', db: false })
+  }
+})
+```
+
+❌ **Не реализовано.** Есть только `GET /api/health`.
+
+### 55. Load Testing (k6)
+
+```js
+// test/load/chat.k6.js
+import http from 'k6/http'
+export const options = { vus: 50, duration: '30s' }
+export default () => {
+  http.post('http://localhost:4000/api/chats/1/messages',
+    JSON.stringify({ text: 'load test' }),
+    { headers: { Authorization: `Bearer ${__ENV.TOKEN}` } }
+  )
+}
+```
+
+❌ **Не реализовано.** Нет к6-скриптов для нагрузки чатов/тикетов.
 
 ---
 
