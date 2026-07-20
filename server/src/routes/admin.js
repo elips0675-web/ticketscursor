@@ -195,6 +195,19 @@ router.post('/settings/seed', async (req, res) => {
   }
 })
 
+router.post('/settings/geo', async (_req, res) => {
+  try {
+    await prisma.$executeRawUnsafe('ALTER TABLE tickets ADD FULLTEXT INDEX ft_tickets_search (title, description)')
+    res.json({ success: true, data: { message: 'Fulltext index created' } })
+  } catch (err) {
+    if (err.code === 'ER_DUP_KEYNAME') {
+      return res.json({ success: true, data: { message: 'Fulltext index already exists' } })
+    }
+    logger.error('Geo route error:', err)
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
 router.get('/settings/redis-status', async (req, res) => {
   try {
     const row = await prisma.admin_settings.findUnique({ where: { key: 'REDIS_URL' } })

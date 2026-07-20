@@ -329,6 +329,15 @@ docker compose up -d --build
 - **i18n**: 20 новых ключей в `admin.*` (ru/en), добавлен `common.add`
 - **check-console**: 17/17 ALL OK
 
+### Этап 30 — Email Templates + Email Notifications
+- **Admin UI**: `EmailTemplatesSection` в `AdminSettings.tsx` — 8 шаблонов (create/status/priority/assign/message/SLA breach × subject/body)
+- **Validation**: `PUT /admin/settings` — проверяет JSON + 8 обязательных ключей
+- **SMTP from DB**: `email.js` читает SMTP_HOST/USER/PASS из `admin_settings` (БД), fallback `process.env`; пересоздаёт транспортер при смене конфига
+- **Startup warning**: если SMTP не настроен — `logger.warn` при старте
+- **notifyPriorityChanged**: email + in-app уведомления (был только Telegram)
+- **notifyTicketMessage**: email создателю + исполнителю (был только in-app + Telegram)
+- **Тесты**: сервер 352/352, клиент 372/372
+
 ### Этап 29 — Feature Flags
 - **Migration**: `20260720_feature_flags.js` — таблица `feature_flags` (key PK, enabled, description, updated_at)
 - **Backend**: `GET/PUT /api/admin/features` в admin.js, кэш 30с (`cacheMiddleware`), инвалидация на PUT

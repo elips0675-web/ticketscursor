@@ -5,6 +5,23 @@
 
 ---
 
+## [1.4.0] — 2026-07-20
+
+### 📧 Email Notification System
+
+- **Email Templates UI** — `AdminSettings.tsx`: 8 шаблонов (create/status/priority/assign/message/SLA breach × subject/body), редактирование через textarea, кликабельные `{{variable}}` теги, кнопка сброса на дефолт
+- **Backend validation** — `PUT /admin/settings` проверяет `EMAIL_TEMPLATES` на валидный JSON и наличие всех 8 ключей
+- **SMTP from DB** — `email.js` читает SMTP_HOST/USER/PASS из `admin_settings` (БД), а не только из `.env`; пересоздаёт транспортер при изменении конфига
+- **Startup warning** — предупреждение в лог, если SMTP не настроен
+- **notifyPriorityChanged** — теперь шлёт email + in-app уведомления (раньше только Telegram)
+- **notifyTicketMessage** — теперь шлёт email создателю и исполнителю (раньше только in-app + Telegram)
+
+### 🐛 Исправлено
+
+- **email.js + env mismatch** — SMTP-настройки из админ-панели (БД) реально используются при отправке писем; раньше `email.js` читал только `process.env`
+- **notifyPriorityChanged** — не отправлял email и in-app уведомления (только Telegram)
+- **notifyTicketMessage** — не отправлял email уведомления (только in-app + Telegram)
+
 ## [1.3.0] — 2026-07-20
 
 ### 🚀 Dead Letter Queue + Background Jobs Reliability
