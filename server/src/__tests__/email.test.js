@@ -6,7 +6,7 @@ vi.mock('nodemailer', () => ({
   },
 }))
 
-vi.mock('../logger.js', () => ({ default: { error: vi.fn() } }))
+vi.mock('../logger.js', () => ({ default: { error: vi.fn(), info: vi.fn() } }))
 
 describe('email.js', () => {
   beforeEach(() => {
