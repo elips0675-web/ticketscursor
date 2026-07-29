@@ -5,7 +5,20 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
-import { Save, Loader2, Eye, EyeOff, Database, Server, FileText, Search, RefreshCw, Flag, ToggleLeft, Mail } from 'lucide-react'
+import {
+  Save,
+  Loader2,
+  Eye,
+  EyeOff,
+  Database,
+  Server,
+  FileText,
+  Search,
+  RefreshCw,
+  Flag,
+  ToggleLeft,
+  Mail,
+} from 'lucide-react'
 import { api } from '@/lib/api'
 
 const FIELDS = [
@@ -254,25 +267,64 @@ function RedisStatus() {
 }
 
 const EMAIL_TEMPLATE_KEYS = [
-  { key: 'ticketCreatedSubject', label: 'Тема (создание тикета)', variables: ['ticketId', 'ticketTitle', 'priority', 'companyName', 'userName'] },
-  { key: 'ticketCreatedBody', label: 'Тело (создание тикета)', variables: ['ticketId', 'ticketTitle', 'priority', 'companyName', 'userName'], multiline: true },
-  { key: 'ticketStatusSubject', label: 'Тема (изменение статуса)', variables: ['ticketId', 'ticketTitle', 'oldStatus', 'newStatus', 'companyName', 'userName'] },
-  { key: 'ticketStatusBody', label: 'Тело (изменение статуса)', variables: ['ticketId', 'ticketTitle', 'oldStatus', 'newStatus', 'companyName', 'userName'], multiline: true },
-  { key: 'ticketAssignedSubject', label: 'Тема (назначение тикета)', variables: ['ticketId', 'ticketTitle', 'status', 'priority', 'companyName', 'userName'] },
-  { key: 'ticketAssignedBody', label: 'Тело (назначение тикета)', variables: ['ticketId', 'ticketTitle', 'status', 'priority', 'companyName', 'userName'], multiline: true },
-  { key: 'slaBreachedSubject', label: 'Тема (просрочка SLA)', variables: ['ticketId', 'ticketTitle', 'dueAt', 'companyName'] },
-  { key: 'slaBreachedBody', label: 'Тело (просрочка SLA)', variables: ['ticketId', 'ticketTitle', 'dueAt', 'companyName'], multiline: true },
+  {
+    key: 'ticketCreatedSubject',
+    label: 'Тема (создание тикета)',
+    variables: ['ticketId', 'ticketTitle', 'priority', 'companyName', 'userName'],
+  },
+  {
+    key: 'ticketCreatedBody',
+    label: 'Тело (создание тикета)',
+    variables: ['ticketId', 'ticketTitle', 'priority', 'companyName', 'userName'],
+    multiline: true,
+  },
+  {
+    key: 'ticketStatusSubject',
+    label: 'Тема (изменение статуса)',
+    variables: ['ticketId', 'ticketTitle', 'oldStatus', 'newStatus', 'companyName', 'userName'],
+  },
+  {
+    key: 'ticketStatusBody',
+    label: 'Тело (изменение статуса)',
+    variables: ['ticketId', 'ticketTitle', 'oldStatus', 'newStatus', 'companyName', 'userName'],
+    multiline: true,
+  },
+  {
+    key: 'ticketAssignedSubject',
+    label: 'Тема (назначение тикета)',
+    variables: ['ticketId', 'ticketTitle', 'status', 'priority', 'companyName', 'userName'],
+  },
+  {
+    key: 'ticketAssignedBody',
+    label: 'Тело (назначение тикета)',
+    variables: ['ticketId', 'ticketTitle', 'status', 'priority', 'companyName', 'userName'],
+    multiline: true,
+  },
+  {
+    key: 'slaBreachedSubject',
+    label: 'Тема (просрочка SLA)',
+    variables: ['ticketId', 'ticketTitle', 'dueAt', 'companyName'],
+  },
+  {
+    key: 'slaBreachedBody',
+    label: 'Тело (просрочка SLA)',
+    variables: ['ticketId', 'ticketTitle', 'dueAt', 'companyName'],
+    multiline: true,
+  },
 ]
 
 const DEFAULT_EMAIL_TEMPLATES: Record<string, string> = {
   ticketCreatedSubject: 'Тикет #{{ticketId}} создан: {{ticketTitle}}',
-  ticketCreatedBody: 'Ваш тикет "{{ticketTitle}}" (#{{ticketId}}) создан.\nСтатус: Открыт\nПриоритет: {{priority}}\n\n{{companyName}}',
+  ticketCreatedBody:
+    'Ваш тикет "{{ticketTitle}}" (#{{ticketId}}) создан.\nСтатус: Открыт\nПриоритет: {{priority}}\n\n{{companyName}}',
   ticketStatusSubject: 'Статус тикета #{{ticketId}}: {{newStatus}}',
   ticketStatusBody: 'Тикет "{{ticketTitle}}" (#{{ticketId}})\nСтатус: {{oldStatus}} → {{newStatus}}\n\n{{companyName}}',
   ticketAssignedSubject: 'Тикет #{{ticketId}} назначен на вас: {{ticketTitle}}',
-  ticketAssignedBody: 'Тикет "{{ticketTitle}}" (#{{ticketId}}) назначен на вас.\nСтатус: {{status}}\nПриоритет: {{priority}}\n\n{{companyName}}',
+  ticketAssignedBody:
+    'Тикет "{{ticketTitle}}" (#{{ticketId}}) назначен на вас.\nСтатус: {{status}}\nПриоритет: {{priority}}\n\n{{companyName}}',
   slaBreachedSubject: 'SLA просрочка: тикет #{{ticketId}}',
-  slaBreachedBody: 'Тикет "{{ticketTitle}}" (#{{ticketId}}) просрочен по SLA.\nСрок реакции истёк: {{dueAt}}\n\n{{companyName}}',
+  slaBreachedBody:
+    'Тикет "{{ticketTitle}}" (#{{ticketId}}) просрочен по SLA.\nСрок реакции истёк: {{dueAt}}\n\n{{companyName}}',
 }
 
 function EmailTemplatesSection() {
@@ -303,7 +355,7 @@ function EmailTemplatesSection() {
   }, [])
 
   const update = (key: string, value: string) => {
-    setTemplates(prev => ({ ...prev, [key]: value }))
+    setTemplates((prev) => ({ ...prev, [key]: value }))
   }
 
   const save = async () => {
@@ -315,7 +367,9 @@ function EmailTemplatesSection() {
       }
       await api.put('/admin/settings', { EMAIL_TEMPLATES: JSON.stringify(payload) })
       toast.success(t('admin.saveSuccess'))
-    } catch { }
+    } catch {
+      toast.error(t('common.error'))
+    }
     setSaving(false)
   }
 
@@ -324,7 +378,9 @@ function EmailTemplatesSection() {
     try {
       await api.put('/admin/settings', { EMAIL_TEMPLATES: JSON.stringify(DEFAULT_EMAIL_TEMPLATES) })
       toast.success(t('admin.saveSuccess'))
-    } catch { }
+    } catch {
+      toast.error(t('common.error'))
+    }
   }
 
   if (loading) {
@@ -357,17 +413,21 @@ function EmailTemplatesSection() {
         <p className="text-xs text-muted-foreground">{t('admin.emailTemplatesSubtitle')}</p>
         {EMAIL_TEMPLATE_KEYS.map(({ key, label, variables, multiline }) => (
           <div key={key}>
-            <label htmlFor={`et-${key}`} className="text-xs font-bold block mb-1">{label}</label>
+            <label htmlFor={`et-${key}`} className="text-xs font-bold block mb-1">
+              {label}
+            </label>
             <div className="flex flex-wrap gap-1 mb-1">
-              {variables.map(v => (
-                <code key={v} className="text-[10px] bg-muted px-1 rounded text-muted-foreground">{'{{' + v + '}}'}</code>
+              {variables.map((v) => (
+                <code key={v} className="text-[10px] bg-muted px-1 rounded text-muted-foreground">
+                  {'{{' + v + '}}'}
+                </code>
               ))}
             </div>
             {multiline ? (
               <textarea
                 id={`et-${key}`}
                 value={templates[key] || ''}
-                onChange={e => update(key, e.target.value)}
+                onChange={(e) => update(key, e.target.value)}
                 className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-[60px] resize-y"
               />
             ) : (
@@ -375,7 +435,7 @@ function EmailTemplatesSection() {
                 id={`et-${key}`}
                 type="text"
                 value={templates[key] || ''}
-                onChange={e => update(key, e.target.value)}
+                onChange={(e) => update(key, e.target.value)}
                 className="flex w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             )}
@@ -420,7 +480,7 @@ function FeatureFlagsSection() {
   }, [])
 
   const toggle = (key: string) => {
-    setFlags(prev => prev.map(f => f.key === key ? { ...f, enabled: !f.enabled } : f))
+    setFlags((prev) => prev.map((f) => (f.key === key ? { ...f, enabled: !f.enabled } : f)))
     setChanged(true)
   }
 
@@ -430,7 +490,9 @@ function FeatureFlagsSection() {
       await api.put('/admin/features', flags)
       toast.success(t('common.saveSuccess'))
       setChanged(false)
-    } catch { }
+    } catch {
+      toast.error(t('common.error'))
+    }
     setSaving(false)
   }
 
@@ -440,7 +502,9 @@ function FeatureFlagsSection() {
       const data = await api.get('/admin/features')
       if (data) setFlags(data)
       setChanged(false)
-    } catch { }
+    } catch {
+      toast.error(t('common.error'))
+    }
     setLoading(false)
   }
 
@@ -489,7 +553,9 @@ function FeatureFlagsSection() {
               onClick={() => toggle(f.key)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${f.enabled ? 'bg-primary' : 'bg-input'}`}
             >
-              <span className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${f.enabled ? 'translate-x-[22px]' : 'translate-x-[2px]'}`} />
+              <span
+                className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${f.enabled ? 'translate-x-[22px]' : 'translate-x-[2px]'}`}
+              />
             </button>
           </div>
         ))}

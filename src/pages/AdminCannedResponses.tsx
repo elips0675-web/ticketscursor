@@ -33,11 +33,15 @@ export default function AdminCannedResponses() {
     try {
       const data = await api.get('/canned-responses')
       setItems(data || [])
-    } catch { }
+    } catch {
+      toast.error(t('common.error'))
+    }
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+  }, [])
 
   const create = async () => {
     if (!editTitle.trim() || !editText.trim()) return
@@ -50,7 +54,9 @@ export default function AdminCannedResponses() {
       setEditCategory('')
       setEditing(null)
       await load()
-    } catch { }
+    } catch {
+      toast.error(t('common.error'))
+    }
     setSaving(false)
   }
 
@@ -62,7 +68,9 @@ export default function AdminCannedResponses() {
       toast.success(t('common.saveSuccess'))
       setEditing(null)
       await load()
-    } catch { }
+    } catch {
+      toast.error(t('common.error'))
+    }
     setSaving(false)
   }
 
@@ -71,7 +79,9 @@ export default function AdminCannedResponses() {
       await api.delete(`/canned-responses/${id}`)
       toast.success(t('common.deleteSuccess'))
       await load()
-    } catch { }
+    } catch {
+      toast.error(t('common.error'))
+    }
   }
 
   const startEdit = (item: CannedResponse) => {
@@ -92,10 +102,28 @@ export default function AdminCannedResponses() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3 mb-4 p-3 rounded-lg border">
-            <Input placeholder={t('admin.cannedTitle')} value={editTitle} onChange={e => setEditTitle(e.target.value)} />
-            <Input placeholder={t('admin.cannedCategory')} value={editCategory} onChange={e => setEditCategory(e.target.value)} />
-            <Textarea placeholder={t('admin.cannedText')} value={editText} onChange={e => setEditText(e.target.value)} rows={3} />
-            <Button size="sm" onClick={editing ? () => update(editing) : create} disabled={saving || !editTitle.trim() || !editText.trim()} className="gap-1.5">
+            <Input
+              placeholder={t('admin.cannedTitle')}
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+            />
+            <Input
+              placeholder={t('admin.cannedCategory')}
+              value={editCategory}
+              onChange={(e) => setEditCategory(e.target.value)}
+            />
+            <Textarea
+              placeholder={t('admin.cannedText')}
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              rows={3}
+            />
+            <Button
+              size="sm"
+              onClick={editing ? () => update(editing) : create}
+              disabled={saving || !editTitle.trim() || !editText.trim()}
+              className="gap-1.5"
+            >
               {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
               {editing ? t('common.save') : t('common.add')}
             </Button>
@@ -109,20 +137,31 @@ export default function AdminCannedResponses() {
             <p className="text-sm text-muted-foreground text-center py-4">{t('admin.cannedEmpty')}</p>
           ) : (
             <div className="space-y-2">
-              {items.map(item => (
+              {items.map((item) => (
                 <div key={item.id} className="flex items-start gap-3 rounded-lg border p-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       {item.category && (
-                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">{item.category}</span>
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                          {item.category}
+                        </span>
                       )}
                       <span className="text-sm font-medium truncate">{item.title}</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.text}</p>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => startEdit(item)}><Plus className="w-3 h-3" /></Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => remove(item.id)}><Trash2 className="w-3 h-3" /></Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => startEdit(item)}>
+                      <Plus className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-destructive"
+                      onClick={() => remove(item.id)}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
                   </div>
                 </div>
               ))}
