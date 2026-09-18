@@ -137,7 +137,7 @@ const options = {
           security: [{ bearerAuth: [] }],
           parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
           requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { text: { type: 'string' }, isInternal: { type: 'boolean' }, attachments: { type: 'array', items: { type: 'object' } } }, required: ['text'] } } } },
-          responses: { '201': { description: 'Message created' } },
+          responses: { '201': { description: 'Message created. Mentions detected via @name / @email-prefix and stored in response data.mentions.' } },
         },
       },
       '/api/tickets/bulk': {

@@ -1041,6 +1041,32 @@ describe('POST /api/tickets/:id/messages', () => {
       expect(res.body.data).toHaveProperty('text', 'Test message content')
     }
   })
+
+  it('saves mentions when text mentions employees by name', async () => {
+    const res = await request(app)
+      .post('/api/tickets/1/messages')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ text: 'Коллеги, @Мария Иванова и @Дмитрий Сидоров, посмотрите' })
+    expect([201, 403, 404, 500]).toContain(res.status)
+    if (res.status === 201) {
+      expect(res.body.data).toHaveProperty('mentions')
+      const parsed = Array.isArray(res.body.data.mentions)
+        ? res.body.data.mentions
+        : JSON.parse(res.body.data.mentions || '[]')
+      expect(parsed).toEqual(expect.arrayContaining([2, 3]))
+    }
+  })
+
+  it('stores null mentions when text has no mentions', async () => {
+    const res = await request(app)
+      .post('/api/tickets/1/messages')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ text: 'Обычное сообщение без упоминаний' })
+    expect([201, 403, 404, 500]).toContain(res.status)
+    if (res.status === 201) {
+      expect(res.body.data.mentions).toBeNull()
+    }
+  })
 })
 
 describe('POST /api/chats/:id/messages success', () => {

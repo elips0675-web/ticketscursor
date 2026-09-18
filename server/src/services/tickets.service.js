@@ -318,3 +318,41 @@ export async function updateTicketAssignee(id, employeeId) {
 export function generateTicketFilename(originalName) {
   return randomUUID() + '-' + originalName
 }
+
+const MENTION_RE = /(?<![A-Za-zА-Яа-яЁё0-9])@([A-Za-zА-Яа-яЁё0-9._-]+)/g
+
+export function extractMentionTokens(text) {
+  if (!text) return []
+  const tokens = new Set()
+  for (const match of String(text).matchAll(MENTION_RE)) {
+    const value = match[1].trim()
+    if (value) tokens.add(value)
+  }
+  return Array.from(tokens)
+}
+
+export async function resolveMentionedEmployees(text, excludeUserId) {
+  if (!text || typeof text !== 'string' || !text.includes('@')) return []
+  const rows = await prisma.employees.findMany({
+    where: {
+      is_active: true,
+      NOT: excludeUserId ? { id: excludeUserId } : undefined,
+    },
+    select: { id: true, name: true, email: true },
+  })
+  const lowerText = text.toLowerCase()
+  const ids = []
+  const seen = new Set()
+  for (const row of rows) {
+    if (row.id === excludeUserId) continue
+    const namePattern = '@' + row.name.toLowerCase()
+    const emailPattern = '@' + row.email.split('@')[0].toLowerCase()
+    if (lowerText.includes(namePattern) || lowerText.includes(emailPattern)) {
+      if (!seen.has(row.id)) {
+        seen.add(row.id)
+        ids.push(row.id)
+      }
+    }
+  }
+  return ids
+}

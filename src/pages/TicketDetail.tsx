@@ -33,6 +33,20 @@ import {
 import type { TicketStatus, TicketPriority } from '@/types'
 import { API_URL } from '@/lib/api'
 
+function parseMentions(value: unknown): number[] {
+  if (!value) return []
+  if (Array.isArray(value)) return value.map(Number).filter((n) => Number.isFinite(n))
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      return Array.isArray(parsed) ? parsed.map(Number).filter((n) => Number.isFinite(n)) : []
+    } catch {
+      return []
+    }
+  }
+  return []
+}
+
 function mapTicketDetail(raw: Record<string, unknown>): Ticket {
   return {
     id: raw.id,
@@ -66,6 +80,7 @@ function mapTicketDetail(raw: Record<string, unknown>): Ticket {
               ? JSON.parse(m.attachments)
               : m.attachments
             : [],
+          mentions: parseMentions(m.mentions),
           createdAt: m.created_at,
           isInternal: !!m.is_internal,
         }))
@@ -103,6 +118,10 @@ export default function TicketDetail() {
   }, [id, token])
 
   const [messageText, setMessageText] = useState('')
+  const mentionAtIdxRef = useRef<number>(-1)
+  const [mentionQuery, setMentionQuery] = useState('')
+  const [mentionIndex, setMentionIndex] = useState(0)
+  const [showMentions, setShowMentions] = useState(false)
   const [tagsDraft, setTagsDraft] = useState('')
   const [isInternal, setIsInternal] = useState(false)
   const [attachments, setAttachments] = useState<{ url: string; name: string }[]>([])
@@ -110,6 +129,7 @@ export default function TicketDetail() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
@@ -166,6 +186,9 @@ export default function TicketDetail() {
     setMessageText('')
     setIsInternal(false)
     setAttachments([])
+    setShowMentions(false)
+    mentionAtIdxRef.current = -1
+    setMentionQuery('')
   }
 
   const handleSaveTags = () => {
@@ -197,6 +220,83 @@ export default function TicketDetail() {
     }
     setUploading(false)
     if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const updateMentionState = (value: string, cursorPos: number) => {
+    setShowMentions(false)
+    mentionAtIdxRef.current = -1
+    setMentionQuery('')
+    const before = value.slice(0, cursorPos)
+    const atIdx = before.lastIndexOf('@')
+    if (atIdx === -1) return
+    const rest = before.slice(atIdx + 1)
+    if (rest.includes(' ') || rest.includes('\n') || rest.length > 40) return
+    mentionAtIdxRef.current = atIdx
+    setMentionQuery(rest)
+    const matches = employees.filter((e) => e.name.toLowerCase().startsWith(rest.toLowerCase()))
+    setShowMentions(matches.length > 0)
+    setMentionIndex(0)
+  }
+
+  const filteredMentions = mentionQuery
+    ? employees.filter((e) => e.name.toLowerCase().startsWith(mentionQuery.toLowerCase()))
+    : []
+
+  const acceptMention = (employeeName: string) => {
+    const atIdx = mentionAtIdxRef.current
+    if (atIdx < 0) return
+    setMessageText((prev) => prev.slice(0, atIdx + 1) + employeeName + prev.slice(atIdx + 1 + mentionQuery.length))
+    setShowMentions(false)
+    mentionAtIdxRef.current = -1
+    setMentionQuery('')
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus()
+      const pos = atIdx + 1 + employeeName.length
+      textareaRef.current?.setSelectionRange(pos, pos)
+    })
+  }
+
+  const handleMessageTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value
+    setMessageText(value)
+    updateMentionState(value, e.target.selectionStart ?? value.length)
+  }
+
+  const handleMessageKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!showMentions) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setMentionIndex((prev) => (prev + 1) % Math.max(filteredMentions.length, 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setMentionIndex((prev) => (prev - 1 + Math.max(filteredMentions.length, 1)) % Math.max(filteredMentions.length, 1))
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault()
+      const emp = filteredMentions[mentionIndex]
+      if (emp) acceptMention(emp.name)
+    } else if (e.key === 'Escape') {
+      setShowMentions(false)
+      mentionAtIdxRef.current = -1
+      setMentionQuery('')
+    }
+  }
+
+  const renderMentionedText = (rawText: string) => {
+    if (!rawText.includes('@')) return rawText
+    const parts = rawText.split(/(@[^\s@]+(?:\s+[^\s@]+)?)/)
+    return parts.map((part, idx) => {
+      if (!part.startsWith('@') || part.length < 2) return part
+      const emp = employees.find((e) => {
+        const pat = part.slice(1).toLowerCase()
+        return e.name.toLowerCase() === pat || e.email.split('@')[0].toLowerCase() === pat
+      })
+      if (!emp) return part
+      return (
+        <span key={idx} className="text-primary font-medium" data-testid="message-mention">
+          {part}
+        </span>
+      )
+    })
   }
 
   const statusLabel: Record<string, string> = {
@@ -300,7 +400,7 @@ export default function TicketDetail() {
                                   </Badge>
                                 )}
                               </div>
-                              <p className="text-sm text-foreground/80">{msg.text}</p>
+                              <p className="text-sm text-foreground/80">{renderMentionedText(msg.text)}</p>
                               {msg.attachments && msg.attachments.length > 0 && (
                                 <div className="flex flex-wrap gap-2 mt-2">
                                   {msg.attachments.map((att: Record<string, unknown>, i: number) => (
@@ -340,7 +440,7 @@ export default function TicketDetail() {
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-sm text-foreground/80">{msg.text}</p>
+                            <p className="text-sm text-foreground/80">{renderMentionedText(msg.text)}</p>
                             {msg.attachments && msg.attachments.length > 0 && (
                               <div className="flex flex-wrap gap-2 mt-2">
                                 {msg.attachments.map((att: Record<string, unknown>, i: number) => (
@@ -369,14 +469,36 @@ export default function TicketDetail() {
               </div>
 
               <Separator className="my-3" />
-              <div className="space-y-2">
+              <div className="space-y-2 relative">
                 <Textarea
+                  ref={textareaRef}
                   value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
+                  onChange={handleMessageTextChange}
+                  onKeyDown={handleMessageKeyDown}
                   placeholder={t('tickets.messagePlaceholder')}
                   className="min-h-[80px]"
                   id="ticket-message"
                 />
+                {showMentions && filteredMentions.length > 0 && (
+                  <div className="absolute z-50 w-64 max-h-48 overflow-y-auto rounded-md border bg-background shadow-md" data-testid="mention-menu">
+                    {filteredMentions.map((emp, idx) => (
+                      <button
+                        key={emp.id}
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          acceptMention(emp.name)
+                        }}
+                        className={`flex items-center gap-2 w-full px-3 py-2 text-left text-sm hover:bg-muted ${idx === mentionIndex ? 'bg-muted' : ''}`}
+                      >
+                        <Avatar className="w-5 h-5">
+                          <AvatarFallback className="text-[8px]">{emp.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <span className="truncate">{emp.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {attachments.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {attachments.map((att, i) => (

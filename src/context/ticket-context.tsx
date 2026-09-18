@@ -73,6 +73,7 @@ function mapTicket(raw: Record<string, unknown>): Ticket {
               ? JSON.parse(m.attachments)
               : m.attachments
             : [],
+          mentions: parseMentions(m.mentions),
           createdAt: m.created_at,
           isInternal: !!m.is_internal,
         }))
@@ -98,6 +99,20 @@ function mapEmployee(e: Record<string, unknown>): Employee {
     activeTickets: e.activeTickets || 0,
     resolvedToday: e.resolvedToday || 0,
   }
+}
+
+function parseMentions(value: unknown): number[] {
+  if (!value) return []
+  if (Array.isArray(value)) return value.map(Number).filter((n) => Number.isFinite(n))
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      return Array.isArray(parsed) ? parsed.map(Number).filter((n) => Number.isFinite(n)) : []
+    } catch {
+      return []
+    }
+  }
+  return []
 }
 
 function authLogout() {
@@ -330,6 +345,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         senderAvatar: '',
         text,
         attachments: [],
+        mentions: [],
         createdAt: new Date().toISOString(),
         isInternal,
       }
@@ -359,6 +375,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
                 ? JSON.parse(msg.attachments)
                 : msg.attachments
               : [],
+            mentions: parseMentions(msg.mentions),
             createdAt: msg.created_at,
             isInternal: !!msg.is_internal,
           }

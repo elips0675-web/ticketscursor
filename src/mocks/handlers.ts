@@ -103,6 +103,15 @@ export const handlers = [
             text: 'Описание проблемы',
             created_at: '2026-07-01T10:00:00Z',
           },
+          {
+            id: 2,
+            ticket_id: 1,
+            sender_id: 2,
+            sender_name: 'Иван Иванов',
+            text: 'Ответ для @Пётр Петров и @Admin',
+            mentions: [1, 3],
+            created_at: '2026-07-01T11:00:00Z',
+          },
         ],
       },
     })

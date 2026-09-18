@@ -186,4 +186,48 @@ describe('TicketDetail', () => {
       expect(screen.getAllByText('urgent').length).toBeGreaterThan(0)
     })
   })
+
+  it('shows mention autocomplete when typing @', async () => {
+    const user = userEvent.setup()
+    render(<TicketDetail />, { wrapper: TestProviders })
+    await screen.findByText('Проблема с доступом')
+    const input = screen.getByPlaceholderText('Напишите сообщение...')
+    await user.type(input, 'Посмотри @Пёт')
+    await waitFor(() => {
+      expect(screen.getByTestId('mention-menu')).toBeInTheDocument()
+    })
+    expect(screen.getByText('Пётр Петров')).toBeInTheDocument()
+  })
+
+  it('inserts full name when selecting a mention', async () => {
+    const user = userEvent.setup()
+    render(<TicketDetail />, { wrapper: TestProviders })
+    await screen.findByText('Проблема с доступом')
+    const input = screen.getByPlaceholderText('Напишите сообщение...')
+    await user.type(input, 'Спроси @Пёт')
+    await waitFor(() => {
+      expect(screen.getByTestId('mention-menu')).toBeInTheDocument()
+    })
+    await user.click(screen.getByText('Пётр Петров'))
+    expect(input).toHaveValue('Спроси @Пётр Петров')
+    await waitFor(() => {
+      expect(screen.queryByTestId('mention-menu')).not.toBeInTheDocument()
+    })
+  })
+
+  it('hides mention menu when typing no match', async () => {
+    const user = userEvent.setup()
+    render(<TicketDetail />, { wrapper: TestProviders })
+    await screen.findByText('Проблема с доступом')
+    const input = screen.getByPlaceholderText('Напишите сообщение...')
+    await user.type(input, 'Привет @Zzz')
+    expect(screen.queryByTestId('mention-menu')).not.toBeInTheDocument()
+  })
+
+  it('renders existing mentions as highlighted spans', async () => {
+    render(<TicketDetail />, { wrapper: TestProviders })
+    await waitFor(() => {
+      expect(screen.getAllByTestId('message-mention').length).toBeGreaterThanOrEqual(2)
+    })
+  })
 })

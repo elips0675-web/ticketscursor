@@ -263,6 +263,23 @@ export async function notifyTicketMessage(ticketId, senderId, senderName, text) 
   }
 }
 
+export async function notifyTicketMention(ticketId, mentionedUserIds, senderId, senderName) {
+  const t = await getTicketWithUsers(ticketId)
+  if (!t) return
+
+  for (const userId of mentionedUserIds) {
+    if (!userId || userId === senderId) continue
+    safeNotify(createNotification({
+      userId, type: 'ticket_mention',
+      title: 'Упоминание в тикете',
+      body: `${senderName || 'Пользователь'}: ${t.title}#${ticketId}`,
+      link: `/tickets/${ticketId}`,
+    }))
+  }
+
+  sendTelegramNotification(`📣 Упоминание в тикете #${ticketId}: ${t.title}\n${senderName || 'Пользователь'} упомянул: ${mentionedUserIds.filter(id => id !== senderId).join(', ')}`)
+}
+
 export async function notifySlaBreached(ticketId) {
   const t = await getTicketWithUsers(ticketId)
   if (!t) return

@@ -27,6 +27,7 @@
     • Фильтры, пагинация, сортировка
     • ticket-context.tsx: хардкод localhost:4000 → централизованный API_URL
     • Анализ аналогов рынка → "Service Desk против аналогов рынка.md" (Zammad/GLPI/Zendesk/Kайтен и др., оценка стека и позиционирование)
+    • Mentions (Этап 3): @упоминания сотрудников в сообщениях тикета — автокомплит в TicketDetail, подсветка упомянутых, уведомления (notifyTicketMention, type=ticket_mention); миграция 20260724_ticket_mentions (JSON mentions), resolveMentionedEmployees (по полному имени или local-part email)
 
   ✅ Дашборд
     • Статистика, график по статусам (Recharts), виджет сотрудников
@@ -422,6 +423,16 @@
   - `runSlaCheck` в background.js — эскалация по интервалам
   - `notifySlaEscalated` в notify.js — WS эмит, аудит, уведомления
   - UI бадж в TicketDetail.tsx + настройки в AdminSettings.tsx
+
+### v1.6.0 — Mentions (@username, Этап 3 роадмапа, завершён)
+- ✅ Миграция `20260724_ticket_mentions.js` — JSON-колонка `mentions` на `ticket_messages` (+ `mentions Json?` в schema.prisma, `npx prisma generate`)
+- ✅ `resolveMentionedEmployees(text, excludeUserId)` в tickets.service.js — матч `@Полное Имя` или `@-локальная-часть-email` активных сотрудников, sender исключён; ранний выход при отсутствии `@`
+- ✅ `notifyTicketMention` в notify.js — уведомление упомянутым (type=ticket_mention, link /tickets/:id) + Telegram
+- ✅ POST `/api/tickets/:id/messages` сохраняет `mentions` (JSON string) и шлёт уведомления
+- ✅ TicketDetail.tsx — автокомплит `@` (name startsWith, стрелки/Enter/Tab/Escape, data-testid="mention-menu"), вставка полного имени, подсветка упоминаний (data-testid="message-mention"), сброс при отправке
+- ✅ ticket-context.tsx — parseMentions (строка/массив), маппинг в mapTicket/realMsg
+- ✅ Swagger обновлён; MSW-хендлеры: сообщение с `mentions: [1,3]`
+- ✅ Тесты: unit tickets.service.mentions 13, API +2 (mentions by name / null), frontend TicketDetail +5 → сервер 393/393, клиент 385/385; tsc чист, build OK, lint 0 новых
 
 ### Остаточный техдолг (не из Оценка kimi.txt)
 - Server coverage: search.js FULLTEXT fallback, tickets.service.js 500-branches

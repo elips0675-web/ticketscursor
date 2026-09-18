@@ -102,7 +102,7 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 - ✅ Шаблоны ответов (canned responses)
 - ❌ Time tracking
 - ✅ Tags/labels на тикетах (JSON `tags`, create/редактирование в TicketDetail, фильтр и отображение в Tickets, `PUT /api/tickets/:id/tags`)
-- ❌ Mentions (@username)
+- ✅ Mentions (@username) — Этап 3 (см. дорожную карту)
 - ❌ ИИ-ответы из Wiki (по мотивам Frisbee) — P2, опционально: поиск по статьям Wiki + сгенерированный ответ (LLM/шаблон), кнопка "спросить ассистента" в тикете
 - ✅ SLA breach escalation
 
@@ -115,7 +115,7 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 
 - ✅ Этап 1 — Tags/labels (см. выше)
 - ✅ Этап 2 — Bulk actions (POST /api/tickets/bulk + чекбоксы/панель в Tickets.tsx)
-- ⬜ Этап 3 — Mentions (@username) — автокомплит в чате/заметках тикета, уведомления
+- ✅ Этап 3 — Mentions (@username) — автомкомплит в TicketDetail (@Имя Фамилия → вставка), подсветка упоминаний, уведомления упомянутым (notifyTicketMention, type=ticket_mention); backend: миграция `20260724_ticket_mentions.js` (JSON `mentions` на ticket_messages), `resolveMentionedEmployees` в tickets.service.js (матч по полному имени или local-part email, sender исключён), роут POST /:id/messages сохраняет mentions; swagger обновлён
 - ⬜ Этап 4 — Read receipts + offline queue
 - ⬜ Этап 5 — Time tracking
 - ⬜ Этап 6 — API versioning

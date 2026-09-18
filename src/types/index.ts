@@ -24,6 +24,7 @@ export interface TicketMessage {
   senderAvatar: string
   text: string
   attachments: string[]
+  mentions: number[]
   createdAt: string
   isInternal: boolean
 }

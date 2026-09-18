@@ -10,10 +10,7 @@ import { hasRole } from '../utils/roleUtils.js'
 import { invalidateCache } from '../cache.js'
 import { enqueueEvent } from '../outbox.js'
 import { logAudit } from '../audit.js'
-import {
-  notifyTicketCreated, notifyStatusChanged, notifyPriorityChanged,
-  notifyTicketAssigned, notifyTicketMessage,
-} from '../notify.js'
+import { notifyTicketCreated, notifyStatusChanged, notifyPriorityChanged, notifyTicketAssigned, notifyTicketMessage, notifyTicketMention } from '../notify.js'
 import { createTicketValidation, updateStatusValidation, updatePriorityValidation, assignTicketValidation, updateTagsValidation, bulkTicketValidation, addMessageValidation } from '../validate.js'
 import logger from '../logger.js'
 import { idempotent } from '../middleware/idempotency.js'
@@ -31,6 +28,7 @@ import {
   updateTicketTags,
   bulkUpdateTickets,
   generateTicketFilename,
+  resolveMentionedEmployees,
 } from '../services/tickets.service.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -291,6 +289,7 @@ router.post('/:id/messages', idempotent, addMessageValidation, async (req, res) 
       ticket.created_by === req.user.userId ||
       ticket.assigned_to === req.user.userId
     if (!canWrite) return res.status(403).json({ success: false, message: 'Forbidden' })
+    const mentionedUserIds = await resolveMentionedEmployees(text, req.user.userId)
     const msg = await prisma.ticket_messages.create({
       data: {
         ticket_id: ticketId,
@@ -298,6 +297,7 @@ router.post('/:id/messages', idempotent, addMessageValidation, async (req, res) 
         sender_name: req.user.name || 'User',
         text,
         attachments: attachments ? JSON.stringify(attachments) : null,
+        mentions: mentionedUserIds.length > 0 ? JSON.stringify(mentionedUserIds) : null,
         is_internal: isInternal ? true : false,
       },
     })
@@ -305,6 +305,9 @@ router.post('/:id/messages', idempotent, addMessageValidation, async (req, res) 
     enqueueEvent('ticket:message', null, { ticketId, message: msg })
     try {
       await notifyTicketMessage(ticketId, req.user.userId, req.user.name, text)
+      if (mentionedUserIds.length > 0) {
+        await notifyTicketMention(ticketId, mentionedUserIds, req.user.userId, req.user.name)
+      }
     } catch (notifyErr) {
       logger.warn('notifyTicketMessage failed:', notifyErr.message)
     }
