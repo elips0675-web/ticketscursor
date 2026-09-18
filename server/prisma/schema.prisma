@@ -55,6 +55,7 @@ model tickets {
   resolved_at DateTime?
   escalated_at DateTime?
   escalation_level Int       @default(0)
+  tags        Json?
   created_at  DateTime? @default(now())
   updated_at  DateTime? @default(now())
   deleted_at  DateTime?

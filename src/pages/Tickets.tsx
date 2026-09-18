@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Search, ArrowUpDown, Filter, Plus, MessageSquare, User, Download, FileText } from 'lucide-react'
+import { Search, ArrowUpDown, Filter, Plus, MessageSquare, User, Download, FileText, Tag as TagIcon } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useSocket } from '@/context/SocketContext'
@@ -59,8 +59,15 @@ export default function Tickets() {
   const debouncedSearch = useDebounce(search, 300)
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get('status') || 'all')
   const [priorityFilter, setPriorityFilter] = useState<string>(searchParams.get('priority') || 'all')
+  const [tagFilter, setTagFilter] = useState<string>(searchParams.get('tag') || 'all')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest')
   const [page, setPage] = useState(1)
+
+  const allTags = useMemo(() => {
+    const set = new Set<string>()
+    tickets.forEach((t) => (t.tags || []).forEach((tag) => set.add(tag)))
+    return Array.from(set).sort()
+  }, [tickets])
 
   const filtered = useMemo(() => {
     let result = [...tickets]
@@ -70,13 +77,14 @@ export default function Tickets() {
     }
     if (statusFilter !== 'all') result = result.filter((t) => t.status === statusFilter)
     if (priorityFilter !== 'all') result = result.filter((t) => t.priority === priorityFilter)
+    if (tagFilter !== 'all') result = result.filter((t) => (t.tags || []).includes(tagFilter))
     result.sort((a, b) =>
       sortBy === 'newest'
         ? new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
         : new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
     )
     return result
-  }, [tickets, debouncedSearch, statusFilter, priorityFilter, sortBy])
+  }, [tickets, debouncedSearch, statusFilter, priorityFilter, tagFilter, sortBy])
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE)
   const paged = filtered.slice(0, page * PER_PAGE)
@@ -231,6 +239,28 @@ export default function Tickets() {
               ))}
             </SelectContent>
           </Select>
+          {allTags.length > 0 && (
+            <Select
+              value={tagFilter}
+              onValueChange={(v) => {
+                setTagFilter(v)
+                resetPage()
+              }}
+            >
+              <SelectTrigger className="w-full sm:w-[150px]">
+                <TagIcon className="w-3.5 h-3.5 mr-1" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('tickets.allTags')}</SelectItem>
+                {allTags.map((tag) => (
+                  <SelectItem key={tag} value={tag}>
+                    {tag}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Button
             variant="outline"
             size="icon"
@@ -281,6 +311,20 @@ export default function Tickets() {
               </div>
               <h3 className="font-bold text-sm leading-snug mb-1 line-clamp-2">{ticket.title}</h3>
               <p className="text-xs text-muted-foreground line-clamp-2 mb-4 flex-1">{ticket.description}</p>
+              {(ticket.tags || []).length > 0 && (
+                <div className="flex items-center gap-1 flex-wrap mb-3">
+                  {ticket.tags.slice(0, 4).map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-[9px]">
+                      {tag}
+                    </Badge>
+                  ))}
+                  {(ticket.tags || []).length > 4 && (
+                    <Badge variant="outline" className="text-[9px]">
+                      +{ticket.tags.length - 4}
+                    </Badge>
+                  )}
+                </div>
+              )}
               <div className="flex items-center gap-3 text-[10px] text-muted-foreground pt-3 border-t">
                 <span className="flex items-center gap-1">
                   <User className="w-3 h-3" />

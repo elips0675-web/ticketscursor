@@ -1,7 +1,7 @@
 import { ZodError } from 'zod'
 import {
   loginSchema, registerSchema, createTicketSchema,
-  updateStatusSchema, updatePrioritySchema, assignTicketSchema,
+  updateStatusSchema, updatePrioritySchema, assignTicketSchema, updateTagsSchema,
   addMessageSchema, createPollSchema, voteSchema,
   createNewsSchema, createWikiSchema, createCalendarSchema,
   updateCalendarSchema, searchSchema, changePasswordSchema,
@@ -48,6 +48,7 @@ export const createTicketValidation = validate(createTicketSchema)
 export const updateStatusValidation = validate(updateStatusSchema)
 export const updatePriorityValidation = validate(updatePrioritySchema)
 export const assignTicketValidation = validate(assignTicketSchema)
+export const updateTagsValidation = validate(updateTagsSchema)
 export const addMessageValidation = validate(addMessageSchema)
 export const createPollValidation = validate(createPollSchema)
 export const voteValidation = validate(voteSchema)

@@ -777,6 +777,23 @@ describe('POST /api/tickets', () => {
     expect(res.body.data).toHaveProperty('title', 'Test ticket')
   })
 
+  it('creates a ticket with tags', async () => {
+    const res = await request(app)
+      .post('/api/tickets')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ title: 'Tagged ticket', description: 'test', priority: 'medium', category: 'bug', tags: ['urgent', 'vpn'] })
+    expect(res.status).toBe(201)
+    expect(res.body.data).toHaveProperty('tags')
+  })
+
+  it('rejects tags exceeding 20 items', async () => {
+    const res = await request(app)
+      .post('/api/tickets')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ title: 'Too many tags', description: 'test', priority: 'medium', category: 'bug', tags: Array.from({ length: 21 }, (_, i) => `tag-${i}`) })
+    expect(res.status).toBe(400)
+  })
+
   it('assigns a ticket to employee', async () => {
     const create = await request(app)
       .post('/api/tickets')
@@ -791,6 +808,38 @@ describe('POST /api/tickets', () => {
       .send({ employeeId: 2 })
     expect(res.status).toBe(200)
     expect(res.body.success).toBe(true)
+  })
+
+  it('updates ticket tags', async () => {
+    const create = await request(app)
+      .post('/api/tickets')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ title: 'Tags update test', description: 'test', priority: 'medium', category: 'bug', tags: ['urgent'] })
+    expect(create.status).toBe(201)
+    const ticketId = create.body.data.id
+
+    const res = await request(app)
+      .put(`/api/tickets/${ticketId}/tags`)
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ tags: ['urgent', 'vpn'] })
+    expect(res.status).toBe(200)
+    expect(res.body.data.tags).toEqual(['urgent', 'vpn'])
+  })
+
+  it('returns 404 when updating tags of missing ticket', async () => {
+    const res = await request(app)
+      .put('/api/tickets/999999/tags')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ tags: ['x'] })
+    expect(res.status).toBe(404)
+  })
+
+  it('rejects empty array for tag update', async () => {
+    const res = await request(app)
+      .put('/api/tickets/1/tags')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({})
+    expect(res.status).toBe(400)
   })
 })
 

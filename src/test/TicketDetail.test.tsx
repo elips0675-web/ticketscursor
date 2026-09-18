@@ -42,6 +42,9 @@ vi.mock('react-i18next', () => ({
         'tickets.internalNote': 'Внутренняя заметка',
         'tickets.internalBadge': 'Внутр.',
         'tickets.newMessageFrom': 'Новое сообщение от {name}',
+        'tickets.tags': 'Теги',
+        'tickets.tagsInputPlaceholder': 'добавить теги через запятую',
+        'tickets.saveTags': 'Сохранить',
         'common.back': 'Назад',
       })[key] || key,
   }),
@@ -164,5 +167,23 @@ describe('TicketDetail', () => {
     const input = screen.getByPlaceholderText('Напишите сообщение...')
     await user.type(input, 'Тестовое сообщение')
     expect(input).toHaveValue('Тестовое сообщение')
+  })
+
+  it('shows existing tags', async () => {
+    render(<TicketDetail />, { wrapper: TestProviders })
+    await screen.findByText('Проблема с доступом')
+    expect(screen.getAllByText('vpn').length).toBeGreaterThan(0)
+  })
+
+  it('adds new tags via tags input', async () => {
+    const user = userEvent.setup()
+    render(<TicketDetail />, { wrapper: TestProviders })
+    await screen.findByText('Проблема с доступом')
+    const input = screen.getByPlaceholderText('добавить теги через запятую')
+    await user.type(input, 'urgent, vpn')
+    await user.click(screen.getByText('Сохранить'))
+    await waitFor(() => {
+      expect(screen.getAllByText('urgent').length).toBeGreaterThan(0)
+    })
   })
 })

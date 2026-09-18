@@ -23,6 +23,7 @@ import {
   createTicket,
   updateTicketStatus,
   updateTicketPriority,
+  updateTicketTags,
   getSlaStats,
   listOverdueSlaTickets,
   listTickets,
@@ -76,6 +77,20 @@ describe('SLA — due_at on create', () => {
     prisma.tickets.create.mockResolvedValue({ id: 1 })
     const result = await createTicket({ title: 'T', description: 'D', priority: 'medium', category: 'support', createdBy: 1 })
     expect(result.autoAssignedTo).toBeNull()
+  })
+
+  it('stores tags when provided', async () => {
+    prisma.tickets.create.mockResolvedValue({ id: 1, tags: ['urgent', 'vpn'] })
+    await createTicket({ title: 'T', description: 'D', priority: 'medium', category: 'support', createdBy: 1, tags: ['urgent', 'vpn'] })
+    const data = prisma.tickets.create.mock.calls[0][0].data
+    expect(data.tags).toEqual(['urgent', 'vpn'])
+  })
+
+  it('omits tags when not provided', async () => {
+    prisma.tickets.create.mockResolvedValue({ id: 1 })
+    await createTicket({ title: 'T', description: 'D', priority: 'medium', category: 'support', createdBy: 1 })
+    const data = prisma.tickets.create.mock.calls[0][0].data
+    expect(data).not.toHaveProperty('tags')
   })
 })
 
@@ -173,6 +188,41 @@ describe('listTickets', () => {
     prisma.tickets.findMany.mockResolvedValue([])
     await listTickets({ page: 1, limit: 20, userId: 1, role: 'super_admin' })
     expect(prisma.tickets.count).toHaveBeenCalledWith(expect.objectContaining({ where: { deleted_at: null } }))
+  })
+
+  it('filters by tag', async () => {
+    prisma.tickets.count.mockResolvedValue(1)
+    prisma.tickets.findMany.mockResolvedValue([{ id: 1, title: 'Tagged', tags: ['urgent'], assigned_to_employee: null, _count: { ticket_messages: 0 } }])
+    const result = await listTickets({ page: 1, limit: 20, userId: 1, role: 'super_admin', tags: ['urgent'] })
+    expect(result.data).toHaveLength(1)
+    expect(prisma.tickets.count).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { deleted_at: null, tags: { array_contains: 'urgent' } } }),
+    )
+  })
+})
+
+describe('updateTicketTags', () => {
+  it('updates tags and returns them', async () => {
+    prisma.tickets.findUnique.mockResolvedValue({ id: 1 })
+    prisma.tickets.update.mockResolvedValue({ id: 1, tags: ['urgent'] })
+    const result = await updateTicketTags(1, ['urgent'])
+    expect(result).toEqual({ id: 1, tags: ['urgent'] })
+    const updateData = prisma.tickets.update.mock.calls[0][0].data
+    expect(updateData.tags).toEqual(['urgent'])
+  })
+
+  it('stores empty array when tags cleared', async () => {
+    prisma.tickets.findUnique.mockResolvedValue({ id: 1 })
+    prisma.tickets.update.mockResolvedValue({ id: 1, tags: [] })
+    await updateTicketTags(1, [])
+    const updateData = prisma.tickets.update.mock.calls[0][0].data
+    expect(updateData.tags).toEqual([])
+  })
+
+  it('returns null for missing ticket', async () => {
+    prisma.tickets.findUnique.mockResolvedValue(null)
+    const result = await updateTicketTags(999, ['x'])
+    expect(result).toBeNull()
   })
 })
 

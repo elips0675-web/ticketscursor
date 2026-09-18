@@ -101,8 +101,9 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 - ❌ Bulk actions (массовое назначение/закрытие)
 - ✅ Шаблоны ответов (canned responses)
 - ❌ Time tracking
-- ❌ Tags/labels на тикетах
+- ✅ Tags/labels на тикетах (JSON `tags`, create/редактирование в TicketDetail, фильтр и отображение в Tickets, `PUT /api/tickets/:id/tags`)
 - ❌ Mentions (@username)
+- ❌ ИИ-ответы из Wiki (по мотивам Frisbee) — P2, опционально: поиск по статьям Wiki + сгенерированный ответ (LLM/шаблон), кнопка "спросить ассистента" в тикете
 - ✅ SLA breach escalation
 
 ## Admin Operations — `/admin/settings`

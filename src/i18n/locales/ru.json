@@ -145,7 +145,12 @@
     "messageDeleted": "Сообщение удалено",
     "closedStatus": "Тикет закрыт",
     "createdAt": "Создан {{{date}}}",
-    "escalated": "Эскалация ур. {{{level}}}"
+    "escalated": "Эскалация ур. {{{level}}}",
+    "tags": "Теги",
+    "tagsPlaceholder": "тег1, тег2 (через запятую)",
+    "tagsInputPlaceholder": "добавить теги через запятую",
+    "saveTags": "Сохранить",
+    "allTags": "Все теги"
   },
   "dashboard": {
     "title": "Дашборд",

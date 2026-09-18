@@ -18,6 +18,7 @@ export default function NewTicket() {
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<TicketPriority>('medium')
   const [category, setCategory] = useState('support')
+  const [tagsText, setTagsText] = useState('')
   const [computerName, setComputerName] = useState('')
   const [userAccount, setUserAccount] = useState('')
 
@@ -34,11 +35,13 @@ export default function NewTicket() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim() || !description.trim()) return
+    const tags = tagsText.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 20)
     createTicket({
       title,
       description,
       priority,
       category,
+      tags: tags.length > 0 ? tags : undefined,
       computerName: computerName || undefined,
       userAccount: userAccount || undefined,
     })
@@ -111,6 +114,15 @@ export default function NewTicket() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-bold">{t('tickets.tags')}</label>
+              <Input
+                value={tagsText}
+                onChange={(e) => setTagsText(e.target.value)}
+                placeholder={t('tickets.tagsPlaceholder')}
+              />
             </div>
 
             <div className="space-y-1.5 p-3 rounded-lg bg-muted/30">

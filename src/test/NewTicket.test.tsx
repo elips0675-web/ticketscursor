@@ -22,6 +22,8 @@ vi.mock('react-i18next', () => ({
       'tickets.categorySelect': 'Категория',
       'tickets.medium': 'Средний',
       'tickets.support': 'Поддержка',
+      'tickets.tags': 'Теги',
+      'tickets.tagsPlaceholder': 'тег1, тег2 (через запятую)',
     })[key] || key,
   }),
 }))
@@ -55,5 +57,10 @@ describe('NewTicket', () => {
   it('shows category selector', () => {
     render(<NewTicket />, { wrapper: AllTheProviders })
     expect(screen.getByText('Категория')).toBeInTheDocument()
+  })
+
+  it('shows tags input', () => {
+    render(<NewTicket />, { wrapper: AllTheProviders })
+    expect(screen.getByPlaceholderText('тег1, тег2 (через запятую)')).toBeInTheDocument()
   })
 })

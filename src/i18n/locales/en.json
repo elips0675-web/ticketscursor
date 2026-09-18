@@ -146,7 +146,12 @@
     "messageDeleted": "Message deleted",
     "closedStatus": "Ticket closed",
     "createdAt": "Created {{{date}}}",
-    "escalated": "Escalation lvl {{{level}}}"
+    "escalated": "Escalation lvl {{{level}}}",
+    "tags": "Tags",
+    "tagsPlaceholder": "tag1, tag2 (comma separated)",
+    "tagsInputPlaceholder": "add tags comma separated",
+    "saveTags": "Save",
+    "allTags": "All tags"
   },
   "dashboard": {
     "title": "Dashboard",

@@ -86,7 +86,7 @@ const options = {
           tags: ['Tickets'],
           summary: 'Create a ticket',
           security: [{ bearerAuth: [] }],
-          requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { title: { type: 'string' }, description: { type: 'string' }, priority: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] }, category: { type: 'string' }, computerName: { type: 'string' }, userAccount: { type: 'string' } }, required: ['title', 'description', 'priority', 'category'] } } } },
+          requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { title: { type: 'string' }, description: { type: 'string' }, priority: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] }, category: { type: 'string' }, tags: { type: 'array', items: { type: 'string' } }, computerName: { type: 'string' }, userAccount: { type: 'string' } }, required: ['title', 'description', 'priority', 'category'] } } } },
           responses: { '201': { description: 'Created ticket' } },
         },
       },
@@ -118,6 +118,16 @@ const options = {
           parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
           requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { employeeId: { type: 'integer' } }, required: ['employeeId'] } } } },
           responses: { '200': { description: 'Assigned' }, '403': { description: 'Forbidden' } },
+        },
+      },
+      '/api/tickets/{id}/tags': {
+        put: {
+          tags: ['Tickets'],
+          summary: 'Update ticket tags (agent+)',
+          security: [{ bearerAuth: [] }],
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+          requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { tags: { type: 'array', items: { type: 'string' } } }, required: ['tags'] } } } },
+          responses: { '200': { description: 'Tags updated' }, '404': { description: 'Ticket not found' }, '403': { description: 'Forbidden' } },
         },
       },
       '/api/tickets/{id}/messages': {

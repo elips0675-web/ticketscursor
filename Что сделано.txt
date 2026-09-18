@@ -16,6 +16,7 @@
 
   ✅ Тикеты
     • CRUD, статусы с валидацией переходов (VALID_TRANSITIONS), приоритеты
+    • Tags/labels: JSON tags, создание в форме, редактирование в деталях (PUT /api/tickets/:id/tags), фильтр/отображение в списке
     • SLA: due_at, first_response_at, resolved_at; пересчёт при смене приоритета
     • Автоназначение (AUTO_ASSIGN — наименее загруженный)
     • Agent видит свои + неназначенные; requester — только свои
@@ -424,3 +425,4 @@
 - Server coverage: search.js FULLTEXT fallback, tickets.service.js 500-branches
 - Notifications: read receipts, offline message queue
 - Files.tsx Branch 72.5%
+- ИИ-ответы из Wiki (по мотивам Frisbee) — P2, опционально: поиск по статьям Wiki + сгенерированный ответ (LLM/шаблон), кнопка "спросить ассистента" в тикете

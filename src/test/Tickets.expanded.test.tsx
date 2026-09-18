@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -21,6 +21,7 @@ vi.mock('react-i18next', () => ({
         'tickets.search': 'Поиск по тикетам...',
         'tickets.allStatuses': 'Все статусы',
         'tickets.allPriorities': 'Все приоритеты',
+        'tickets.allTags': 'Все теги',
         'tickets.notFound': 'Тикеты не найдены',
         'tickets.tryAdjust': 'Попробуйте изменить параметры поиска',
         'tickets.showMore': 'Показать ещё',
@@ -74,9 +75,9 @@ const mkTicket = (
   description: `Description ${id}`,
   status: 'open',
   priority: 'medium',
-  category: 'bug',
-  tags: [],
-  computerName: null,
+category: 'bug',
+    tags: [] as string[],
+    computerName: null,
   userAccount: null,
   createdBy: { id: 1, name: 'User A', email: '', avatar: '' },
   assignedTo: undefined,
@@ -88,11 +89,11 @@ const mkTicket = (
 })
 
 const mockTickets = [
-  mkTicket(1, { title: 'Network issue', status: 'open', priority: 'critical', category: 'incident' }),
-  mkTicket(2, { title: 'Printer jam', status: 'in_progress', priority: 'high', category: 'support' }),
+  mkTicket(1, { title: 'Network issue', status: 'open', priority: 'critical', category: 'incident', tags: ['vpn', 'urgent'] }),
+  mkTicket(2, { title: 'Printer jam', status: 'in_progress', priority: 'high', category: 'support', tags: ['hardware'] }),
   mkTicket(3, { title: 'Software request', status: 'resolved', priority: 'medium', category: 'feature' }),
   mkTicket(4, { title: 'Email not working', status: 'open', priority: 'low', category: 'support' }),
-  mkTicket(5, { title: 'Login problem', status: 'closed', priority: 'high', category: 'bug' }),
+  mkTicket(5, { title: 'Login problem', status: 'closed', priority: 'high', category: 'bug', tags: ['vpn'] }),
   mkTicket(6, { title: 'Hardware request', status: 'open', priority: 'medium', category: 'support' }),
   mkTicket(7, { title: 'Server down', status: 'in_progress', priority: 'critical', category: 'incident' }),
   mkTicket(8, { title: 'Password reset', status: 'resolved', priority: 'low', category: 'support' }),
@@ -321,5 +322,41 @@ describe('Tickets', () => {
     expect(await screen.findByText('Network issue')).toBeInTheDocument()
     const sortBtn = screen.getByLabelText('Сортировка')
     await user.click(sortBtn)
+  })
+
+  it('shows tags on ticket cards', async () => {
+    render(<Tickets />, { wrapper: TestWrapper })
+    expect(await screen.findByText('Network issue')).toBeInTheDocument()
+    expect(screen.getAllByText('vpn').length).toBeGreaterThanOrEqual(2)
+    expect(screen.getByText('urgent')).toBeInTheDocument()
+    expect(screen.getByText('hardware')).toBeInTheDocument()
+  })
+
+  it('filters tickets by tag via select', async () => {
+    render(<Tickets />, { wrapper: TestWrapper })
+    await screen.findByText('Network issue')
+    const boxes = screen.getAllByRole('combobox')
+    const tagTrigger = boxes.find((b) => b.textContent && b.textContent.includes('Все теги'))
+    expect(tagTrigger).toBeTruthy()
+    await fireEvent.click(tagTrigger!)
+    const option = await screen
+      .findAllByText('hardware')
+      .then((els) => els.map((el) => el.closest('[role="option"]')).find((o) => !!o))
+    expect(option).toBeTruthy()
+    await fireEvent.pointerDown(option!)
+    await fireEvent.click(option!)
+    await waitFor(() => {
+      expect(screen.getAllByText('Printer jam').length).toBeGreaterThan(0)
+      expect(screen.queryByText('Network issue')).not.toBeInTheDocument()
+    })
+  })
+
+  it('filters tickets by tag via url param', async () => {
+    render(<Tickets />, { wrapper: (p) => <TestWrapper {...p} url="/tickets?tag=vpn" /> })
+    await waitFor(() => {
+      expect(screen.getByText('Network issue')).toBeInTheDocument()
+    })
+    expect(screen.getByText('Login problem')).toBeInTheDocument()
+    expect(screen.queryByText('Printer jam')).not.toBeInTheDocument()
   })
 })

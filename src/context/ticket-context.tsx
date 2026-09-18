@@ -13,6 +13,7 @@ interface TicketContextType {
   updateTicketStatus: (id: number, status: TicketStatus) => Promise<void>
   updateTicketPriority: (id: number, priority: TicketPriority) => Promise<void>
   assignTicket: (id: number, employeeId: number) => Promise<void>
+  updateTicketTags: (id: number, tags: string[]) => Promise<void>
   addMessage: (
     ticketId: number,
     text: string,
@@ -24,6 +25,7 @@ interface TicketContextType {
     description: string
     priority: TicketPriority
     category: string
+    tags?: string[]
     computerName?: string
     userAccount?: string
   }) => Promise<void>
@@ -39,7 +41,7 @@ function mapTicket(raw: Record<string, unknown>): Ticket {
     status: raw.status,
     priority: raw.priority,
     category: raw.category,
-    tags: [],
+    tags: Array.isArray(raw.tags) ? (raw.tags as string[]) : [],
     computerName: raw.computer_name,
     userAccount: raw.user_account,
     createdBy: { id: raw.created_by, name: raw.created_by_name || 'User', email: '', avatar: '' },
@@ -229,6 +231,26 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     },
   })
 
+  const tagsMutation = useMutation({
+    mutationFn: ({ id, tags }: { id: number; tags: string[] }) =>
+      authFetch(`${API_URL}/tickets/${id}/tags`, token, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tags }),
+      }),
+    onMutate: async ({ id, tags }) => {
+      await queryClient.cancelQueries({ queryKey: ['tickets'] })
+      const prev = queryClient.getQueryData<Ticket[]>(['tickets'])
+      queryClient.setQueryData<Ticket[]>(['tickets'], (old) =>
+        old?.map((t) => (t.id === id ? { ...t, tags, updatedAt: new Date().toISOString() } : t)),
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(['tickets'], ctx.prev)
+    },
+  })
+
   const addMessageMutation = useMutation({
     mutationFn: async ({
       ticketId,
@@ -307,6 +329,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       description: string
       priority: TicketPriority
       category: string
+      tags?: string[]
       computerName?: string
       userAccount?: string
     }) =>
@@ -325,7 +348,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         status: 'open',
         priority: data.priority,
         category: data.category,
-        tags: [],
+        tags: data.tags || [],
         computerName: data.computerName,
         userAccount: data.userAccount,
         createdBy: { id: user?.id || 0, name: user?.name || '', email: '', avatar: '' },
@@ -363,6 +386,11 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     [assignMutation],
   )
 
+  const updateTicketTags = useCallback(
+    (id: number, tags: string[]) => tagsMutation.mutateAsync({ id, tags }),
+    [tagsMutation],
+  )
+
   const addMessage = useCallback(
     (ticketId: number, text: string, isInternal: boolean, attachments?: { url: string; name: string }[]) =>
       addMessageMutation.mutateAsync({ ticketId, text, isInternal, attachments }),
@@ -375,6 +403,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       description: string
       priority: TicketPriority
       category: string
+      tags?: string[]
       computerName?: string
       userAccount?: string
     }) => createTicketMutation.mutateAsync(data),
@@ -390,6 +419,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         updateTicketStatus,
         updateTicketPriority,
         assignTicket,
+        updateTicketTags,
         addMessage,
         createTicket,
         loading,

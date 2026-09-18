@@ -18,6 +18,7 @@ export const createTicketSchema = z.object({
   description: z.string().trim().min(1, 'Description required'),
   priority: z.enum(['low', 'medium', 'high', 'critical']),
   category: z.string().trim().min(1, 'Category required'),
+  tags: z.array(z.string().trim().min(1, 'Tag required').max(50)).max(20).optional(),
 })
 
 export const updateStatusSchema = z.object({
@@ -30,6 +31,10 @@ export const updatePrioritySchema = z.object({
 
 export const assignTicketSchema = z.object({
   employeeId: z.number().int().nullable(),
+})
+
+export const updateTagsSchema = z.object({
+  tags: z.array(z.string().trim().min(1, 'Tag required').max(50)).max(20),
 })
 
 export const addMessageSchema = z.object({

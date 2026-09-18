@@ -14,7 +14,7 @@ import {
   notifyTicketCreated, notifyStatusChanged, notifyPriorityChanged,
   notifyTicketAssigned, notifyTicketMessage,
 } from '../notify.js'
-import { createTicketValidation, updateStatusValidation, updatePriorityValidation, assignTicketValidation, addMessageValidation } from '../validate.js'
+import { createTicketValidation, updateStatusValidation, updatePriorityValidation, assignTicketValidation, updateTagsValidation, addMessageValidation } from '../validate.js'
 import logger from '../logger.js'
 import { idempotent } from '../middleware/idempotency.js'
 import { validateUpload } from '../middleware/validateUpload.js'
@@ -28,6 +28,7 @@ import {
   updateTicketStatus,
   updateTicketPriority,
   updateTicketAssignee,
+  updateTicketTags,
   generateTicketFilename,
 } from '../services/tickets.service.js'
 
@@ -59,8 +60,9 @@ router.use(auditLogMiddleware)
 router.get('/', async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page) || 1)
   const limit = Math.min(500, Math.max(1, parseInt(req.query.limit) || 50))
+  const tags = req.query.tag ? [String(req.query.tag)] : undefined
   try {
-    const payload = await listTickets({ page, limit, userId: req.user.userId, role: req.user.role })
+    const payload = await listTickets({ page, limit, userId: req.user.userId, role: req.user.role, tags })
     res.json({ success: true, ...payload })
   } catch (err) {
     logger.error('Tickets list error:', err)
@@ -110,13 +112,14 @@ router.get('/:id', async (req, res) => {
 })
 
 router.post('/', idempotent, createTicketValidation, async (req, res) => {
-  const { title, description, priority, category } = req.body
+  const { title, description, priority, category, tags } = req.body
   try {
     const { ticket, dueAt, autoAssignedTo } = await createTicket({
       title,
       description,
       priority,
       category,
+      tags,
       createdBy: req.user.userId,
     })
     await prisma.ticket_messages.create({
@@ -215,6 +218,22 @@ router.put('/:id/assign', requireRole('admin', 'senior_agent'), assignTicketVali
   } catch (err) {
     logger.error('Assign ticket error:', err)
     res.status(500).json({ success: false, message: 'Failed to assign ticket' })
+  }
+})
+
+router.put('/:id/tags', requireRole('admin', 'senior_agent', 'agent'), updateTagsValidation, async (req, res) => {
+  const ticketId = Number(req.params.id)
+  const { tags } = req.body
+  try {
+    const result = await updateTicketTags(ticketId, tags)
+    if (!result) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    enqueueEvent('ticket:updated', null, { id: ticketId, tags, updatedBy: req.user.userId })
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'tags_updated', entityType: 'ticket', entityId: ticketId, details: { tags } })
+    invalidateCache('cache:/api/tickets*')
+    res.json({ success: true, data: result })
+  } catch (err) {
+    logger.error('Update ticket tags error:', err)
+    res.status(500).json({ success: false, message: 'Failed to update tags' })
   }
 })
 

@@ -4,58 +4,65 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import Calendar from '@/pages/Calendar'
 
-const mockEvents = vi.hoisted(() => [
-  {
-    id: 1,
-    title: 'Team Standup',
-    date: '2026-07-06T09:00:00Z',
-    time: '09:00',
-    description: 'Daily standup',
-    category: 'meeting',
-    created_by: 1,
-    author_name: 'Admin',
-  },
-  {
-    id: 2,
-    title: 'Sprint Review',
-    date: '2026-07-06T14:00:00Z',
-    time: '14:00',
-    description: 'Sprint demo',
-    category: 'meeting',
-    created_by: 1,
-    author_name: 'Admin',
-  },
-  {
-    id: 3,
-    title: 'Admin Birthday',
-    date: '2026-07-15T00:00:00Z',
-    time: null,
-    description: null,
-    category: 'personal',
-    created_by: 1,
-    author_name: 'Admin',
-  },
-  {
-    id: 4,
-    title: 'Project Deadline',
-    date: '2026-08-01T00:00:00Z',
-    time: null,
-    description: 'Final deadline',
-    category: 'deadline',
-    created_by: 1,
-    author_name: 'Admin',
-  },
-  {
-    id: 5,
-    title: 'Team Lunch',
-    date: '2026-07-06T12:00:00Z',
-    time: '12:00',
-    description: null,
-    category: 'social',
-    created_by: 1,
-    author_name: 'Admin',
-  },
-])
+const mockEvents = vi.hoisted(() => {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = now.getMonth()
+  const isoDay = (day: number, monthOffset = 0) =>
+    new Date(y, m + monthOffset, day, 12, 0, 0).toISOString()
+  return [
+    {
+      id: 1,
+      title: 'Team Standup',
+      date: isoDay(6),
+      time: '09:00',
+      description: 'Daily standup',
+      category: 'meeting',
+      created_by: 1,
+      author_name: 'Admin',
+    },
+    {
+      id: 2,
+      title: 'Sprint Review',
+      date: isoDay(6),
+      time: '14:00',
+      description: 'Sprint demo',
+      category: 'meeting',
+      created_by: 1,
+      author_name: 'Admin',
+    },
+    {
+      id: 3,
+      title: 'Admin Birthday',
+      date: isoDay(15),
+      time: null,
+      description: null,
+      category: 'personal',
+      created_by: 1,
+      author_name: 'Admin',
+    },
+    {
+      id: 4,
+      title: 'Project Deadline',
+      date: isoDay(1, 1),
+      time: null,
+      description: 'Final deadline',
+      category: 'deadline',
+      created_by: 1,
+      author_name: 'Admin',
+    },
+    {
+      id: 5,
+      title: 'Team Lunch',
+      date: isoDay(6),
+      time: '12:00',
+      description: null,
+      category: 'social',
+      created_by: 1,
+      author_name: 'Admin',
+    },
+  ]
+})
 
 const mockApi = vi.hoisted(() => ({
   get: vi.fn().mockResolvedValue([]),

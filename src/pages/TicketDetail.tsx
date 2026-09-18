@@ -7,6 +7,7 @@ import { useSocket } from '@/context/SocketContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -40,7 +41,7 @@ function mapTicketDetail(raw: Record<string, unknown>): Ticket {
     status: raw.status,
     priority: raw.priority,
     category: raw.category,
-    tags: [],
+    tags: Array.isArray(raw.tags) ? (raw.tags as string[]) : [],
     computerName: raw.computer_name,
     userAccount: raw.user_account,
     createdBy: { id: raw.created_by, name: raw.created_by_name || 'User', email: '', avatar: '' },
@@ -79,7 +80,7 @@ export default function TicketDetail() {
   const { t } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
-  const { tickets, employees, updateTicketStatus, updateTicketPriority, assignTicket, addMessage } = useTickets()
+  const { tickets, employees, updateTicketStatus, updateTicketPriority, assignTicket, addMessage, updateTicketTags } = useTickets()
   const { canManage, token } = useAuth()
   const { socket } = useSocket()
   const [detailTicket, setDetailTicket] = useState<Ticket | null>(null)
@@ -102,6 +103,7 @@ export default function TicketDetail() {
   }, [id, token])
 
   const [messageText, setMessageText] = useState('')
+  const [tagsDraft, setTagsDraft] = useState('')
   const [isInternal, setIsInternal] = useState(false)
   const [attachments, setAttachments] = useState<{ url: string; name: string }[]>([])
   const [uploading, setUploading] = useState(false)
@@ -164,6 +166,14 @@ export default function TicketDetail() {
     setMessageText('')
     setIsInternal(false)
     setAttachments([])
+  }
+
+  const handleSaveTags = () => {
+    const parsed = tagsDraft.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 20)
+    const merged = Array.from(new Set([...(ticket.tags || []), ...parsed]))
+    updateTicketTags(ticket.id, merged)
+    if (detailTicket) setDetailTicket({ ...detailTicket, tags: merged })
+    setTagsDraft('')
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -487,6 +497,38 @@ export default function TicketDetail() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label htmlFor="ticket-tags" className="text-xs font-bold text-muted-foreground">
+                    {t('tickets.tags')}
+                  </label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="ticket-tags"
+                      value={tagsDraft}
+                      onChange={(e) => setTagsDraft(e.target.value)}
+                      placeholder={t('tickets.tagsInputPlaceholder')}
+                    />
+                    <Button
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => handleSaveTags()}
+                      disabled={!tagsDraft.trim()}
+                    >
+                      <Tag className="w-3.5 h-3.5" />
+                      {t('tickets.saveTags')}
+                    </Button>
+                  </div>
+                  {(ticket.tags || []).length > 0 && (
+                    <div className="flex items-center gap-1 flex-wrap pt-1">
+                      {ticket.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary" className="text-[9px]">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

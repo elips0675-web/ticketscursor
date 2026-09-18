@@ -62,7 +62,7 @@ export async function getLeastLoadedAssignee() {
   return rows?.[0]?.id || null
 }
 
-export async function listTickets({ page, limit, userId, role }) {
+export async function listTickets({ page, limit, userId, role, tags }) {
   const where = { deleted_at: null }
   if (role === 'requester') {
     where.created_by = userId
@@ -71,6 +71,9 @@ export async function listTickets({ page, limit, userId, role }) {
       { assigned_to: userId },
       { assigned_to: null },
     ]
+  }
+  if (Array.isArray(tags) && tags.length > 0) {
+    where.tags = { array_contains: tags[0] }
   }
   const offset = (page - 1) * limit
   const total = await prisma.tickets.count({ where })
@@ -161,25 +164,38 @@ export async function getTicketMessages(id, page = 1, limit = 50) {
   return { data: rows, total, page, totalPages: Math.ceil(total / limit) }
 }
 
-export async function createTicket({ title, description, priority, category, createdBy }) {
+export async function createTicket({ title, description, priority, category, createdBy, tags }) {
   const settings = await getSettings().catch(() => ({}))
   const normalizedPriority = priority || 'medium'
   const dueAt = new Date(Date.now() + getSlaHours(normalizedPriority, category, settings) * 60 * 60 * 1000)
   const autoAssignEnabled = parseBooleanSetting(settings.AUTO_ASSIGN)
   const autoAssignedTo = autoAssignEnabled ? await getLeastLoadedAssignee() : null
-  const ticket = await prisma.tickets.create({
-    data: {
-      title,
-      description,
-      status: 'open',
-      priority: normalizedPriority,
-      category: category || 'support',
-      created_by: createdBy,
-      assigned_to: autoAssignedTo,
-      due_at: dueAt,
-    },
-  })
+  const data = {
+    title,
+    description,
+    status: 'open',
+    priority: normalizedPriority,
+    category: category || 'support',
+    created_by: createdBy,
+    assigned_to: autoAssignedTo,
+    due_at: dueAt,
+  }
+  if (tags && tags.length > 0) data.tags = tags
+  const ticket = await prisma.tickets.create({ data })
   return { ticket, dueAt, autoAssignedTo }
+}
+
+export async function updateTicketTags(id, tags) {
+  const old = await prisma.tickets.findUnique({
+    where: { id },
+    select: { id: true },
+  })
+  if (!old) return null
+  await prisma.tickets.update({
+    where: { id },
+    data: { tags: tags.length > 0 ? tags : [], updated_at: new Date() },
+  })
+  return { id, tags }
 }
 
 export async function updateTicketStatus(id, status) {

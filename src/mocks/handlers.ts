@@ -44,6 +44,7 @@ export const handlers = [
           status: 'open',
           priority: 'high',
           category: 'incident',
+          tags: ['vpn'],
           created_by: 1,
           assigned_to: 2,
           created_at: '2026-07-01T10:00:00Z',
@@ -83,6 +84,7 @@ export const handlers = [
         status: 'open',
         priority: 'high',
         category: 'incident',
+        tags: ['vpn'],
         created_by: 1,
         assigned_to: 2,
         computer_name: 'PC-001',
@@ -438,6 +440,12 @@ export const handlers = [
 
   http.put(`${API}/tickets/:id/assign`, () => {
     return HttpResponse.json({ success: true })
+  }),
+
+  http.put(`${API}/tickets/:id/tags`, ({ params, request }) => {
+    return request.json().then((body: { tags?: string[] }) => {
+      return HttpResponse.json({ success: true, data: { id: Number(params.id), tags: body.tags || [] } })
+    })
   }),
 
   http.post(`${API}/tickets/:id/messages`, () => {
