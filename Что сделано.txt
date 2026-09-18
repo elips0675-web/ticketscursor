@@ -26,6 +26,7 @@
     • POST /:id/messages — проверка прав (creator/assignee/senior_agent+)
     • Фильтры, пагинация, сортировка
     • ticket-context.tsx: хардкод localhost:4000 → централизованный API_URL
+    • Анализ аналогов рынка → "Service Desk против аналогов рынка.md" (Zammad/GLPI/Zendesk/Kайтен и др., оценка стека и позиционирование)
 
   ✅ Дашборд
     • Статистика, график по статусам (Recharts), виджет сотрудников

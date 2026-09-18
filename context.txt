@@ -106,6 +106,21 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 - ❌ ИИ-ответы из Wiki (по мотивам Frisbee) — P2, опционально: поиск по статьям Wiki + сгенерированный ответ (LLM/шаблон), кнопка "спросить ассистента" в тикете
 - ✅ SLA breach escalation
 
+## Сравнение с аналогами рынка
+
+Файл `Service Desk против аналогов рынка.md` — сравнительный анализ (Zammad, GLPI, osTicket, Zendesk, Кайтен, Okdesk и др.), оценка стека (Node/Express + Prisma + MySQL + Socket.IO + Redis — уникален среди open-source helpdesk'ов), уникальная комбинация модулей (WS-чаты в тикетах + Wiki + календарь + PWA + Tauri + K8s), рекомендация: развивать свою систему по тикетному роадмапу, аналоговые фичи (видео/SIP/E2E) — переросток.
+Источник данных: `Аналоги.rtf` / `Аналоги.txt`.
+
+## Дорожная карта (тикетные фичи, по одной, зелёный прогон после каждой)
+
+- ✅ Этап 1 — Tags/labels (см. выше)
+- ✅ Этап 2 — Bulk actions (POST /api/tickets/bulk + чекбоксы/панель в Tickets.tsx)
+- ⬜ Этап 3 — Mentions (@username) — автокомплит в чате/заметках тикета, уведомления
+- ⬜ Этап 4 — Read receipts + offline queue
+- ⬜ Этап 5 — Time tracking
+- ⬜ Этап 6 — API versioning
+- ⬜ Этап 7 — ИИ-ответы из Wiki (P2, опционально)
+
 ## Admin Operations — `/admin/settings`
 
 Страница "Настройки" теперь содержит блок **"Операции"**:
