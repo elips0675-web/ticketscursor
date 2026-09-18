@@ -434,8 +434,17 @@
 - ✅ Swagger обновлён; MSW-хендлеры: сообщение с `mentions: [1,3]`
 - ✅ Тесты: unit tickets.service.mentions 13, API +2 (mentions by name / null), frontend TicketDetail +5 → сервер 393/393, клиент 385/385; tsc чист, build OK, lint 0 новых
 
+### v1.7.0 — Read receipts + offline queue (Этап 4 роадмапа, завершён)
+- ✅ Миграция `20260725_chat_read_receipts.js` — таблица `chat_read_receipts` (chat_id, user_id, last_read_message_id, last_read_at, unique [chat_id, user_id]) + модель в schema.prisma, `npx prisma generate`
+- ✅ `markRead(chatId, userId, lastReadMessageId)` в chats.service.js — upsert по `chat_id_user_id`, курсор = переданный или существующий, сброс unread в chat_rooms; `getChatById` возвращает `readers: [{userId, lastReadMessageId, lastReadAt}]`
+- ✅ PUT `/api/chats/:id/read` принимает `lastReadMessageId` → receipt + WS `chat:read` (chatId, userId, lastReadMessageId, lastReadAt); `message:read` в socket.js тоже персистит
+- ✅ ChatDetail.tsx — `readers` (вместо Set), авто-прочтение новых чужих сообщений, CheckCheck: синяя ✓ `text-blue-400` для прочитанных / полупрозрачная «Доставлено»
+- ✅ Offline queue: WS ack `message:ack` (clientId) из socket.js; localStorage-outbox в SocketContext (sendMessage с clientId, вставка при disconnect, flush при `connect`, удаление по ack); реконсиляция эха собственных сообщений в onNew (маркер `senderName === 'Я'` вместо дубликата)
+- ✅ Missed-доставка точная: на connect — по пер-чатовому курсору `chat_read_receipts` (id > last_read_message_id), fallback на last_active (грубо) где receipt ещё нет
+- ✅ Тесты: SocketContext +3 (outbox queue/flush/ack), ChatDetail +1 (реконсиляция), chats.service test обновлён → сервер 394/394, клиент 389/389; tsc чист, vite build OK, lint 0 ошибок
+- Коммиты: `b6a01eb` (read receipts), `41c6487` (offline queue)
+
 ### Остаточный техдолг (не из Оценка kimi.txt)
 - Server coverage: search.js FULLTEXT fallback, tickets.service.js 500-branches
-- Notifications: read receipts, offline message queue
 - Files.tsx Branch 72.5%
 - ИИ-ответы из Wiki (по мотивам Frisbee) — P2, опционально: поиск по статьям Wiki + сгенерированный ответ (LLM/шаблон), кнопка "спросить ассистента" в тикете

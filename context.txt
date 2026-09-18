@@ -97,7 +97,7 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 Остаётся не реализовано:
 - ❌ API Versioning (unit-префикс `/api/` есть, версионирование `/api/v1/` — нет)
 - ❌ Visual regression testing
-- ❌ Read receipts для чатов (частично — WS `chat:read` есть, но UI не полный)
+- ❌ Read receipts для чатов — ✅ РЕАЛИЗОВАНО в Этапе 4: пер-юзерный курсор `chat_read_receipts`, WS `chat:read` + REST PUT /:id/read (lastReadMessageId), синие ✓ в ChatDetail.tsx для прочитанных
 - ✅ Bulk actions (массовое назначение/закрытие) — Этап 2: реализовано (POST /api/tickets/bulk: status/assign/priority, чекбоксы + панель в Tickets.tsx)
 - ✅ Шаблоны ответов (canned responses)
 - ❌ Time tracking
@@ -116,7 +116,7 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 - ✅ Этап 1 — Tags/labels (см. выше)
 - ✅ Этап 2 — Bulk actions (POST /api/tickets/bulk + чекбоксы/панель в Tickets.tsx)
 - ✅ Этап 3 — Mentions (@username) — автомкомплит в TicketDetail (@Имя Фамилия → вставка), подсветка упоминаний, уведомления упомянутым (notifyTicketMention, type=ticket_mention); backend: миграция `20260724_ticket_mentions.js` (JSON `mentions` на ticket_messages), `resolveMentionedEmployees` в tickets.service.js (матч по полному имени или local-part email, sender исключён), роут POST /:id/messages сохраняет mentions; swagger обновлён
-- ⬜ Этап 4 — Read receipts + offline queue
+- ✅ Этап 4 — Read receipts + offline queue (миграция `20260725_chat_read_receipts.js`; курсор на чат; WS ack `message:ack`; localStorage-outbox в SocketContext с flush при реконнекте; реконсиляция эха собственных сообщений в ChatDetail; точная missed-доставка по курсору вместо last_active)
 - ⬜ Этап 5 — Time tracking
 - ⬜ Этап 6 — API versioning
 - ⬜ Этап 7 — ИИ-ответы из Wiki (P2, опционально)
