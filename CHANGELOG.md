@@ -5,6 +5,17 @@
 
 ---
 
+## [1.8.0] — 2026-09-18
+
+### ⏱️ Time tracking (Этап 5 роадмапа)
+
+- **Backend** — таблицы `time_entries` и `ticket_timers` (миграция `20260918_time_tracking.js`), колонка `tickets.time_spent_minutes`, Prisma-модели `TimeEntry`/`TicketTimer`
+- **API** — `GET/POST /api/tickets/:id/time`, `DELETE /api/tickets/:id/time/:entryId`, `GET /api/tickets/:id/time/timer`, `POST /api/tickets/:id/time/timer/start|stop` (все под `requireRole('admin','senior_agent','agent')`); Zod-схемы: minutes 1..1440, description ≤500
+- **time.service.js** — ручной ввод, таймер start/stop (стоп пишет запись из затраченных минут), удаление (владелец или senior_agent+), пересчёт `time_spent_minutes`
+- **Frontend** — `TimeTrackingCard.tsx` в `TicketDetail`: итого «X ч Y мин», таймер с тиком 1с, форма добавления, список записей с удалением; скрыта для requester
+- **i18n** — 18 ключей `tickets.time*` (ru/en)
+- **Тесты** — сервер 413/413 (+19), клиент 393/393 (+4); tsc чист, vite build OK, lint 0 новых ошибок
+
 ## [1.4.0] — 2026-07-20
 
 ### 📧 Email Notification System

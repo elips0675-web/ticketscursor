@@ -102,8 +102,8 @@
 
 ТЕСТЫ
 
-   • Клиентские: 372/372 (52 файла, vitest + jsdom)
-   • Серверные: 352/352 (25 файлов, vitest + supertest)
+   • Клиентские: 393/393 (52 файла, vitest + jsdom)
+   • Серверные: 413/413 (25 файлов, vitest + supertest)
    • E2E: 36 тестов, 14 файлов (Playwright — login, tickets, chats, admin, SLA, files, search, ldap, kanban, notifications, profile, calculator, audit, file-upload)
    • ESLint: 0 errors, 0 warnings
    • Type-check + build: успешно
@@ -448,3 +448,14 @@
 - Server coverage: search.js FULLTEXT fallback, tickets.service.js 500-branches
 - Files.tsx Branch 72.5%
 - ИИ-ответы из Wiki (по мотивам Frisbee) — P2, опционально: поиск по статьям Wiki + сгенерированный ответ (LLM/шаблон), кнопка "спросить ассистента" в тикете
+
+### v1.8.0 — Time tracking (Этап 5 роадмапа, завершён)
+- ✅ Миграция `20260918_time_tracking.js` — таблицы `time_entries` (ticket_id FK, user_id FK, minutes, description, entry_date, created_at, deleted_at) и `ticket_timers` (ticket_id FK, user_id FK, started_at), FK-индексы
+- ✅ `tickets.time_spent_minutes Int @default(0)` — в schema.prisma + миграция (добавление колонки), `npx prisma generate`
+- ✅ `time.service.js` — 14 unit-тестов: createTimeEntry (валидация minutes/description/права), getTicketTime (тотал/активный таймер), start/stopTimer (стоп пишет entry из затраченных минут, ноль не сохраняется), deleteTimeEntry (владелец или senior_agent+), пересчёт time_spent_minutes
+- ✅ Роуты в tickets.js: GET/POST `/api/tickets/:id/time`, DELETE `/api/tickets/:id/time/:entryId`, GET `/api/tickets/:id/time/timer`, POST `/api/tickets/:id/time/timer/start|stop` — все под `requireRole('admin','senior_agent','agent')`; Zod-схемы (minutes 1..1440, description ≤500) в schemas.js; getTicketById возвращает `time_spent_minutes`
+- ✅ `src/components/TimeTrackingCard.tsx` — карточка «Время» в TicketDetail: итого «X ч Y мин», таймер start/stop с тиком 1с, форма добавления (минуты + описание), список записей с удалением (свои или admin/senior_agent); скрыта для requester
+- ✅ i18n: 18 ключей `tickets.time*` в ru.json/en.json (валидность JSON проверена)
+- ✅ MSW-хендлеры time-эндпоинтов; TicketDetail.test.tsx +4 теста (показ карточки/тотала, добавление записи, start/stop таймера, скрытие для requester)
+- ✅ Тесты: сервер 413/413 (+19), клиент 393/393 (+4); tsc чист, vite build OK, eslint 0 новых ошибок (2 предупреждения: одно pre-existing в handlers.ts, новое set-state-in-effect подавлено по конвенции проекта)
+- Коммит Этапа 5

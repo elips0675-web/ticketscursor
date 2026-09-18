@@ -75,6 +75,7 @@ export const handlers = [
     })
   }),
 
+  // ── Tickets ──
   http.get(`${API}/tickets/:id`, ({ params }) => {
     return HttpResponse.json({
       data: {
@@ -89,6 +90,7 @@ export const handlers = [
         assigned_to: 2,
         computer_name: 'PC-001',
         user_account: 'domain\\user',
+        time_spent_minutes: 60,
         created_at: '2026-07-01T10:00:00Z',
         updated_at: '2026-07-01T10:00:00Z',
         assigned_name: 'Иван Иванов',
@@ -114,6 +116,72 @@ export const handlers = [
           },
         ],
       },
+    })
+  }),
+
+  // ── Ticket time tracking ──
+  http.get(`${API}/tickets/:id/time`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        entries: [
+          {
+            id: 1,
+            ticket_id: 1,
+            user_id: 1,
+            minutes: 60,
+            description: 'Диагностика',
+            entry_date: '2026-09-18T09:00:00Z',
+            created_at: '2026-09-18T09:00:00Z',
+            user: { id: 1, name: 'Admin User', avatar: '' },
+          },
+        ],
+        totalMinutes: 60,
+        totalEntries: 1,
+        activeTimer: null,
+      },
+    })
+  }),
+
+  http.post(`${API}/tickets/:id/time`, async ({ request }) => {
+    const body = (await request.json()) as { minutes: number; description?: string }
+    return HttpResponse.json(
+      {
+        success: true,
+        data: {
+          id: 2,
+          ticket_id: Number(request.url.split('/')[4]),
+          user_id: 1,
+          minutes: body.minutes,
+          description: body.description || '',
+          entry_date: '2026-09-18T10:00:00Z',
+          created_at: '2026-09-18T10:00:00Z',
+          user: { id: 1, name: 'Admin User', avatar: '' },
+        },
+      },
+      { status: 201 },
+    )
+  }),
+
+  http.delete(`${API}/tickets/:id/time/:entryId`, () => {
+    return HttpResponse.json({ success: true, data: { entryId: 1 } })
+  }),
+
+  http.get(`${API}/tickets/:id/time/timer`, () => {
+    return HttpResponse.json({ success: true, data: null })
+  }),
+
+  http.post(`${API}/tickets/:id/time/timer/start`, () => {
+    return HttpResponse.json(
+      { success: true, data: { id: 1, ticket_id: 1, user_id: 1, started_at: new Date().toISOString() } },
+      { status: 201 },
+    )
+  }),
+
+  http.post(`${API}/tickets/:id/time/timer/stop`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: { timer: null, minutes: 5, entry: { id: 99, ticket_id: 1, user_id: 1, minutes: 5, description: '' } },
     })
   }),
 

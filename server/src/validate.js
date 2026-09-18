@@ -6,6 +6,7 @@ import {
   createNewsSchema, createWikiSchema, createCalendarSchema,
   updateCalendarSchema, searchSchema, changePasswordSchema,
   idParamSchema,
+  addTimeSchema,
 } from './schemas.js'
 
 export function validate(schema) {
@@ -59,6 +60,7 @@ export const createCalendarValidation = validate(createCalendarSchema)
 export const updateCalendarValidation = validate(updateCalendarSchema)
 export const searchValidation = validateQuery(searchSchema)
 export const changePasswordValidation = validate(changePasswordSchema)
+export const addTimeValidation = validate(addTimeSchema)
 
 export function validateParams(schema) {
   return (req, res, next) => {

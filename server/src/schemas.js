@@ -111,3 +111,9 @@ export const changePasswordSchema = z.object({
 export const idParamSchema = z.object({
   id: z.coerce.number().int().positive(),
 })
+
+export const addTimeSchema = z.object({
+  minutes: z.coerce.number().int().min(1, 'Minutes required (min 1)').max(1440),
+  description: z.string().trim().max(500, 'Description too long').optional().default(''),
+  entryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Valid date required (YYYY-MM-DD)').optional(),
+})

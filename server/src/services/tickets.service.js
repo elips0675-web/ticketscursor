@@ -132,22 +132,28 @@ export async function getSlaStats() {
 }
 
 export async function getTicketById(id, messagePage = 1, messageLimit = 50) {
-  const ticket = await prisma.tickets.findUnique({
-    where: { id },
-    include: {
-      assigned_to_employee: {
-        select: { name: true, email: true, avatar: true },
+  const [ticket, timeAgg] = await Promise.all([
+    prisma.tickets.findUnique({
+      where: { id },
+      include: {
+        assigned_to_employee: {
+          select: { name: true, email: true, avatar: true },
+        },
+        ticket_messages: {
+          where: { deleted_at: null },
+          orderBy: { created_at: 'asc' },
+          take: messageLimit,
+          skip: (messagePage - 1) * messageLimit,
+        },
       },
-      ticket_messages: {
-        where: { deleted_at: null },
-        orderBy: { created_at: 'asc' },
-        take: messageLimit,
-        skip: (messagePage - 1) * messageLimit,
-      },
-    },
-  })
+    }),
+    prisma.time_entries.aggregate({
+      where: { ticket_id: id },
+      _sum: { minutes: true },
+    }),
+  ])
   if (!ticket) return null
-  return mapTicketRow(ticket)
+  return { ...mapTicketRow(ticket), time_spent_minutes: timeAgg._sum.minutes || 0 }
 }
 
 export async function getTicketMessages(id, page = 1, limit = 50) {

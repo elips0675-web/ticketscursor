@@ -2,8 +2,8 @@
 
 ## Текущее состояние
 
-- **Фронт**: 372 теста (52 suite)
-- **Сервер**: 352 теста (25 suites)
+- **Фронт**: 393 теста (52 suite)
+- **Сервер**: 413 тестов (25 suites)
 - **E2E**: 17/17 страниц ALL OK (check-console.mjs)
 - **Prisma моделей**: 18 (включая event_outbox)
 - **API endpoints**: 60+ (Swagger + Health probes + k6 metrics)
@@ -100,7 +100,7 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 - ❌ Read receipts для чатов — ✅ РЕАЛИЗОВАНО в Этапе 4: пер-юзерный курсор `chat_read_receipts`, WS `chat:read` + REST PUT /:id/read (lastReadMessageId), синие ✓ в ChatDetail.tsx для прочитанных
 - ✅ Bulk actions (массовое назначение/закрытие) — Этап 2: реализовано (POST /api/tickets/bulk: status/assign/priority, чекбоксы + панель в Tickets.tsx)
 - ✅ Шаблоны ответов (canned responses)
-- ❌ Time tracking
+- ✅ Time tracking
 - ✅ Tags/labels на тикетах (JSON `tags`, create/редактирование в TicketDetail, фильтр и отображение в Tickets, `PUT /api/tickets/:id/tags`)
 - ✅ Mentions (@username) — Этап 3 (см. дорожную карту)
 - ❌ ИИ-ответы из Wiki (по мотивам Frisbee) — P2, опционально: поиск по статьям Wiki + сгенерированный ответ (LLM/шаблон), кнопка "спросить ассистента" в тикете
@@ -117,7 +117,7 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 - ✅ Этап 2 — Bulk actions (POST /api/tickets/bulk + чекбоксы/панель в Tickets.tsx)
 - ✅ Этап 3 — Mentions (@username) — автомкомплит в TicketDetail (@Имя Фамилия → вставка), подсветка упоминаний, уведомления упомянутым (notifyTicketMention, type=ticket_mention); backend: миграция `20260724_ticket_mentions.js` (JSON `mentions` на ticket_messages), `resolveMentionedEmployees` в tickets.service.js (матч по полному имени или local-part email, sender исключён), роут POST /:id/messages сохраняет mentions; swagger обновлён
 - ✅ Этап 4 — Read receipts + offline queue (миграция `20260725_chat_read_receipts.js`; курсор на чат; WS ack `message:ack`; localStorage-outbox в SocketContext с flush при реконнекте; реконсиляция эха собственных сообщений в ChatDetail; точная missed-доставка по курсору вместо last_active)
-- ⬜ Этап 5 — Time tracking
+- ✅ Этап 5 — Time tracking (см. раздел ниже)
 - ⬜ Этап 6 — API versioning
 - ⬜ Этап 7 — ИИ-ответы из Wiki (P2, опционально)
 
@@ -188,3 +188,21 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 - `notifyTicketAssigned` — email исполнителю ✅
 - `notifyTicketMessage` — email создателю + исполнителю ✅ (новое)
 - `notifySlaBreached` — email всем админам ✅
+
+## Time tracking — реализация (v1.8.0, Этап 5)
+
+**Что делает:** карточка «Время» в TicketDetail для agent/senior_agent/admin/super_admin — ручной ввод времени по тикету + таймер (start/stop) с живым подсчётом.
+
+**Backend:**
+- Миграция `server/migrations/20260918_time_tracking.js` — таблицы `time_entries` (ticket_id, user_id, minutes, description, entry_date) и `ticket_timers` (ticket_id, user_id, started_at), FK, индексы
+- Prisma: модели `TimeEntry`, `TicketTimer` (+ relation на Ticket/User), `tickets.time_spent_minutes Int @default(0)`
+- `server/src/services/time.service.js` — `createTimeEntry`, `getTicketTime` (entries + totalMinutes + totalEntries + activeTimer), `startTimer`/`stopTimer` (стоп пишет entry из потраченных минут, ноль не сохраняется), `deleteTimeEntry` (владелец или senior_agent+), пересчёт `time_spent_minutes` на постоянный инвариант
+- `server/src/routes/tickets.js` — `GET/POST /api/tickets/:id/time`, `DELETE /api/tickets/:id/time/:entryId`, `GET /api/tickets/:id/time/timer`, `POST /api/tickets/:id/time/timer/start|stop`; все под `requireRole('admin','senior_agent','agent')`; схемы в `schemas.js` (minutes 1..1440, description ≤500)
+- `tickets.service.js` — `getTicketById` возвращает `time_spent_minutes`
+
+**Frontend:**
+- `src/components/TimeTrackingCard.tsx` — итого «X ч Y мин», запуск/остановка таймера (тик 1с), форма минуты+описание (валидация 1..1440 → toast.error), список записей с удалением (свои или admin/senior_agent); data-testid: time-card, time-total, time-start-timer, time-stop-timer, time-timer, time-minutes, time-description, time-add-button, time-entry, time-delete, time-empty
+- `TicketDetail.tsx` — карточка подключена после management-блока; `timeSpentMinutes` маппится в `mapTicketDetail`
+- MSW-хендлеры для всех time-эндпоинтов; тесты в `TicketDetail.test.tsx` (+4)
+
+**Тесты:** сервер 413/413 (+19: 14 time.service + 5 API), клиент 393/393 (+4); tsc чист, vite build OK, lint 0 новых ошибок

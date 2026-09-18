@@ -29,6 +29,30 @@ export interface TicketMessage {
   isInternal: boolean
 }
 
+export interface TimeEntry {
+  id: number
+  ticketId: number
+  userId: number
+  userName: string
+  minutes: number
+  description: string
+  entryDate: string
+  createdAt: string
+}
+
+export interface TicketTimer {
+  id: number
+  ticketId: number
+  userId: number
+  startedAt: string
+}
+
+export interface TicketTimeState {
+  entries: TimeEntry[]
+  totalMinutes: number
+  activeTimer: TicketTimer | null
+}
+
 export interface Ticket {
   id: number
   title: string
@@ -53,6 +77,7 @@ export interface Ticket {
   dueAt?: string
   escalationLevel?: number
   escalatedAt?: string
+  timeSpentMinutes?: number
 }
 
 export interface TicketStats {

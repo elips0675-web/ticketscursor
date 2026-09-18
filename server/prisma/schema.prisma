@@ -39,6 +39,8 @@ model employees {
   notifications       notifications[]
   poll_votes          poll_votes[]
   ticket_messages     ticket_messages[]
+  time_entries        time_entries[]
+  ticket_timers       ticket_timers[]
 }
 
 model tickets {
@@ -63,6 +65,36 @@ model tickets {
   created_by_employee  employees?      @relation("tickets_created_by", fields: [created_by], references: [id])
   assigned_to_employee employees?      @relation("tickets_assigned_to", fields: [assigned_to], references: [id])
   ticket_messages      ticket_messages[]
+  time_entries         time_entries[]
+  ticket_timers        ticket_timers[]
+}
+
+model time_entries {
+  id          Int       @id @default(autoincrement())
+  ticket_id   Int
+  user_id     Int
+  minutes     Int
+  description String?   @default("") @db.VarChar(500)
+  entry_date  DateTime  @db.Date
+  created_at  DateTime? @default(now())
+
+  ticket tickets?   @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  user   employees? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([ticket_id, user_id])
+}
+
+model ticket_timers {
+  id         Int       @id @default(autoincrement())
+  ticket_id  Int
+  user_id    Int
+  started_at DateTime
+  created_at DateTime? @default(now())
+
+  ticket tickets?   @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  user   employees? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([ticket_id, user_id])
 }
 
 model ticket_messages {

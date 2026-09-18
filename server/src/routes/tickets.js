@@ -11,7 +11,7 @@ import { invalidateCache } from '../cache.js'
 import { enqueueEvent } from '../outbox.js'
 import { logAudit } from '../audit.js'
 import { notifyTicketCreated, notifyStatusChanged, notifyPriorityChanged, notifyTicketAssigned, notifyTicketMessage, notifyTicketMention } from '../notify.js'
-import { createTicketValidation, updateStatusValidation, updatePriorityValidation, assignTicketValidation, updateTagsValidation, bulkTicketValidation, addMessageValidation } from '../validate.js'
+import { createTicketValidation, updateStatusValidation, updatePriorityValidation, assignTicketValidation, updateTagsValidation, bulkTicketValidation, addMessageValidation, addTimeValidation } from '../validate.js'
 import logger from '../logger.js'
 import { idempotent } from '../middleware/idempotency.js'
 import { validateUpload } from '../middleware/validateUpload.js'
@@ -30,6 +30,16 @@ import {
   generateTicketFilename,
   resolveMentionedEmployees,
 } from '../services/tickets.service.js'
+import {
+  listTimeEntries,
+  getTimeTotals,
+  addTimeEntry,
+  getTimeEntryById,
+  deleteTimeEntry,
+  getActiveTimer,
+  startTimer,
+  stopTimer,
+} from '../services/time.service.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ticketUploads = path.join(__dirname, '..', '..', 'uploads', 'tickets')
@@ -344,6 +354,95 @@ router.delete('/:id/messages/:msgId', async (req, res) => {
   } catch (err) {
     logger.error('Delete message error:', err)
     res.status(500).json({ success: false, message: 'Failed to delete message' })
+  }
+})
+
+router.get('/:id/time', requireRole('admin', 'senior_agent', 'agent'), async (req, res) => {
+  const ticketId = Number(req.params.id)
+  try {
+    const [entries, totals, activeTimer] = await Promise.all([
+      listTimeEntries(ticketId),
+      getTimeTotals(ticketId),
+      getActiveTimer(ticketId, req.user.userId),
+    ])
+    res.json({ success: true, data: { entries, ...totals, activeTimer } })
+  } catch (err) {
+    logger.error('Get time entries error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch time entries' })
+  }
+})
+
+router.post('/:id/time', requireRole('admin', 'senior_agent', 'agent'), addTimeValidation, async (req, res) => {
+  const ticketId = Number(req.params.id)
+  const { minutes, description } = req.body
+  try {
+    const ticket = await prisma.tickets.findUnique({ where: { id: ticketId }, select: { id: true } })
+    if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    const entry = await addTimeEntry({ ticketId, userId: req.user.userId, minutes, description })
+    const totals = await getTimeTotals(ticketId)
+    invalidateCache('cache:/api/tickets*')
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'time_added', entityType: 'ticket', entityId: ticketId, details: { minutes, entryId: entry.id } })
+    res.status(201).json({ success: true, data: entry, totals })
+  } catch (err) {
+    logger.error('Add time error:', err)
+    res.status(500).json({ success: false, message: 'Failed to add time' })
+  }
+})
+
+router.delete('/:id/time/:entryId', requireRole('admin', 'senior_agent', 'agent'), async (req, res) => {
+  const ticketId = Number(req.params.id)
+  const entryId = Number(req.params.entryId)
+  try {
+    const entry = await getTimeEntryById(entryId)
+    if (!entry) return res.status(404).json({ success: false, message: 'Time entry not found' })
+    const isAdmin = hasRole(req.user.role, 'senior_agent')
+    const isOwner = entry.user_id === req.user.userId
+    if (!isAdmin && !isOwner) return res.status(403).json({ success: false, message: 'Forbidden' })
+    await deleteTimeEntry(entryId)
+    invalidateCache('cache:/api/tickets*')
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'time_removed', entityType: 'ticket', entityId: ticketId, details: { entryId } })
+    res.json({ success: true, data: { entryId } })
+  } catch (err) {
+    logger.error('Delete time entry error:', err)
+    res.status(500).json({ success: false, message: 'Failed to delete time entry' })
+  }
+})
+
+router.get('/:id/time/timer', requireRole('admin', 'senior_agent', 'agent'), async (req, res) => {
+  try {
+    const timer = await getActiveTimer(Number(req.params.id), req.user.userId)
+    res.json({ success: true, data: timer })
+  } catch (err) {
+    logger.error('Get timer error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch timer' })
+  }
+})
+
+router.post('/:id/time/timer/start', requireRole('admin', 'senior_agent', 'agent'), async (req, res) => {
+  const ticketId = Number(req.params.id)
+  try {
+    const ticket = await prisma.tickets.findUnique({ where: { id: ticketId }, select: { id: true } })
+    if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    const timer = await startTimer(ticketId, req.user.userId)
+    res.status(201).json({ success: true, data: timer })
+  } catch (err) {
+    logger.error('Start timer error:', err)
+    res.status(500).json({ success: false, message: 'Failed to start timer' })
+  }
+})
+
+router.post('/:id/time/timer/stop', requireRole('admin', 'senior_agent', 'agent'), async (req, res) => {
+  const ticketId = Number(req.params.id)
+  try {
+    const result = await stopTimer(ticketId, req.user.userId)
+    if (!result) return res.status(404).json({ success: false, message: 'No active timer' })
+    const totals = await getTimeTotals(ticketId)
+    invalidateCache('cache:/api/tickets*')
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'time_timer_stopped', entityType: 'ticket', entityId: ticketId, details: { minutes: result.minutes, entryId: result.entry.id } })
+    res.json({ success: true, data: result, totals })
+  } catch (err) {
+    logger.error('Stop timer error:', err)
+    res.status(500).json({ success: false, message: 'Failed to stop timer' })
   }
 })
 

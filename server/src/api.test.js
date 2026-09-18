@@ -1196,6 +1196,79 @@ describe('GET /api/tickets/:id/messages', () => {
   })
 })
 
+describe('Time tracking API', () => {
+  it('GET /api/tickets/:id/time returns entries and totals', async () => {
+    const res = await request(app)
+      .get('/api/tickets/1/time')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+    expect(Array.isArray(res.body.data.entries)).toBe(true)
+    expect(res.body.data.totalMinutes).toBeGreaterThanOrEqual(0)
+    expect(res.body.data).toHaveProperty('activeTimer')
+  })
+
+  it('rejects time without minutes', async () => {
+    const res = await request(app)
+      .post('/api/tickets/1/time')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ minutes: 0 })
+    expect([400, 500]).toContain(res.status)
+  })
+
+  it('adds a time entry and deletes it', async () => {
+    const created = await request(app)
+      .post('/api/tickets/1/time')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ minutes: 30, description: 'debugging' })
+    expect(created.status).toBe(201)
+    expect(created.body.success).toBe(true)
+    expect(created.body.data.minutes).toBe(30)
+
+    const deleted = await request(app)
+      .delete(`/api/tickets/1/time/${created.body.data.id}`)
+      .set('Authorization', `Bearer ${devToken}`)
+    expect(deleted.status).toBe(200)
+    expect(deleted.body.success).toBe(true)
+  })
+
+  it('forbids requester from accessing time routes', async () => {
+    const requesterToken = jwt.sign({ userId: 50, role: 'requester' }, JWT_SECRET, { expiresIn: '1h' })
+    const res = await request(app)
+      .get('/api/tickets/1/time?check=rbac')
+      .set('Authorization', `Bearer ${requesterToken}`)
+    expect(res.status).toBe(403)
+  })
+
+  it('starts, reads and stops a timer', async () => {
+    const start = await request(app)
+      .post('/api/tickets/1/time/timer/start')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect(start.status).toBe(201)
+    expect(start.body.success).toBe(true)
+    expect(start.body.data.started_at).toBeTruthy()
+
+    const active = await request(app)
+      .get('/api/tickets/1/time/timer')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect(active.status).toBe(200)
+    expect(active.body.data.id).toBe(start.body.data.id)
+
+    const stop = await request(app)
+      .post('/api/tickets/1/time/timer/stop')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect(stop.status).toBe(200)
+    expect(stop.body.success).toBe(true)
+    expect(stop.body.data.minutes).toBeGreaterThanOrEqual(1)
+    expect(stop.body.data.entry.minutes).toBeGreaterThanOrEqual(1)
+
+    const again = await request(app)
+      .post('/api/tickets/1/time/timer/stop')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect([404, 500]).toContain(again.status)
+  })
+})
+
 describe('PUT /api/tickets/:id/priority — success path', () => {
   it('updates priority to high', async () => {
     const res = await request(app)

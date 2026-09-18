@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator'
 import { useTickets } from '@/context/ticket-context'
 import { useAuth } from '@/context/AuthContext'
+import TimeTrackingCard from '@/components/TimeTrackingCard'
 import { formatDate, formatTime } from '@/lib/utils'
 import {
   ArrowLeft,
@@ -88,6 +89,7 @@ function mapTicketDetail(raw: Record<string, unknown>): Ticket {
     messages_count: raw.messages_count || (Array.isArray(raw.messages) ? raw.messages.length : 0),
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
+    timeSpentMinutes: raw.time_spent_minutes,
   }
 }
 
@@ -655,6 +657,8 @@ export default function TicketDetail() {
               </CardContent>
             </Card>
           )}
+
+          <TimeTrackingCard ticketId={ticket.id} />
 
           <Card>
             <CardHeader>
