@@ -66,10 +66,17 @@ router.post('/:id/messages', idempotent, async (req, res) => {
 
 router.put('/:id/read', async (req, res) => {
   try {
-    await markRead(Number(req.params.id))
-    enqueueEvent('chat:read', `chat:${req.params.id}`, { chatId: Number(req.params.id), userId: req.user.userId })
-    res.json({ success: true, data: { ok: true } })
-  } catch {
+    const lastReadMessageId = Number(req.body?.lastReadMessageId) || null
+    const receipt = await markRead(Number(req.params.id), req.user.userId, lastReadMessageId)
+    enqueueEvent('chat:read', `chat:${req.params.id}`, {
+      chatId: Number(req.params.id),
+      userId: req.user.userId,
+      lastReadMessageId: receipt?.last_read_message_id ?? null,
+      lastReadAt: receipt?.last_read_at ?? new Date().toISOString(),
+    })
+    res.json({ success: true, data: receipt })
+  } catch (err) {
+    logger.error('Chat mark read error:', err)
     res.status(500).json({ message: 'Failed to mark read' })
   }
 })

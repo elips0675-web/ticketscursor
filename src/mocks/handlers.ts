@@ -318,6 +318,7 @@ export const handlers = [
       type: 'group',
       unread: 0,
       created_at: '2026-07-01T10:00:00Z',
+      readers: [{ userId: 2, lastReadMessageId: 2, lastReadAt: '2026-07-09T09:02:00Z' }],
       messages: [
         {
           id: 1,

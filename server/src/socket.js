@@ -5,6 +5,7 @@ import prisma from './prisma.js'
 import { JWT_SECRET } from './middleware.js'
 import { hasRole } from './utils/roleUtils.js'
 import { createNotification } from './routes/notifications.js'
+import { markRead } from './services/chats.service.js'
 import logger from './logger.js'
 
 let io
@@ -172,8 +173,20 @@ export async function setupSocket(server) {
       socket.to(`chat:${chatId}`).emit('chat:typing', { userId: socket.userId })
     })
 
-    socket.on('message:read', ({ chatId }) => {
-      socket.to(`chat:${chatId}`).emit('chat:read', { chatId, userId: socket.userId })
+    socket.on('message:read', async ({ chatId, lastReadMessageId }) => {
+      const chatIdNum = Number(chatId)
+      if (!chatIdNum) return
+      try {
+        const receipt = await markRead(chatIdNum, socket.userId, lastReadMessageId ? Number(lastReadMessageId) : null)
+        socket.to(`chat:${chatIdNum}`).emit('chat:read', {
+          chatId: chatIdNum,
+          userId: socket.userId,
+          lastReadMessageId: receipt?.last_read_message_id ?? null,
+          lastReadAt: receipt?.last_read_at ?? new Date().toISOString(),
+        })
+      } catch (err) {
+        logger.error('WS markRead error:', err)
+      }
     })
 
     socket.on('message:delete', async ({ chatId, msgId }) => {

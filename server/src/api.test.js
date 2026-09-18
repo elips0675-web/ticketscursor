@@ -532,7 +532,12 @@ describe('PUT /api/chats/:id/read', () => {
     const res = await request(app)
       .put('/api/chats/1/read')
       .set('Authorization', `Bearer ${devToken}`)
+      .send({ lastReadMessageId: 1 })
     expect([200, 500]).toContain(res.status)
+    if (res.status === 200) {
+      expect(res.body.data.chat_id).toBe(1)
+      expect(res.body.data.user_id).toBeTruthy()
+    }
   })
 })
 

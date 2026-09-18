@@ -138,4 +138,16 @@ describe('ChatDetail', () => {
     const deleteBtns = screen.getAllByLabelText('Удалить')
     expect(deleteBtns.length).toBeGreaterThan(0)
   })
+
+  it('marks own messages as read with blue check when reader cursor covers them', async () => {
+    localStorage.setItem('user', JSON.stringify({ id: 1, name: 'Admin', email: 'admin@test.com', role: 'admin' }))
+
+    render(<ChatDetail />, { wrapper: TestProviders })
+    await screen.findByText('Привет всем!')
+    await waitFor(() => {
+      expect(document.querySelector('.text-blue-400')).toBeTruthy()
+    })
+    const readBadge = screen.getByLabelText('Прочитано')
+    expect(readBadge).toBeInTheDocument()
+  })
 })

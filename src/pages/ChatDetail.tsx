@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ArrowLeft, Send, Smile, Users, CheckCheck, Trash2, Search, ImagePlus, X, Loader2 } from 'lucide-react'
 import { cn, formatTime } from '@/lib/utils'
 import { api } from '@/lib/api'
-import type { ChatMessage } from '@/types'
+import type { ChatMessage, ChatReadReceipt } from '@/types'
 import { motion } from 'framer-motion'
 import { useSocket } from '@/context/SocketContext'
 import { useAuth } from '@/context/AuthContext'
@@ -30,7 +30,7 @@ export default function ChatDetail() {
   const [imageFile, setImageFile] = useState<string | null>(null)
   const [previewImg, setPreviewImg] = useState<string | null>(null)
   const [typingUsers, setTypingUsers] = useState<number[]>([])
-  const [readByUsers, setReadByUsers] = useState<Set<number>>(new Set())
+  const [readers, setReaders] = useState<ChatReadReceipt[]>([])
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const msgEndRef = useRef<HTMLDivElement>(null)
@@ -55,28 +55,39 @@ export default function ChatDetail() {
       .then((data) => {
         if (data) {
           setChatInfo({ name: data.name, type: data.type })
-          setMessages((data.messages || []).map(mapMessage))
+          const msgs = (data.messages || []).map(mapMessage)
+          setMessages(msgs)
+          if (Array.isArray(data.readers)) setReaders(data.readers)
+          const latestId = msgs.reduce((max, m) => Math.max(max, m.id), 0)
+          if (latestId > 0) {
+            markRead(chatId, latestId)
+            api.put(`/chats/${chatId}/read`, { lastReadMessageId: latestId }).catch(() => {})
+          }
         }
         setLoading(false)
       })
       .catch(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId])
 
   useEffect(() => {
     joinChat(chatId)
-    markRead(chatId)
-    api.put(`/chats/${chatId}/read`, {}).catch(() => {})
     return () => {
       leaveChat(chatId)
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
     }
-  }, [chatId, joinChat, leaveChat, markRead])
+  }, [chatId, joinChat, leaveChat])
 
   useEffect(() => {
     if (!socket) return
     const onNew = (msg: Record<string, unknown>) => {
-      setMessages((prev) => [...prev, mapMessage(msg)])
-      setTypingUsers((prev) => prev.filter((id) => id !== ((msg.senderId ?? msg.sender_id) as number)))
+      const mapped = mapMessage(msg)
+      setMessages((prev) => [...prev, mapped])
+      setTypingUsers((prev) => prev.filter((id) => id !== mapped.senderId))
+      if (mapped.senderId !== currentUserId) {
+        markRead(chatId, mapped.id)
+        api.put(`/chats/${chatId}/read`, { lastReadMessageId: mapped.id }).catch(() => {})
+      }
     }
     const onRemove = (msgId: number) => setMessages((prev) => prev.filter((m) => m.id !== msgId))
     const onTyping = ({ userId }: { userId: number }) => {
@@ -84,8 +95,11 @@ export default function ChatDetail() {
       setTypingUsers((prev) => (prev.includes(userId) ? prev : [...prev, userId]))
       setTimeout(() => setTypingUsers((prev) => prev.filter((id) => id !== userId)), 3000)
     }
-    const onRead = ({ userId }: { userId: number }) => {
-      setReadByUsers((prev) => new Set(prev).add(userId))
+    const onRead = ({ userId, lastReadMessageId, lastReadAt }: { userId: number; lastReadMessageId?: number | null; lastReadAt?: string }) => {
+      setReaders((prev) => [
+        ...prev.filter((r) => r.userId !== userId),
+        { userId, lastReadMessageId: lastReadMessageId ?? null, lastReadAt: lastReadAt || new Date().toISOString() },
+      ])
     }
     socket.on('message:new', onNew)
     socket.on('message:removed', onRemove)
@@ -187,6 +201,11 @@ export default function ChatDetail() {
   const isGroup = chatInfo.type === 'group' || chatInfo.type === 'channel'
   const currentUserId = user?.id ?? 0
 
+  const readersOf = (msgId: number): ChatReadReceipt[] =>
+    readers.filter(
+      (r) => r.userId !== currentUserId && r.lastReadMessageId !== null && r.lastReadMessageId >= msgId,
+    )
+
   const renderMsg = (msg: ChatMessage) => {
     const isMe = msg.senderId === currentUserId || msg.senderName === 'Я'
     const msgReactions = msg.reactions
@@ -218,12 +237,17 @@ export default function ChatDetail() {
             <div className={cn('flex items-center gap-1 mt-1', isMe ? 'justify-end' : 'justify-start')}>
               <span className="text-[9px] opacity-60">{formatTime(msg.createdAt)}</span>
               {isMe && (
-                <CheckCheck
-                  className={cn(
-                    'w-3 h-3 transition-colors',
-                    readByUsers.size > 0 ? 'text-blue-400' : 'opacity-60',
-                  )}
-                />
+                <span
+                  title={readersOf(msg.id).length > 0 ? 'Прочитано' : 'Доставлено'}
+                  aria-label={readersOf(msg.id).length > 0 ? 'Прочитано' : 'Доставлено'}
+                >
+                  <CheckCheck
+                    className={cn(
+                      'w-3 h-3 transition-colors',
+                      readersOf(msg.id).length > 0 ? 'text-blue-400' : 'opacity-60',
+                    )}
+                  />
+                </span>
               )}
             </div>
           </div>

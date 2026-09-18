@@ -4,6 +4,7 @@ vi.mock('../../prisma.js', () => ({
   default: {
     chat_rooms: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn(), create: vi.fn(), findFirst: vi.fn() },
     chat_messages: { create: vi.fn(), findMany: vi.fn(), count: vi.fn() },
+    chat_read_receipts: { findMany: vi.fn(), findUnique: vi.fn(), upsert: vi.fn() },
     employees: { findUnique: vi.fn() },
   },
 }))
@@ -33,10 +34,12 @@ describe('getChatById', () => {
     prisma.chat_rooms.findUnique.mockResolvedValue({ id: 1, name: 'Test' })
     prisma.chat_messages.findMany.mockResolvedValue([{ id: 1, text: 'hello' }])
     prisma.chat_messages.count.mockResolvedValue(1)
+    prisma.chat_read_receipts.findMany.mockResolvedValue([{ user_id: 2, last_read_message_id: 1, last_read_at: new Date() }])
     const result = await getChatById(1)
     expect(result.name).toBe('Test')
     expect(result.messages).toHaveLength(1)
     expect(result.total).toBe(1)
+    expect(result.readers).toEqual([{ userId: 2, lastReadMessageId: 1, lastReadAt: expect.any(Date) }])
   })
 
   it('returns null when chat not found', async () => {
@@ -57,13 +60,33 @@ describe('createMessage', () => {
 })
 
 describe('markRead', () => {
-  it('resets unread counter', async () => {
+  it('upserts read receipt with cursor and resets unread', async () => {
+    prisma.chat_read_receipts.findUnique.mockResolvedValue(null)
+    prisma.chat_read_receipts.upsert.mockResolvedValue({ id: 1, chat_id: 1, user_id: 1, last_read_message_id: 5 })
     prisma.chat_rooms.update.mockResolvedValue({})
-    await markRead(1)
+    const result = await markRead(1, 1, 5)
+    expect(prisma.chat_read_receipts.upsert).toHaveBeenCalledWith({
+      where: { chat_id_user_id: { chat_id: 1, user_id: 1 } },
+      update: { last_read_message_id: 5, last_read_at: expect.any(Date) },
+      create: { chat_id: 1, user_id: 1, last_read_message_id: 5, last_read_at: expect.any(Date) },
+    })
     expect(prisma.chat_rooms.update).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { unread: 0 },
     })
+    expect(result.last_read_message_id).toBe(5)
+  })
+
+  it('keeps existing cursor when no lastReadMessageId passed', async () => {
+    prisma.chat_read_receipts.findUnique.mockResolvedValue({ last_read_message_id: 7, last_read_at: new Date() })
+    prisma.chat_read_receipts.upsert.mockResolvedValue({ id: 1, chat_id: 1, user_id: 1, last_read_message_id: 7 })
+    prisma.chat_rooms.update.mockResolvedValue({})
+    await markRead(1, 1, null)
+    expect(prisma.chat_read_receipts.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: expect.objectContaining({ last_read_message_id: 7 }),
+      }),
+    )
   })
 })
 

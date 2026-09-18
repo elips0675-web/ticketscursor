@@ -182,6 +182,16 @@ model chat_messages {
   sender employees?  @relation(fields: [sender_id], references: [id], onDelete: Cascade)
 }
 
+model chat_read_receipts {
+  id                   Int        @id @default(autoincrement())
+  chat_id              Int
+  user_id              Int
+  last_read_message_id Int?
+  last_read_at         DateTime?  @default(now())
+
+  @@unique([chat_id, user_id])
+}
+
 model wiki_articles {
   id          Int       @id @default(autoincrement())
   title       String    @db.VarChar(300)

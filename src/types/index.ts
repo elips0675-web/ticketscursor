@@ -139,6 +139,12 @@ export interface ChatMessage {
   reactions?: Record<string, number[]>
 }
 
+export interface ChatReadReceipt {
+  userId: number
+  lastReadMessageId: number | null
+  lastReadAt: string
+}
+
 export interface EmployeeProfile {
   id: number
   name: string

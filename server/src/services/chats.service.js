@@ -26,7 +26,7 @@ export async function getChatById(id, page = 1, limit = 50) {
   const chat = await prisma.chat_rooms.findUnique({ where: { id } })
   if (!chat) return null
   const skip = (page - 1) * limit
-  const [messages, total] = await Promise.all([
+  const [messages, total, receipts] = await Promise.all([
     prisma.chat_messages.findMany({
       where: { chat_id: id, deleted_at: null },
       orderBy: { created_at: 'asc' },
@@ -34,8 +34,20 @@ export async function getChatById(id, page = 1, limit = 50) {
       skip,
     }),
     prisma.chat_messages.count({ where: { chat_id: id, deleted_at: null } }),
+    prisma.chat_read_receipts.findMany({ where: { chat_id: id } }),
   ])
-  return { ...chat, messages, total, page, totalPages: Math.ceil(total / limit) }
+  return {
+    ...chat,
+    messages,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+    readers: receipts.map((r) => ({
+      userId: r.user_id,
+      lastReadMessageId: r.last_read_message_id,
+      lastReadAt: r.last_read_at,
+    })),
+  }
 }
 
 export async function createMessage({ chatId, userId, userName, text }) {
@@ -59,11 +71,21 @@ export async function getChatParticipants(chatId, excludeUserId) {
   })
 }
 
-export async function markRead(chatId) {
-  await prisma.chat_rooms.update({
-    where: { id: chatId },
-    data: { unread: 0 },
+export async function markRead(chatId, userId, lastReadMessageId) {
+  const existing = await prisma.chat_read_receipts.findUnique({
+    where: { chat_id_user_id: { chat_id: chatId, user_id: userId } },
+    select: { last_read_message_id: true, last_read_at: true },
   })
+  const cursor = lastReadMessageId || existing?.last_read_message_id || null
+  const [receipt] = await Promise.all([
+    prisma.chat_read_receipts.upsert({
+      where: { chat_id_user_id: { chat_id: chatId, user_id: userId } },
+      update: { last_read_message_id: cursor, last_read_at: new Date() },
+      create: { chat_id: chatId, user_id: userId, last_read_message_id: cursor, last_read_at: new Date() },
+    }),
+    prisma.chat_rooms.update({ where: { id: chatId }, data: { unread: 0 } }),
+  ])
+  return receipt
 }
 
 export async function findOrCreatePersonalChat(userId, _myId) {
