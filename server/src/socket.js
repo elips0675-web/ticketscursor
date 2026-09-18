@@ -100,30 +100,35 @@ export async function setupSocket(server) {
       .then(() => io.emit('user:status', { userId: socket.userId, online: true }))
       .catch(() => {})
 
-    // Offline message delivery — найти непрочитанные сообщения с момента последней активности
+    // Offline message delivery — доставка по пер-юзерному курсору (fallback: last_active)
     prisma.employees.findUnique({
       where: { id: socket.userId },
       select: { last_active: true },
-    }).then((user) => {
-      if (!user?.last_active) return
-      const since = new Date(user.last_active)
-      // Найти чаты, где пользователь участвовал (отправлял сообщения)
-      prisma.chat_messages.findMany({
-        where: {
-          chat: {
-            chat_messages: { some: { sender_id: socket.userId } },
-          },
-          created_at: { gt: since },
-          sender_id: { not: socket.userId },
-        },
-        orderBy: { created_at: 'asc' },
-        take: 100,
-      }).then((missed) => {
+    }).then(async (user) => {
+      if (!user) return
+      const since = user.last_active ? new Date(user.last_active) : null
+      const participations = await prisma.chat_messages.groupBy({
+        by: ['chat_id'],
+        where: { sender_id: socket.userId },
+      })
+      for (const { chat_id } of participations) {
+        const receipt = await prisma.chat_read_receipts.findUnique({
+          where: { chat_id_user_id: { chat_id, user_id: socket.userId } },
+        })
+        const after = receipt?.last_read_message_id
+          ? { id: { gt: receipt.last_read_message_id } }
+          : (since ? { created_at: { gt: since } } : null)
+        if (!after) continue
+        const missed = await prisma.chat_messages.findMany({
+          where: { chat_id, sender_id: { not: socket.userId }, deleted_at: null, ...after },
+          orderBy: { created_at: 'asc' },
+          take: 100,
+        })
         for (const msg of missed) {
           socket.emit('message:new', msg)
         }
-      }).catch(() => {})
-    }).catch(() => {})
+      }
+    }).catch((err) => logger.warn('Missed chat delivery error:', err))
 
     socket.on('join:chat', (chatId) => {
       socket.join(`chat:${chatId}`)
@@ -133,7 +138,7 @@ export async function setupSocket(server) {
       socket.leave(`chat:${chatId}`)
     })
 
-    socket.on('message:send', async ({ chatId, text }) => {
+    socket.on('message:send', async ({ chatId, text, clientId }) => {
       if (!text?.trim()) return
       if (text.length > 2000) return socket.emit('error', { message: 'Text too long (max 2000 chars)' })
       if (!wsRateLimit(socket)) return socket.emit('rate:limited', { event: 'message:send' })
@@ -149,6 +154,7 @@ export async function setupSocket(server) {
           },
         })
         io.to(`chat:${chatId}`).emit('message:new', msg)
+        if (clientId) socket.emit('message:ack', { clientId, msg })
         // Уведомление участникам чата кроме отправителя
         const participants = await prisma.chat_messages.findMany({
           where: { chat_id: chatId, sender_id: { not: socket.userId } },

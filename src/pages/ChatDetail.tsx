@@ -82,7 +82,23 @@ export default function ChatDetail() {
     if (!socket) return
     const onNew = (msg: Record<string, unknown>) => {
       const mapped = mapMessage(msg)
-      setMessages((prev) => [...prev, mapped])
+      setMessages((prev) => {
+        if (mapped.senderId === currentUserId) {
+          const idx = prev.findIndex(
+            (m) =>
+              m.id !== mapped.id &&
+              m.senderId === mapped.senderId &&
+              m.senderName === 'Я' &&
+              m.text === mapped.text,
+          )
+          if (idx !== -1) {
+            const next = [...prev]
+            next[idx] = mapped
+            return next
+          }
+        }
+        return [...prev, mapped]
+      })
       setTypingUsers((prev) => prev.filter((id) => id !== mapped.senderId))
       if (mapped.senderId !== currentUserId) {
         markRead(chatId, mapped.id)

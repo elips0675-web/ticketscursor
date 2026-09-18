@@ -29,9 +29,18 @@ function renderWithToken(token: string | null) {
   })
 }
 
+function captureCallbacks() {
+  const cbs: Record<string, (...args: unknown[]) => void> = {}
+  mockOn.mockImplementation((event: string, cb: (...args: unknown[]) => void) => {
+    cbs[event] = cb
+  })
+  return cbs
+}
+
 describe('SocketProvider', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
   })
 
   it('does not connect without token', () => {
@@ -46,15 +55,46 @@ describe('SocketProvider', () => {
     expect(mockIo).toHaveBeenCalledWith({ auth: { token: 'token' } })
   })
 
-  it('calls sendMessage', () => {
+  it('calls sendMessage with clientId', () => {
     mockOn.mockImplementation((event: string, cb: (...args: unknown[]) => void) => {
       if (event === 'connect') cb()
     })
     const { result } = renderWithToken('token')
     act(() => {
-      result.current.sendMessage(1, 'hello')
+      result.current.sendMessage(1, 'hello', 'cid-1')
     })
-    expect(mockEmit).toHaveBeenCalledWith('message:send', { chatId: 1, text: 'hello' })
+    expect(mockEmit).toHaveBeenCalledWith('message:send', { chatId: 1, text: 'hello', clientId: 'cid-1' })
+  })
+
+  it('queues sent messages to outbox when disconnected', () => {
+    const cbs = captureCallbacks()
+    const { result } = renderWithToken('token')
+    act(() => {
+      result.current.sendMessage(1, 'hello', 'cid-1')
+    })
+    expect(mockEmit).not.toHaveBeenCalled()
+    expect(JSON.parse(localStorage.getItem('socket_offline_outbox') || '[]')).toEqual([
+      expect.objectContaining({ clientId: 'cid-1', chatId: 1, text: 'hello' }),
+    ])
+    expect(cbs.connect).toBeDefined()
+  })
+
+  it('flushes outbox and clears entries after reconnect', () => {
+    const cbs = captureCallbacks()
+    const { result } = renderWithToken('token')
+    act(() => {
+      result.current.sendMessage(1, 'hello', 'cid-1')
+      result.current.sendMessage(2, 'second', 'cid-2')
+    })
+    act(() => {
+      cbs.connect()
+    })
+    expect(mockEmit).toHaveBeenCalledWith('message:send', { chatId: 1, text: 'hello', clientId: 'cid-1' })
+    expect(mockEmit).toHaveBeenCalledWith('message:send', { chatId: 2, text: 'second', clientId: 'cid-2' })
+    cbs['message:ack']?.({ clientId: 'cid-1' })
+    expect(JSON.parse(localStorage.getItem('socket_offline_outbox') || '[]')).toEqual([
+      expect.objectContaining({ clientId: 'cid-2' }),
+    ])
   })
 
   it('calls joinChat and leaveChat', () => {

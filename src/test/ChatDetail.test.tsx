@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -149,5 +149,30 @@ describe('ChatDetail', () => {
     })
     const readBadge = screen.getByLabelText('Прочитано')
     expect(readBadge).toBeInTheDocument()
+  })
+
+  it('reconciles echoed own message instead of duplicating it', async () => {
+    const user = userEvent.setup()
+    const ms = createMockSocket()
+    render(<ChatDetail />, { wrapper: (p) => TestProviders({ ...p, mockSocket: ms }) })
+    await screen.findByText('Привет всем!')
+    const input = screen.getByPlaceholderText('Написать сообщение...')
+    await user.type(input, 'echo')
+    await user.click(screen.getByLabelText('Отправить'))
+    await waitFor(() => expect(screen.getAllByText('echo')).toHaveLength(1))
+    act(() => {
+      ms.listeners['message:new']({
+        id: 999,
+        chat_id: 1,
+        sender_id: 1,
+        sender_name: 'Admin',
+        text: 'echo',
+        created_at: new Date().toISOString(),
+      })
+    })
+    await waitFor(() => {
+      expect(screen.getAllByText('echo')).toHaveLength(1)
+      expect(screen.queryByText('Я')).not.toBeInTheDocument()
+    })
   })
 })
