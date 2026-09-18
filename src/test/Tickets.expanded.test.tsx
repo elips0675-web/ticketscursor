@@ -37,6 +37,18 @@ vi.mock('react-i18next', () => ({
         'tickets.csvHeaderAssignee': 'Исполнитель',
         'tickets.csvHeaderCreated': 'Создан',
         'tickets.exportLimitWarn': 'Экспорт ограничен {limit} записями',
+        'tickets.bulkSelected': 'Выбрано: {count}',
+        'tickets.bulkClose': 'Закрыть',
+        'tickets.bulkReopen': 'Открыть заново',
+        'tickets.bulkReopened': 'Переоткрыто тикетов: {count}',
+        'tickets.bulkClosed': 'Закрыто тикетов: {count}',
+        'tickets.bulkAssigned': 'Назначено тикетов: {count}',
+        'tickets.bulkAssignPlaceholder': 'Назначить...',
+        'tickets.bulkUnassign': 'Снять назначение',
+        'tickets.bulkClear': 'Сбросить',
+        'tickets.bulkSelectAll': 'Выбрать все',
+        'tickets.bulkDeselectAll': 'Снять все',
+        'tickets.bulkSelectCard': 'Выбрать тикет',
       })[key] || key
     return { t }
   },
@@ -117,6 +129,8 @@ const mockCtx = {
   updateTicketStatus: vi.fn(),
   updateTicketPriority: vi.fn(),
   assignTicket: vi.fn(),
+  updateTicketTags: vi.fn(),
+  bulkUpdateTickets: vi.fn(),
   addMessage: vi.fn(),
   createTicket: vi.fn(),
 }
@@ -166,6 +180,7 @@ describe('Tickets', () => {
     mockSocket.on.mockReset()
     mockSocket.off.mockReset()
     mockCtx.loading = false
+    mockCtx.bulkUpdateTickets = vi.fn()
   })
 
   it('renders title', async () => {
@@ -351,12 +366,52 @@ describe('Tickets', () => {
     })
   })
 
-  it('filters tickets by tag via url param', async () => {
+it('filters tickets by tag via url param', async () => {
     render(<Tickets />, { wrapper: (p) => <TestWrapper {...p} url="/tickets?tag=vpn" /> })
     await waitFor(() => {
       expect(screen.getByText('Network issue')).toBeInTheDocument()
     })
     expect(screen.getByText('Login problem')).toBeInTheDocument()
     expect(screen.queryByText('Printer jam')).not.toBeInTheDocument()
+  })
+
+  it('shows bulk panel after selecting tickets', async () => {
+    const user = userEvent.setup()
+    render(<Tickets />, { wrapper: TestWrapper })
+    expect(await screen.findByText('Network issue')).toBeInTheDocument()
+    const checkbox = screen.getByTestId('select-ticket-1').querySelector('button')
+    expect(checkbox).toBeTruthy()
+    await user.click(checkbox!)
+    expect(screen.getByText('Выбрано: {count}')).toBeInTheDocument()
+    expect(screen.getByText('Закрыть')).toBeInTheDocument()
+    expect(screen.getByText('Открыть заново')).toBeInTheDocument()
+  })
+
+  it('bulk closes selected tickets', async () => {
+    mockCtx.bulkUpdateTickets = vi.fn().mockResolvedValue({ updated: 1, skipped: 0 })
+    const user = userEvent.setup()
+    render(<Tickets />, { wrapper: TestWrapper })
+    expect(await screen.findByText('Network issue')).toBeInTheDocument()
+    const checkbox = screen.getByTestId('select-ticket-1').querySelector('button')
+    await user.click(checkbox!)
+    await user.click(screen.getByText('Закрыть'))
+    await waitFor(() => {
+      expect(mockCtx.bulkUpdateTickets).toHaveBeenCalledWith({
+        ids: [1],
+        action: 'status',
+        status: 'closed',
+      })
+    })
+    expect(screen.queryByText('Выбрано: {count}')).not.toBeInTheDocument()
+  })
+
+  it('select all checkbox toggles visible selection', async () => {
+    const user = userEvent.setup()
+    render(<Tickets />, { wrapper: TestWrapper })
+    expect(await screen.findByText('Network issue')).toBeInTheDocument()
+    await user.click(screen.getByText('Выбрать все (9)'))
+    expect(screen.getByText('Выбрано: {count}')).toBeInTheDocument()
+    await user.click(screen.getByText('Снять все'))
+    expect(screen.queryByText('Выбрано: {count}')).not.toBeInTheDocument()
   })
 })

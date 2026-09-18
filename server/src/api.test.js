@@ -843,6 +843,97 @@ describe('POST /api/tickets', () => {
   })
 })
 
+describe('POST /api/tickets/bulk', () => {
+  it('rejects empty ids', async () => {
+    const res = await request(app)
+      .post('/api/tickets/bulk')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ ids: [], action: 'status', status: 'closed' })
+    expect(res.status).toBe(400)
+  })
+
+  it('rejects invalid action', async () => {
+    const res = await request(app)
+      .post('/api/tickets/bulk')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ ids: [1], action: 'delete' })
+    expect(res.status).toBe(400)
+  })
+
+  it('rejects missing required field for action', async () => {
+    const res = await request(app)
+      .post('/api/tickets/bulk')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ ids: [1], action: 'priority' })
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 403 for requester role', async () => {
+    const requesterToken = jwt.sign({ userId: 10, role: 'requester' }, JWT_SECRET, { expiresIn: '1h' })
+    const res = await request(app)
+      .post('/api/tickets/bulk')
+      .set('Authorization', `Bearer ${requesterToken}`)
+      .send({ ids: [1], action: 'status', status: 'closed' })
+    expect(res.status).toBe(403)
+  })
+
+  it('bulk closes tickets', async () => {
+    const first = await request(app)
+      .post('/api/tickets')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ title: 'Bulk close 1', description: 'test', priority: 'medium', category: 'bug' })
+    const second = await request(app)
+      .post('/api/tickets')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ title: 'Bulk close 2', description: 'test', priority: 'medium', category: 'bug' })
+    const ids = [first.body.data.id, second.body.data.id]
+    const res = await request(app)
+      .post('/api/tickets/bulk')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ ids, action: 'status', status: 'closed' })
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+    expect(res.body.data.updated).toBe(2)
+    expect(res.body.data.results).toHaveLength(2)
+  })
+
+  it('bulk assigns tickets to employee', async () => {
+    const create = await request(app)
+      .post('/api/tickets')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ title: 'Bulk assign', description: 'test', priority: 'medium', category: 'bug' })
+    const id = create.body.data.id
+    const res = await request(app)
+      .post('/api/tickets/bulk')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ ids: [id], action: 'assign', employeeId: 2 })
+    expect(res.status).toBe(200)
+    expect(res.body.data.updated).toBe(1)
+  })
+
+  it('returns 404 when assigning to missing employee', async () => {
+    const res = await request(app)
+      .post('/api/tickets/bulk')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ ids: [1], action: 'assign', employeeId: 999999 })
+    expect(res.status).toBe(404)
+  })
+
+  it('bulk updates priority', async () => {
+    const create = await request(app)
+      .post('/api/tickets')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ title: 'Bulk priority', description: 'test', priority: 'medium', category: 'bug' })
+    const id = create.body.data.id
+    const res = await request(app)
+      .post('/api/tickets/bulk')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send({ ids: [id], action: 'priority', priority: 'critical' })
+    expect(res.status).toBe(200)
+    expect(res.body.data.updated).toBe(1)
+  })
+})
+
 describe('DELETE /api/tickets/:id/messages/:msgId', () => {
   let createdMsgId
 

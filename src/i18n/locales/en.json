@@ -151,7 +151,19 @@
     "tagsPlaceholder": "tag1, tag2 (comma separated)",
     "tagsInputPlaceholder": "add tags comma separated",
     "saveTags": "Save",
-    "allTags": "All tags"
+    "allTags": "All tags",
+    "bulkSelected": "{{count}} selected",
+    "bulkClose": "Close",
+    "bulkReopen": "Reopen",
+    "bulkReopened": "{{count}} tickets reopened",
+    "bulkClosed": "{{count}} tickets closed",
+    "bulkAssigned": "{{count}} tickets assigned",
+    "bulkAssignPlaceholder": "Assign to...",
+    "bulkUnassign": "Unassign",
+    "bulkClear": "Clear",
+    "bulkSelectAll": "Select all",
+    "bulkDeselectAll": "Deselect all",
+    "bulkSelectCard": "Select ticket"
   },
   "dashboard": {
     "title": "Dashboard",

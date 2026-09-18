@@ -17,6 +17,7 @@
   ✅ Тикеты
     • CRUD, статусы с валидацией переходов (VALID_TRANSITIONS), приоритеты
     • Tags/labels: JSON tags, создание в форме, редактирование в деталях (PUT /api/tickets/:id/tags), фильтр/отображение в списке
+    • Bulk actions: POST /api/tickets/bulk (status/assign/priority), чекбоксы + bulk-панель в Tickets (переоткрытие, закрытие, назначение)
     • SLA: due_at, first_response_at, resolved_at; пересчёт при смене приоритета
     • Автоназначение (AUTO_ASSIGN — наименее загруженный)
     • Agent видит свои + неназначенные; requester — только свои

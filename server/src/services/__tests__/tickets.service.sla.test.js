@@ -24,6 +24,7 @@ import {
   updateTicketStatus,
   updateTicketPriority,
   updateTicketTags,
+  bulkUpdateTickets,
   getSlaStats,
   listOverdueSlaTickets,
   listTickets,
@@ -245,5 +246,88 @@ describe('generateTicketFilename', () => {
     const result = generateTicketFilename('report.pdf')
     expect(result).toMatch(/^[0-9a-f-]+-report\.pdf$/)
     expect(result.length).toBeGreaterThan('report.pdf'.length)
+  })
+})
+
+describe('bulkUpdateTickets', () => {
+  beforeEach(() => {
+    prisma.tickets.findMany.mockResolvedValue([])
+    getSettings.mockResolvedValue({})
+  })
+
+  it('returns updated 0 and skipped ids when no matching tickets', async () => {
+    const result = await bulkUpdateTickets({ ids: [1, 2], action: 'status', status: 'closed' })
+    expect(result).toEqual({ updated: 0, skipped: 2, results: [] })
+  })
+
+  it('closes tickets with valid transitions and skips invalid ones', async () => {
+    prisma.tickets.findMany.mockResolvedValue([
+      { id: 1, status: 'open', priority: 'medium', category: 'support', resolved_at: null, first_response_at: null },
+      { id: 2, status: 'closed', priority: 'medium', category: 'support', resolved_at: null, first_response_at: null },
+    ])
+    prisma.tickets.update.mockResolvedValue({})
+    const result = await bulkUpdateTickets({ ids: [1, 2], action: 'status', status: 'in_progress' })
+    expect(result.updated).toBe(1)
+    expect(result.skipped).toBe(1)
+    expect(result.results[0]).toEqual({ id: 1, status: 'in_progress' })
+    const updateData = prisma.tickets.update.mock.calls[0][0].data
+    expect(updateData.status).toBe('in_progress')
+  })
+
+  it('reopens closed tickets', async () => {
+    prisma.tickets.findMany.mockResolvedValue([
+      { id: 1, status: 'closed', priority: 'medium', category: 'support', resolved_at: new Date(), first_response_at: new Date() },
+      { id: 2, status: 'open', priority: 'medium', category: 'support', resolved_at: null, first_response_at: null },
+    ])
+    prisma.tickets.update.mockResolvedValue({})
+    const result = await bulkUpdateTickets({ ids: [1, 2], action: 'status', status: 'reopened' })
+    expect(result.updated).toBe(1)
+    expect(result.results[0]).toEqual({ id: 1, status: 'reopened' })
+    const updateData = prisma.tickets.update.mock.calls[0][0].data
+    expect(updateData.resolved_at).toBeNull()
+  })
+
+  it('sets first_response_at on bulk status to in_progress', async () => {
+    prisma.tickets.findMany.mockResolvedValue([
+      { id: 1, status: 'open', priority: 'medium', category: 'support', resolved_at: null, first_response_at: null },
+    ])
+    prisma.tickets.update.mockResolvedValue({})
+    await bulkUpdateTickets({ ids: [1], action: 'status', status: 'in_progress' })
+    const updateData = prisma.tickets.update.mock.calls[0][0].data
+    expect(updateData.first_response_at).toBeInstanceOf(Date)
+  })
+
+  it('updates priority and recalculates due_at', async () => {
+    prisma.tickets.findMany.mockResolvedValue([
+      { id: 1, status: 'open', priority: 'low', category: 'feature', resolved_at: null, first_response_at: null },
+    ])
+    prisma.tickets.update.mockResolvedValue({})
+    await bulkUpdateTickets({ ids: [1], action: 'priority', priority: 'critical' })
+    const updateData = prisma.tickets.update.mock.calls[0][0].data
+    expect(updateData.priority).toBe('critical')
+    expect(updateData.due_at).toBeInstanceOf(Date)
+    const diffHours = (updateData.due_at.getTime() - NOW) / 3600000
+    expect(diffHours).toBeLessThan(8)
+    expect(diffHours).toBeGreaterThanOrEqual(4)
+  })
+
+  it('assigns tickets to employee', async () => {
+    prisma.tickets.findMany.mockResolvedValue([
+      { id: 1, status: 'open', priority: 'medium', category: 'support', resolved_at: null, first_response_at: null },
+    ])
+    prisma.employees.findUnique.mockResolvedValue({ id: 7 })
+    prisma.tickets.update.mockResolvedValue({})
+    const result = await bulkUpdateTickets({ ids: [1], action: 'assign', employeeId: 7 })
+    expect(result.updated).toBe(1)
+    const updateData = prisma.tickets.update.mock.calls[0][0].data
+    expect(updateData.assigned_to).toBe(7)
+  })
+
+  it('throws 404 when assigning to missing employee', async () => {
+    prisma.tickets.findMany.mockResolvedValue([
+      { id: 1, status: 'open', priority: 'medium', category: 'support', resolved_at: null, first_response_at: null },
+    ])
+    prisma.employees.findUnique.mockResolvedValue(null)
+    await expect(bulkUpdateTickets({ ids: [1], action: 'assign', employeeId: 999 })).rejects.toMatchObject({ statusCode: 404 })
   })
 })

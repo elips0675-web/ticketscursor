@@ -4,8 +4,9 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Search, ArrowUpDown, Filter, Plus, MessageSquare, User, Download, FileText, Tag as TagIcon } from 'lucide-react'
+import { Search, ArrowUpDown, Filter, Plus, MessageSquare, User, Download, FileText, Tag as TagIcon, CheckSquare, Square } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useSocket } from '@/context/SocketContext'
@@ -62,6 +63,8 @@ export default function Tickets() {
   const [tagFilter, setTagFilter] = useState<string>(searchParams.get('tag') || 'all')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest')
   const [page, setPage] = useState(1)
+  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const { bulkUpdateTickets, employees } = useTickets()
 
   const allTags = useMemo(() => {
     const set = new Set<string>()
@@ -90,6 +93,41 @@ export default function Tickets() {
   const paged = filtered.slice(0, page * PER_PAGE)
 
   const resetPage = () => setPage(1)
+
+  const idsInView = paged.map((t) => t.id)
+  const allVisibleSelected = idsInView.length > 0 && idsInView.every((id) => selected.has(id))
+
+  const toggleSelectAllVisible = () => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (allVisibleSelected) {
+        idsInView.forEach((id) => next.delete(id))
+      } else {
+        idsInView.forEach((id) => next.add(id))
+      }
+      return next
+    })
+  }
+
+  const handleBulkStatus = async (status: string) => {
+    const ids = Array.from(selected)
+    if (ids.length === 0) return
+    const payload = { ids, action: 'status', status } as const
+    await bulkUpdateTickets(payload).catch(() => setSelected(new Set()))
+    setSelected(new Set())
+  }
+
+  const handleBulkAssign = async (employeeId: number) => {
+    const ids = Array.from(selected)
+    if (ids.length === 0) return
+    const payload = {
+      ids,
+      action: 'assign',
+      employeeId: employeeId === -1 ? null : employeeId,
+    } as const
+    await bulkUpdateTickets(payload).catch(() => setSelected(new Set()))
+    setSelected(new Set())
+  }
 
   const EXPORT_LIMIT = 10000
   const exportCSV = () => {
@@ -179,10 +217,24 @@ export default function Tickets() {
           <h1 className="text-2xl font-bold tracking-tight">Тикеты</h1>
           <p className="text-sm text-muted-foreground mt-1">{t('tickets.total', { count: filtered.length })}</p>
         </div>
-        <Button onClick={() => navigate('/tickets/new')}>
-          <Plus className="w-4 h-4 mr-1.5" />
-          {t('tickets.new')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={toggleSelectAllVisible}
+            className="hidden md:flex items-center"
+          >
+            {allVisibleSelected ? (
+              <CheckSquare className="w-4 h-4 mr-1.5" />
+            ) : (
+              <Square className="w-4 h-4 mr-1.5" />
+            )}
+            {allVisibleSelected ? t('tickets.bulkDeselectAll') : `${t('tickets.bulkSelectAll')} (${idsInView.length})`}
+          </Button>
+          <Button onClick={() => navigate('/tickets/new')}>
+            <Plus className="w-4 h-4 mr-1.5" />
+            {t('tickets.new')}
+          </Button>
+        </div>
       </div>
 
       <Card className="p-4">
@@ -283,6 +335,76 @@ export default function Tickets() {
         </div>
       </Card>
 
+      {selected.size > 0 && (
+        <Card className="p-4 border-primary/40 bg-primary/5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <span className="text-sm font-bold">
+              {t('tickets.bulkSelected', { count: selected.size })}
+            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() =>
+                  handleBulkStatus('closed').then(() =>
+                    toast.success(t('tickets.bulkClosed', { count: selected.size })),
+                  )
+                }
+              >
+                <CheckSquare className="w-4 h-4 mr-1.5" />
+                {t('tickets.bulkClose')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  handleBulkStatus('reopened').then(() =>
+                    toast.success(t('tickets.bulkReopened', { count: selected.size })),
+                  )
+                }
+              >
+                {t('tickets.bulkReopen')}
+              </Button>
+              <Select
+                value=""
+                onValueChange={(v) => {
+                  const empId = Number(v)
+                  if (!Number.isFinite(empId)) return
+                  handleBulkAssign(empId).then(() =>
+                    toast.success(t('tickets.bulkAssigned', { count: selected.size })),
+                  )
+                }}
+              >
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <User className="w-3.5 h-3.5 mr-1" />
+                  <SelectValue placeholder={t('tickets.bulkAssignPlaceholder')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees
+                    .filter((e) => ['agent', 'senior_agent', 'admin', 'super_admin'].includes(e.role))
+                    .map((e) => (
+                      <SelectItem key={e.id} value={String(e.id)}>
+                        {e.name}
+                      </SelectItem>
+                    ))}
+                  <SelectItem value="-1">{t('tickets.bulkUnassign')}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSelected(new Set())
+                }}
+              >
+                <Square className="w-4 h-4 mr-1.5" />
+                {t('tickets.bulkClear')}
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {loading ? (
         <SkeletonCardGrid count={PER_PAGE} />
       ) : (
@@ -295,19 +417,41 @@ export default function Tickets() {
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
+                  if (e.target instanceof HTMLInputElement) return
                   e.preventDefault()
                   navigate(`/tickets/${ticket.id}`)
                 }
               }}
               className="bg-white rounded-xl border p-5 hover:shadow-md transition-all cursor-pointer flex flex-col"
             >
-              <div className="flex items-center gap-2 mb-3">
-                <Badge className={`text-[9px] ${ticket.status.replace('_', '-')}`}>
-                  {statusLabels[ticket.status] || ticket.status}
-                </Badge>
-                <Badge className={`text-[9px] priority-${ticket.priority}`}>
-                  {priorityLabels[ticket.priority] || ticket.priority}
-                </Badge>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Badge className={`text-[9px] ${ticket.status.replace('_', '-')}`}>
+                    {statusLabels[ticket.status] || ticket.status}
+                  </Badge>
+                  <Badge className={`text-[9px] priority-${ticket.priority}`}>
+                    {priorityLabels[ticket.priority] || ticket.priority}
+                  </Badge>
+                </div>
+                <div
+                  role="presentation"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  data-testid={`select-ticket-${ticket.id}`}
+                >
+                  <Checkbox
+                    aria-label={t('tickets.bulkSelectCard')}
+                    checked={selected.has(ticket.id)}
+                    onCheckedChange={(checked) => {
+                      setSelected((prev) => {
+                        const next = new Set(prev)
+                        if (checked) next.add(ticket.id)
+                        else next.delete(ticket.id)
+                        return next
+                      })
+                    }}
+                  />
+                </div>
               </div>
               <h3 className="font-bold text-sm leading-snug mb-1 line-clamp-2">{ticket.title}</h3>
               <p className="text-xs text-muted-foreground line-clamp-2 mb-4 flex-1">{ticket.description}</p>

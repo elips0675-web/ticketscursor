@@ -1,4 +1,4 @@
-export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed'
+export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed' | 'reopened'
 export type TicketPriority = 'low' | 'medium' | 'high' | 'critical'
 export type TicketCategory = 'bug' | 'feature' | 'support' | 'incident' | 'other'
 export type EmployeeRole = 'requester' | 'agent' | 'senior_agent' | 'admin' | 'super_admin'

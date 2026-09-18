@@ -37,6 +37,24 @@ export const updateTagsSchema = z.object({
   tags: z.array(z.string().trim().min(1, 'Tag required').max(50)).max(20),
 })
 
+export const bulkTicketSchema = z
+  .object({
+    ids: z.array(z.number().int().positive()).min(1, 'At least one ticket id required').max(100),
+    action: z.enum(['status', 'assign', 'priority']),
+    status: z.enum(['open', 'in_progress', 'resolved', 'closed', 'reopened']).optional(),
+    employeeId: z.number().int().positive().nullable().optional(),
+    priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.action === 'status') return data.status !== undefined
+      if (data.action === 'assign') return data.employeeId !== undefined
+      if (data.action === 'priority') return data.priority !== undefined
+      return false
+    },
+    { message: 'Missing required field for this action' },
+  )
+
 export const addMessageSchema = z.object({
   text: z.string().trim().min(1, 'Message text required'),
   isInternal: z.boolean().optional(),

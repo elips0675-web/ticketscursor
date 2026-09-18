@@ -198,6 +198,71 @@ export async function updateTicketTags(id, tags) {
   return { id, tags }
 }
 
+export async function bulkUpdateTickets({ ids, action, status, employeeId, priority }) {
+  const where = { id: { in: ids }, deleted_at: null }
+  const rows = await prisma.tickets.findMany({
+    where,
+    select: { id: true, status: true, priority: true, category: true, resolved_at: true, first_response_at: true },
+  })
+  if (rows.length === 0) return { updated: 0, skipped: ids.length, results: [] }
+
+  let results = []
+  if (action === 'status') {
+    const now = new Date()
+    for (const row of rows) {
+      const transitions = VALID_TRANSITIONS[row.status]
+      if (!transitions || !transitions.includes(status)) {
+        continue
+      }
+      const updateData = {
+        status,
+        updated_at: now,
+        resolved_at: getResolvedAt(status, row.resolved_at),
+      }
+      if (status === 'in_progress' && !row.first_response_at) {
+        updateData.first_response_at = now
+      }
+      await prisma.tickets.update({ where: { id: row.id }, data: updateData })
+      results.push({ id: row.id, status })
+    }
+    return { updated: results.length, skipped: ids.length - results.length, results }
+  }
+
+  if (action === 'priority') {
+    const settings = await getSettings().catch(() => ({}))
+    const now = new Date()
+    for (const row of rows) {
+      const slaHours = getSlaHours(priority, row.category, settings)
+      const dueAt = new Date(now.getTime() + slaHours * 60 * 60 * 1000)
+      await prisma.tickets.update({
+        where: { id: row.id },
+        data: { priority, due_at: dueAt, updated_at: now },
+      })
+      results.push({ id: row.id, priority })
+    }
+    return { updated: results.length, skipped: ids.length - results.length, results }
+  }
+
+  if (action === 'assign') {
+    if (employeeId) {
+      const emp = await prisma.employees.findUnique({ where: { id: employeeId }, select: { id: true } })
+      if (!emp) {
+        const err = new Error('Employee not found')
+        err.statusCode = 404
+        throw err
+      }
+    }
+    const now = new Date()
+    for (const row of rows) {
+      await prisma.tickets.update({ where: { id: row.id }, data: { assigned_to: employeeId || null, updated_at: now } })
+      results.push({ id: row.id, assigned_to: employeeId || null })
+    }
+    return { updated: results.length, skipped: ids.length - results.length, results }
+  }
+
+  return { updated: 0, skipped: ids.length, results: [] }
+}
+
 export async function updateTicketStatus(id, status) {
   const old = await prisma.tickets.findUnique({
     where: { id },

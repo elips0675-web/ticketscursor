@@ -140,6 +140,15 @@ const options = {
           responses: { '201': { description: 'Message created' } },
         },
       },
+      '/api/tickets/bulk': {
+        post: {
+          tags: ['Tickets'],
+          summary: 'Bulk update tickets — status / assign / priority (agent+)',
+          security: [{ bearerAuth: [] }],
+          requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { ids: { type: 'array', items: { type: 'integer' }, minItems: 1 }, action: { type: 'string', enum: ['status', 'assign', 'priority'] }, status: { type: 'string', enum: ['open', 'in_progress', 'resolved', 'closed', 'reopened'] }, employeeId: { type: 'integer', nullable: true }, priority: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] } }, required: ['ids', 'action'] } } } },
+          responses: { '200': { description: 'Bulk update result { updated, skipped, results }' }, '400': { description: 'Validation error' }, '403': { description: 'Forbidden' } },
+        },
+      },
       '/api/tickets/upload': {
         post: {
           tags: ['Tickets'],

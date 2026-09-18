@@ -448,6 +448,15 @@ export const handlers = [
     })
   }),
 
+  http.post(`${API}/tickets/bulk`, ({ request }) => {
+    return request.json().then((body: { ids?: number[]; action?: string }) => {
+      return HttpResponse.json({
+        success: true,
+        data: { updated: body.ids?.length || 0, skipped: 0, results: (body.ids || []).map((id) => ({ id })) },
+      })
+    })
+  }),
+
   http.post(`${API}/tickets/:id/messages`, () => {
     return HttpResponse.json({
       data: {

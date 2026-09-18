@@ -14,7 +14,7 @@ import {
   notifyTicketCreated, notifyStatusChanged, notifyPriorityChanged,
   notifyTicketAssigned, notifyTicketMessage,
 } from '../notify.js'
-import { createTicketValidation, updateStatusValidation, updatePriorityValidation, assignTicketValidation, updateTagsValidation, addMessageValidation } from '../validate.js'
+import { createTicketValidation, updateStatusValidation, updatePriorityValidation, assignTicketValidation, updateTagsValidation, bulkTicketValidation, addMessageValidation } from '../validate.js'
 import logger from '../logger.js'
 import { idempotent } from '../middleware/idempotency.js'
 import { validateUpload } from '../middleware/validateUpload.js'
@@ -29,6 +29,7 @@ import {
   updateTicketPriority,
   updateTicketAssignee,
   updateTicketTags,
+  bulkUpdateTickets,
   generateTicketFilename,
 } from '../services/tickets.service.js'
 
@@ -234,6 +235,36 @@ router.put('/:id/tags', requireRole('admin', 'senior_agent', 'agent'), updateTag
   } catch (err) {
     logger.error('Update ticket tags error:', err)
     res.status(500).json({ success: false, message: 'Failed to update tags' })
+  }
+})
+
+router.post('/bulk', requireRole('admin', 'senior_agent', 'agent'), bulkTicketValidation, async (req, res) => {
+  const { ids, action, status, employeeId, priority } = req.body
+  try {
+    const result = await bulkUpdateTickets({ ids, action, status, employeeId, priority })
+    if (action === 'assign' && result.updated > 0) {
+      enqueueEvent('ticket:updated', null, { ids, action, assignedTo: employeeId || null, updatedBy: req.user.userId })
+      logAudit({ userId: req.user.userId, userName: req.user.name, action: 'bulk_assigned', entityType: 'ticket', entityId: null, details: { ids, employeeId: employeeId || null } })
+      try {
+        await notifyTicketAssigned(ids[0], employeeId, req.user.name)
+      } catch (notifyErr) {
+        logger.warn('notifyTicketAssigned failed on bulk:', notifyErr.message)
+      }
+    } else if (action === 'status') {
+      enqueueEvent('ticket:updated', null, { ids, action, status, updatedBy: req.user.userId })
+      logAudit({ userId: req.user.userId, userName: req.user.name, action: 'bulk_status_changed', entityType: 'ticket', entityId: null, details: { ids, status } })
+    } else if (action === 'priority') {
+      enqueueEvent('ticket:updated', null, { ids, action, priority, updatedBy: req.user.userId })
+      logAudit({ userId: req.user.userId, userName: req.user.name, action: 'bulk_priority_changed', entityType: 'ticket', entityId: null, details: { ids, priority } })
+    }
+    invalidateCache('cache:/api/tickets*')
+    res.json({ success: true, data: result })
+  } catch (err) {
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({ success: false, message: err.message })
+    }
+    logger.error('Bulk ticket update error:', err)
+    res.status(500).json({ success: false, message: 'Failed to bulk update tickets' })
   }
 })
 

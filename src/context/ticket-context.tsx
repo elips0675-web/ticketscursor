@@ -14,6 +14,13 @@ interface TicketContextType {
   updateTicketPriority: (id: number, priority: TicketPriority) => Promise<void>
   assignTicket: (id: number, employeeId: number) => Promise<void>
   updateTicketTags: (id: number, tags: string[]) => Promise<void>
+  bulkUpdateTickets: (data: {
+    ids: number[]
+    action: 'status' | 'assign' | 'priority'
+    status?: TicketStatus | 'reopened'
+    employeeId?: number | null
+    priority?: TicketPriority
+  }) => Promise<{ updated: number; skipped: number }>
   addMessage: (
     ticketId: number,
     text: string,
@@ -251,6 +258,48 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     },
   })
 
+  const bulkMutation = useMutation({
+    mutationFn: (data: {
+      ids: number[]
+      action: 'status' | 'assign' | 'priority'
+      status?: TicketStatus | 'reopened'
+      employeeId?: number | null
+      priority?: TicketPriority
+    }) =>
+      authFetch(`${API_URL}/tickets/bulk`, token, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }).then((body) => body.data as { updated: number; skipped: number }),
+    onMutate: async (data) => {
+      await queryClient.cancelQueries({ queryKey: ['tickets'] })
+      const prev = queryClient.getQueryData<Ticket[]>(['tickets'])
+      const idSet = new Set(data.ids)
+      queryClient.setQueryData<Ticket[]>(['tickets'], (old) =>
+        old?.map((t) => {
+          if (!idSet.has(t.id)) return t
+          const next = { ...t, updatedAt: new Date().toISOString() }
+          if (data.action === 'status' && data.status) {
+            next.status = data.status as TicketStatus
+            if (data.status === 'reopened') next.escalationLevel = 0
+          }
+          if (data.action === 'priority' && data.priority) {
+            next.priority = data.priority
+          }
+          if (data.action === 'assign') {
+            const emp = data.employeeId ? employees.find((e) => e.id === data.employeeId) : undefined
+            next.assignedTo = emp || (data.employeeId === null ? undefined : t.assignedTo)
+          }
+          return next
+        }),
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(['tickets'], ctx.prev)
+    },
+  })
+
   const addMessageMutation = useMutation({
     mutationFn: async ({
       ticketId,
@@ -391,6 +440,17 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     [tagsMutation],
   )
 
+  const bulkUpdateTickets = useCallback(
+    (data: {
+      ids: number[]
+      action: 'status' | 'assign' | 'priority'
+      status?: TicketStatus | 'reopened'
+      employeeId?: number | null
+      priority?: TicketPriority
+    }) => bulkMutation.mutateAsync(data),
+    [bulkMutation],
+  )
+
   const addMessage = useCallback(
     (ticketId: number, text: string, isInternal: boolean, attachments?: { url: string; name: string }[]) =>
       addMessageMutation.mutateAsync({ ticketId, text, isInternal, attachments }),
@@ -420,6 +480,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         updateTicketPriority,
         assignTicket,
         updateTicketTags,
+        bulkUpdateTickets,
         addMessage,
         createTicket,
         loading,
