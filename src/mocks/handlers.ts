@@ -549,6 +549,18 @@ export const handlers = [
     })
   }),
 
+  http.post(`${API}/tickets/:id/assistant`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        keywords: ['vpn', 'доступ'],
+        answer: 'Проверьте подключение к VPN-клиенту и перезапустите его. Инструкция доступна в базе знаний.',
+        usedLlm: false,
+        sources: [{ id: 1, title: 'Как настроить VPN', category: 'Инструкции' }],
+      },
+    })
+  }),
+
   http.post(`${API}/tickets`, () => {
     return HttpResponse.json({
       data: {

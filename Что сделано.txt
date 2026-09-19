@@ -102,13 +102,11 @@
 
 ТЕСТЫ
 
-   • Клиентские: 393/393 (52 файла, vitest + jsdom)
-   • Серверные: 413/413 (25 файлов, vitest + supertest)
+   • Клиентские: 397/397 (52 файла, vitest + jsdom)
+   • Серверные: 436/436 (28 файлов, vitest + supertest)
    • E2E: 36 тестов, 14 файлов (Playwright — login, tickets, chats, admin, SLA, files, search, ldap, kanban, notifications, profile, calculator, audit, file-upload)
-   • ESLint: 0 errors, 0 warnings
+• ESLint: 0 errors, 10 pre-existing warnings
    • Type-check + build: успешно
-  • ESLint: 0 errors, 0 warnings
-  • Type-check + build: успешно
 
 ────────────────────────────────────────────────────────────────────────────
 
@@ -459,3 +457,15 @@
 - ✅ MSW-хендлеры time-эндпоинтов; TicketDetail.test.tsx +4 теста (показ карточки/тотала, добавление записи, start/stop таймера, скрытие для requester)
 - ✅ Тесты: сервер 413/413 (+19), клиент 393/393 (+4); tsc чист, vite build OK, eslint 0 новых ошибок (2 предупреждения: одно pre-existing в handlers.ts, новое set-state-in-effect подавлено по конвенции проекта)
 - Коммит Этапа 5
+
+### v1.9.0 — API versioning + ИИ-ассистент (Этапы 6 и 7 роадмапа, завершены)
+- ✅ **API versioning** (Этап 6): глобальный middleware в `app.js` — `req.url`/`req.originalUrl` с `/api/v1/` переписываются на `/api/` (единый mount `/api${prefix}`), ответ с заголовком `X-API-Version: v1`; `/api/*` полностью совместим
+- ✅ **Фикс `cacheMiddleware`**: кэш только для статуса <400 (ранее могли кэшироваться 4xx/5xx); cache.test.js 6/6
+- ✅ **ИИ-ассистент из Wiki** (Этап 7): `assistant.service.js` — `extractKeywords` (RU/EN), `searchWiki`, `buildAnswer` (шаблон), `generateLlmAnswer` (OpenAI, 15s abort) при `OPENAI_API_KEY`; полный он — сразу после `key & OPENAI_API_KEY`, гибрид `answer || templateAnswer`
+- ✅ **API**: POST `/api/tickets/:id/assistant` (`requireRole('admin','senior_agent','agent')`), ответ `{ success, data: { keywords, answer, usedLlm, sources } }`, swagger-документ
+- ✅ **Frontend**: карточка «Ассистент» в TicketDetail (data-testid="assistant-card"), кнопка «Спросить ассистента», keywords-бейджи, ответ с источниками (ссылки на /wiki), «Вставить в сообщение» → setMessageText; видна только staff-ролям (canUseAssistant)
+- ✅ **i18n**: 7 ключей `tickets.assistant*` (ru/en)
+- ✅ **MSW + тесты**: handler POST /tickets/:id/assistant; TicketDetail.test.tsx +4 (показ для staff, ответ с источниками, вставка, скрытие для requester)
+- ✅ **Lint-очистка**: 0 errors — пустые catch в AdminCannedResponses/AdminSettings (/* ignore */), `/* global console, process */` в check-bundle-size.js, k6-глобалы в test/load, удалён неиспользуемый `keywords` из generateLlmAnswer
+- ✅ Тесты: сервер 436/436 (+23, 28 файлов), клиент 397/397 (+4, 52 файла); tsc чист, vite build OK, eslint 0 errors (10 warnings — все pre-existing)
+- Коммит Этапов 6–7

@@ -34,7 +34,7 @@ export default function AdminCannedResponses() {
       const data = await api.get('/canned-responses')
       setItems(data || [])
     } catch {
-      toast.error(t('common.error'))
+      /* ignore */
     }
     setLoading(false)
   }
@@ -55,7 +55,7 @@ export default function AdminCannedResponses() {
       setEditing(null)
       await load()
     } catch {
-      toast.error(t('common.error'))
+      /* ignore */
     }
     setSaving(false)
   }
@@ -69,7 +69,7 @@ export default function AdminCannedResponses() {
       setEditing(null)
       await load()
     } catch {
-      toast.error(t('common.error'))
+      /* ignore */
     }
     setSaving(false)
   }
@@ -80,7 +80,7 @@ export default function AdminCannedResponses() {
       toast.success(t('common.deleteSuccess'))
       await load()
     } catch {
-      toast.error(t('common.error'))
+      /* ignore */
     }
   }
 

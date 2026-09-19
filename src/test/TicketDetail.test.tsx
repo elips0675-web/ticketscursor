@@ -57,6 +57,13 @@ vi.mock('react-i18next', () => ({
         'tickets.timeStop': 'Стоп',
         'tickets.timeEmpty': 'Записей нет',
         'tickets.timeEntryMinutes': '{minutes} мин',
+        'tickets.assistant': 'Ассистент (Wiki)',
+        'tickets.assistantAsk': 'Спросить ассистента',
+        'tickets.assistantLoading': 'Ассистент думает...',
+        'tickets.assistantAnswer': 'Рекомендация',
+        'tickets.assistantSources': 'Источники',
+        'tickets.assistantInsert': 'Вставить в сообщение',
+        'tickets.assistantError': 'Не удалось получить ответ ассистента',
         'common.back': 'Назад',
       })[key] || key,
   }),
@@ -241,6 +248,48 @@ describe('TicketDetail', () => {
     await waitFor(() => {
       expect(screen.getAllByTestId('message-mention').length).toBeGreaterThanOrEqual(2)
     })
+  })
+
+  it('shows assistant card for staff roles', async () => {
+    render(<TicketDetail />, { wrapper: TestProviders })
+    await screen.findByText('Проблема с доступом')
+    expect(screen.getByTestId('assistant-card')).toBeInTheDocument()
+    expect(screen.getByText('Спросить ассистента')).toBeInTheDocument()
+  })
+
+  it('asks assistant and shows suggestion with sources', async () => {
+    const user = userEvent.setup()
+    render(<TicketDetail />, { wrapper: TestProviders })
+    await screen.findByText('Проблема с доступом')
+    await user.click(screen.getByTestId('assistant-ask'))
+    await waitFor(() => {
+      expect(screen.getByTestId('assistant-answer')).toBeInTheDocument()
+    })
+    expect(screen.getByText(/VPN-клиенту/)).toBeInTheDocument()
+    expect(screen.getByText('Источники')).toBeInTheDocument()
+    expect(screen.getByText('Как настроить VPN')).toBeInTheDocument()
+  })
+
+  it('inserts assistant suggestion into message input', async () => {
+    const user = userEvent.setup()
+    render(<TicketDetail />, { wrapper: TestProviders })
+    await screen.findByText('Проблема с доступом')
+    await user.click(screen.getByTestId('assistant-ask'))
+    await waitFor(() => {
+      expect(screen.getByTestId('assistant-answer')).toBeInTheDocument()
+    })
+    await user.click(screen.getByTestId('assistant-insert'))
+    const textarea = screen.getByPlaceholderText('Напишите сообщение...')
+    expect(textarea).toHaveValue(
+      'Проверьте подключение к VPN-клиенту и перезапустите его. Инструкция доступна в базе знаний.',
+    )
+  })
+
+  it('hides assistant card for requester role', async () => {
+    localStorage.setItem('user', JSON.stringify({ id: 3, name: 'Резидент', email: 'r@test.com', role: 'requester' }))
+    render(<TicketDetail />, { wrapper: TestProviders })
+    await screen.findByText('Проблема с доступом')
+    expect(screen.queryByTestId('assistant-card')).not.toBeInTheDocument()
   })
 })
 

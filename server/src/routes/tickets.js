@@ -40,6 +40,7 @@ import {
   startTimer,
   stopTimer,
 } from '../services/time.service.js'
+import { generateAssistantSuggestion } from '../services/assistant.service.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ticketUploads = path.join(__dirname, '..', '..', 'uploads', 'tickets')
@@ -338,6 +339,28 @@ router.get('/:id/messages', async (req, res) => {
   } catch (err) {
     logger.error('Ticket messages error:', err)
     res.status(500).json({ success: false, message: 'Failed to fetch messages' })
+  }
+})
+
+router.post('/:id/assistant', requireRole('admin', 'senior_agent', 'agent'), async (req, res) => {
+  const ticketId = Number(req.params.id)
+  try {
+    const ticket = await prisma.tickets.findUnique({
+      where: { id: ticketId },
+      select: { id: true, title: true, description: true },
+    })
+    if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    const messages = await prisma.ticket_messages.findMany({
+      where: { ticket_id: ticketId, deleted_at: null },
+      orderBy: { created_at: 'asc' },
+      take: 50,
+      select: { text: true },
+    })
+    const suggestion = await generateAssistantSuggestion({ ticket, messages })
+    res.json({ success: true, data: suggestion })
+  } catch (err) {
+    logger.error('Assistant suggestion error:', err)
+    res.status(500).json({ success: false, message: 'Failed to generate assistant suggestion' })
   }
 })
 

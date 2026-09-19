@@ -180,7 +180,14 @@
     "bulkClear": "Clear",
     "bulkSelectAll": "Select all",
     "bulkDeselectAll": "Deselect all",
-    "bulkSelectCard": "Select ticket"
+    "bulkSelectCard": "Select ticket",
+    "assistant": "Assistant (Wiki)",
+    "assistantAsk": "Ask assistant",
+    "assistantLoading": "Assistant is thinking...",
+    "assistantAnswer": "Suggestion",
+    "assistantSources": "Sources",
+    "assistantInsert": "Insert into message",
+    "assistantError": "Failed to get assistant answer"
   },
   "dashboard": {
     "title": "Dashboard",

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { toast } from 'sonner'
@@ -30,8 +30,9 @@ import {
   FileText,
   Loader2,
   AlertTriangle,
+  Sparkles,
 } from 'lucide-react'
-import type { TicketStatus, TicketPriority } from '@/types'
+import type { TicketStatus, TicketPriority, AssistantSuggestion } from '@/types'
 import { API_URL } from '@/lib/api'
 
 function parseMentions(value: unknown): number[] {
@@ -97,13 +98,24 @@ export default function TicketDetail() {
   const { t } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
-  const { tickets, employees, updateTicketStatus, updateTicketPriority, assignTicket, addMessage, updateTicketTags } = useTickets()
-  const { canManage, token } = useAuth()
+  const { tickets, employees, updateTicketStatus, updateTicketPriority, assignTicket, addMessage, updateTicketTags } =
+    useTickets()
+  const { canManage, token, user } = useAuth()
   const { socket } = useSocket()
   const [detailTicket, setDetailTicket] = useState<Ticket | null>(null)
   const [detailLoading, setDetailLoading] = useState(true)
   const ctxTicket = tickets.find((t) => t.id === Number(id))
   const ticket = detailTicket || ctxTicket
+
+  const role = user?.role
+  const canUseAssistant = role === 'admin' || role === 'super_admin' || role === 'senior_agent' || role === 'agent'
+  const [assistantLoading, setAssistantLoading] = useState(false)
+  const [assistantSuggestion, setAssistantSuggestion] = useState<AssistantSuggestion | null>(null)
+
+  useEffect(() => {
+    setAssistantSuggestion(null)
+    setAssistantLoading(false)
+  }, [id])
 
   useEffect(() => {
     if (!id || !token) return
@@ -193,8 +205,39 @@ export default function TicketDetail() {
     setMentionQuery('')
   }
 
+  const handleAskAssistant = async () => {
+    if (!ticket || assistantLoading) return
+    setAssistantLoading(true)
+    try {
+      const res = await fetch(`${API_URL}/tickets/${ticket.id}/assistant`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const json = res.ok ? await res.json() : null
+      if (res.ok && json?.data) {
+        const suggestion = json.data as AssistantSuggestion
+        setAssistantSuggestion({
+          keywords: Array.isArray(suggestion.keywords) ? suggestion.keywords : [],
+          answer: suggestion.answer || '',
+          usedLlm: Boolean(suggestion.usedLlm),
+          sources: Array.isArray(suggestion.sources) ? suggestion.sources : [],
+        })
+      } else {
+        toast.error(t('tickets.assistantError'))
+      }
+    } catch {
+      toast.error(t('tickets.assistantError'))
+    } finally {
+      setAssistantLoading(false)
+    }
+  }
+
   const handleSaveTags = () => {
-    const parsed = tagsDraft.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 20)
+    const parsed = tagsDraft
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 20)
     const merged = Array.from(new Set([...(ticket.tags || []), ...parsed]))
     updateTicketTags(ticket.id, merged)
     if (detailTicket) setDetailTicket({ ...detailTicket, tags: merged })
@@ -271,7 +314,9 @@ export default function TicketDetail() {
       setMentionIndex((prev) => (prev + 1) % Math.max(filteredMentions.length, 1))
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      setMentionIndex((prev) => (prev - 1 + Math.max(filteredMentions.length, 1)) % Math.max(filteredMentions.length, 1))
+      setMentionIndex(
+        (prev) => (prev - 1 + Math.max(filteredMentions.length, 1)) % Math.max(filteredMentions.length, 1),
+      )
     } else if (e.key === 'Enter' || e.key === 'Tab') {
       e.preventDefault()
       const emp = filteredMentions[mentionIndex]
@@ -482,7 +527,10 @@ export default function TicketDetail() {
                   id="ticket-message"
                 />
                 {showMentions && filteredMentions.length > 0 && (
-                  <div className="absolute z-50 w-64 max-h-48 overflow-y-auto rounded-md border bg-background shadow-md" data-testid="mention-menu">
+                  <div
+                    className="absolute z-50 w-64 max-h-48 overflow-y-auto rounded-md border bg-background shadow-md"
+                    data-testid="mention-menu"
+                  >
                     {filteredMentions.map((emp, idx) => (
                       <button
                         key={emp.id}
@@ -634,12 +682,7 @@ export default function TicketDetail() {
                       onChange={(e) => setTagsDraft(e.target.value)}
                       placeholder={t('tickets.tagsInputPlaceholder')}
                     />
-                    <Button
-                      size="sm"
-                      className="gap-1.5"
-                      onClick={() => handleSaveTags()}
-                      disabled={!tagsDraft.trim()}
-                    >
+                    <Button size="sm" className="gap-1.5" onClick={() => handleSaveTags()} disabled={!tagsDraft.trim()}>
                       <Tag className="w-3.5 h-3.5" />
                       {t('tickets.saveTags')}
                     </Button>
@@ -654,6 +697,75 @@ export default function TicketDetail() {
                     </div>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {canUseAssistant && (
+            <Card data-testid="assistant-card">
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  {t('tickets.assistant')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {!assistantSuggestion && (
+                  <Button
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={handleAskAssistant}
+                    disabled={assistantLoading}
+                    data-testid="assistant-ask"
+                  >
+                    {assistantLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    {assistantLoading ? t('tickets.assistantLoading') : t('tickets.assistantAsk')}
+                  </Button>
+                )}
+                {assistantSuggestion && (
+                  <div className="space-y-3">
+                    {assistantSuggestion.keywords.length > 0 && (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {assistantSuggestion.keywords.map((k) => (
+                          <Badge key={k} variant="secondary" className="text-[9px]">
+                            {k}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-xs font-bold text-muted-foreground mb-1">{t('tickets.assistantAnswer')}</p>
+                      <p className="text-xs text-foreground/80 whitespace-pre-line" data-testid="assistant-answer">
+                        {assistantSuggestion.answer}
+                      </p>
+                    </div>
+                    {assistantSuggestion.sources.length > 0 && (
+                      <div>
+                        <p className="text-xs font-bold text-muted-foreground mb-1">{t('tickets.assistantSources')}</p>
+                        <ul className="space-y-1">
+                          {assistantSuggestion.sources.map((s) => (
+                            <li key={s.id} className="text-xs">
+                              <Link to="/wiki" className="text-primary hover:underline">
+                                {s.title}
+                              </Link>
+                              {s.category && <span className="text-muted-foreground"> · {s.category}</span>}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5"
+                      onClick={() => setMessageText(assistantSuggestion.answer)}
+                      data-testid="assistant-insert"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      {t('tickets.assistantInsert')}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

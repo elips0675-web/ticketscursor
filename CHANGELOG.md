@@ -5,6 +5,27 @@
 
 ---
 
+## [1.9.0] — 2026-09-18
+
+### 🔄 API versioning (Этап 6 роадмапа)
+
+- **Backend** — глобальный middleware в `app.js`: `req.url`/`req.originalUrl` с префиксом `/api/v1/` перезаписываются на `/api/` (единый mount `/api${prefix}`), каждый v1-запрос получает заголовок `X-API-Version: v1`; обратная совместимость с `/api/*` сохранена полностью
+- **Фикс бага `cacheMiddleware`** — кэшируется только ответ со статусом <400 (раньше в кэш могли попадать 4xx/5xx); итоговая версия `cache.js` покрыта 6 unit-тестами
+
+### ✨ ИИ-ассистент из Wiki (Этап 7 роадмапа)
+
+- **Backend** — `assistant.service.js`: `extractKeywords` (RU/EN стоп-слова, нормализация), `searchWiki`, `buildAnswer` (шаблон со ссылками на статьи), `generateLlmAnswer` (OpenAI, 15s timeout) при `OPENAI_API_KEY`; гибридный ответ — LLM если ключ есть, иначе качественный шаблон
+- **API** — `POST /api/tickets/:id/assistant` под `requireRole('admin','senior_agent','agent')`: ответ `{ success, data: { keywords, answer, usedLlm, sources } }`; swagger-документ добавлен
+- **Frontend** — карточка «Ассистент» в `TicketDetail.tsx` (data-testid="assistant-card"): кнопка «Спросить ассистента», keywords-бейджи, ответ с источниками (ссылки на Wiki) и кнопкой «Вставить в сообщение» → заполняет поле отправки; видна только staff-ролям
+- **i18n** — 7 ключей `tickets.assistant*` (ru/en)
+- **Тесты** — MSW handler + 4 теста TicketDetail (показ для staff, ответ с источниками, вставка в сообщение, скрытие для requester)
+
+### 🧹 Lint-очистка
+
+- ESLint: **0 errors** (фикс пустых catch-блоков в `AdminCannedResponses.tsx`/`AdminSettings.tsx`, node-env для `scripts/check-bundle-size.js`, k6-глобалы в `test/load/*.k6.js`, убран неиспользуемый `keywords` в `assistant.service.js`); остаются только pre-existing warnings
+
+- **Тесты** — сервер 436/436 (28 файлов), клиент 397/397 (52 файла); tsc чист, vite build OK, git diff не содержит ALTER TABLE
+
 ## [1.8.0] — 2026-09-18
 
 ### ⏱️ Time tracking (Этап 5 роадмапа)

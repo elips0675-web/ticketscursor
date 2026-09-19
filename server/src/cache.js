@@ -80,7 +80,9 @@ export function cacheMiddleware(ttl = 300) {
     if (cached) return res.json(cached)
     const originalJson = res.json.bind(res)
     res.json = (body) => {
-      cache.set(key, body, ttl)
+      if (typeof res.statusCode !== 'number' || res.statusCode < 400) {
+        cache.set(key, body, ttl)
+      }
       originalJson(body)
     }
     next()

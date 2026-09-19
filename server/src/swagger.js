@@ -140,6 +140,21 @@ const options = {
           responses: { '201': { description: 'Message created. Mentions detected via @name / @email-prefix and stored in response data.mentions.' } },
         },
       },
+      '/api/tickets/{id}/assistant': {
+        post: {
+          tags: ['Tickets'],
+          summary: 'Generate AI assistant suggestion from knowledge base (agent+)',
+          security: [{ bearerAuth: [] }],
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+          responses: {
+            '200': {
+              description: 'Suggestion with wiki sources',
+              content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, data: { type: 'object', properties: { keywords: { type: 'array', items: { type: 'string' } }, answer: { type: 'string' }, usedLlm: { type: 'boolean' }, sources: { type: 'array', items: { type: 'object', properties: { id: { type: 'integer' }, title: { type: 'string' }, category: { type: 'string' } } } } } } } } } },
+            },
+            '404': { description: 'Ticket not found' },
+          },
+        },
+      },
       '/api/tickets/bulk': {
         post: {
           tags: ['Tickets'],

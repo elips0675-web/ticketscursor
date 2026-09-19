@@ -117,6 +117,15 @@ app.use('/uploads', (req, res, next) => {
   }
 })
 
+app.use((req, res, next) => {
+  if (req.url.startsWith('/api/v1/')) {
+    req.url = '/api' + req.url.slice('/api/v1'.length)
+    req.originalUrl = req.url
+    res.setHeader('X-API-Version', 'v1')
+  }
+  next()
+})
+
 function mount(prefix, router, ...mw) {
   app.use(`/api${prefix}`, ...mw, router)
 }

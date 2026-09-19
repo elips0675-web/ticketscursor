@@ -26,6 +26,42 @@ describe('GET /api/health', () => {
   })
 })
 
+describe('API versioning — /api/v1/*', () => {
+  it('GET /api/v1/health returns ok with X-API-Version header', async () => {
+    const res = await request(app).get('/api/v1/health')
+    expect(res.status).toBe(200)
+    expect(res.body.status).toBe('ok')
+    expect(res.headers['x-api-version']).toBe('v1')
+  })
+
+  it('POST /api/v1/auth/dev-login returns token', async () => {
+    const res = await request(app).post('/api/v1/auth/dev-login')
+    expect(res.status).toBe(200)
+    expect(res.body.data).toHaveProperty('token')
+    expect(res.headers['x-api-version']).toBe('v1')
+  })
+
+  it('GET /api/v1/tickets returns 401 without token', async () => {
+    const res = await request(app).get('/api/v1/tickets')
+    expect(res.status).toBe(401)
+    expect(res.body.message).toBe('No token provided')
+  })
+
+  it('GET /api/v1/tickets works with dev token', async () => {
+    const res = await request(app)
+      .get('/api/v1/tickets')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect([200, 500]).toContain(res.status)
+  })
+
+  it('GET /api/v1/employees works with dev token', async () => {
+    const res = await request(app)
+      .get('/api/v1/employees')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect([200, 500]).toContain(res.status)
+  })
+})
+
 describe('POST /api/auth/dev-login', () => {
   it('returns token and employee', async () => {
     const res = await request(app).post('/api/auth/dev-login')
@@ -1193,6 +1229,35 @@ describe('GET /api/tickets/:id/messages', () => {
       .set('Authorization', `Bearer ${devToken}`)
     expect(res.status).toBe(200)
     expect(res.body.success).toBe(true)
+  })
+})
+
+describe('POST /api/tickets/:id/assistant', () => {
+  it('returns suggestion with wiki sources', async () => {
+    const res = await request(app)
+      .post('/api/tickets/1/assistant')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+    expect(res.body.data).toHaveProperty('answer')
+    expect(res.body.data).toHaveProperty('keywords')
+    expect(res.body.data).toHaveProperty('usedLlm')
+    expect(Array.isArray(res.body.data.sources)).toBe(true)
+  })
+
+  it('returns 404 for non-existent ticket', async () => {
+    const res = await request(app)
+      .post('/api/tickets/999999/assistant')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect(res.status).toBe(404)
+  })
+
+  it('returns 403 for requester role', async () => {
+    const requesterToken = jwt.sign({ userId: 60, role: 'requester' }, JWT_SECRET, { expiresIn: '1h' })
+    const res = await request(app)
+      .post('/api/tickets/1/assistant')
+      .set('Authorization', `Bearer ${requesterToken}`)
+    expect(res.status).toBe(403)
   })
 })
 

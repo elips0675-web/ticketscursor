@@ -183,6 +183,13 @@ export interface EmployeeProfile {
   online: boolean
 }
 
+export interface AssistantSuggestion {
+  keywords: string[]
+  answer: string
+  usedLlm: boolean
+  sources: { id: number; title: string; category: string | null }[]
+}
+
 export interface WikiArticle {
   id: number
   title: string

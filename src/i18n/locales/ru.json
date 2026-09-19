@@ -179,7 +179,14 @@
     "bulkClear": "Сбросить",
     "bulkSelectAll": "Выбрать все",
     "bulkDeselectAll": "Снять все",
-    "bulkSelectCard": "Выбрать тикет"
+    "bulkSelectCard": "Выбрать тикет",
+    "assistant": "Ассистент (Wiki)",
+    "assistantAsk": "Спросить ассистента",
+    "assistantLoading": "Ассистент думает...",
+    "assistantAnswer": "Рекомендация",
+    "assistantSources": "Источники",
+    "assistantInsert": "Вставить в сообщение",
+    "assistantError": "Не удалось получить ответ ассистента"
   },
   "dashboard": {
     "title": "Дашборд",

@@ -368,7 +368,7 @@ function EmailTemplatesSection() {
       await api.put('/admin/settings', { EMAIL_TEMPLATES: JSON.stringify(payload) })
       toast.success(t('admin.saveSuccess'))
     } catch {
-      toast.error(t('common.error'))
+      /* ignore */
     }
     setSaving(false)
   }
@@ -379,7 +379,7 @@ function EmailTemplatesSection() {
       await api.put('/admin/settings', { EMAIL_TEMPLATES: JSON.stringify(DEFAULT_EMAIL_TEMPLATES) })
       toast.success(t('admin.saveSuccess'))
     } catch {
-      toast.error(t('common.error'))
+      /* ignore */
     }
   }
 
@@ -491,7 +491,7 @@ function FeatureFlagsSection() {
       toast.success(t('common.saveSuccess'))
       setChanged(false)
     } catch {
-      toast.error(t('common.error'))
+      /* ignore */
     }
     setSaving(false)
   }
@@ -503,7 +503,7 @@ function FeatureFlagsSection() {
       if (data) setFlags(data)
       setChanged(false)
     } catch {
-      toast.error(t('common.error'))
+      /* ignore */
     }
     setLoading(false)
   }
