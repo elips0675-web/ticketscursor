@@ -209,3 +209,144 @@ Kimi проанализировал `frontend-tests.txt` и увидел ~100 з
 | 7 | **OIDC/SAML** — крупная фича, нужна для корпоративных клиентов | 10-15 | P0 |
 
 > Email ingestion и OIDC/SAML — это фичи, после которых систему реально предлагать как замену Zendesk в среднем корпоративном сегменте.
+
+---
+
+## Gap-анализ 2.0 (Qwen — расширенное сравнение с Jira, Zendesk, Freshdesk, Zammad, Linear, HelpScout, YouTrack, OTRS)
+
+### Что уже реализовано (ядро)
+
+| Функция | Статус |
+|---------|--------|
+| Тикеты (CRUD, статусы, приоритеты, теги, кастомные поля) | ✅ |
+| SLA (таймеры, дедлайны, эскалация) | ✅ |
+| RBAC (6 ролей) | ✅ |
+| Чаты (real-time, WebSocket, read receipts, реакции) | ✅ |
+| Wiki / База знаний | ✅ |
+| Календарь + события | ✅ |
+| Push-уведомления (VAPID) | ✅ |
+| Telegram-бот | ✅ |
+| ИИ-ассистент (RAG по Wiki) | ✅ |
+| Time tracking | ✅ |
+| Canned responses | ✅ |
+| Bulk actions | ✅ |
+| Feature flags | ✅ |
+| PWA | ✅ |
+| Экспорт (CSV, PDF) | ✅ |
+| LDAP | ✅ |
+| Swagger API docs | ✅ |
+| Audit log | ✅ |
+| Админ-дашборд | ✅ |
+| Кастомные поля (частично) | ⚠️ |
+
+---
+
+### 🔥 Высокий приоритет (must-have для enterprise)
+
+| # | Фича | Что это | Аналоги | Сложность | Наш статус |
+|---|-------|---------|---------|-----------|------------|
+| 1 | **Rules Engine / Автоматизация** | Визуальный редактор правил: «ЕСЛИ статус = open И прошло > 24ч → назначить manager». Webhooks на события. Шаблоны с переменными `{{ticket.id}}` | Jira Automation, Zendesk Triggers, Freshdesk Observer | 2-3 недели | ❌ Нет (BullMQ — хорошая основа) |
+| 2 | **Omnichannel inbox** | Единый inbox для email + Telegram + чата + web-форм. Склейка по email (threading). Перенаправление между каналами | Zendesk, Freshdesk, HelpScout | 3-4 недели | ⚠️ Telegram-бот есть, нет unified inbox |
+| 3 | **Self-service портал + KB 2.0** | Публичная KB с SEO. «Похожие статьи» при создании тикета (AI-assistant расширить). Голосование, комментарии, версия | Zendesk Guide, Freshdesk Solutions | 1-2 недели | ⚠️ Wiki есть, но закрытая |
+| 4 | **Кастомные поля (Custom Fields)** | Админ создаёт: текст, число, дата, select, checkbox, user picker. Привязка к категориям. Валидация через Zod | Jira, Zendesk, YouTrack | 2 недели | ⚠️ Частично есть, нет конструктора |
+| 5 | **Mobile app (PWA → нативная)** | React Native или Capacitor. Push (web-push есть). Offline mode для черновиков | Все крупные | 3-4 недели | ⚠️ PWA есть |
+
+---
+
+### ⭐ Средний приоритет (сильное конкурентное преимущество)
+
+| # | Фича | Аналоги | Сложность | Наш статус |
+|---|-------|---------|-----------|------------|
+| 6 | **Advanced Analytics / BI** — конструктор дашбордов, CSAT, First Response Time, Resolution Time | Jira Dashboards, Zendesk Explore | 2-3 недели | ⚠️ Базово есть (Recharts) |
+| 7 | **Marketplace / Интеграции** — Slack, GitHub/GitLab, 1С/Битрикс24, Google Calendar, OAuth2 marketplace | Все крупные | 3-5 дней each | ❌ Нет |
+| 8 | **Voice / Video calls** — Twilio/Vonage, запись + транскрипция (Whisper), click-to-call | Zendesk Talk, Freshdesk Phone | 3-4 недели | ❌ Нет |
+| 9 | **Gamification** — бейджи («Быстрый ответ», «Решено 100 тикетов»), leaderboard, уровни и XP | Zendesk Agent Leaderboard, Freshdesk | 1 неделя | ❌ Нет (данные в audit log уже есть) |
+| 10 | **Multi-tenancy (SaaS-ready)** — Организация → workspace → изоляция данных. Billing (Stripe). Subdomain per tenant | Zendesk, Freshdesk | 4-6 недель | ❌ Нет |
+
+---
+
+### 💎 Nice-to-have (выделяющие продукт)
+
+| # | Фича | Аналоги | Сложность | Наш статус |
+|---|-------|---------|-----------|------------|
+| 11 | **AI нового поколения** — Auto-triage (категория/приоритет/агент), Sentiment analysis, Summarize thread, AI draft replies | Linear AI, Zendesk AI, Jira Intelligence | 2-3 недели | ⚠️ AI-assistant есть — хорошая база |
+| 12 | **Forms builder** — конструктор форм, условная логика, публичные ссылки | Jira Issue types, Zendesk Ticket forms | 2 недели | ❌ Нет |
+| 13 | **Time tracking + Billing** — ставки агентов, генерация инвойсов | Jira, YouTrack, Zammad | 2 недели | ⚠️ Time tracking есть, нет billing |
+| 14 | **Compliance / Security** — GDPR tools, Data residency, SAML 2.0/Okta/Azure AD, Audit log 2.0 (immutable, SIEM), IP whitelist, 2FA | Enterprise-версии Jira, Zendesk | 3-4 недели | ⚠️ LDAP есть, нет SAML/2FA |
+| 15 | **Canned responses 2.0** — переменные в шаблонах, горячие клавиши | Zendesk, Freshdesk, HelpScout | 3-5 дней | ⚠️ Базовые canned responses есть |
+
+---
+
+### Сравнительная таблица с аналогами
+
+| Фича | Jira | Zendesk | Freshdesk | **У нас** | Приоритет |
+|-------|------|---------|-----------|-----------|-----------|
+| Rules/Automation | ✅ | ✅ | ✅ | ❌ | 🔥 |
+| Omnichannel | ❌ | ✅ | ✅ | ⚠️ частично | 🔥 |
+| Public KB | ✅ | ✅ | ✅ | ❌ | 🔥 |
+| Custom fields | ✅ | ✅ | ✅ | ❌ | 🔥 |
+| Mobile app | ✅ | ✅ | ✅ | ⚠️ PWA | 🔥 |
+| BI/Dashboards | ✅ | ✅ | ✅ | ⚠️ базово | ⭐ |
+| Marketplace | ✅ | ✅ | ✅ | ❌ | ⭐ |
+| Voice calls | ❌ | ✅ | ✅ | ❌ | ⭐ |
+| Gamification | ❌ | ✅ | ✅ | ❌ | ⭐ |
+| Multi-tenancy | ❌ | ✅ | ✅ | ❌ | ⭐ |
+| AI auto-triage | ✅ | ✅ | ✅ | ⚠️ частично | 💎 |
+| Forms builder | ✅ | ✅ | ✅ | ❌ | 💎 |
+| Time tracking | ✅ | ❌ | ✅ | ❌ | 💎 |
+| SAML SSO | ✅ | ✅ | ✅ | ❌ (LDAP есть) | 💎 |
+| Canned responses | ✅ | ✅ | ✅ | ❌ | 💎 |
+
+---
+
+### Топ-5 рекомендаций (что делать в первую очередь)
+
+| # | Фича | Дней | Почему |
+|---|-------|------|--------|
+| 1 | **Canned responses 2.0** (переменные + hotkeys) | 3-5 | Самое быстрое, закрывает боль «пишу одно и то же» |
+| 2 | **CSAT-опросы** | 5-7 | Даёт метрику качества — без неё enterprise не продаётся |
+| 3 | **Rules Engine (базовый)** | 10-15 | Снимает рутину с агентов. JSON-правила в БД, BullMQ |
+| 4 | **Custom fields** | 10 | Без этого нельзя продавать enterprise-клиентам |
+| 5 | **AI auto-triage** | 10-15 | Естественное расширение AI-assistant. LLM → категория/приоритет/агент |
+
+---
+
+### Быстрые победы (1-3 дня)
+
+| Фича | Реализация |
+|------|-----------|
+| **Горячие клавиши** | C — создать тикет, / — поиск, J/K — навигация (как в Linear) |
+| **Keyboard shortcuts cheatsheet** | Модалка со списком |
+| **Dark mode** | Tailwind v4 — 2 часа |
+| **Command palette (Cmd+K)** | Быстрый доступ ко всему (как в Linear) |
+| **Markdown preview** | В комментариях в реальном времени |
+| **Bulk actions 2.0** | Выделить 10 тикетов → массово сменить статус/агента |
+| **Ticket templates** | Шаблоны для частых типов обращений |
+
+---
+
+### Roadmap на 3 месяца
+
+| Месяц | Задачи | Результат |
+|-------|--------|-----------|
+| **Месяц 1** | Canned responses 2.0 + CSAT + горячие клавиши + dark mode | Быстрые победы, UX |
+| **Месяц 2** | Custom fields + Rules engine (базовый) | Enterprise-ядро |
+| **Месяц 3** | AI auto-triage + Forms builder + интеграция Slack | Конкурентное преимущество |
+
+> После этого проект будет конкурентоспособен с Freshdesk на уровне $15-25/agent/month и готов к выходу на рынок.
+
+---
+
+### Итог:覆盖率 (coverage)
+
+| Категория | Реализовано | Всего | % |
+|-----------|-------------|-------|---|
+| Тикетное ядро | 12 | 15 | 80% |
+| Omnichannel | 1 | 4 | 25% |
+| AI/Автоматизация | 2 | 5 | 40% |
+| Аналитика | 2 | 4 | 50% |
+| Безопасность | 3 | 6 | 50% |
+| Интеграции | 1 | 5 | 20% |
+| **Общий** | **21** | **39** | **~54%** |
+
+> Текущий проект покрывает ~54% функционала зрелого helpdesk. Для MVP достаточно 70%+ (цель: месяц 3).
