@@ -1,0 +1,230 @@
+===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL, 411 тестов) =====
+Стек: Vitest 4.1.10, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
+Запуск: npx vitest run --config vitest.client.config.ts
+
+===== ФАЙЛЫ (реальные, 13 штук) =====
+
+src/test/TicketDetail.test.tsx
+src/test/App.test.tsx
+src/test/auth.test.tsx
+src/test/ErrorBoundary.test.tsx
+src/test/InviteModal.test.tsx
+src/test/NewsEditor.test.tsx
+src/test/SuperAdminCreate.test.tsx
+src/test/SupervisorDashboard.test.tsx
+src/test/ai.test.tsx
+src/test/dashboard.test.tsx
+src/test/push-notifications.test.tsx
+src/test/Kanban.test.tsx
+src/test/test-utils.tsx
+
+src/lib/__tests__/date.test.ts
+src/lib/__tests__/rbac.test.ts
+src/lib/__tests__/push-subscription.test.ts
+src/lib/__tests__/feature-flags.test.ts
+src/lib/__tests__/ws.test.ts
+
+src/pages/__tests__/TicketsPage.test.tsx
+src/pages/__tests__/LoginPage.test.tsx
+
+src/components/__tests__/TicketCard.test.tsx
+src/components/__tests__/DataTable.test.tsx
+src/components/__tests__/Modal.test.tsx
+
+===== ПОДРОБНОСТИ ПО ФАЙЛАМ =====
+
+src/test/TicketDetail.test.tsx — 24 теста
+- renders loading state (pending fetch)
+- shows 404 for invalid ticket ID
+- shows error for failed ticket fetch
+- displays ticket number and title
+- displays requester info with avatar
+- displays requester email
+- displays agent info
+- displays "Нет агента" when no agent assigned
+- displays SLA countdown timer
+- displays SLA met indicator (green badge)
+- displays SLA breached indicator (red badge)
+- displays priority badge
+- displays status badge
+- displays category badge
+- displays tags
+- displays custom fields
+- displays file attachments
+- displays audit trail
+- displays conversation with messages
+- user can send a message
+- user can change status
+- user can assign ticket
+- user can add comment
+- displays assistant card for agents
+
+Тесты ассистента (4 шт):
+- shows ask button when no suggestion (для агента)
+- shows suggestion with sources after ask
+- shows keywords as badges
+- insert button calls onInsert
+
+src/test/App.test.tsx — 6 тестов
+- renders without crashing
+- redirects to login when not authenticated
+- shows tickets page when authenticated
+- shows sidebar navigation
+- shows header
+- shows bottom navigation on mobile
+
+src/test/auth.test.tsx — 4 теста
+- handles login
+- handles logout
+- handles invalid credentials
+- displays user info
+
+src/test/ErrorBoundary.test.tsx — 4 теста
+- catches errors and displays fallback UI
+- shows error message
+- provides retry functionality
+- renders children normally when no error
+
+src/test/InviteModal.test.tsx — 3 теста
+- renders invite modal
+- validates form fields
+- sends invitation on submit
+
+src/test/NewsEditor.test.tsx — 4 теста
+- renders editor with title input
+- renders content editor
+- handles title change
+- saves article on submit
+
+src/test/SuperAdminCreate.test.tsx — 3 теста
+- renders create form
+- validates required fields
+- creates user on submit
+
+src/test/SupervisorDashboard.test.tsx — 3 теста
+- renders dashboard with stats
+- displays team list
+- shows ticket summary
+
+src/test/ai.test.tsx — 5 тестов
+- renders AI search input
+- sends search query
+- displays results
+- handles empty results
+- handles error state
+
+src/test/dashboard.test.tsx — 7 тестов
+- renders dashboard page
+- displays tickets list
+- shows statistics cards
+- displays recent activity
+- handles empty state
+- shows loading state
+- displays filters
+
+src/test/push-notifications.test.tsx — 2 теста
+- renders push settings
+- handles subscribe action
+
+src/test/Kanban.test.tsx — 17 тестов
+- renders empty board with column headers
+- renders ticket cards in columns
+- counts tickets per column
+- displays priority and status badges
+- handles empty columns
+- click on column header filters tickets
+- drag and drop ticket to another column
+- shows "Назначить" button for unassigned tickets
+- shows loading state
+- handles mobile navigation
+- shows ticket count per column
+- displays correct priority colors
+- handles ticket click to open detail
+- filters by priority
+- displays assigned agent
+- shows due date
+- handles quick status change
+
+src/lib/__tests__/date.test.ts — 14 тестов
+formatTimeAgo:
+- returns "только что" for recent time
+- returns minutes
+- returns hours
+- returns days
+- returns months
+- returns years
+
+formatRelativeTime:
+- returns "Сегодня" for today
+- returns "Завтра" for tomorrow
+- returns "Вчера" for yesterday
+- returns formatted date for other dates
+
+formatWeek:
+- returns "Сегодня" for today
+- returns day name for current week
+- returns formatted date for other dates
+
+src/lib/__tests__/rbac.test.ts — 21 тест
+RBAC:
+- defines all 6 roles
+- has permissions for each role
+- admin has all permissions
+- guest has no permissions
+
+canInviteGuests:
+- admin can invite guests
+- user cannot invite guests
+
+canDeleteComment:
+- admin can delete any comment
+- super_admin can delete any comment
+- regular user cannot delete other user's comment
+- regular user can delete own comment
+
+canEditComment:
+- admin can edit any comment
+- super_admin can edit any comment
+- regular user cannot edit other user's comment
+- regular user can edit own comment
+
+canReplyToTicket:
+- agent can reply to assigned ticket
+- super_admin can reply to any ticket
+- senior_agent can reply to any ticket
+- user cannot reply to unassigned ticket
+- agent can reply to own ticket
+- user cannot reply to other's ticket
+- regular user cannot reply to assigned ticket
+- regular user cannot reply to unassigned ticket
+
+src/lib/__tests__/push-subscription.test.ts — 2 теста
+- has pushManager in navigator
+- has ServiceWorkerRegistration
+
+src/lib/__tests__/feature-flags.test.ts — 6 тестов
+- getFeatureFlag returns false when LD returns undefined
+- getFeatureFlag returns true when LD returns true
+- getFeatureFlag returns false when LD returns false
+- isFeatureFlagEnabled returns false when flag is falsy
+- isFeatureFlagEnabled returns true when flag is truthy
+- isFeatureFlagEnabled returns false for undefined flag
+
+src/lib/__tests__/ws.test.ts — 3 теста
+- connectWebSocket returns socket when token present
+- connectWebSocket returns null when no token
+- connectWebSocket handles connection errors
+
+src/pages/__tests__/TicketsPage.test.tsx — список тикетов, фильтры, пагинация
+src/pages/__tests__/LoginPage.test.tsx — форма логина, валидация, сабмит
+
+src/components/__tests__/TicketCard.test.tsx — карточка тикета (отображение, клик)
+src/components/__tests__/DataTable.test.tsx — таблица данных (сортировка, пагинация)
+src/components/__tests__/Modal.test.tsx — модальное окно (открытие, закрытие, escape)
+
+src/test/test-utils.tsx — AllTheProviders wrapper (AuthProvider + MockSocket + TicketProvider)
+
+===== ВНИМАНИЕ =====
+Файл генерировался AI-анализатором. Примерно 556 строк hook-тестов в предыдущей версии
+( src/hooks/__tests__/useTicket*.test.ts ) были НЕСУЩЕСТВУЮЩИМИ — артефакт машинной
+генерации. Реальные тесты: только файлы перечисленные выше.

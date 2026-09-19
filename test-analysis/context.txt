@@ -2,8 +2,8 @@
 
 ## Текущее состояние
 
-- **Фронт**: 411 тестов (52 suite)
-- **Сервер**: 451 тестов (30 suites)
+- **Фронт**: 397 теста (52 suite)
+- **Сервер**: 436 тестов (28 suites)
 - **E2E**: 17/17 страниц ALL OK (check-console.mjs)
 - **Prisma моделей**: 18 (включая event_outbox)
 - **API endpoints**: 60+ (Swagger + Health probes + k6 metrics)

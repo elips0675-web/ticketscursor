@@ -1,0 +1,257 @@
+===== E2E ТЕСТЫ (Playwright, 15 файлов, 36 тестов) =====
+Стек: Playwright + TypeScript, базовый URL http://localhost:5173
+Запуск: npx playwright test
+
+===== FILE: e2e/global-setup.ts =====
+import { chromium, type FullConfig } from '@playwright/test'
+
+async function globalSetup(_config: FullConfig) {
+  const browser = await chromium.launch({ channel: 'chrome' })
+  const page = await browser.newPage()
+  await page.goto('http://localhost:5173/login', { waitUntil: 'networkidle' })
+  const token = await page.evaluate(async () => {
+    const r = await fetch('http://localhost:4000/api/auth/dev-login', { method: 'POST' })
+    const d = await r.json()
+    return d?.data?.token || d?.token
+  })
+  await page.evaluate((t) => localStorage.setItem('token', t), token)
+  await page.context().storageState({ path: 'auth.json' })
+  await browser.close()
+}
+
+export default globalSetup
+
+===== FILE: e2e/login.spec.ts =====
+import { test, expect } from '@playwright/test'
+
+test.describe('Login page', () => {
+  test('redirects to tickets when already logged in', async ({ page }) => {
+    await page.goto('/')
+    await expect(page).toHaveURL(/\/tickets|\/dashboard|\//)
+  })
+})
+
+===== FILE: e2e/tickets.spec.ts =====
+import { test, expect } from '@playwright/test'
+
+test.describe('Tickets', () => {
+  test('renders tickets list', async ({ page }) => {
+    await page.goto('/tickets')
+    await expect(page.locator('h1, h2, h3').first()).toBeVisible()
+  })
+  test('navigates to new ticket page', async ({ page }) => {
+    await page.goto('/tickets/new')
+    await expect(page.locator('h1, h2, h3').first()).toBeVisible()
+  })
+  test('renders page title on new ticket', async ({ page }) => {
+    await page.goto('/tickets/new')
+    await expect(page.locator('input, textarea').first()).toBeVisible()
+  })
+})
+
+===== FILE: e2e/chats.spec.ts =====
+import { test, expect } from '@playwright/test'
+
+test.describe('Chats', () => {
+  test('chats page renders', async ({ page }) => {
+    await page.goto('/chats')
+    await expect(page.locator('h1, h2, h3').first()).toBeVisible()
+  })
+  test('calendar page renders with events', async ({ page }) => {
+    await page.goto('/calendar')
+    await expect(page.locator('h1, h2').first()).toBeVisible()
+  })
+  test('news page renders', async ({ page }) => {
+    await page.goto('/news')
+    await expect(page.locator('h1, h2').first()).toBeVisible()
+  })
+})
+
+===== FILE: e2e/admin.spec.ts =====
+import { test, expect } from '@playwright/test'
+
+test.describe('Admin panel', () => {
+  test('renders admin dashboard', async ({ page }) => {
+    await page.goto('/admin')
+    await expect(page.locator('h1, h2').first()).toBeVisible()
+  })
+  test('renders users page', async ({ page }) => {
+    await page.goto('/admin/users')
+    await expect(page.locator('h1, h2').first()).toBeVisible()
+  })
+  test('renders push page', async ({ page }) => {
+    await page.goto('/admin/push')
+    await expect(page.locator('h1, h2').first()).toBeVisible()
+  })
+  test('renders audit page', async ({ page }) => {
+    await page.goto('/admin/audit')
+    await expect(page.locator('h1, h2').first()).toBeVisible()
+  })
+  test('renders settings page', async ({ page }) => {
+    await page.goto('/admin/settings')
+    await expect(page.locator('h1, h2').first()).toBeVisible()
+  })
+  test('push page has subscribe text', async ({ page }) => {
+    await page.goto('/admin/push')
+    await expect(page.getByText(/push|уведомлен|подпис/i).first()).toBeVisible()
+  })
+  test('users page has table or list', async ({ page }) => {
+    await page.goto('/admin/users')
+    await expect(page.locator('table, [role="grid"], [role="listbox"]').first()).toBeVisible()
+  })
+})
+
+===== FILE: e2e/admin-audit.spec.ts =====
+import { test, expect } from '@playwright/test'
+
+test.describe('Admin audit', () => {
+  test('audit page renders', async ({ page }) => {
+    await page.goto('/admin/audit')
+    await expect(page.locator('h1, h2, h3').first()).toBeVisible()
+  })
+  test('audit page has table or list', async ({ page }) => {
+    await page.goto('/admin/audit')
+    await expect(page.locator('table, [role="grid"], [role="list"]').first()).toBeVisible()
+  })
+})
+
+===== FILE: e2e/search.spec.ts =====
+import { test, expect } from '@playwright/test'
+
+test.describe('Global search', () => {
+  test('search dialog opens with Ctrl+K', async ({ page }) => {
+    await page.goto('/')
+    await page.keyboard.press('Control+k')
+    await expect(page.getByPlaceholder(/поиск|search/i).first()).toBeVisible()
+  })
+  test('search input accepts text', async ({ page }) => {
+    await page.goto('/')
+    await page.keyboard.press('Control+k')
+    const input = page.getByPlaceholder(/поиск|search/i).first()
+    await input.fill('test')
+    await expect(input).toHaveValue('test')
+  })
+})
+
+===== FILE: e2e/kanban.spec.ts =====
+import { test, expect } from '@playwright/test'
+
+test.describe('Kanban', () => {
+  test('kanban page renders', async ({ page }) => {
+    await page.goto('/kanban')
+    await expect(page.locator('h1, h2, h3').first()).toBeVisible()
+  })
+})
+
+===== FILE: e2e/files.spec.ts =====
+import { test, expect } from '@playwright/test'
+
+test.describe('Files page', () => {
+  test('shows file folders and files', async ({ page }) => {
+    await page.goto('/files')
+    await expect(page.getByText('Файлы')).toBeVisible()
+  })
+  test('has upload dropzone', async ({ page }) => {
+    await page.goto('/files')
+    await expect(page.getByText('Перетащите файлы сюда')).toBeVisible()
+  })
+  test('can switch between grid and list view', async ({ page }) => {
+    await page.goto('/files')
+    await page.getByLabel('Вид списком').click()
+    await expect(page.getByLabel('Вид сеткой')).toBeVisible()
+  })
+})
+
+===== FILE: e2e/file-upload.spec.ts =====
+import { test, expect } from '@playwright/test'
+
+test.describe('File upload', () => {
+  test('files page renders with controls', async ({ page }) => {
+    await page.goto('/files')
+    await expect(page.locator('h1, h2, h3').first()).toBeVisible()
+  })
+  test('files page has upload area', async ({ page }) => {
+    await page.goto('/files')
+    await expect(page.locator('[class*="drop"], [class*="upload"], button, [role="button"]').first()).toBeVisible()
+  })
+})
+
+===== FILE: e2e/notifications.spec.ts =====
+import { test, expect } from '@playwright/test'
+
+test.describe('Notifications', () => {
+  test('notifications page renders', async ({ page }) => {
+    await page.goto('/notifications')
+    await expect(page.locator('h1, h2, h3').first()).toBeVisible()
+  })
+})
+
+===== FILE: e2e/profile.spec.ts =====
+import { test, expect } from '@playwright/test'
+
+test.describe('Profile', () => {
+  test('profile page renders', async ({ page }) => {
+    await page.goto('/profile')
+    await expect(page.locator('h1, h2, h3').first()).toBeVisible()
+  })
+})
+
+===== FILE: e2e/calculator.spec.ts =====
+import { test, expect } from '@playwright/test'
+
+test.describe('Calculator', () => {
+  test('calculator page renders', async ({ page }) => {
+    await page.goto('/calculator')
+    await expect(page.locator('h1, h2, h3').first()).toBeVisible()
+  })
+  test('calculator has input fields', async ({ page }) => {
+    await page.goto('/calculator')
+    await expect(page.locator('input, select, button').first()).toBeVisible()
+  })
+})
+
+===== FILE: e2e/ldap-login.spec.ts =====
+import { test, expect } from '@playwright/test'
+
+test.describe('LDAP login', () => {
+  test('login page has LDAP hint', async ({ page }) => {
+    await page.goto('/login')
+    await expect(page.getByText(/ldap|ad|domain|authenticat/i).first()).toBeVisible()
+  })
+  test('login form has required fields', async ({ page }) => {
+    await page.goto('/login')
+    await expect(page.locator('input[type="email"], input[type="text"]').first()).toBeVisible()
+    await expect(page.locator('input[type="password"]').first()).toBeVisible()
+  })
+})
+
+===== FILE: e2e/sla-autoassign-export.spec.ts =====
+import { test, expect } from '@playwright/test'
+
+test.describe('SLA / Auto-assign / Export', () => {
+  test('tickets page has export CSV button', async ({ page }) => {
+    await page.goto('/tickets')
+    await expect(page.getByRole('button').filter({ hasText: /csv/i }).first()).toBeVisible()
+  })
+  test('tickets page has export PDF button', async ({ page }) => {
+    await page.goto('/tickets')
+    await expect(page.getByRole('button').filter({ hasText: /pdf/i }).first()).toBeVisible()
+  })
+  test('calendar page has export CSV button', async ({ page }) => {
+    await page.goto('/calendar')
+    await expect(page.getByRole('button').filter({ hasText: /csv/i }).first()).toBeVisible()
+  })
+  test('employees page has export CSV button', async ({ page }) => {
+    await page.goto('/employees')
+    await expect(page.getByRole('button').filter({ hasText: /csv/i }).first()).toBeVisible()
+  })
+  test('shows tickets with SLA badges', async ({ page }) => {
+    await page.goto('/tickets')
+    const cards = page.locator('[class*="card"], [class*="Card"], article, [role="button"]').filter({ hasText: /ticket|\d/i })
+    await expect(cards.first()).toBeVisible()
+  })
+  test('news page has export CSV button', async ({ page }) => {
+    await page.goto('/news')
+    await expect(page.getByRole('button').filter({ hasText: /csv/i }).first()).toBeVisible()
+  })
+})

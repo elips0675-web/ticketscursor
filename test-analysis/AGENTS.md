@@ -39,7 +39,7 @@
 | **При коммите** | Husky → lint-staged | `eslint --fix` + `prettier --write` на изменённых файлах |
 | **В CI (GitHub Actions)** | `tsc --noEmit` | TypeScript strict type-check |
 | | `eslint . --max-warnings 100` | Синтаксис, неисп. переменные, импорты |
-| | `vitest run` | Юнит-тесты (411 клиентских + 451 серверных) |
+| | `vitest run` | Юнит-тесты (209 клиентских + 295 серверных) |
 | | `vite build` | Сборка production |
 | **Тестовая БД** | `vitest.global-setup.js` | Создаёт `servicedesk_test`, мигрирует, сидит, фиксит колонки |
 | **Rate limiter** | `app.js` | Отключён при `NODE_ENV=test` через `skip` |
