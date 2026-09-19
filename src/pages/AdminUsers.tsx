@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 
-import { Users, RefreshCw, UserCheck, UserX } from 'lucide-react'
+import { Users, RefreshCw, UserCheck, UserX, Upload } from 'lucide-react'
 
 interface User {
   id: number
@@ -26,6 +26,16 @@ export default function AdminUsers() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState<number | null>(null)
+  const [importOpen, setImportOpen] = useState(false)
+  const [importText, setImportText] = useState('')
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<{
+    created: number
+    skipped: number
+    errors: { name: string; reason: string }[]
+    defaultPassword: string
+  } | null>(null)
+  const [defaultPassword, setDefaultPassword] = useState('123456')
 
   const unwrapApiData = <T,>(payload: T | { success?: boolean; data?: T } | null): T | null => {
     if (!payload) return null
@@ -79,6 +89,28 @@ export default function AdminUsers() {
       agent: { label: t('employees.agent'), variant: 'outline' },
     }
     const c = map[role] || { label: role, variant: 'outline' as const }
+    const handleImport = async () => {
+      if (!importText.trim()) return
+      setImporting(true)
+      setImportResult(null)
+      const token = localStorage.getItem('token')
+      try {
+        const res = await fetch('/api/admin/employees/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ text: importText, defaultPassword }),
+        })
+        const data = await res.json()
+        if (data.success) {
+          setImportResult(data.data)
+          fetchUsers()
+        }
+      } catch (err) {
+        console.error('Import error:', err)
+      }
+      setImporting(false)
+    }
+
     return (
       <Badge variant={c.variant} className="text-[10px]">
         {c.label}
@@ -96,6 +128,18 @@ export default function AdminUsers() {
         <Button variant="outline" size="sm" onClick={fetchUsers} disabled={loading}>
           <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
           {t('admin.refresh')}
+        </Button>
+        <Button
+          variant="default"
+          size="sm"
+          onClick={() => {
+            setImportOpen(true)
+            setImportResult(null)
+            setImportText('')
+          }}
+        >
+          <Upload className="w-4 h-4 mr-1.5" />
+          Импорт из Word
         </Button>
       </div>
 
@@ -175,6 +219,74 @@ export default function AdminUsers() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {importOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-background rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-lg font-bold mb-4">Импорт сотрудников из Word</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Откройте таблицу в Word, выделите все строки (без шапки), скопируйте (Ctrl+C) и вставьте сюда.
+                <br />
+                Формат:{' '}
+                <code className="bg-muted px-1 rounded">
+                  отдел &quot;таб&quot; ФИО &quot;таб&quot; должность &quot;таб&quot; телефон
+                </code>
+                <br />
+                Разделители — табуляция (Tab) или 2+ пробела.
+              </p>
+              <div className="mb-4">
+                <label className="text-sm font-medium mb-1 block">Пароль по умолчанию:</label>
+                <input
+                  type="text"
+                  value={defaultPassword}
+                  onChange={(e) => setDefaultPassword(e.target.value)}
+                  className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                />
+              </div>
+              <textarea
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+                placeholder={
+                  'IT\tИван Иванов\tМенеджер\t101\nПоддержка\tПетров Пётр\tАгент\t102\nРазработка\tСидорова Мария\tВедущий инженер\t103'
+                }
+                className="w-full h-64 rounded-md border border-input bg-background px-3 py-2 text-sm font-mono resize-none"
+              />
+              {importResult && (
+                <div className="mt-4 p-4 rounded-md bg-muted/50">
+                  <p className="text-sm font-bold">
+                    Импортировано: <span className="text-green-600">{importResult.created}</span> | Пропущено:{' '}
+                    <span className="text-orange-600">{importResult.skipped}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Пароль для всех новых: <code className="bg-muted px-1 rounded">{importResult.defaultPassword}</code>
+                  </p>
+                  {importResult.errors.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-xs font-medium text-orange-600">Ошибки:</p>
+                      {importResult.errors.map((e, i) => (
+                        <p key={i} className="text-xs text-muted-foreground">
+                          • {e.name || '(пустое ФИО)'} — {e.reason}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="flex justify-end gap-2 mt-4">
+                <Button variant="outline" onClick={() => setImportOpen(false)}>
+                  Отмена
+                </Button>
+                <Button onClick={handleImport} disabled={importing || !importText.trim()}>
+                  {importing
+                    ? 'Импорт...'
+                    : `Импорт (${importText.split(/\r?\n/).filter((l) => l.trim()).length} строк)`}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -285,4 +285,103 @@ router.put('/features', async (req, res) => {
   }
 })
 
+const TRANSLIT_MAP = {
+  а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'yo',ж:'zh',з:'z',и:'i',й:'y',к:'k',л:'l',м:'m',н:'n',
+  о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'kh',ц:'ts',ч:'ch',ш:'sh',щ:'shch',ъ:'',ы:'y',
+  ь:'',э:'e',ю:'yu',я:'ya',
+  А:'A',Б:'B',В:'V',Г:'G',Д:'D',Е:'E',Ё:'Yo',Ж:'Zh',З:'Z',И:'I',Й:'Y',К:'K',Л:'L',М:'M',Н:'N',
+  О:'O',П:'P',Р:'R',С:'S',Т:'T',У:'U',Ф:'F',Х:'Kh',Ц:'Ts',Ч:'Ch',Ш:'Sh',Щ:'Shch',Ъ:'',Ы:'Y',
+  Ь:'',Э:'E',Ю:'Yu',Я:'Ya',
+}
+
+function transliterate(str) {
+  return str.split('').map(ch => TRANSLIT_MAP[ch] ?? ch).join('')
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]/g, '.')
+    .replace(/\.+/g, '.')
+    .replace(/^\.|\.$/g, '')
+}
+
+function parseImportRows(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim())
+  if (lines.length === 0) return []
+  const rows = []
+  for (const line of lines) {
+    const cells = line.split(/\t/).map(c => c.trim())
+    if (cells.length < 3) {
+      const cells2 = line.split(/\s{2,}/).map(c => c.trim())
+      if (cells2.length >= 3) {
+        rows.push({
+          department: cells2[0] || '',
+          name: cells2[1] || '',
+          title: cells2[2] || '',
+          phone: cells2[3] || '',
+        })
+        continue
+      }
+      continue
+    }
+    rows.push({
+      department: cells[0] || '',
+      name: cells[1] || '',
+      title: cells[2] || '',
+      phone: cells[3] || '',
+    })
+  }
+  return rows
+}
+
+router.post('/employees/import', async (req, res) => {
+  try {
+    const { rows: rawRows, text, defaultPassword = '123456', domain = 'company.local' } = req.body
+    const parsed = rawRows?.length ? rawRows : parseImportRows(text || '')
+    if (!parsed.length) {
+      return res.status(400).json({ success: false, message: 'Нет данных для импорта. Вставьте таблицу из Word (отдел \\t ФИО \\t должность \\t телефон)' })
+    }
+    const existing = await prisma.employees.findMany({ select: { email: true } })
+    const existingEmails = new Set(existing.map(e => e.email))
+    const hash = await bcrypt.hash(defaultPassword, 10)
+    const created = []
+    const skipped = []
+    const emailCounters = {}
+    for (const row of parsed) {
+      if (!row.name) { skipped.push({ ...row, reason: 'Пустое ФИО' }); continue }
+      const baseEmail = transliterate(row.name) + '@' + domain
+      let email = baseEmail
+      if (emailCounters[baseEmail]) {
+        emailCounters[baseEmail]++
+        email = baseEmail.replace('@', `.${emailCounters[baseEmail]}@`)
+      } else {
+        emailCounters[baseEmail] = 1
+      }
+      if (existingEmails.has(email)) {
+        skipped.push({ ...row, email, reason: 'Email уже существует' })
+        continue
+      }
+      try {
+        const emp = await prisma.employees.create({
+          data: {
+            name: row.name,
+            email,
+            password_hash: hash,
+            role: 'agent',
+            department: row.department || '',
+            title: row.title || 'Сотрудник',
+            phone: row.phone || '',
+            is_active: true,
+          },
+        })
+        created.push({ id: emp.id, name: emp.name, email: emp.email, department: emp.department, title: emp.title, phone: emp.phone })
+        existingEmails.add(email)
+      } catch (err) {
+        skipped.push({ ...row, email, reason: err.message })
+      }
+    }
+    res.json({ success: true, data: { created: created.length, skipped: skipped.length, employees: created, errors: skipped, defaultPassword } })
+  } catch (err) {
+    logger.error('Employees import error:', err)
+    res.status(500).json({ success: false, message: 'Ошибка импорта сотрудников' })
+  }
+})
+
 export default router
