@@ -157,14 +157,14 @@ npm run test:e2e
 
 | Показатель | Значение | Статус |
 |---|---|---|
-| Клиентские тесты | 372 тестов, 52 файла | ✅ Пройдены |
-| Серверные тесты | 352 тестов, 25 файлов | ✅ Пройдены |
-| E2E тесты (Playwright) | 14 spec'ов, 17 страниц (`check-console.mjs`) | 16 spec'ов (включая user-flow), 17 страниц |
-| Покрытие кода (клиент) | 71.02% stmts, 60.76% branch, 60.55% funcs, 73.96% lines (порог: 70/60/60/73) | ✅ Стабильно |
-| Покрытие кода (сервер) | 70.97% stmts, 64% branch, 72% funcs, 73% lines (порог: 64/55/62/63) | ✅ Стабильно |
+| Клиентские тесты | 411 тестов, 52 файла | ✅ Пройдены |
+| Серверные тесты | 523 теста, 35 файлов | ✅ Пройдены |
+| E2E тесты (Playwright) | 15 spec'ов, 17 страниц (`check-console.mjs`) | ✅ Пройдены |
+| Покрытие кода (клиент) | 71% stmts (порог: 72/62/62/75) | ✅ Стабильно |
+| Покрытие кода (сервер) | 71% stmts (порог: 65/56/63/64) | ✅ Стабильно |
 | ESLint | 0 errors, 0 warnings | ✅ Чисто |
 | check-console (E2E) | 17/17 страниц без ошибок, русский текст | ✅ Пройден |
-| Prisma моделей | 19 (добавлен event_outbox, feature_flags) | ✅ |
+| Prisma моделей | 25 (включая event_outbox, custom_fields, api_tokens, webhooks, automation_rules, feature_flags) | ✅ |
 | API endpoints | 60+ (Swagger + k6 metrics + Health probes) | ✅ |
 | React Query | useQuery/useMutation, optimistic updates, staleTime 5min | ✅ |
 | Request timing metrics | Prometheus-формат, гистограммы (50–5000ms) | ✅ |

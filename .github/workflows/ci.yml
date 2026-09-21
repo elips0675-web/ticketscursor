@@ -20,6 +20,7 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci
+      - run: npm audit --audit-level=high --omit=dev
       - run: npx tsc --noEmit
       - run: npx eslint . --max-warnings 50
       - run: npx vitest run --config vitest.client.config.ts
@@ -48,6 +49,7 @@ jobs:
           cache: npm
           cache-dependency-path: server/package-lock.json
       - run: npm ci
+      - run: npm audit --audit-level=high --omit=dev
       - run: mysql -h 127.0.0.1 -u root -proot servicedesk_test < seed.sql
       - run: npx vitest run
         env:

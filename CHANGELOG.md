@@ -5,7 +5,18 @@
 
 ---
 
-## [1.9.0] — 2026-09-19
+## [1.8.0] — 2026-09-21
+
+### 🔧 AI-аудит + исправления
+
+- **Этап 36** — i18n: исправлены дубли auth ключей в ru/en JSON, русификация ForgotPassword/ResetPassword/SSO
+- **Этап 37** — Фикс тестов: DB schema sync (locked_by, locked_at, field_id), Telegram welcome, Queue/Worker counts
+- **Этап 38** — AI-аудит: Kimi 7/10, DeepSeek 7.5/10, Qwen 8.5/10; все P0 исправлены
+- **Этап 39** — Coverage thresholds подняты (71/61/61/74 → 72/62/62/75 клиент, 64/55/62/63 → 65/56/63/64 сервер)
+- **Этап 40** — prisma → devDeps, удалён неиспользуемый express-validator
+- **Этап 42** — npm audit в CI, README обновлён (15 spec'ов), CHANGELOG приведён к порядку
+
+## [1.7.0] — 2026-09-19
 
 ### 📧 Email Ingestion (IMAP) — этап 1
 
@@ -35,7 +46,7 @@
 
 - **Тесты** — сервер 436/436 (28 файлов), клиент 397/397 (52 файла); tsc чист, vite build OK, git diff не содержит ALTER TABLE
 
-## [1.8.0] — 2026-09-18
+## [1.6.0] — 2026-09-18
 
 ### ⏱️ Time tracking (Этап 5 роадмапа)
 
@@ -46,7 +57,7 @@
 - **i18n** — 18 ключей `tickets.time*` (ru/en)
 - **Тесты** — сервер 413/413 (+19), клиент 393/393 (+4); tsc чист, vite build OK, lint 0 новых ошибок
 
-## [1.4.0] — 2026-07-20
+## [1.5.0] — 2026-07-20
 
 ### 📧 Email Notification System
 
@@ -63,7 +74,7 @@
 - **notifyPriorityChanged** — не отправлял email и in-app уведомления (только Telegram)
 - **notifyTicketMessage** — не отправлял email уведомления (только in-app + Telegram)
 
-## [1.3.0] — 2026-07-20
+## [1.4.0] — 2026-07-20
 
 ### 🚀 Dead Letter Queue + Background Jobs Reliability
 
@@ -92,7 +103,7 @@
 - **Тесты**: +5 серверных (feature flags API), +5 клиентских (useFeature hook + AdminSettings toggles)
 - **Кими-аудит**: зафиксированы оставшиеся gaps (email-шаблоны, WebSocket комнаты, bulk actions) — внесены в context.txt
 
-## [1.2.0] — 2026-07-17
+## [1.3.0] — 2026-07-17
 
 ### 🚀 Admin Operations
 
@@ -107,7 +118,7 @@
 
 - i18n: добавлен `common.add` (ru/en)
 
-## [1.1.0] — 2026-07-17
+## [1.2.0] — 2026-07-17
 
 ### 🚀 Добавлено (merge from ticketscursordom)
 

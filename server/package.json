@@ -30,7 +30,6 @@
     "dotenv": "^16.4.5",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
-    "express-validator": "^7.3.2",
     "file-type": "^22.0.1",
     "helmet": "^8.2.0",
     "imapflow": "^2.0.5",
@@ -46,7 +45,6 @@
     "openid-client": "^5.7.1",
     "passport": "^0.7.0",
     "passport-ldapauth": "^3.0.1",
-    "prisma": "^5.22.0",
     "socket.io": "^4.8.3",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",
@@ -55,6 +53,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "prisma": "^5.22.0",
     "supertest": "^7.2.2",
     "vitest": "^4.1.9"
   }
