@@ -1,111 +1,87 @@
-Основываясь на предоставленных файлах, я проведу комплексный аудит вашей инфраструктуры, тестирования и CI/CD.
-Общая оценка: 8 из 10 🌟
-Это очень зрелый, продуманный и "enterprise-ready" стек. Видно, что проект прошел стадию "hello world" и находится в активной фазе развития с упором на качество и автоматизацию. Однако в коде есть несколько критических багов, которые сломают CI/CD, а также архитектурные нюансы, которые стоит улучшить перед релизом в продакшен.
-Ниже подробный разбор.
-🟢 Сильные стороны (Что сделано отлично)
-Многоуровневое тестирование:
-Отличное разделение: Unit (Vitest с порогами покрытия), E2E (Playwright), Load (k6 + Artillery), API (кастомный Node.js скрипт).
-Глобальный setup для Playwright с сохранением storageState — это правильный паттерн, чтобы не логиниться в каждом тесте.
-Инфраструктура и Docker:
-Multi-stage Dockerfile — идеальное решение. Финальный образ будет весить копейки, так как в frontend попадает только dist, а в server только production зависимости.
-Nginx конфиг написан грамотно: правильно настроен try_files для SPA (React/Vue) и корректно проксируются WebSockets (/ws) с заголовками Upgrade.
-CI/CD (GitHub Actions):
-Параллельное выполнение джоб (lint, typecheck, test, bundle, playwright) экономит время.
-Использование services: mysql с healthcheck — правильный подход для интеграционных тестов.
-DevEx (Удобство для разработчиков):
-Наличие скриптов seed-dev.js, fix-prisma.js, test-analytics.js сильно ускоряет онбординг и отладку.
-Скрипт check-bundle-size.js предотвращает деградацию производительности фронтенда.
-🔴 Критические баги и Риски (Требуют немедленного исправления)
-1. Баг в CI/CD: cmd /c на Ubuntu
-В файле .github/workflows/ci.yml в джобе test:
-yaml
+Комплексная оценка проекта Service Desk
+🎯 Общая оценка: 8.5 / 10
+Проект находится на уровне production-ready enterprise решения. Видна зрелая инженерная культура: итеративное развитие, покрытие тестами, инфраструктура как код, документирование изменений. Для monolith-архитектуры — очень высокий уровень проработки.
+📈 Детальная оценка по критериям
+Критерий
+Балл
+Комментарий
+Архитектура и стек
+9/10
+Современный стек (React 19, Vite 8, Node 22, Express 5, Prisma, TS). Monolith, но хорошо структурирован
+Функциональная полнота
+10/10
+30+ фич: от базовых тикетов до AI-ассистента, SSO, Rules Engine, Telegram, Public Portal
+Тестирование
+9/10
+436+ серверных, 397+ клиентских, E2E Playwright, k6+Artillery. Не хватает contract/perf в CI
+Инфраструктура / DevOps
+8/10
+GitHub Actions, Docker, Prometheus+Grafana, multi-stage build. Нет security scanning, OpenTelemetry
+Безопасность
+8/10
+RBAC, JWT+refresh, Helmet, CORS, rate limiting, Zod, Prisma. Нет SAST/DAST, secrets manager
+Производительность
+9/10
+Meilisearch, Redis, BullMQ, optimistic updates, virtualization, skeleton loaders
+UX / a11y / i18n
+9/10
+Command Palette, dark theme, PWA, i18n RU/EN, a11y (ARIA, keyboard, reduced-motion)
+Observability
+7/10
+Winston + Sentry + requestId + health probes. Нет distributed tracing, structured logs в JSON
+Масштабируемость
+7/10
+Redis adapter для WS, MySQL replica, S3. Monolith — потолок ~500 RPS, дальше нужно делить
+Сопровождаемость
+8/10
+Changelog, Husky + lint-staged, ESLint/Prettier, TypeScript. Нет ADR, runbook
+✅ Сильные стороны (топ-10)
+Огромный функциональный охват — SSO/OIDC, Rules Engine, AI-ассистент, Webhooks, API-токены, Collision Avoidance, Recurring Tickets, Public Portal, Telegram, IMAP ingestion. Это уровень Jira/Zendesk.
+Зрелая тестовая пирамида — unit → integration → E2E → load. Покрытие ~80%+ критичных путей.
+Outbox Pattern + BullMQ DLQ — гарантированная доставка событий, retry с exponential backoff, алёртинг при >10 DLQ/час. Это production-grade reliability.
+Multi-tier search — Meilisearch → FULLTEXT → LIKE fallback. Отличный UX при любом состоянии инфраструктуры.
+Оптимистичные обновления + React Query — мгновенный UI, rollback при ошибке. Ощущение native-приложения.
+RBAC + иерархия ролей — 5 ролей с super_admin-override, hasRole() utility, ProtectedRoute на фронте.
+Гибридная аутентификация — JWT (15м) + refresh (7д, httpOnly) + API-токены (sd_…, SHA-256) + LDAP + OIDC.
+Observability из коробки — Prometheus /metrics, Grafana dashboards, health/readiness probes для K8s.
+i18n + a11y как first-class citizens — не "потом", а сразу. useTranslation, aria-label, prefers-reduced-motion.
+Graceful shutdown + DLQ + retry — три уровня отказоустойчивости.
+⚠️ Слабые стороны и риски
+🔴 Критичные (для production)
+Prisma + Knex одновременно — дублирование ORM/migration слоёв. Рассинхрон схем, путаница в команде.
+Нет security scanning в CI — ни npm audit, ни Snyk/Trivy, ни SAST (Semgrep/SonarQube). Уязвимости зависимостей могут уйти в прод.
+Secrets только в env vars — нет Vault/Secrets Manager. JWT_SECRET, DB_PASSWORD, OpenAI key в .env — риск утечки через логи/бекапы.
+Нагрузочные тесты вне CI — k6/Artillery сценарии есть, но не запускаются автоматически. Регресс производительности можно не заметить.
+🟡 Важные
+Express 5 + React 19 + Zod 4 + Vite 8 — все мажорные версии свежие. Риск несовместимостей библиотек, меньше community knowledge.
+Нет distributed tracing — OpenTelemetry/Jaeger не подключены. При инциденте в monolith сложно отследить цепочку (IMAP → ticket → webhook → notification).
+Монолитный ceiling — при >500 RPS или >10k concurrent WS-соединений потребуется разделение. Нет плана миграции.
+MySQL вместо PostgreSQL — для JSON-правил (automation_rules.conditions), full-text, JSONB-агрегаций PG был бы выгоднее.
+Нет CDN для статики — dist/ раздаётся через nginx на том же сервере. При DDoS/трафик-пике упадёт и API, и фронт.
+Email deliverability — нет упоминания SPF/DKIM/DMARC. Письма с service desk будут попадать в спам.
+🟢 Мелкие
+k6 сценарии покрывают только /tickets и /comments. Нет тестов для auth, admin, webhook, AI assistant.
+Artillery capture: $.data.token — хрупкий путь, зависит от формата ответа.
+Нет idempotency keys для POST — при retry можно создать дубликаты тикетов.
+Feature flags без rollout strategy (canary, %-ный rollout) — только toggle on/off.
+Нет ADR (Architecture Decision Records) — почему Prisma+Knex? Почему MySQL? Почему monolith?
+🎯 Рекомендации (приоритизированные)
+🔥 P0 — до production
 
-1
-Проблема: Джоба запускается на ubuntu-latest. Команды cmd /c (Windows) там не существует, шаг упадет с ошибкой.
-Решение: Заменить на cd server && npx vitest run.
-2. Баг в скрипте проверки бандла (ES Modules)
-В scripts/check-bundle-size.js:
-javascript
+12345
+⚡ P1 — в течение квартала
 
-123
-Проблема: Файл использует import (ESM), но внутри использует require (CommonJS). В Node.js это вызовет ReferenceError: require is not defined in ES module scope.
-Решение: Заменить на import { gzipSync } from 'zlib' и использовать gzipSync(content).length.
-3. Опасная стратегия миграций БД
-В docker/entrypoint.sh и в CI используется:
-bash
+12345
+🌱 P2 — стратегические
 
-1
-Проблема: db push предназначен только для разработки. Он может удалять данные или менять схему напрямую. В продакшене это приведет к потере данных.
-Решение: В entrypoint.sh и CI использовать npx prisma migrate deploy.
-4. Поверхностные E2E тесты (Ложноположительные срабатывания)
-Посмотрите на e2e/tickets.spec.ts и другие:
-typescript
-
-1
-Проблема: Этот тест проверяет, что на странице есть хотя бы один заголовок. Если сервер упадет и фронтенд отрендерит страницу ошибки "500 Internal Server Error" (где тоже есть <h1>), тест пройдет успешно.
-Решение: Использовать data-testid или более строгие селекторы. Например: await expect(page.getByTestId('tickets-list')).toBeVisible().
-🟡 Зоны роста (Что можно улучшить)
-1. Нагрузочные тесты (Load Tests)
-В tickets.k6.js и chat.k6.js используется POST /api/auth/dev-login.
-Риск: Вы тестируете бизнес-логику, но обходите реальную систему авторизации (LDAP/БД). Если в реальном login будет узкое место (например, медленный хэш пароля), k6 этого не покажет.
-Совет: Добавьте сценарий, где 10% виртуальных пользователей используют "тяжелый" реальный логин, а 90% — переиспользуют токен.
-2. Безопасность и Nginx
-В docker-compose.yml Nginx слушает 443 порт, но в nginx/default.conf нет настройки SSL-сертификатов.
-Совет: Для продакшена добавьте генерацию Let's Encrypt (например, через certbot в отдельном контейнере или nginx-proxy-acme) или пробрасывайте уже готовые сертификаты через volumes.
-3. Оптимизация GitHub Actions
-В джобе playwright вы устанавливаете браузеры: npx playwright install --with-deps chromium. Это занимает 1-2 минуты.
-Совет: Используйте кэширование для Playwright и node_modules, чтобы ускорить CI.
-В джобе playwright сервер стартует фоном (node src/index.js &), но нет ожидания его готовности (healthcheck). Vite и Playwright могут запуститься раньше, чем БД и сервер поднимутся, что приведет к flaky-тестам. Добавьте sleep 5 или скрипт ожидания curl --retry.
-4. API E2E тесты
-scripts/test-e2e-api.js написан на чистом fetch. Это круто и быстро, но lacks of assertions library.
-Совет: Если тестов станет больше, рассмотрите использование vitest для API тестов или хотя бы добавьте простую обертку для красивых отчетов (например, console.table для summary).
-📋 Итоговый чек-лист (Action Plan)
-Исправить CI: Убрать cmd /c в .github/workflows/ci.yml.
-Исправить скрипт: Заменить require('zlib') на import в check-bundle-size.js.
-Безопасность БД: Заменить prisma db push на prisma migrate deploy в entrypoint.sh и CI.
-Надежность E2E: Добавить data-testid в React-компоненты и переписать селекторы в Playwright с h1, h2 на getByTestId.
-Стабильность CI: Добавить ожидание готовности сервера (wait-on или curl) перед запуском Playwright в GitHub Actions.
-SSL: Настроить HTTPS в Nginx для продакшен-деплоя.
-Резюме: У вас fantastic setup. Проект выглядит как коммерческий продукт уровня Middle+/Senior. Если исправить перечисленные баги (особенно в CI и Docker entrypoint), инфраструктура будет практически безупречной.
-
-
-В текущем виде в CI/CD (GitHub Actions) она упадет на 100%.
-Локально на компьютере разработчика (особенно если это Windows) всё может запускаться и даже проходить тесты. Но как только код попадает на сервер сборки (Ubuntu), пайплайн станет красным из-за двух гарантированных ошибок.
-Вот ровно 3 места, которые ломают работу прямо сейчас. Если их исправить (дело 2 минут), система станет полностью рабочей и надежной.
-🔧 Исправления "скопировал-вставил" (чтобы всё заработало)
-1. Сломает CI мгновенно (Ubuntu не понимает Windows-команды)
-Где: .github/workflows/ci.yml (строка ~45)
-Было:
-yaml
-
-1
-Сделать:
-yaml
-
-1
-2. Сломает проверку размера бандла (ошибка Node.js)
-Где: scripts/check-bundle-size.js (строка ~12)
-Файл начинается с import (это ES-модуль), но внутри используется require (это CommonJS). Node.js выдаст ReferenceError: require is not defined.
-Было:
-javascript
-
-123
-Сделать:
-javascript
-
-1234
-3. Убьет базу данных в продакшене (или при деплое)
-Где: docker/entrypoint.sh и .github/workflows/ci.yml
-prisma db push синхронизирует схему "в лоб", он может удалить таблицы или данные, если схема изменилась. Для CI и продакшена нужна безопасная команда.
-Было:
-bash
-
-1
-Сделать:
-bash
-
-1
-(Примечание: для этого в проекте должны быть созданы миграции через npx prisma migrate dev. Если их нет, оставьте db push только для локальной разработки, но в CI и entrypoint.sh это риск).
-Итог:
-Сейчас: Это "почти рабочая" конфигурация, которая спотыкается об опечатки и смешивание сред (Windows/Ubuntu, ESM/CommonJS).
-После правки этих 3 строк: Да, это отличная, полностью рабочая enterprise-инфраструктура, которую можно смело нести в прод.
+12345
+💡 Что особенно впечатлило
+Outbox Pattern + WebSocket — редкое сочетание для service desk. Гарантированная доставка событий без потерь.
+AI-ассистент с гибридным ответом — LLM если есть ключ, иначе качественный шаблон. Graceful degradation.
+Collision Avoidance с force-unlock — продуманная модель для совместного редактирования.
+Public Portal без регистрации — снижает барьер для пользователей, tracking token для безопасности.
+Rules Engine с JSON-conditions — no-code автоматизация без привлечения разработчиков.
+📌 Итог
+Проект — крепкий enterprise-уровень. Если бы это был реальный продукт для заказчика, я бы рекомендовал его к запуску после закрытия P0-пунктов (особенно security scanning и secrets). Архитектурных тупиков нет, все "технические долги" из changelog закрываются итеративно, что говорит о зрелом процессе разработки.
+Сравнение с внешним аудитом Kimi (7.7/10) — согласен, но с учётом последних фич (2.0.0–2.1.0: SSO, Rules Engine, AI, Public Portal) проект значительно вырос. Моя оценка 8.5/10 отражает этот прогресс.
+Главный риск — монолит + свежие мажорные версии. Если команда <5 человек, стоит зафиксировать версии и не гнаться за обновлениями. Если команда растёт — начинать планировать domain-based разделение уже сейчас.

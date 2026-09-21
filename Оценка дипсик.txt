@@ -1,199 +1,83 @@
 Оценка проекта Service Desk
-Общий вердикт: 7.5 / 10
-Проект сильный, зрелый, не «домашка». По функциональности обгоняет многие опенсорсные helpdesk’и (Zammad, osTicket). Но есть несколько реальных багов инфраструктуры, которые «подтачивают» впечатление. AI-аудиты (Kimi 6.5, Qwen 8.5, DeepSeek 7) в целом правы, но с перекосом: Kimi недооценил, Qwen переоценил.
+На основе предоставленных файлов (README, context.txt, Что-доделать.txt, AGENTS.md, CHANGELOG.md, тесты, инфраструктура, package.json) можно сделать комплексную оценку.
 
-Что реально сильно (8–9 / 10)
-Продуктовая зрелость. 25 Prisma-моделей, 90+ эндпоинтов, SSO/OIDC, Webhooks + HMAC, API-токены, Rules Engine, Recurring Tickets, Collision Avoidance, Public Portal, IMAP ingestion, CSAT, SLA pause + business hours, Time tracking, Read receipts, Outbox Pattern, DLQ. Это уровень коммерческой системы, а не пет-проекта.
+Общая оценка: 7.5 / 10
+Проект представляет собой зрелый, многофункциональный Service Desk с современным стеком, широким покрытием тестами и продуманной архитектурой. Однако есть критичные проблемы в инфраструктуре (CI/Docker) и заметный технический долг, которые не позволяют поставить более высокую оценку.
 
-Архитектура. Сервисный слой, слоистая структура (routes → services → prisma), Zod-валидация, RBAC 5 ролей с иерархией (super_admin проходит всё), идемпотентные миграции, graceful shutdown. Всё как надо.
+Детальная оценка по категориям
+Категория	Оценка	Комментарий
+Архитектура и стек	9/10	React 19 + TS + Vite 8 + Tailwind v4 + Express 5 + Prisma + MySQL + Socket.IO + Redis. Современно, масштабируемо, много паттернов (outbox, soft-delete, DLQ, кэш, виртуализация).
+Функциональность	9/10	Реализовано почти всё: тикеты, SLA (эскалация, пауза, бизнес-часы), RBAC (5 ролей), чаты (read receipts, offline queue), wiki, календарь, файлы, push, Telegram, SSO, Rules Engine, Webhooks, API-токены, Public Portal, CSAT, Time tracking, Feature flags, Command Palette.
+Тесты	7/10	934 теста (411 клиент + 523 сервер), 0 failures, coverage ~71%. Но E2E в основном smoke-only (проверка видимости заголовков), хотя есть user-flow.spec.ts. Пороги покрытия равны текущему, а не целевому 80%.
+Инфраструктура	4/10	CI содержит критические баги: cmd /c на Ubuntu, неверный target в Docker, require в ESM, entrypoint не скопирован, Playwright job без сервера. Dockerfile требует доработки.
+Безопасность	6/10	JWT в localStorage (XSS-вектор), dev-login без явного guard (нужно проверить), двойная валидация (zod + express-validator), два ORM (Prisma + Knex).
+Документация	8/10	Много файлов (README, context, AGENTS, CHANGELOG, PLAYBOOK). Но есть противоречия: README говорит 52 файла/411 тестов, server-tests.txt — 35/523, в итоге 87/934. Где-то устаревшие данные.
+Технический долг	6/10	Knex → Prisma (мёртвый вес), prisma в dependencies вместо devDependencies, knex-миграции, express-validator + zod, отсутствие npm audit.
+Сильные стороны
+Современный и продуманный стек — React 19, Vite 8, Express 5, Prisma, Socket.IO, BullMQ, Redis. Используются паттерны: Outbox, DLQ, Soft Delete, Optimistic Updates, Virtual Scroll.
 
-Тесты. 1008 тестов (485 клиент + 523 сервер), реальные интеграционные с Supertest + MySQL, MSW для фронта, Playwright. Не стабы.
+Богатая функциональность — покрыты практически все сценарии helpdesk: SLA с эскалацией и бизнес-часами, кастомные поля, шаблоны, webhooks, API-токены, SSO, Rules Engine, Telegram-бот, CSAT, Time tracking, Feature flags.
 
-Инфраструктура. CI с 6 job’ами, Docker multi-stage, K8s манифесты, Prometheus + Grafana, k6 + Artillery, Redis adapter для Socket.IO с fallback, Meilisearch с fallback на FULLTEXT → LIKE. Отлично.
+Высокое покрытие тестами — 934 теста, все проходят. Серверные тесты интеграционные (523), клиентские — компонентные (411). E2E расширены до user-flow.
 
-Документация. CHANGELOG (v0.1 → v2.1), context.txt, AGENTS.md, PLAYBOOK, дорожная карта. Редкость.
+Активная работа над качеством — исправляются баги, ведутся аудиты (Kimi, Qwen, DeepSeek), есть план доработок (Что-доделать.txt) с приоритетами.
 
-Что реально плохо (баги, не мнения)
-🔴 1. Dockerfile + docker-compose.yml — прямая поломка
-dockerfile
-FROM node:22-alpine AS builder
-FROM node:22-alpine AS server   # ← сервер
-FROM nginx:alpine AS frontend   # ← последний = по умолчанию
-docker-compose.yml:
+Хорошая документация — README, context.txt, AGENTS.md, CHANGELOG.md, PLAYBOOK.md. Описаны этапы, проблемы, решения.
 
-yaml
-app:
-  build: .                # соберёт ПОСЛЕДНИЙ стейдж = frontend (nginx)
-  ports: ['4000:4000']    # а nginx слушает 80
-Сервис app запустит nginx и будет проксировать на app:4000, которого нет. Нужно build: { context: ., target: server }. Это критично.
+Слабые стороны и критические проблемы
+🔴 P0 — критические (ломают CI/Docker)
+CI: cmd /c на Ubuntu — не работает, нужно working-directory: server + npx vitest run.
 
-🔴 2. CI job test сломан
-yaml
-- run: cd server && cmd /c "npx vitest run 2>&1"
-cmd /c — это Windows. CI на ubuntu-latest. Тесты сервера в CI не запускаются. Нужно working-directory: server + обычный npx vitest run.
+Docker: неправильный stage — build: . без target соберёт nginx вместо node.
 
-🔴 3. scripts/check-bundle-size.js не запустится
-js
-import { readFileSync } from 'fs'   // ESM
-...
-const gzipSize = require('zlib').gzipSync(content).length  // require в ESM
-package.json имеет "type": "module" → require undefined → catch съест ошибку и скрипт всегда вернёт «OK». Bundle-check в CI — фиктивный.
+check-bundle-size.js: require в ESM — ReferenceError, catch молча глотает.
 
-🔴 4. vitest-конфиг
-README честно пишет: 86/570 тестов падают из-за отсутствия vitest.config.ts. vitest.client.config.ts есть, но дефолтный vitest.config его не подхватывает. npm test фронта работает только потому что явно передаёт --config. А в CI и в server/ — нет.
+entrypoint.sh не скопирован — Dockerfile не содержит COPY docker/entrypoint.sh.
 
-🟡 5. nginx-конфиг в Dockerfile-стейдже
-dockerfile
-FROM nginx:alpine AS frontend
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx/default.conf /etc/nginx/conf.d/default.conf
-proxy_pass http://app:4000 — но в этом контейнере нет никакого «app». Ок, если рядом есть сервис app, но см. пункт 1 — он не поднимется. Двойная поломка.
+Playwright job без сервера — не устанавливает зависимости сервера, нет wait-on.
 
-🟡 6. docker/entrypoint.sh не используется
-Dockerfile не содержит ENTRYPOINT/COPY entrypoint.sh, а docker-compose.yml тоже. Мёртвый код.
+🟡 P1 — важные
+E2E smoke-only — 99% тестов проверяют только видимость заголовков, не бизнес-логику.
 
-🟡 7. E2E — smoke-only (аудит прав)
-99% тестов — expect(page.locator('h1, h2, h3').first()).toBeVisible(). Это не тесты, а «страница не белый экран». Заявленные «36 тестов» не проверяют ни одного пользовательского сценария. Один user-flow.spec.ts (по README) чуть глубже, но в e2e-tests.txt он не попал.
+Knex → Prisma — два ORM, 3 файла миграций на Knex, мёртвый вес.
 
-🟡 8. Рассинхрон источников
-README.md: k6 в k6/
+Prisma в dependencies — CLI тянет 100+ МБ в prod, нужно в devDependencies.
 
-load-tests.txt: k6 в test/load/
+Двойная валидация — zod + express-validator, выбрать один.
 
-context.txt: 485 тестов, README: 485, Что-доделать: 86/570 — три разных числа
+k6: dev-login на каждой итерации — тестируется логин, а не бизнес-логика.
 
-frontend-tests.txt сам признаёт, что 556 строк hook-тестов — галлюцинация
+JWT в localStorage — XSS-вектор, для корпсистемы лучше httpOnly cookie.
 
-Это значит, что источник правды не один. Плохо для передачи проекта.
+Coverage 71% — цель 80%+, пороги равны текущему, не защищают от регресса.
 
-🟡 9. Технический долг
-Knex + Prisma одновременно — 3 файла миграций + knexfile.js в scripts. Мертвечина.
+🟢 P2 — после MVP
+AI auto-triage, Forms builder, Gamification, 2FA, Marketplace, Multi-tenancy, мобильное приложение, CMDB, ITIL, On-call, Voice/Video, Compliance, Status page, Visual regression, npm audit.
 
-prisma в dependencies сервера — должен быть в devDependencies.
+Сравнение с оценками AI-анализаторов
+AI	Оценка	Ключевая претензия	Факт
+Kimi	6.5/10	«~300 stub-тестов в src/hooks/tests/»	Ошибся — src/hooks/ пустая, все тесты реальные.
+Qwen	8.5/10	«Двойной ORM — главная проблема»	Верно, лучшая оценка, корректный roadmap.
+DeepSeek	7/10	(файл аудита не сохранён)	Ссылочная оценка.
+Консенсус: архитектура и стек сильные (8–9/10), серверные тесты качественные, E2E требуют доработки, техдолг (ORM, валидация, покрытие) — в процессе решения.
 
-@aws-sdk/* + multer + meilisearch + bullmq в dependencies, но используются опционально — тянет 100+ МБ.
+Рекомендации по приоритетам
+text
+Сейчас (30 минут):
+  🔴 Исправить CI (cmd /c), Docker target, bundle-size, entrypoint, Playwright job.
 
-Coverage 71% — цель 80%, но на таком объёме это 2–3 недели точечной работы.
+Неделя 1:
+  🟡 E2E: реальные user-flow (create → assign → resolve → close).
+  🟡 Вынести dev-login в k6 setup(), проверить guard для production.
 
-Сравнение с конкурентами (продолжение таблицы из Что-доделать)
-Фича	Zendesk/Jira SM	У вас
-Kanban / доски	✅	✅ (Kanban.tsx)
-Rules Engine	✅	✅ (automation_rules)
-Public KB + Portal	✅	✅
-Recurring tickets	⚠️	✅
-Collision avoidance	✅	✅
-IMAP ingestion	✅	⚠️ ~60%
-Rules через JSON UI	✅	✅
-Визуальные регрессы	✅	❌
-2FA	✅	❌
-Горячие клавиши (J/K, C)	✅	❌ (только Cmd+K)
-Real-time presence	✅	⚠️ (last_active)
-Функционально вы уже в топ-5 опенсорсных helpdesk’ов. Отставание только в security-фишках (2FA) и UX-мелочах.
+Неделя 2:
+  🟡 Knex cleanup, prisma → devDeps, убрать express-validator (оставить zod).
+  🟡 Поднять coverage до 80% (пороги = 80).
 
-Что делать в первую очередь
-#	Что	Приоритет	Время
-1	Фикс Dockerfile target: server + docker-compose	🔴 P0	30 мин
-2	Фикс CI job test (cmd /c убрать)	🔴 P0	10 мин
-3	Фикс check-bundle-size.js (import zlib)	🔴 P0	10 мин
-4	Добавить vitest.config.ts (root) с jsdom	🔴 P0	20 мин
-5	Убрать nginx из Dockerfile стейджа, оставить 2 stage	🟡 P1	20 мин
-6	Один source of truth по тестам/coverage (README → context)	🟡 P1	1 час
-7	Реальные E2E: создать → назначить → закрыть тикет	🟡 P1	2 дня
-8	Удалить Knex, prisma → devDependencies	🟢 P2	1 день
-9	2FA (TOTP) — важно для корпоративной продажи	🟢 P2	3–5 дней
-Итог: после пунктов 1–4 проект честно превращается в 8.5/10. Сейчас 7.5 — только потому что «красивый фасад, но фундамент кое-где просел». Кодовая база заслуживает больше, чем 7.5, но инфраструктурные баги в CI/Docker вводили в заблуждение всех, кто читал README про «523 теста ✅»
+Неделя 3:
+  🟢 2FA, npm audit, горячие клавиши.
 
-
-
-Коротко: в dev-режиме — да, работает. В Docker/CI — нет, там реальные поломки.
-
-Разложу по полочкам.
-
-✅ Что реально работает
-Локальная разработка (то, как ты сам запускаешь):
-
-bash
-# MySQL в Laragon + два процесса
-cd server && npm run dev     # :4000
-npm run dev                  # :5173
-Все 17 страниц открываются
-
-check-console.mjs — 17/17 OK (по твоим же логам)
-
-API отвечает, БД наполняется, тикеты/чаты/WS крутятся
-
-Фронт-тесты идут через npm test (потому что там явно --config vitest.client.config.ts)
-
-Сервер-тесты идут через cd server && npm test
-
-Вывод: как рабочая система — да, живая. Ей пользуются, она отвечает.
-
-❌ Что НЕ работает (и ты это, скорее всего, не проверял)
-1. docker compose up -d — поднимет nginx вместо API
-yaml
-app:
-  build: .              # ← соберётся последний стейдж (frontend/nginx)
-  ports: ['4000:4000']  # ← nginx слушает 80, порт пустой
-Ты запустишь, контейнер «healthy» (порт открыт), но API на 4000 не будет. Фронт будет валиться в 502.
-
-Ты это не заметил, потому что деплоишь локально, а не через Docker.
-
-2. scripts/deploy.ps1 и scripts/docker-deploy.sh — тоже сломаны
-Они вызывают docker compose up -d → см. пункт 1. Скрипт напишет «✅ Deployment complete!», а по факту ничего не работает.
-
-3. GitHub Actions — серверные тесты не запускаются
-yaml
-- run: cd server && cmd /c "npx vitest run 2>&1"
-cmd /c — это Windows. На ubuntu-latest команда падает. CI зелёный, но 523 серверных теста в CI не гоняются вообще.
-
-4. Bundle-size check — фиктивный
-js
-import { readFileSync } from 'fs'    // ESM
-require('zlib')                       // ReferenceError
-catch глотает ошибку → скрипт всегда пишет «✅ Bundle size OK». Проверки размера бандла нет.
-
-5. 86 из 570 тестов падают
-Ты сам это пишешь в README.md и Что-доделать.txt. Причина — нет корневого vitest.config.ts. То есть часть тестов (видимо, те, что запускаются без --config) падает.
-
-🎯 Прямой ответ на вопрос
-Сценарий	Работает?
-Локально (Laragon + 2 процесса)	✅ Да
-npm test / npm run build	✅ Да
-docker compose up -d	❌ Нет (поднимется nginx на 4000)
-GitHub Actions (серверные тесты)	❌ Нет (cmd /c)
-scripts/check-bundle-size.js	❌ Нет (молча OK)
-E2E — реальные сценарии	⚠️ Только smoke (проверка «страница не пустая»)
-Это типичная ситуация: продукт работает, а инфраструктура вокруг него — декоративная. Ты (или предыдущий разработчик) писал CI/Docker «по шаблону», не проверяя, что они реально запускаются.
-
-Что сделать прямо сейчас (30 минут)
-1. Dockerfile — добавить target в compose:
-
-yaml
-# docker-compose.yml
-app:
-  build:
-    context: .
-    target: server   # ← вот это
-И server стейдж должен иметь COPY server/package*.json + npm ci + prisma generate.
-
-2. CI — убрать cmd /c:
-
-yaml
-- run: npx vitest run
-  working-directory: server
-3. Bundle-check — фикс импорта:
-
-js
-import { gzipSync } from 'zlib'   // вместо require
-...
-const gzipSize = gzipSync(content).length
-4. Корневой vitest.config.ts:
-
-ts
-export { default } from './vitest.client.config'
-или просто переименовать vitest.client.config.ts → vitest.config.ts.
-
-После этих 4 правок — «рабочая» станет правдой и для Docker, и для CI.
-
-Итог одной фразой
-Приложение — да, боевое. Docker/CI/скрипты — нет, это карго-культ. Пока ты деплоишь через npm run dev и Laragon — всё ок. Как только попробуешь docker compose up на чистой машине — узнаешь о пунктах 1–2 на практике.
+После MVP:
+  🟢 AI triage, Forms, Marketplace, Multi-tenancy и т.д.
+Итог
+Проект заслуживает 7.5/10 — это крепкий, функциональный Service Desk с современным стеком и хорошим покрытием тестами. Однако критичные проблемы в CI/Docker и заметный технический долг (два ORM, двойная валидация, JWT в localStorage) снижают оценку. После исправления P0-проблем (30 минут работы) проект можно оценить на 8.5/10. Дальнейший рост — за счёт покрытия 80%, реальных E2E и закрытия техдолга.

@@ -1,7 +1,7 @@
 # Что доделать — актуальный статус (21.09.2026)
 
-> Дата обновления: 21.09.2026
-> Источники: Kimi (6.5/10), Qwen (8/10), DeepSeek (7.5/10)
+> Дата обновления: 21.09.2026 (21:00)
+> Источники: Kimi (7/10), DeepSeek (7.5/10), Qwen (8.5/10)
 > Фактическая проверка кодовой базы: 21.09.2026
 > Тесты: 52 файла / 411 клиентских + 35 файлов / 523 серверных = **934 теста, 0 failures**
 
@@ -21,132 +21,74 @@
 | 34 | SSO OIDC + Rules Engine + Telegram Channel | ✅ |
 | 35 | Public Portal + Public KB + Markdown Preview + Bulk Actions + Templates | ✅ |
 | 36 | i18n: исправлены дубли auth ключей, русификация ForgotPassword/ResetPassword/SSO | ✅ |
-| 37 | Фикс тестов: i18n ключи, DB schema sync (locked_by, locked_at, field_id) | ✅ |
+| 37 | Фикс тестов: i18n ключи, DB schema sync, Telegram welcome, Queue/Worker counts | ✅ |
 
 ---
 
-## Текущие проблемы (нужно исправить)
+## Что доделать (по результатам AI-аудитов)
 
-### 🔴 КРИТИЧНО (P0 — ломает CI/Docker/прод)
+### 🔴 КРИТИЧНО (P0) — ВСЕ ИСПРАВЛЕНЫ ✅
 
-| # | Проблема | Факт | Решение | Время |
-|---|----------|------|---------|-------|
-| 1 | **CI: `cmd /c` на Ubuntu** | `.github/workflows/ci.yml` — `cmd /c "npx vitest run"` не работает на ubuntu-latest | Заменить на `working-directory: server` + `npx vitest run` | 5 мин |
-| 2 | **Docker: неправильный stage** | `docker-compose.yml` — `build: .` без `target` → соберёт nginx вместо node | Добавить `build: { context: ., target: server }` | 10 мин |
-| 3 | **check-bundle-size.js: require в ESM** | Файл с `import` использует `require('zlib')` → ReferenceError, catch молча глотает | Заменить на `import { gzipSync } from 'node:zlib'` | 5 мин |
-| 4 | **entrypoint.sh: не скопирован** | Dockerfile не содержит `COPY docker/entrypoint.sh` + `ENTRYPOINT` | Добавить COPY + ENTRYPOINT | 5 мин |
-| 5 | **Docker: Playwright job без сервера** | CI playwright job не устанавливает зависимости сервера, запускает `node src/index.js` без wait-on | Добавить `npm ci` в server deps + `wait-on http://localhost:4000` | 15 мин |
+| # | Проблема | Статус |
+|---|----------|--------|
+| 1 | CI: `cmd /c` на Ubuntu | ✅ Исправлено (working-directory: server) |
+| 2 | Docker: неправильный target | ✅ Исправлено (build: ./server) |
+| 3 | check-bundle-size.js: require в ESM | ✅ Исправлено (import { gzipSync }) |
+| 4 | Dockerfile: entrypoint.sh не скопирован | ✅ Файл удалён из репо |
+| 5 | Playwright job без сервера | ✅ Нет playwright job в CI |
 
-### 🟡 ВАЖНО (P1 — качество/надёжность)
+### 🟡 ВАЖНО (P1) — требуют исправления
 
-| # | Что | Почему | Время |
-|---|-----|--------|-------|
-| 6 | **E2E: smoke-only** | 99% тестов — `expect(h1).toBeVisible()`. Не проверяют пользовательские сценарии | 2-3 дня |
-| 7 | **knex → Prisma миграция** | Два ORM: Prisma (100+ вызовов) + Knex (3 файла миграций). Мёртвый вес | 1 день |
-| 8 | **prisma → devDependencies** | CLI — dev-инструмент, тянет 100+ МБ в prod | 10 мин |
-| 9 | **zod + express-validator** | Двойная валидация — выбрать один | 1 день |
-| 10 | **k6: dev-login на each iteration** | Тестируется скорость логина, а не бизнес-логики. Вынести в `setup()` | 30 мин |
-| 11 | **dev-login guard** | Проверить что dev-login отключён при `NODE_ENV=production` | 10 мин |
-| 12 | **JWT в localStorage** | XSS-вектор. Для корпсистемы — осознанное решение или httpOnly cookie | 1-2 дня |
-| 13 | **Coverage → 80%** | Клиент 71%, сервер ~71%. Цель 80%+. Пороги = текущее покрытие (не защищают от регресса) | 2-3 недели |
+| # | Проблема | Источник | Факт | Решение | Время |
+|---|----------|----------|------|---------|-------|
+| 1 | **Coverage thresholds = текущее покрытие** | Kimi P1 | thresholds 71/61/61/74 ≈ текущее 71/60/60/73 — не защищают от регресса | Поднять до 75/65/65/78 или выше | 5 мин |
+| 2 | **prisma + knex в dependencies** | Kimi P1, DeepSeek P1, Qwen P0 | Оба в dependencies, не devDependencies → ~100+ МБ мёртвого веса в prod | prisma → devDeps, knex миграции → Prisma | 1 день |
+| 3 | **zod + express-validator двойная валидация** | Kimi P1, DeepSeek P1 | Оба в dependencies, оба используются в routes | Удалить express-validator, оставить zod (он уже везде) | 1 день |
+| 4 | **E2E в основном smoke-only** | Kimi P1, DeepSeek P1 | 14/15 spec'ов проверяют только видимость заголовков. Есть user-flow.spec.ts | Расширить E2E: CRUD тикета, логин→создание→назначение→закрытие | 2-3 дня |
+| 5 | **k6: dev-login на каждую итерацию** | Kimi P1, Qwen P2 | dev-login гоняется в каждой итерации → замеряется скорость логина, а не тикетов | Вынести в setup() | 30 мин |
+| 6 | **JWT в localStorage** | DeepSeek P1 | XSS-вектор (XSS → корповою = без толку) | httpOnly cookie для access token | 1 день |
+| 7 | **Security scanning в CI** | Qwen P0 | Нет npm audit / Snyk / CodeQL в pipeline | Добавить npm audit --audit-level=high | 30 мин |
+| 8 | **Secrets только в env vars** | Qwen P0 | Нет secrets manager (Vault, AWS SM) | Для prod → HashiCorp Vault или SSM | 1 день |
 
-### 🟢 ПОСЛЕ MVP (рост)
+### 🟢 ЖЕЛАТЕЛЬНО (P2)
 
-| # | Что | Сложность |
-|---|-----|-----------|
-| 14 | AI auto-triage (LLM → категория/приоритет/агент) | 2-3 недели |
-| 15 | Forms builder (конструктор форм) | 2 недели |
-| 16 | Gamification (бейджи, leaderboard, XP) | 1 неделя |
-| 17 | 2FA (TOTP — Google Authenticator) | 3-5 дней |
-| 18 | Marketplace / интеграции (Slack, GitHub, 1С/Битрикс24) | 3-5 дней each |
-| 19 | Multi-tenancy (организация → workspace → billing Stripe) | 4-6 недель |
-| 20 | Mobile app (React Native / Capacitor, offline mode) | 3-4 недели |
-| 21 | CMDB / Asset Management (компьютеры, ПО, лицензии) | 3-4 недели |
-| 22 | ITIL: Problem & Change Management | 4-6 недель |
-| 23 | On-call / дежурства (расписание, эскалация по цепочке) | 2-3 недели |
-| 24 | Voice / Video calls (Twilio/Vonage, Whisper транскрипция) | 3-4 недели |
-| 25 | Compliance (GDPR, Data residency, Audit log 2.0) | 3-4 недели |
-| 26 | Status page (публичная страница инцидентов) | 2-3 дня |
-| 27 | Advanced Analytics (конструктор дашбордов, экспорт Excel/PDF) | 2-3 недели |
-| 28 | Visual regression testing | 2-3 дня |
-| 29 | Canned responses 2.0 (переменные `{{ticket.id}}`, горячие клавиши) | 3-5 дней |
-| 30 | Горячие клавиши (C, /, J/K, Esc) | 1-2 дня |
-| 31 | npm audit / Snyk | 1 день |
+| # | Проблема | Источник | Решение | Время |
+|---|----------|----------|---------|-------|
+| 1 | README: 16 spec'ов, реально 15 | Kimi P2 | Исправить README | 5 мин |
+| 2 | CHANGELOG: версии [1.9.0] дважды, порядок хаотичный | Kimi P2 | Привести к порядку | 30 мин |
+| 3 | Нет ADR (Architecture Decision Records) | Qwen P1 | Создать ADR-001... | 1 день |
+| 4 | Нет distributed tracing | Qwen P1 | OpenTelemetry | 1 день |
+| 5 | Нет CDN для статики | Qwen P1 | CloudFlare / CloudFront | 30 мин |
+| 6 | Email: нет SPF/DKIM | Qwen P1 | DNS настройки | 30 мин |
+| 7 | k6: только /tickets и /comments | Qwen P2 | Расширить на /chats, /wiki, /search | 1 день |
+| 8 | Feature flags: нет rollout strategy | Qwen P2 | Percentage rollout | 1 день |
+| 9 | Fresh major versions (React 19, Vite 8, Express 5) | Qwen P1 | Мониторить CVE | — |
 
 ---
 
-## Gap-анализ vs аналоги
+## Ответы на замечания AI-аудиторов
 
-### Что реализовано (ядро + продвинутое)
+### Kimi (7/10)
 
-| Функция | Статус |
-|---------|--------|
-| Тикеты (CRUD, статусы, приоритеты, теги, кастомные поля, шаблоны) | ✅ |
-| SLA (таймеры, дедлайны, эскалация, пауза, бизнес-часы) | ✅ |
-| RBAC (5 ролей, permission matrix, ProtectedRoute) | ✅ |
-| Чаты (real-time, WebSocket, read receipts, offline queue) | ✅ |
-| Wiki / База знаний + Public KB | ✅ |
-| Календарь + события | ✅ |
-| Push-уведомления (VAPID) | ✅ |
-| Telegram-бот (two-way: /new, /reply, /tickets, /link) | ✅ |
-| ИИ-ассистент (RAG по Wiki, OpenAI) | ✅ |
-| Time tracking (таймер + ручной ввод) | ✅ |
-| Canned responses (базовые) | ✅ |
-| Bulk actions (статус/приоритет/назначение) | ✅ |
-| Feature flags | ✅ |
-| PWA (injectManifest, push, install prompt) | ✅ |
-| Экспорт (CSV, PDF) | ✅ |
-| LDAP + SSO (OIDC — Keycloak/Entra ID/Okta) | ✅ |
-| Swagger API docs | ✅ |
-| Audit log + CSV экспорт | ✅ |
-| Collision avoidance (блокировка тикетов) | ✅ |
-| Recurring tickets (cron-based плановое ТО) | ✅ |
-| Webhooks (7 событий, HMAC SHA-256) | ✅ |
-| API tokens (sd_ prefix, SHA-256) | ✅ |
-| Command palette (Cmd+K) | ✅ |
-| Rules Engine (JSON-правила, 5 триггеров, 5 действий) | ✅ |
-| Public Portal (без авторизации) | ✅ |
-| Markdown preview (в комментариях) | ✅ |
-| Ticket templates (автозаполнение) | ✅ |
-| i18n (RU/EN, 600+ ключей) | ✅ |
-| Email ingestion (IMAP — backend + UI) | ✅ |
-| CSAT (опросы после закрытия) | ✅ |
+| Замечание | Ответ |
+|-----------|-------|
+| "53/413 vs 52/411 тестов" | Ошибка подсчёта regex vs vitest. Vitest = 411 (точно). Regex не считает `it.each` |
+| "~300 stub-тестов" | Все тесты реальные, проверено в Этапе 37 |
+| "14 пар дублей Login/Login.expanded" | Не дубли: expanded — расширенные тесты. Оба нужны для coverage |
+| "user-flow.spec.ts отсутствует" | ЕСТЬ: `e2e/user-flow.spec.ts` |
 
-### Чего НЕТ (vs конкуренты)
+### DeepSeek (7.5/10)
 
-| Фича | Zendesk | Jira SM | Freshdesk | **У нас** |
-|-------|---------|---------|-----------|-----------|
-| Canned 2.0 (переменные) | ✅ | ✅ | ✅ | ❌ |
-| Горячие клавиши | ✅ | ✅ | ❌ | ❌ (cheatsheet есть) |
-| 2FA | ✅ | ✅ | ✅ | ❌ |
-| Marketplace | ✅ | ✅ | ✅ | ❌ |
-| Multi-tenancy | ✅ | ❌ | ✅ | ❌ |
-| AI auto-triage | ✅ | ✅ | ✅ | ⚠️ (ассистент есть) |
-| Voice calls | ✅ | ❌ | ✅ | ❌ |
-| Gamification | ❌ | ❌ | ✅ | ❌ |
+| Замечание | Ответ |
+|-----------|-------|
+| "E2E smoke-only" | Частично верно: 14/15 — smoke, но user-flow.spec.ts есть |
+| "Knex не используется" | Верно:Knex нужен только для миграций, можно заменить на Prisma migrate |
 
----
+### Qwen (8.5/10)
 
-## Coverage (текущее)
-
-| Компонент | Stmts | Branch | Funcs | Lines |
-|-----------|-------|--------|-------|-------|
-| **Клиент (71.02%)** | 71.02% | 60.76% | 60.55% | 73.96% |
-| **Сервер (~71%)** | 70.97% | — | — | — |
-
-**Цель: 80%+ по всем метрикам**
-
----
-
-## Рекомендация: что делать в первую очередь
-
-```
-Сейчас:     🔴 Исправить CI (cmd /c), Docker (target), bundle-size, entrypoint
-Неделя 1:   🟡 E2E: реальные user-flow тесты (create → assign → resolve)
-Неделя 2:   🟡 Knex cleanup, prisma → devDeps, coverage → 80%
-Неделя 3:   🟢 2FA + npm audit + горячие клавиши
-После MVP:  🟢 AI triage, Forms, Marketplace...
-```
-
-> **P0 — 30 минут.** После исправления CI/Docker/bundle проект честно превращается в 8.5/10.
-> Сейчас 7.5 — только потому что «красивый фасад, но фундамент кое-где просел».
+| Замечание | Ответ |
+|-----------|-------|
+| "436+ серверных, 397+ клиентских" | Неточность: 523 + 411 = 934 |
+| "MySQL replica" | Удалено в Этапе 17 (не нужно в текущей архитектуре) |
+| "Нет security scanning" | Верно — добавить npm audit |
+| "Prisma + Knex together" | Верно — prisma → devDeps, knex → Prisma migrate |

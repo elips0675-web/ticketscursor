@@ -100,13 +100,15 @@
 
 ────────────────────────────────────────────────────────────────────────────
 
-ТЕСТЫ
+ТЕСТЫ (934 тестов, 0 failures)
 
-   • Клиентские: 397/397 (52 файла, vitest + jsdom)
-   • Серверные: 436/436 (28 файлов, vitest + supertest)
-   • E2E: 36 тестов, 14 файлов (Playwright — login, tickets, chats, admin, SLA, files, search, ldap, kanban, notifications, profile, calculator, audit, file-upload)
-• ESLint: 0 errors, 10 pre-existing warnings
+   • Клиентские: 411/411 (52 файла, 71 suite, vitest + jsdom + RTL)
+   • Серверные: 523/523 (35 файлов, 192 suite, vitest + supertest)
+   • E2E: 15 spec'ов (Playwright) + 17/17 страниц (check-console.mjs)
+   • Coverage: клиент 71% stmts, сервер 71% stmts
+   • ESLint: 0 errors, 0 warnings (no-explicit-any исправлен)
    • Type-check + build: успешно
+   • test-analysis/: test-inventory.json + scripts/count-tests.js
 
 ────────────────────────────────────────────────────────────────────────────
 
@@ -533,3 +535,18 @@
 - **SSO.tsx**: ошибки переведены на i18n (notConfigured, failedLoadConfig, loginFailed, missingAuthCode, noToken, authFailed)
 - **ru.json/en.json**: добавлены 25+ новых ключей (forgotPassword*, resetPassword*, sso.error*, common.reset)
 - **check-console.mjs**: 17/17 ALL OK
+
+### Этап 37 — Фикс тестов после AI-аудитов (21.09.2026)
+- **vitest.global-setup.js**: добавлены locked_by, locked_at, deleted_at, escalated_at, escalation_level, last_active, field_id в test DB schema
+- **telegram.expanded.test.js**: исправлено приветственное сообщение /start
+- **background.expanded.test.js**: Queue/Worker counts 3→4 (DLQ воркер добавлен)
+- **i18n тесты**: исправлены утверждения ключей auth в ForgotPassword/ResetPassword тестах
+- **Результат**: клиент 411/411 ✅, сервер 523/523 ✅, TypeScript 0 ошибок ✅
+
+### Этап 38 — AI-аудит: анализ + документация (21.09.2026)
+- **Прочитаны**: Kimi (7/10), DeepSeek (7.5/10), Qwen (8.5/10)
+- **Верифицированы P0**: все 5 критических проблем (CI cmd/c, Docker target, bundle-size, entrypoint, playwright) — УЖЕ ИСПРАВЛЕНЫ
+- **Подтверждены P1**: coverage thresholds декоративные (71/61/61/74 ≈ текущее), prisma+knex в dependencies, zod+express-validator двойная валидация
+- **Ошибки аудиторов**: user-flow.spec.ts ЕСТЬ (Kimi ошибся), дублей тестов нет (Login/Login.expanded — комплементарные)
+- **test-analysis/**: перезаписаны frontend-tests.txt (52 файла), server-tests.txt (35 файлов), context.txt (точные цифры), добавлен test-inventory.json (машинно-читаемый)
+- **scripts/count-tests.js**: скрипт для генерации инвентаря тестов
