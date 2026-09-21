@@ -33,6 +33,8 @@ import ResetPassword from '@/pages/ResetPassword'
 import { SSOLogin, SSOCallback } from '@/pages/SSO'
 import PublicPortal from '@/pages/Portal'
 import PortalTrack from '@/pages/PortalTrack'
+import PublicKB from '@/pages/PublicKB'
+import PublicKBArticle from '@/pages/PublicKBArticle'
 import Register from '@/pages/Register'
 import NotFound from '@/pages/NotFound'
 
@@ -137,6 +139,8 @@ export default function App() {
                     <Route path="/portal" element={<PublicPortal />} />
                     <Route path="/portal/track" element={<PortalTrack />} />
                     <Route path="/portal/track/:token" element={<PortalTrack />} />
+                    <Route path="/kb" element={<PublicKB />} />
+                    <Route path="/kb/:slug" element={<PublicKBArticle />} />
 
                     <Route
                       path="/admin"

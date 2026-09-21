@@ -573,6 +573,21 @@
     "sendReply": "Send Reply",
     "replySent": "Reply sent"
   },
+  "kb": {
+    "title": "Knowledge Base",
+    "subtitle": "Find answers to your questions",
+    "search": "Search",
+    "searchPlaceholder": "Search the knowledge base...",
+    "allCategories": "All categories",
+    "empty": "No articles yet",
+    "notFound": "Article not found",
+    "backToList": "← Back to list",
+    "noExcerpt": "No excerpt",
+    "noContent": "No content available",
+    "updated": "Updated",
+    "helpful": "Was this helpful?",
+    "similarArticles": "Similar articles"
+  },
   "sso": {
     "loginTitle": "SSO Login",
     "loginSubtitle": "Sign in with your corporate account",

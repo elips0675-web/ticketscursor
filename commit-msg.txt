@@ -1,1 +1,1 @@
-feat(public-portal): self-service portal for ticket creation and tracking without login
+feat(public-kb): knowledge base 2.0 with search, categories, voting, and similar articles
