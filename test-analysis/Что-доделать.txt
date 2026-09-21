@@ -1,8 +1,9 @@
 # Что доделать — актуальный статус (21.09.2026)
 
 > Дата обновления: 21.09.2026
-> Источники: Kimi (6.5/10), Qwen (8.5/10), DeepSeek (7/10)
+> Источники: Kimi (6.5/10), Qwen (8/10), DeepSeek (7.5/10)
 > Фактическая проверка кодовой базы: 21.09.2026
+> Тесты: 52 файла / 411 клиентских + 35 файлов / 523 серверных = **934 теста, 0 failures**
 
 ---
 
@@ -20,53 +21,61 @@
 | 34 | SSO OIDC + Rules Engine + Telegram Channel | ✅ |
 | 35 | Public Portal + Public KB + Markdown Preview + Bulk Actions + Templates | ✅ |
 | 36 | i18n: исправлены дубли auth ключей, русификация ForgotPassword/ResetPassword/SSO | ✅ |
+| 37 | Фикс тестов: i18n ключи, DB schema sync (locked_by, locked_at, field_id) | ✅ |
 
 ---
 
 ## Текущие проблемы (нужно исправить)
 
-### 🔴 КРИТИЧНО
+### 🔴 КРИТИЧНО (P0 — ломает CI/Docker/прод)
 
-| # | Проблема | Факт | Решение |
-|---|----------|------|---------|
-| 1 | **86/570 тестов падают** | Vitest по умолчанию использует `node` окружение → `localStorage is not defined`. Файл `vitest.client.config.ts` существует с `environment: 'jsdom'`, но не используется по умолчанию | Создать `vitest.config.ts` с `environment: 'jsdom'` + `globals: true`, либо добавить секцию `test` в `vite.config.ts` |
-| 2 | **Два ORM: Prisma + Knex** | Prisma — 100+ вызовов, Knex — 3 файла. Выбран Prisma, но Knex не удалён | P2: удалить Knex, оставить только Prisma |
-| 3 | **Server api.test.js падает** | POST /api/tickets → 500 вместо 201 (4 теста). Причина: миграции не применяются к тестовой БД или не хватает колонок | Проверить `vitest.global-setup.js`, убедиться что все колонки есть |
+| # | Проблема | Факт | Решение | Время |
+|---|----------|------|---------|-------|
+| 1 | **CI: `cmd /c` на Ubuntu** | `.github/workflows/ci.yml` — `cmd /c "npx vitest run"` не работает на ubuntu-latest | Заменить на `working-directory: server` + `npx vitest run` | 5 мин |
+| 2 | **Docker: неправильный stage** | `docker-compose.yml` — `build: .` без `target` → соберёт nginx вместо node | Добавить `build: { context: ., target: server }` | 10 мин |
+| 3 | **check-bundle-size.js: require в ESM** | Файл с `import` использует `require('zlib')` → ReferenceError, catch молча глотает | Заменить на `import { gzipSync } from 'node:zlib'` | 5 мин |
+| 4 | **entrypoint.sh: не скопирован** | Dockerfile не содержит `COPY docker/entrypoint.sh` + `ENTRYPOINT` | Добавить COPY + ENTRYPOINT | 5 мин |
+| 5 | **Docker: Playwright job без сервера** | CI playwright job не устанавливает зависимости сервера, запускает `node src/index.js` без wait-on | Добавить `npm ci` в server deps + `wait-on http://localhost:4000` | 15 мин |
 
-### 🟡 ВАЖНО
+### 🟡 ВАЖНО (P1 — качество/надёжность)
 
-| # | Что | Почему | Дней |
-|---|-----|--------|------|
-| 4 | **Canned responses 2.0** | Переменные `{{ticket.id}}`, `{{user.name}}` + горячие клавиши | 3-5 |
-| 5 | **Горячие клавиши** (C, /, J/K, Esc) | Ускорение работы агентов | 1-2 |
-| 6 | **Coverage → 80%** | Клиент 71%, сервер ~71%. Цель 80%+ | 5-7 |
-| 7 | **npm audit / Snyk** | Нет автоматической проверки зависимостей | 1 |
-| 8 | **zod + express-validator** | Двойная валидация — выбрать один | 1 |
-| 9 | **Prisma в dependencies** | CLI — dev-инструмент, должен быть в devDependencies | 0.5 |
+| # | Что | Почему | Время |
+|---|-----|--------|-------|
+| 6 | **E2E: smoke-only** | 99% тестов — `expect(h1).toBeVisible()`. Не проверяют пользовательские сценарии | 2-3 дня |
+| 7 | **knex → Prisma миграция** | Два ORM: Prisma (100+ вызовов) + Knex (3 файла миграций). Мёртвый вес | 1 день |
+| 8 | **prisma → devDependencies** | CLI — dev-инструмент, тянет 100+ МБ в prod | 10 мин |
+| 9 | **zod + express-validator** | Двойная валидация — выбрать один | 1 день |
+| 10 | **k6: dev-login на each iteration** | Тестируется скорость логина, а не бизнес-логики. Вынести в `setup()` | 30 мин |
+| 11 | **dev-login guard** | Проверить что dev-login отключён при `NODE_ENV=production` | 10 мин |
+| 12 | **JWT в localStorage** | XSS-вектор. Для корпсистемы — осознанное решение или httpOnly cookie | 1-2 дня |
+| 13 | **Coverage → 80%** | Клиент 71%, сервер ~71%. Цель 80%+. Пороги = текущее покрытие (не защищают от регресса) | 2-3 недели |
 
 ### 🟢 ПОСЛЕ MVP (рост)
 
 | # | Что | Сложность |
 |---|-----|-----------|
-| 10 | AI auto-triage (LLM → категория/приоритет/агент) | 2-3 недели |
-| 11 | Forms builder (конструктор форм) | 2 недели |
-| 12 | Gamification (бейджи, leaderboard, XP) | 1 неделя |
-| 13 | 2FA (TOTP — Google Authenticator) | 3-5 дней |
-| 14 | Marketplace / интеграции (Slack, GitHub, 1С/Битрикс24) | 3-5 дней each |
-| 15 | Multi-tenancy (организация → workspace → billing Stripe) | 4-6 недель |
-| 16 | Mobile app (React Native / Capacitor, offline mode) | 3-4 недели |
-| 17 | CMDB / Asset Management (компьютеры, ПО, лицензии) | 3-4 недели |
-| 18 | ITIL: Problem & Change Management | 4-6 недель |
-| 19 | On-call / дежурства (расписание, эскалация по цепочке) | 2-3 недели |
-| 20 | Voice / Video calls (Twilio/Vonage, Whisper транскрипция) | 3-4 недели |
-| 21 | Compliance (GDPR, Data residency, Audit log 2.0) | 3-4 недели |
-| 22 | Status page (публичная страница инцидентов) | 2-3 дня |
-| 23 | Advanced Analytics (конструктор дашбордов, экспорт Excel/PDF) | 2-3 недели |
-| 24 | Visual regression testing | 2-3 дня |
+| 14 | AI auto-triage (LLM → категория/приоритет/агент) | 2-3 недели |
+| 15 | Forms builder (конструктор форм) | 2 недели |
+| 16 | Gamification (бейджи, leaderboard, XP) | 1 неделя |
+| 17 | 2FA (TOTP — Google Authenticator) | 3-5 дней |
+| 18 | Marketplace / интеграции (Slack, GitHub, 1С/Битрикс24) | 3-5 дней each |
+| 19 | Multi-tenancy (организация → workspace → billing Stripe) | 4-6 недель |
+| 20 | Mobile app (React Native / Capacitor, offline mode) | 3-4 недели |
+| 21 | CMDB / Asset Management (компьютеры, ПО, лицензии) | 3-4 недели |
+| 22 | ITIL: Problem & Change Management | 4-6 недель |
+| 23 | On-call / дежурства (расписание, эскалация по цепочке) | 2-3 недели |
+| 24 | Voice / Video calls (Twilio/Vonage, Whisper транскрипция) | 3-4 недели |
+| 25 | Compliance (GDPR, Data residency, Audit log 2.0) | 3-4 недели |
+| 26 | Status page (публичная страница инцидентов) | 2-3 дня |
+| 27 | Advanced Analytics (конструктор дашбордов, экспорт Excel/PDF) | 2-3 недели |
+| 28 | Visual regression testing | 2-3 дня |
+| 29 | Canned responses 2.0 (переменные `{{ticket.id}}`, горячие клавиши) | 3-5 дней |
+| 30 | Горячие клавиши (C, /, J/K, Esc) | 1-2 дня |
+| 31 | npm audit / Snyk | 1 день |
 
 ---
 
-## Gap-анализ vs аналоги (обновление)
+## Gap-анализ vs аналоги
 
 ### Что реализовано (ядро + продвинутое)
 
@@ -132,11 +141,12 @@
 ## Рекомендация: что делать в первую очередь
 
 ```
-Сейчас:     🔴 Исправить vitest конфиг (86 тестов падают)
-Неделя 1:   🟡 Canned responses 2.0 + горячие клавиши
-Неделя 2:   🟡 Coverage → 80% (фокус на low-coverage файлы)
-Неделя 3:   🟢 2FA + npm audit + cleanup Knex
+Сейчас:     🔴 Исправить CI (cmd /c), Docker (target), bundle-size, entrypoint
+Неделя 1:   🟡 E2E: реальные user-flow тесты (create → assign → resolve)
+Неделя 2:   🟡 Knex cleanup, prisma → devDeps, coverage → 80%
+Неделя 3:   🟢 2FA + npm audit + горячие клавиши
 После MVP:  🟢 AI triage, Forms, Marketplace...
 ```
 
-> **Сейчас самый важный баг — vitest конфиг.** 86 тестов падают из-за того, что `vitest.client.config.ts` не используется по умолчанию. Нужно создать `vitest.config.ts` или добавить `test` секцию в `vite.config.ts`.
+> **P0 — 30 минут.** После исправления CI/Docker/bundle проект честно превращается в 8.5/10.
+> Сейчас 7.5 — только потому что «красивый фасад, но фундамент кое-где просел».
