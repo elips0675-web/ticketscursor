@@ -3,11 +3,11 @@
 ## Стек
 React 19 + TypeScript 5 + Vite 8 + Tailwind v4 + shadcn/ui | Express 5 + Prisma + MySQL 8 + Socket.IO + Redis
 
-## Текущее состояние (после исправлений 21.09.2026, этап 36)
+## Текущее состояние (после исправлений 21.09.2026, этап 37)
 
 | Метрика | Значение |
 |---------|----------|
-| Frontend тесты | **102 файла / 485 тестов** ✅ |
+| Frontend тесты | **52 файла / 411 тестов** ✅ |
 | Серверные тесты | **35 файлов / 523 тестов** ✅ |
 | E2E тесты | **16 spec'ов** (включая user-flow: login, CRUD, navigation, search) ✅ |
 | E2E (check-console) | **17/17 страниц** ALL OK ✅ |
@@ -73,7 +73,7 @@ React 19 + TypeScript 5 + Vite 8 + Tailwind v4 + shadcn/ui | Express 5 + Prisma 
 |------|-------------|--------|
 | **e2e-tests.txt** | 16 Playwright-файлов — login, tickets, chats, admin, kanban, files, search, notifications, profile, calculator, ldap, sla, **user-flow** | 9 KB |
 | **server-tests.txt** | 30 серверных тестов (451 тест) — api, assistant, cache, middleware, time, sla, mentions, search, socket, notify, background, wiki, **files.route, push** | 16 KB |
-| **frontend-tests.txt** | 52 фронтенд-теста (411 тестов) — все реальные тесты с осмысленной логикой | 61 KB |
+| **frontend-tests.txt** | 52 фронтенд-тестов (411 тестов) — все реальные тесты с осмысленной логикой | 61 KB |
 | **load-tests.txt** | k6 (chat, tickets) + Artillery конфиг | 3 KB |
 | **infra.txt** | CI/CD (ci.yml), Docker (Dockerfile, docker-compose.yml, entrypoint.sh), Nginx, скрипты | 14 KB |
 | **AGENTS.md** | Правила разработки, known pitfalls, roadmap этапов 1-30 | 29 KB |
