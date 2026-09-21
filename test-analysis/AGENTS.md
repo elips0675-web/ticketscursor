@@ -39,7 +39,7 @@
 | **При коммите** | Husky → lint-staged | `eslint --fix` + `prettier --write` на изменённых файлах |
 | **В CI (GitHub Actions)** | `tsc --noEmit` | TypeScript strict type-check |
 | | `eslint . --max-warnings 100` | Синтаксис, неисп. переменные, импорты |
-| | `vitest run` | Юнит-тесты (209 клиентских + 295 серверных) |
+| | `vitest run` | Юнит-тесты (485 клиентских + 523 серверных) |
 | | `vite build` | Сборка production |
 | **Тестовая БД** | `vitest.global-setup.js` | Создаёт `servicedesk_test`, мигрирует, сидит, фиксит колонки |
 | **Rate limiter** | `app.js` | Отключён при `NODE_ENV=test` через `skip` |
@@ -130,6 +130,12 @@
 - **Files.tsx**: переход на FormData, открытие файлов по клику (через `/uploads/files/...`)
 - **seed.sql**: добавлена колонка `path` в таблицу `files`
 - **types/index.ts**: добавлено поле `path` в `FileItem`
+
+### Этап 35 — Public Portal + Public KB + Markdown Preview + Bulk Actions + Templates
+- ✅ Public Portal (без авторизации), Public KB 2.0, Markdown Preview, Bulk Actions 2.0, Ticket Templates, Keyboard Shortcuts Cheatsheet
+
+### Этап 36 — i18n: исправление дублей и русификация
+- ✅ Исправлены дубли auth ключей в ru/en JSON, русификация ForgotPassword/ResetPassword/SSO
 
 ## Состояние проекта
 
@@ -348,6 +354,14 @@ docker compose up -d --build
 - **Тесты**: +5 серверных (api.test.js), +5 клиентских (useFeature.test.tsx, AdminSettings.test.tsx)
 - **MSW handler**: `/admin/features` GET + PUT mock
 - **Итог**: фронт 52 файла / 372 теста, сервер 25 файлов / 352 теста, Vite build ✅
+
+### Этап 36 — i18n: исправление дублей и русификация
+- **ru.json / en.json**: объединены два ключа `"auth"` (второй перезаписывал первый → потеря всех переводов авторизации)
+- **ForgotPassword.tsx**: добавлен `useTranslation`, все строки на `t()` ключах
+- **ResetPassword.tsx**: добавлен `useTranslation`, все строки на `t()` ключах
+- **SSO.tsx**: 7 сообщений ошибок заменены на `t()` ключи (errorMissingParams, errorExchangeFailed, errorNoToken и т.д.)
+- **i18n ключи**: 25+ новых — `forgotPassword.*`, `resetPassword.*`, `sso.error*`, `common.reset`
+- **check-console**: 17/17 ALL OK
 
 ### Этап 28 — Sync, DLQ, идемпотентные миграции, last_active
 - **Sync из nout/repo**: git pull origin/main (9 коммитов: admin operations, CSP, SW bypass, UnhandledRejection, doc updates)

@@ -3,7 +3,7 @@
 ## Стек
 React 19 + TypeScript 5 + Vite 8 + Tailwind v4 + shadcn/ui | Express 5 + Prisma + MySQL 8 + Socket.IO + Redis
 
-## Текущее состояние (после исправлений 21.09.2026, этап 4)
+## Текущее состояние (после исправлений 21.09.2026, этап 36)
 
 | Метрика | Значение |
 |---------|----------|
@@ -12,12 +12,26 @@ React 19 + TypeScript 5 + Vite 8 + Tailwind v4 + shadcn/ui | Express 5 + Prisma 
 | E2E тесты | **16 spec'ов** (включая user-flow: login, CRUD, navigation, search) ✅ |
 | E2E (check-console) | **17/17 страниц** ALL OK ✅ |
 | TypeScript | **0 errors** ✅ |
-| ESLint | **0 errors**, 11 warnings (pre-existing) ✅ |
+| ESLint | **0 errors**, 2 warnings (react-hooks/set-state-in-effect) ✅ |
 | Vite build | **OK** ✅ |
 | Coverage (клиент) | 71% stmts |
 | Coverage (сервер) | 71% stmts |
-| Prisma моделей | **22** (+api_tokens, webhooks) |
-| API endpoints | **70+** (+API tokens, Webhooks) |
+| Prisma моделей | **25** (+api_tokens, webhooks, automation_rules, ticket_recurrences, feature_flags) |
+| API endpoints | **90+** (+API tokens, Webhooks, Lock, Recurrences, Rules, SSO) |
+
+### Исправлено 21.09.2026 (этап 36 — i18n фиксы)
+
+**i18n — исправление корневой причины:**
+- В `ru.json` и `en.json` были два ключа `"auth"` — второй перезаписывал первый, теряя все переводы авторизации
+- Объединены два блока `auth` в один, все переводы восстановлены
+
+**Русизация страниц:**
+- `ForgotPassword.tsx` — добавлен `useTranslation`, все строки на `t()` ключах
+- `ResetPassword.tsx` — добавлен `useTranslation`, все строки на `t()` ключах
+- `SSO.tsx` — 7 сообщений ошибок заменены на `t()` ключи
+
+**i18n ключи:**
+- 25+ новых ключей: `forgotPassword.*`, `resetPassword.*`, `sso.error*`, `common.reset`
 
 ### Исправлено 21.09.2026 (этап 4 — важные фичи)
 
@@ -90,9 +104,11 @@ React 19 + TypeScript 5 + Vite 8 + Tailwind v4 + shadcn/ui | Express 5 + Prisma 
 - ✅ Custom Fields — реализованы (Prisma schema + service + API + UI)
 - ✅ SLA pause/business hours — реализованы
 - ✅ CSAT — реализован
+- ✅ i18n — исправлены дубли auth ключей, русификация ForgotPassword/ResetPassword/SSO
 - ⚠️ Email ingestion — ~60% (service + route + background + tests; reply threading + UI в процессе)
 - ⚠️ Два ORM — Prisma chosen, миграция Knex → P2
 - ⚠️ Coverage 71% — целевой 80% (P2)
+- ⚠️ 86/570 тестов падают — vitest конфиг (нужен `vitest.config.ts` с `environment: 'jsdom'`)
 
 ---
 

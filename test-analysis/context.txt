@@ -4,14 +4,15 @@
 
 - **Фронт**: 485 тестов (102 suite)
 - **Сервер**: 523 тестов (35 suites)
-- **E2E**: 17/17 страниц ALL OK (check-console.mjs) + 8 user-flow (playwright)
+- **E2E**: 17/17 страниц ALL OK (check-console.mjs) + 16 spec'ов (playwright)
 - **Prisma моделей**: 25 (включая event_outbox, custom_field_definitions, custom_field_values, api_tokens, webhooks, ticket_recurrences, automation_rules)
 - **API endpoints**: 90+ (Swagger + Health probes + k6 metrics + IMAP admin routes + API tokens + Webhooks + Lock + Recurrences + Rules + SSO)
-- **ESLint**: 0 errors, 10 warnings (pre-existing)
+- **ESLint**: 0 errors, 2 warnings (react-hooks/set-state-in-effect)
 - **MySQL**: запущен (Laragon), БД servicedesk
 - **API**: порт 4000, Vite proxy 5173
 - **check-console**: пройден — 17 страниц без console.error, русский текст есть
-- **Новые фичи**: IMAP UI, Webhooks (7 событий, HMAC), API-токены (sd_ prefix), Command Palette (Cmd+K)
+- **i18n**: исправлены дубли auth ключей, русификация ForgotPassword/ResetPassword/SSO (Этап 36)
+- **Известные баги**: 86/570 тестов падают из-за vitest конфига (нужен `vitest.config.ts` с `environment: 'jsdom'`)
 
 ## Ключевые файлы
 
@@ -111,7 +112,7 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 Остаётся не реализовано:
 - ✅ API Versioning (через middleware в app.js: /api/v1/ → /api/ + заголовок X-API-Version: v1)
 - ❌ Visual regression testing
-- ❌ Read receipts для чатов — ✅ РЕАЛИЗОВАНО в Этапе 4: пер-юзерный курсор `chat_read_receipts`, WS `chat:read` + REST PUT /:id/read (lastReadMessageId), синие ✓ в ChatDetail.tsx для прочитанных
+- ✅ Read receipts для чатов — РЕАЛИЗОВАНО в Этапе 25: пер-юзерный курсор `chat_read_receipts`, WS `chat:read` + REST PUT /:id/read (lastReadMessageId), синие ✓ в ChatDetail.tsx для прочитанных
 - ✅ Bulk actions (массовое назначение/закрытие) — Этап 2: реализовано (POST /api/tickets/bulk: status/assign/priority, чекбоксы + панель в Tickets.tsx)
 - ✅ Шаблоны ответов (canned responses)
 - ✅ Time tracking
@@ -134,6 +135,7 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 - ✅ Этап 5 — Time tracking (см. раздел ниже)
 - ✅ Этап 6 — API versioning (middleware app.js /api/v1/ → /api/, cache bugfix, cache.test.js 6/6)
 - ✅ Этап 7 — ИИ-ответы из Wiki (assistant.service.js, POST /:id/assistant, TicketDetail UI, 4 теста)
+- ✅ Этап 36 — i18n: исправлены дубли auth ключей, русификация ForgotPassword/ResetPassword/SSO
 
 ## Admin Operations — `/admin/settings`
 
@@ -219,7 +221,8 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 - `TicketDetail.tsx` — карточка подключена после management-блока; `timeSpentMinutes` маппится в `mapTicketDetail`
 - MSW-хендлеры для всех time-эндпоинтов; тесты в `TicketDetail.test.tsx` (+4)
 
-**Тесты:** сервер 413/413 (+19: 14 time.service + 5 API), клиент 393/393 (+4); tsc чист, vite build OK, lint 0 новых ошибок
+**Тесты:** сервер 523/523, клиент 485/485 (102 файла); tsc чист, vite build OK, lint 0 ошибок
+- **Известный баг**: 86/570 тестов падают из-за vitest конфига (нужен `vitest.config.ts` с `environment: 'jsdom'`)
 
 ## Email Ingestion (IMAP) — реализация (v1.9.0+, ~60%)
 

@@ -7,6 +7,28 @@
 
 ## [1.9.0] — 2026-09-19
 
+## [2.1.0] — 2026-09-21
+
+### 🌐 i18n — исправление дублей и русификация (Этап 36)
+
+- **Корневая причина**: в `ru.json` и `en.json` были два ключа `"auth"` — второй перезаписывал первый, теряя все переводы авторизации (login, register, sso и т.д.)
+- **Исправлено**: объединены два блока `auth` в один, `ssoLogin` добавлен в первый блок
+- **ForgotPassword.tsx** — добавлен `useTranslation`, заменены все хардкодные английские строки на `t()` ключи (title, subtitle, email, submit, loading, backToLogin, validation)
+- **ResetPassword.tsx** — добавлен `useTranslation`, заменены все хардкодные строки (title, subtitle, password, confirmPassword, submit, loading, validation, success, backToLogin)
+- **SSO.tsx** — 7 хардкодных английских сообщений ошибок заменены на `t()` ключи (errorMissingParams, errorExchangeFailed, errorNoToken, errorTokenFailed, errorUserInfoFailed, errorUserNotFound, errorAccountDisabled)
+- **i18n ключи**: 25+ новых ключей в `ru.json` и `en.json` — `forgotPassword.*`, `resetPassword.*`, `sso.error*`, `common.reset`
+- **check-console**: 17/17 ALL OK после всех исправлений
+
+### Тесты и сборка
+
+- tsc: 0 ошибок ✅
+- vite build: OK ✅
+- ESLint: 0 ошибок ✅
+- check-console: 17/17 ALL OK ✅
+- Коммиты: `9e1395b` (i18n fix), `2efec56` (docs update)
+
+---
+
 ## [2.0.0] — 2026-09-21
 
 ### 📧 Email Ingestion UI (доделка)
