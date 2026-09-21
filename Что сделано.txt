@@ -550,3 +550,30 @@
 - **Ошибки аудиторов**: user-flow.spec.ts ЕСТЬ (Kimi ошибся), дублей тестов нет (Login/Login.expanded — комплементарные)
 - **test-analysis/**: перезаписаны frontend-tests.txt (52 файла), server-tests.txt (35 файлов), context.txt (точные цифры), добавлен test-inventory.json (машинно-читаемый)
 - **scripts/count-tests.js**: скрипт для генерации инвентаря тестов
+
+### Этап 39 — Coverage thresholds подняты (21.09.2026)
+- **vitest.client.config.ts**: 71/61/61/74 → 72/62/62/75 (буфер +1-2 от текущего)
+- **server/vitest.config.js**: 64/55/62/63 → 65/56/63/64
+- **test-analysis/vitest.client.config.ts**: синхронизирован
+
+### Этап 40 — prisma → devDeps, удалён express-validator (21.09.2026)
+- **server/package.json**: `prisma` перенесён из dependencies в devDeps (CLI tool, не нужен в prod)
+- **express-validator**: удалён (не импортируется нигде в коде — мёртвый вес)
+
+### Этап 41 — k6: TOKEN из env (21.09.2026)
+- **Факт**: k6 тесты уже используют `__ENV.TOKEN`, не dev-login. Kimi ошибся.
+
+### Этап 42 — npm audit в CI + README + CHANGELOG (21.09.2026)
+- **ci.yml**: добавлен `npm audit --audit-level=high --omit=dev` в frontend и backend jobs
+- **README.md**: 16→15 spec'ов, обновлены метрики тестов (411+523=934)
+- **CHANGELOG.md**: версии приведены к порядку (1.8.0→1.7.0→...→1.0.0→0.x)
+
+### Этап 43 — k6: расширены эндпоинты (21.09.2026)
+- **wiki.k6.js**: GET /api/wiki (список + поиск), 100 concurrent
+- **search.k6.js**: GET /api/search (случайные запросы), 100 concurrent
+- **news.k6.js**: GET /api/news (список), 100 concurrent
+- **README.md**: обновлён с 5 тестами и метриками
+
+### Этап 44 — E2E: crud-lifecycle.spec.ts (21.09.2026)
+- **crud-lifecycle.spec.ts**: 6 тестов — UI ticket creation, calendar, chats, wiki, employees, dashboard
+- **Итого E2E**: 15→16 spec'ов

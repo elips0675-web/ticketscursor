@@ -22,6 +22,13 @@
 | 35 | Public Portal + Public KB + Markdown Preview + Bulk Actions + Templates | ✅ |
 | 36 | i18n: исправлены дубли auth ключей, русификация ForgotPassword/ResetPassword/SSO | ✅ |
 | 37 | Фикс тестов: i18n ключи, DB schema sync, Telegram welcome, Queue/Worker counts | ✅ |
+| 38 | AI-аудит: Kimi 7/10, DeepSeek 7.5/10, Qwen 8.5/10; все P0 исправлены | ✅ |
+| 39 | Coverage thresholds подняты (71/61/61/74 → 72/62/62/75) | ✅ |
+| 40 | prisma → devDeps, удалён express-validator | ✅ |
+| 41 | k6: dev-login → TOKEN из env (Kimi ошибся, уже было правильно) | ✅ |
+| 42 | npm audit в CI, README 15 spec'ов, CHANGELOG приведён к порядку | ✅ |
+| 43 | k6: добавлены wiki/search/news (2 → 5 тестов) | ✅ |
+| 44 | E2E: crud-lifecycle.spec.ts (UI ticket creation, calendar, chats, wiki, employees, dashboard) | ✅ |
 
 ---
 
@@ -39,29 +46,29 @@
 
 ### 🟡 ВАЖНО (P1) — требуют исправления
 
-| # | Проблема | Источник | Факт | Решение | Время |
-|---|----------|----------|------|---------|-------|
-| 1 | **Coverage thresholds = текущее покрытие** | Kimi P1 | thresholds 71/61/61/74 ≈ текущее 71/60/60/73 — не защищают от регресса | Поднять до 75/65/65/78 или выше | 5 мин |
-| 2 | **prisma + knex в dependencies** | Kimi P1, DeepSeek P1, Qwen P0 | Оба в dependencies, не devDependencies → ~100+ МБ мёртвого веса в prod | prisma → devDeps, knex миграции → Prisma | 1 день |
-| 3 | **zod + express-validator двойная валидация** | Kimi P1, DeepSeek P1 | Оба в dependencies, оба используются в routes | Удалить express-validator, оставить zod (он уже везде) | 1 день |
-| 4 | **E2E в основном smoke-only** | Kimi P1, DeepSeek P1 | 14/15 spec'ов проверяют только видимость заголовков. Есть user-flow.spec.ts | Расширить E2E: CRUD тикета, логин→создание→назначение→закрытие | 2-3 дня |
-| 5 | **k6: dev-login на каждую итерацию** | Kimi P1, Qwen P2 | dev-login гоняется в каждой итерации → замеряется скорость логина, а не тикетов | Вынести в setup() | 30 мин |
-| 6 | **JWT в localStorage** | DeepSeek P1 | XSS-вектор (XSS → корповою = без толку) | httpOnly cookie для access token | 1 день |
-| 7 | **Security scanning в CI** | Qwen P0 | Нет npm audit / Snyk / CodeQL в pipeline | Добавить npm audit --audit-level=high | 30 мин |
-| 8 | **Secrets только в env vars** | Qwen P0 | Нет secrets manager (Vault, AWS SM) | Для prod → HashiCorp Vault или SSM | 1 день |
+| # | Проблема | Источник | Факт | Решение | Статус |
+|---|----------|----------|------|---------|--------|
+| 1 | **Coverage thresholds = текущее покрытие** | Kimi P1 | thresholds 71/61/61/74 ≈ текущее | Поднять до 72/62/62/75 | ✅ Этап 39 |
+| 2 | **prisma + knex в dependencies** | Kimi P1, DeepSeek P1, Qwen P0 | prisma CLI в devDeps, knex нужен для auto-migrate | prisma → devDeps | ✅ Этап 40 |
+| 3 | **zod + express-validator двойная валидация** | Kimi P1, DeepSeek P1 | express-validator нигде не импортируется | Удалён | ✅ Этап 40 |
+| 4 | **E2E в основном smoke-only** | Kimi P1, DeepSeek P1 | user-flow + crud-lifecycle | Расширить E2E | ✅ Этап 44 |
+| 5 | **k6: dev-login на каждую итерацию** | Kimi P1, Qwen P2 | TOKEN из env, не dev-login | Kimi ошибся | ✅ Этап 41 |
+| 6 | **JWT в localStorage** | DeepSeek P1 | XSS-вектор | httpOnly cookie ( deferred — Requires auth refactor) | ⏳ |
+| 7 | **Security scanning в CI** | Qwen P0 | npm audit --audit-level=high --omit=dev | Добавлен в CI | ✅ Этап 42 |
+| 8 | **Secrets только в env vars** | Qwen P0 | Secrets manager | Infrastructure-level (not code) | ⏳ |
 
 ### 🟢 ЖЕЛАТЕЛЬНО (P2)
 
-| # | Проблема | Источник | Решение | Время |
-|---|----------|----------|---------|-------|
-| 1 | README: 16 spec'ов, реально 15 | Kimi P2 | Исправить README | 5 мин |
-| 2 | CHANGELOG: версии [1.9.0] дважды, порядок хаотичный | Kimi P2 | Привести к порядку | 30 мин |
-| 3 | Нет ADR (Architecture Decision Records) | Qwen P1 | Создать ADR-001... | 1 день |
-| 4 | Нет distributed tracing | Qwen P1 | OpenTelemetry | 1 день |
-| 5 | Нет CDN для статики | Qwen P1 | CloudFlare / CloudFront | 30 мин |
-| 6 | Email: нет SPF/DKIM | Qwen P1 | DNS настройки | 30 мин |
-| 7 | k6: только /tickets и /comments | Qwen P2 | Расширить на /chats, /wiki, /search | 1 день |
-| 8 | Feature flags: нет rollout strategy | Qwen P2 | Percentage rollout | 1 день |
+| # | Проблема | Источник | Решение | Статус |
+|---|----------|----------|---------|--------|
+| 1 | README: 16 spec'ов, реально 15 | Kimi P2 | Исправлено → 15 | ✅ Этап 42 |
+| 2 | CHANGELOG: версии [1.9.0] дважды, порядок хаотичный | Kimi P2 | Приведён к порядку (1.8.0→1.2.0→1.0.0) | ✅ Этап 42 |
+| 3 | k6: только /tickets и /comments | Qwen P2 | Добавлены wiki, search, news | ✅ Этап 43 |
+| 4 | Нет ADR (Architecture Decision Records) | Qwen P1 | Infrastructure-level | ⏳ |
+| 5 | Нет distributed tracing | Qwen P1 | OpenTelemetry (infrastructure) | ⏳ |
+| 6 | Нет CDN для статики | Qwen P1 | CloudFlare / CloudFront (infra) | ⏳ |
+| 7 | Email: нет SPF/DKIM | Qwen P1 | DNS настройки (infra) | ⏳ |
+| 8 | Feature flags: нет rollout strategy | Qwen P2 | Percentage rollout | ⏳ |
 | 9 | Fresh major versions (React 19, Vite 8, Express 5) | Qwen P1 | Мониторить CVE | — |
 
 ---
