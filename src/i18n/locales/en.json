@@ -522,7 +522,28 @@
     "forceUnlock": "Force unlock",
     "lockedByYou": "You locked this",
     "lockedByUser": "Locked by {{name}}",
-    "lockWarning": "Other users won't be able to modify this ticket"
+    "lockWarning": "Other users won't be able to modify this ticket",
+    "ssoSettings": "SSO (Single Sign-On)",
+    "ssoSubtitle": "Configure login via external Identity Provider (OIDC). Supports Keycloak, Entra ID, Okta and others.",
+    "ssoEnabled": "Enable SSO",
+    "ssoProvider": "Provider",
+    "ssoIssuerUrl": "Issuer URL (Discovery Endpoint)",
+    "ssoClientId": "Client ID",
+    "ssoClientSecret": "Client Secret",
+    "ssoRedirectUri": "Redirect URI",
+    "ssoDefaultRole": "Default Role"
+  },
+  "sso": {
+    "loginTitle": "SSO Login",
+    "loginSubtitle": "Sign in with your corporate account",
+    "loginButton": "Sign in with SSO",
+    "redirecting": "Redirecting...",
+    "backToLogin": "Back to regular login",
+    "processing": "Processing authorization...",
+    "errorTitle": "SSO Error"
+  },
+  "auth": {
+    "ssoLogin": "SSO / Corporate login"
   },
   "commandPalette": {
     "placeholder": "Type a command or search...",

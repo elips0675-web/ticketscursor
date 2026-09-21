@@ -7,6 +7,7 @@ import { JWT_SECRET, authenticateToken, requireRole } from '../middleware.js'
 import { sendTicketNotification } from '../email.js'
 import { loginValidation, registerValidation, changePasswordValidation } from '../validate.js'
 import { authenticateLDAP } from '../auth/ldap.js'
+import { initOIDCClient, getSSOConfig, isSSOEnabled, generateSSOState, generateSSONonce, getSSOAuthorizationUrl, handleSSOCallback } from '../auth/oidc.js'
 import logger from '../logger.js'
 
 const router = Router()
@@ -169,6 +170,83 @@ router.post('/reset-password', changePasswordValidation, async (req, res) => {
   } catch (err) {
     logger.error('Reset password error:', err)
     res.status(500).json({ message: 'Internal server error' })
+  }
+})
+
+router.get('/sso/config', async (req, res) => {
+  try {
+    const enabled = await isSSOEnabled()
+    const config = await getSSOConfig()
+    res.json({
+      success: true,
+      data: {
+        enabled,
+        provider: config.SSO_PROVIDER || '',
+        clientId: config.SSO_CLIENT_ID || '',
+        issuerUrl: config.SSO_ISSUER_URL || '',
+      },
+    })
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to get SSO config' })
+  }
+})
+
+router.get('/sso/login', async (req, res) => {
+  try {
+    const enabled = await isSSOEnabled()
+    if (!enabled) return res.status(400).json({ message: 'SSO is not configured' })
+
+    const state = generateSSOState()
+    const nonce = generateSSONonce()
+
+    const sessionStore = globalThis.__ssoSessions || (globalThis.__ssoSessions = new Map())
+    sessionStore.set(state, { nonce, createdAt: Date.now() })
+
+    const authUrl = await getSSOAuthorizationUrl(state, nonce)
+    if (!authUrl) return res.status(500).json({ message: 'Failed to generate SSO URL' })
+
+    res.json({ success: true, data: { url: authUrl } })
+  } catch (err) {
+    logger.error('SSO login error:', err)
+    res.status(500).json({ message: 'SSO login failed' })
+  }
+})
+
+router.post('/sso/callback', async (req, res) => {
+  const { code, state, error } = req.body
+  if (error) return res.status(400).json({ message: `SSO error: ${error}` })
+  if (!code || !state) return res.status(400).json({ message: 'Missing code or state' })
+
+  const sessionStore = globalThis.__ssoSessions || new Map()
+  const session = sessionStore.get(state)
+  if (!session) return res.status(400).json({ message: 'Invalid or expired SSO state' })
+  sessionStore.delete(state)
+
+  if (Date.now() - session.createdAt > 10 * 60 * 1000) {
+    return res.status(400).json({ message: 'SSO state expired (10 min limit)' })
+  }
+
+  try {
+    const result = await handleSSOCallback(code, state, session.nonce)
+
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/api/auth',
+    })
+
+    res.json({
+      success: true,
+      data: {
+        token: result.accessToken,
+        employee: result.employee,
+      },
+    })
+  } catch (err) {
+    logger.error('SSO callback error:', err)
+    res.status(500).json({ message: err.message || 'SSO authentication failed' })
   }
 })
 

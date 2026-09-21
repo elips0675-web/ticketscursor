@@ -21,6 +21,9 @@ import {
   Inbox,
   CheckCircle2,
   XCircle,
+  Key,
+  Shield,
+  Globe,
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { ApiTokensSection, WebhooksSection } from './AdminIntegrations'
@@ -200,6 +203,8 @@ export default function AdminSettings() {
       <EmailTemplatesSection />
 
       <ImapSection />
+
+      <SSOSection />
 
       <ApiTokensSection />
 
@@ -615,6 +620,158 @@ function ImapSection() {
             />
           </div>
         ))}
+
+        <Button size="sm" onClick={save} disabled={saving} className="gap-1.5">
+          {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+          {t('common.save')}
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
+
+function SSOSection() {
+  const { t } = useTranslation()
+  const [values, setValues] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<'ok' | 'fail' | null>(null)
+  const [testMsg, setTestMsg] = useState('')
+
+  useEffect(() => {
+    api
+      .get('/admin/settings')
+      .then((data: Record<string, string>) => {
+        setValues({
+          SSO_ENABLED: data?.SSO_ENABLED || 'false',
+          SSO_PROVIDER: data?.SSO_PROVIDER || '',
+          SSO_ISSUER_URL: data?.SSO_ISSUER_URL || '',
+          SSO_CLIENT_ID: data?.SSO_CLIENT_ID || '',
+          SSO_CLIENT_SECRET: data?.SSO_CLIENT_SECRET || '',
+          SSO_REDIRECT_URI: data?.SSO_REDIRECT_URI || '',
+          SSO_DEFAULT_ROLE: data?.SSO_DEFAULT_ROLE || 'agent',
+        })
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      await api.put('/admin/settings', values)
+      toast.success(t('admin.saveSuccess'))
+    } catch {
+      /* handled */
+    }
+    setSaving(false)
+  }
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Key className="w-4 h-4 text-primary" />
+            {t('admin.ssoSettings')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-center py-4">
+            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const isEnabled = values.SSO_ENABLED === 'true'
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Key className="w-4 h-4 text-primary" />
+          {t('admin.ssoSettings')}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-xs text-muted-foreground">{t('admin.ssoSubtitle')}</p>
+
+        <div className="flex items-center gap-3">
+          <Label className="text-xs font-bold">{t('admin.ssoEnabled')}</Label>
+          <button
+            type="button"
+            onClick={() => setValues((prev) => ({ ...prev, SSO_ENABLED: isEnabled ? 'false' : 'true' }))}
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isEnabled ? 'bg-primary' : 'bg-muted'}`}
+          >
+            <span
+              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${isEnabled ? 'translate-x-4.5' : 'translate-x-0.5'}`}
+            />
+          </button>
+        </div>
+
+        {isEnabled && (
+          <>
+            <div>
+              <Label className="text-xs font-bold">{t('admin.ssoProvider')}</Label>
+              <Input
+                value={values.SSO_PROVIDER || ''}
+                onChange={(e) => setValues((prev) => ({ ...prev, SSO_PROVIDER: e.target.value }))}
+                className="mt-1"
+                placeholder="Keycloak / Entra ID / Okta / Custom"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-bold">{t('admin.ssoIssuerUrl')}</Label>
+              <Input
+                value={values.SSO_ISSUER_URL || ''}
+                onChange={(e) => setValues((prev) => ({ ...prev, SSO_ISSUER_URL: e.target.value }))}
+                className="mt-1"
+                placeholder="https://your-idp.com/.well-known/openid-configuration"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-bold">{t('admin.ssoClientId')}</Label>
+              <Input
+                value={values.SSO_CLIENT_ID || ''}
+                onChange={(e) => setValues((prev) => ({ ...prev, SSO_CLIENT_ID: e.target.value }))}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-bold">{t('admin.ssoClientSecret')}</Label>
+              <Input
+                type="password"
+                value={values.SSO_CLIENT_SECRET || ''}
+                onChange={(e) => setValues((prev) => ({ ...prev, SSO_CLIENT_SECRET: e.target.value }))}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-bold">{t('admin.ssoRedirectUri')}</Label>
+              <Input
+                value={values.SSO_REDIRECT_URI || ''}
+                onChange={(e) => setValues((prev) => ({ ...prev, SSO_REDIRECT_URI: e.target.value }))}
+                className="mt-1"
+                placeholder="http://localhost:5173/auth/sso/callback"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-bold">{t('admin.ssoDefaultRole')}</Label>
+              <select
+                value={values.SSO_DEFAULT_ROLE || 'agent'}
+                onChange={(e) => setValues((prev) => ({ ...prev, SSO_DEFAULT_ROLE: e.target.value }))}
+                className="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <option value="requester">{t('roles.requester')}</option>
+                <option value="agent">{t('roles.agent')}</option>
+                <option value="senior_agent">{t('roles.seniorAgent')}</option>
+              </select>
+            </div>
+          </>
+        )}
 
         <Button size="sm" onClick={save} disabled={saving} className="gap-1.5">
           {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}

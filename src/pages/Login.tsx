@@ -156,6 +156,9 @@ export default function Login() {
             >
               {ldapLoading ? t('auth.loggingIn') : 'LDAP / AD'}
             </Button>
+            <Button variant="outline" size="sm" className="w-full" onClick={() => navigate('/auth/sso')}>
+              {t('auth.ssoLogin')}
+            </Button>
           </div>
 
           <div className="text-center text-sm text-muted-foreground mt-4">

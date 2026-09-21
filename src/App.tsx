@@ -30,6 +30,7 @@ import NotificationsPage from '@/pages/NotificationsPage'
 import Login from '@/pages/Login'
 import ForgotPassword from '@/pages/ForgotPassword'
 import ResetPassword from '@/pages/ResetPassword'
+import { SSOLogin, SSOCallback } from '@/pages/SSO'
 import Register from '@/pages/Register'
 import NotFound from '@/pages/NotFound'
 
@@ -128,6 +129,9 @@ export default function App() {
                         </ProtectedRoute>
                       }
                     />
+
+                    <Route path="/auth/sso" element={<SSOLogin />} />
+                    <Route path="/auth/sso/callback" element={<SSOCallback />} />
 
                     <Route
                       path="/admin"

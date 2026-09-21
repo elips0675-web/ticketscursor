@@ -517,7 +517,28 @@
     "forceUnlock": "Принудительно разблокировать",
     "lockedByYou": "Вы заблокировали",
     "lockedByUser": "Заблокирован {{name}}",
-    "lockWarning": "Другие пользователи не смогут изменять тикет"
+    "lockWarning": "Другие пользователи не смогут изменять тикет",
+    "ssoSettings": "SSO (Single Sign-On)",
+    "ssoSubtitle": "Настройка входа через внешний Identity Provider (OIDC). Поддерживает Keycloak, Entra ID, Okta и другие.",
+    "ssoEnabled": "Включить SSO",
+    "ssoProvider": "Провайдер",
+    "ssoIssuerUrl": "Issuer URL (Discovery Endpoint)",
+    "ssoClientId": "Client ID",
+    "ssoClientSecret": "Client Secret",
+    "ssoRedirectUri": "Redirect URI",
+    "ssoDefaultRole": "Роль по умолчанию"
+  },
+  "sso": {
+    "loginTitle": "Вход через SSO",
+    "loginSubtitle": "Войдите с помощью корпоративной учётной записи",
+    "loginButton": "Войти через SSO",
+    "redirecting": "Перенаправление...",
+    "backToLogin": "Вернуться к обычному входу",
+    "processing": "Обработка авторизации...",
+    "errorTitle": "Ошибка SSO"
+  },
+  "auth": {
+    "ssoLogin": "SSO / Корпоративный вход"
   },
   "commandPalette": {
     "placeholder": "Введите команду или поищите...",
