@@ -63,7 +63,7 @@ describe('telegram.js', () => {
     initTelegram()
     const handler = mockBotInstance.on.mock.calls.find(c => c[0] === 'message')[1]
     handler({ text: '/start', chat: { id: 789 } })
-    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(789, 'Бот активирован. Вы будете получать уведомления о тикетах.')
+    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(789, '✅ Бот активирован. Вы будете получать уведомления о тикетах.\n\nКоманды:\n/link — привязать аккаунт\n/new — создать тикет\n/tickets — мои тикеты\n/reply <id> <текст> — ответить на тикет')
   })
 
   it('does not send notification when bot is null', async () => {

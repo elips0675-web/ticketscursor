@@ -9,16 +9,18 @@ vi.mock('react-i18next', () => ({
   }),
 }))
 
-beforeEach(() => { localStorage.clear() })
+beforeEach(() => {
+  localStorage.clear()
+})
 
 describe('ForgotPassword', () => {
   it('renders forgot password form', () => {
     render(<ForgotPassword />, { wrapper: AllTheProviders })
-    expect(screen.getByText('Forgot password')).toBeInTheDocument()
+    expect(screen.getByText('auth.forgotPasswordTitle')).toBeInTheDocument()
   })
 
   it('shows email input', () => {
     render(<ForgotPassword />, { wrapper: AllTheProviders })
-    expect(screen.getByText('Enter your email and we\'ll send you a reset link')).toBeInTheDocument()
+    expect(screen.getByText('auth.forgotPasswordDesc')).toBeInTheDocument()
   })
 })

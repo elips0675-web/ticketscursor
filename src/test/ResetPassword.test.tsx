@@ -9,16 +9,18 @@ vi.mock('react-i18next', () => ({
   }),
 }))
 
-beforeEach(() => { localStorage.clear() })
+beforeEach(() => {
+  localStorage.clear()
+})
 
 describe('ResetPassword', () => {
   it('shows invalid link message when no token', () => {
     render(<ResetPassword />, { wrapper: AllTheProviders })
-    expect(screen.getByText('Invalid link')).toBeInTheDocument()
+    expect(screen.getByText('auth.resetPasswordInvalidLink')).toBeInTheDocument()
   })
 
-  it('shows link expired message', () => {
+  it('shows link expired description', () => {
     render(<ResetPassword />, { wrapper: AllTheProviders })
-    expect(screen.getByText('This reset link is invalid or expired.')).toBeInTheDocument()
+    expect(screen.getByText('auth.resetPasswordInvalidLinkDesc')).toBeInTheDocument()
   })
 })

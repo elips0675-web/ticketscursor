@@ -3,6 +3,16 @@ import { execSync } from 'child_process'
 
 const dbName = 'servicedesk_test'
 
+async function addColumnIfNotExists(conn, table, column, definition) {
+  const [rows] = await conn.execute(
+    `SELECT COUNT(*) AS cnt FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+    [dbName, table, column]
+  )
+  if (rows[0].cnt === 0) {
+    await conn.execute(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`)
+  }
+}
+
 export async function setup() {
   const conn = await mysql.createConnection({ host: 'localhost', user: 'root', password: '', port: 3306 })
   await conn.execute(`DROP DATABASE IF EXISTS \`${dbName}\``)
@@ -13,12 +23,24 @@ export async function setup() {
   execSync('npx knex migrate:latest --knexfile knexfile.js', { stdio: 'pipe', env: knexEnv })
 
   const fix = await mysql.createConnection({ host: 'localhost', user: 'root', password: '', database: dbName })
+
+  // Fix column types that Knex creates incorrectly
   await fix.execute('ALTER TABLE employees MODIFY COLUMN role VARCHAR(20) NOT NULL')
   await fix.execute('ALTER TABLE tickets MODIFY COLUMN status VARCHAR(20) NOT NULL')
   await fix.execute('ALTER TABLE tickets MODIFY COLUMN priority VARCHAR(20) NOT NULL')
-  await fix.execute('ALTER TABLE tickets ADD COLUMN sla_paused_at DATETIME NULL')
-  await fix.execute('ALTER TABLE tickets ADD COLUMN sla_accumulated_ms INT NOT NULL DEFAULT 0')
-  await fix.execute('ALTER TABLE tickets ADD COLUMN email_message_id VARCHAR(500) DEFAULT NULL')
+
+  // Add all columns Prisma expects but Knex doesn't create
+  await addColumnIfNotExists(fix, 'employees', 'last_active', 'DATETIME NULL')
+  await addColumnIfNotExists(fix, 'tickets', 'sla_paused_at', 'DATETIME NULL')
+  await addColumnIfNotExists(fix, 'tickets', 'sla_accumulated_ms', 'INT NOT NULL DEFAULT 0')
+  await addColumnIfNotExists(fix, 'tickets', 'email_message_id', 'VARCHAR(500) DEFAULT NULL')
+  await addColumnIfNotExists(fix, 'tickets', 'locked_by', 'INT NULL')
+  await addColumnIfNotExists(fix, 'tickets', 'locked_at', 'DATETIME NULL')
+  await addColumnIfNotExists(fix, 'tickets', 'deleted_at', 'DATETIME NULL')
+  await addColumnIfNotExists(fix, 'tickets', 'escalated_at', 'DATETIME NULL')
+  await addColumnIfNotExists(fix, 'tickets', 'escalation_level', 'INT NOT NULL DEFAULT 0')
+
+  // Create custom field tables if not exist
   await fix.execute(`CREATE TABLE IF NOT EXISTS custom_field_definitions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -33,11 +55,12 @@ export async function setup() {
   await fix.execute(`CREATE TABLE IF NOT EXISTS custom_field_values (
     id INT AUTO_INCREMENT PRIMARY KEY,
     ticket_id INT NOT NULL,
-    definition_id INT NOT NULL,
+    field_id INT NOT NULL,
     value TEXT,
     created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
     updated_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3)
   )`)
+
   await fix.end()
 
   execSync('npx knex seed:run --knexfile knexfile.js', { stdio: 'pipe', env: knexEnv })

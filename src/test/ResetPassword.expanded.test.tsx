@@ -26,12 +26,12 @@ describe('ResetPassword', () => {
   it('shows invalid link message when no token', () => {
     mockGet.mockReturnValue('')
     render(<ResetPassword />, { wrapper: AllTheProviders })
-    expect(screen.getByText('Invalid link')).toBeInTheDocument()
+    expect(screen.getByText('auth.resetPasswordInvalidLink')).toBeInTheDocument()
   })
 
   it('shows set password form when token exists', () => {
     render(<ResetPassword />, { wrapper: AllTheProviders })
-    expect(screen.getByText('Set new password')).toBeInTheDocument()
+    expect(screen.getByText('auth.resetPasswordTitle')).toBeInTheDocument()
   })
 
   it('shows validation error when passwords mismatch', async () => {
@@ -40,8 +40,8 @@ describe('ResetPassword', () => {
     const pwInputs = screen.getAllByPlaceholderText(/password/i)
     await user.type(pwInputs[0], 'password123')
     await user.type(pwInputs[1], 'different')
-    await user.click(screen.getByText('Reset password'))
-    expect(screen.getByText("Passwords don't match")).toBeInTheDocument()
+    await user.click(screen.getByText('auth.resetPasswordBtn'))
+    expect(screen.getByText('auth.passwordsNoMatch')).toBeInTheDocument()
   })
 
   it('shows validation error when password too short', async () => {
@@ -50,8 +50,8 @@ describe('ResetPassword', () => {
     const pwInputs = screen.getAllByPlaceholderText(/password/i)
     await user.type(pwInputs[0], '123')
     await user.type(pwInputs[1], '123')
-    await user.click(screen.getByText('Reset password'))
-    expect(screen.getByText('Password must be at least 6 characters')).toBeInTheDocument()
+    await user.click(screen.getByText('auth.resetPasswordBtn'))
+    expect(screen.getByText('auth.passwordTooShort')).toBeInTheDocument()
   })
 
   it('submits password reset successfully', async () => {
@@ -65,9 +65,9 @@ describe('ResetPassword', () => {
     const pwInputs = screen.getAllByPlaceholderText(/password/i)
     await user.type(pwInputs[0], 'newpassword123')
     await user.type(pwInputs[1], 'newpassword123')
-    await user.click(screen.getByText('Reset password'))
+    await user.click(screen.getByText('auth.resetPasswordBtn'))
     await waitFor(() => {
-      expect(screen.getByText('Password reset')).toBeInTheDocument()
+      expect(screen.getByText('auth.resetPasswordSuccess')).toBeInTheDocument()
     })
   })
 
@@ -82,7 +82,7 @@ describe('ResetPassword', () => {
     const pwInputs = screen.getAllByPlaceholderText(/password/i)
     await user.type(pwInputs[0], 'newpassword123')
     await user.type(pwInputs[1], 'newpassword123')
-    await user.click(screen.getByText('Reset password'))
+    await user.click(screen.getByText('auth.resetPasswordBtn'))
     await waitFor(() => {
       expect(screen.getByText('Token expired')).toBeInTheDocument()
     })
@@ -90,7 +90,7 @@ describe('ResetPassword', () => {
 
   it('disables submit when fields are empty', () => {
     render(<ResetPassword />, { wrapper: AllTheProviders })
-    expect(screen.getByText('Reset password')).toBeDisabled()
+    expect(screen.getByText('auth.resetPasswordBtn')).toBeDisabled()
   })
 
   it('shows loading state while submitting', async () => {
@@ -100,7 +100,7 @@ describe('ResetPassword', () => {
     const pwInputs = screen.getAllByPlaceholderText(/password/i)
     await user.type(pwInputs[0], 'newpassword123')
     await user.type(pwInputs[1], 'newpassword123')
-    await user.click(screen.getByText('Reset password'))
-    expect(screen.getByText('Reset password')).toBeDisabled()
+    await user.click(screen.getByText('auth.resetPasswordBtn'))
+    expect(screen.getByText('auth.resetPasswordBtn')).toBeDisabled()
   })
 })

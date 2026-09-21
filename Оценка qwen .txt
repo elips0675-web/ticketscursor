@@ -1,123 +1,111 @@
-Комплексная оценка проекта Service Desk
-🎯 Общая оценка: 8.5 / 10
-Проект уровня production-ready enterprise с современным стеком, богатым функционалом и зрелой инженерной культурой. Ниже — детальный разбор.
-✅ Сильные стороны
-1. Стек — современный и актуальный (сент. 2026)
-Компонент
-Версия
-Оценка
-React
-19.1
-🟢 latest
-Vite
-8.0
-🟢 latest
-Tailwind
-4.1
-🟢 latest (v4 — значимый апгрейд)
-TypeScript
-5.9
-🟢 latest
-Express
-5.2
-🟢 latest (новая мажорка)
-Node.js
-≥22
-🟢 LTS
-Vitest
-4.1
-🟢 latest
-Zod
-4.4
-🟡 очень свежий, следить за breaking changes
-2. Функционал — enterprise-grade
-Real-time: Socket.IO + Redis adapter (горизонтальное масштабирование)
-Очереди: BullMQ для фоновых задач (SLA sweep, cleanup)
-Поиск: Meilisearch (не MySQL LIKE — правильно)
-Хранилище: AWS S3 + presigned URLs
-Мониторинг: Sentry (client + server)
-Notifications: web-push + Telegram bot + email (nodemailer)
-Auth: JWT + refresh tokens + LDAP + RBAC
-AI: AI-assistant с Wikipedia-источниками, feature flags (LaunchDarkly)
-SLA/ Kanban / Wiki / Audit log / i18n — полный набор
-3. Тестирование — зрелая пирамида
-Уровень
-Кол-во
-Качество
-Frontend unit/component
-397
-✅ реальные, не stub
-Server API + services
-436
-✅ интеграционные + юнит
-E2E (Playwright)
-36
-⚠️ smoke-уровень
-Load (k6 + Artillery)
-2 сценария
-⚠️ базовый
-Итого
-~870 тестов
-🟢 отлично
-4. Инфраструктура
-Docker (multi-stage, раздельные Dockerfile для api/client)
-CI/CD (GitHub Actions)
-Nginx reverse proxy
-Husky + lint-staged + Prettier + ESLint
-Миграции через Knex, seed-скрипты
-Скрипты backup/analytics/deploy
-⚠️ Архитектурные долги и риски
-🔴 Критично
-1. Двойной ORM: Prisma + Knex
-В server-package.json есть и prisma/@prisma/client, и knex/mysql2
-Это рассинхрон схем, двойная поддержка миграций, путаница в коде
-Рекомендация: выбрать один. Prisma — для типобезопасности, Knex — для сложных запросов. Идеально — мигрировать на Prisma полностью, Knex оставить только для миграций/seed.
-🟡 Средний приоритет
-2. E2E тесты — только smoke
-17 страниц проверены на check-console, но реальных user flows мало
-Рекомендация: добавить критические сценарии:
-Создание тикета → назначение → SLA → закрытие
-Real-time чат между двумя пользователями
-LDAP login flow
-3. Load tests — узкое покрытие
-Только tickets и chat
-Нет тестов для: auth, search (Meilisearch), file uploads, WebSocket на 1000+ соединений
-Рекомендация: добавить сценарий "100 одновременных создателей тикетов" и "WebSocket stress"
-4. Coverage 71% — можно выше
-Для enterprise-проекта целевой порог — 80%+ statements
-Рекомендация: дописать тесты для edge-cases в tickets.service, search.service, background-jobs
-🟢 Низкий приоритет, но важно
-5. Нет упоминаний:
-npm audit / Snyk в CI — security scanning
-API versioning (/api/v1/...) — при breaking changes будет больно
-Observability кроме Sentry (OpenTelemetry, Prometheus метрики)
-Rate limiting — есть express-rate-limit, но нет тестов на его поведение под нагрузкой
-Backup strategy — скрипт есть, но нет тестов на восстановление
-6. Свежие зависимости — риск breaking changes
-zod@4.4, express@5.2, vite@8 — все в первых мажорных/полумажорных версиях
-Рекомендация: закрепить lock-файл, добавить Renovate/Dependabot с группировкой обновлений
-📈 Сравнение с оценками других AI
-AI
-Оценка
-Вердикт
-Kimi
-7/10
-Занизил из-за ложного "200 stub-тестов"
-DeepSeek
-7/10
-Занизил, проблемы уже были исправлены
-Qwen
-8/10
-Ближе к истине, верно отметил Prisma+Knex
-Моя оценка
-8.5/10
-С учётом исправлений и зрелости инфраструктуры
-🎯 Топ-5 рекомендаций (roadmap)
-Унифицировать ORM — оставить Prisma как основной, Knex → только для миграций
-Поднять coverage до 80% — сфокусироваться на services/ и edge-cases
-Расширить E2E — 5-7 критических user flows с assertions, не только console-check
-Добавить security-scan в CI (npm audit --audit-level=high)
-Внедрить API versioning — пока проект молодой, это дёшево; потом — дорого
-💡 Итог
-Проект — крепкий середняк между "хорошим стартапом" и "enterprise-ready". Архитектура продуманная, стек современный, тесты осмысленные. Главная техническая проблема — двойной ORM, всё остальное — точечные улучшения.
-Если закрыть вопросы из раздела "архитектурные долги" — проект легко тянет на 9/10 и готов к масштабированию на тысячи пользователей.
+Основываясь на предоставленных файлах, я проведу комплексный аудит вашей инфраструктуры, тестирования и CI/CD.
+Общая оценка: 8 из 10 🌟
+Это очень зрелый, продуманный и "enterprise-ready" стек. Видно, что проект прошел стадию "hello world" и находится в активной фазе развития с упором на качество и автоматизацию. Однако в коде есть несколько критических багов, которые сломают CI/CD, а также архитектурные нюансы, которые стоит улучшить перед релизом в продакшен.
+Ниже подробный разбор.
+🟢 Сильные стороны (Что сделано отлично)
+Многоуровневое тестирование:
+Отличное разделение: Unit (Vitest с порогами покрытия), E2E (Playwright), Load (k6 + Artillery), API (кастомный Node.js скрипт).
+Глобальный setup для Playwright с сохранением storageState — это правильный паттерн, чтобы не логиниться в каждом тесте.
+Инфраструктура и Docker:
+Multi-stage Dockerfile — идеальное решение. Финальный образ будет весить копейки, так как в frontend попадает только dist, а в server только production зависимости.
+Nginx конфиг написан грамотно: правильно настроен try_files для SPA (React/Vue) и корректно проксируются WebSockets (/ws) с заголовками Upgrade.
+CI/CD (GitHub Actions):
+Параллельное выполнение джоб (lint, typecheck, test, bundle, playwright) экономит время.
+Использование services: mysql с healthcheck — правильный подход для интеграционных тестов.
+DevEx (Удобство для разработчиков):
+Наличие скриптов seed-dev.js, fix-prisma.js, test-analytics.js сильно ускоряет онбординг и отладку.
+Скрипт check-bundle-size.js предотвращает деградацию производительности фронтенда.
+🔴 Критические баги и Риски (Требуют немедленного исправления)
+1. Баг в CI/CD: cmd /c на Ubuntu
+В файле .github/workflows/ci.yml в джобе test:
+yaml
+
+1
+Проблема: Джоба запускается на ubuntu-latest. Команды cmd /c (Windows) там не существует, шаг упадет с ошибкой.
+Решение: Заменить на cd server && npx vitest run.
+2. Баг в скрипте проверки бандла (ES Modules)
+В scripts/check-bundle-size.js:
+javascript
+
+123
+Проблема: Файл использует import (ESM), но внутри использует require (CommonJS). В Node.js это вызовет ReferenceError: require is not defined in ES module scope.
+Решение: Заменить на import { gzipSync } from 'zlib' и использовать gzipSync(content).length.
+3. Опасная стратегия миграций БД
+В docker/entrypoint.sh и в CI используется:
+bash
+
+1
+Проблема: db push предназначен только для разработки. Он может удалять данные или менять схему напрямую. В продакшене это приведет к потере данных.
+Решение: В entrypoint.sh и CI использовать npx prisma migrate deploy.
+4. Поверхностные E2E тесты (Ложноположительные срабатывания)
+Посмотрите на e2e/tickets.spec.ts и другие:
+typescript
+
+1
+Проблема: Этот тест проверяет, что на странице есть хотя бы один заголовок. Если сервер упадет и фронтенд отрендерит страницу ошибки "500 Internal Server Error" (где тоже есть <h1>), тест пройдет успешно.
+Решение: Использовать data-testid или более строгие селекторы. Например: await expect(page.getByTestId('tickets-list')).toBeVisible().
+🟡 Зоны роста (Что можно улучшить)
+1. Нагрузочные тесты (Load Tests)
+В tickets.k6.js и chat.k6.js используется POST /api/auth/dev-login.
+Риск: Вы тестируете бизнес-логику, но обходите реальную систему авторизации (LDAP/БД). Если в реальном login будет узкое место (например, медленный хэш пароля), k6 этого не покажет.
+Совет: Добавьте сценарий, где 10% виртуальных пользователей используют "тяжелый" реальный логин, а 90% — переиспользуют токен.
+2. Безопасность и Nginx
+В docker-compose.yml Nginx слушает 443 порт, но в nginx/default.conf нет настройки SSL-сертификатов.
+Совет: Для продакшена добавьте генерацию Let's Encrypt (например, через certbot в отдельном контейнере или nginx-proxy-acme) или пробрасывайте уже готовые сертификаты через volumes.
+3. Оптимизация GitHub Actions
+В джобе playwright вы устанавливаете браузеры: npx playwright install --with-deps chromium. Это занимает 1-2 минуты.
+Совет: Используйте кэширование для Playwright и node_modules, чтобы ускорить CI.
+В джобе playwright сервер стартует фоном (node src/index.js &), но нет ожидания его готовности (healthcheck). Vite и Playwright могут запуститься раньше, чем БД и сервер поднимутся, что приведет к flaky-тестам. Добавьте sleep 5 или скрипт ожидания curl --retry.
+4. API E2E тесты
+scripts/test-e2e-api.js написан на чистом fetch. Это круто и быстро, но lacks of assertions library.
+Совет: Если тестов станет больше, рассмотрите использование vitest для API тестов или хотя бы добавьте простую обертку для красивых отчетов (например, console.table для summary).
+📋 Итоговый чек-лист (Action Plan)
+Исправить CI: Убрать cmd /c в .github/workflows/ci.yml.
+Исправить скрипт: Заменить require('zlib') на import в check-bundle-size.js.
+Безопасность БД: Заменить prisma db push на prisma migrate deploy в entrypoint.sh и CI.
+Надежность E2E: Добавить data-testid в React-компоненты и переписать селекторы в Playwright с h1, h2 на getByTestId.
+Стабильность CI: Добавить ожидание готовности сервера (wait-on или curl) перед запуском Playwright в GitHub Actions.
+SSL: Настроить HTTPS в Nginx для продакшен-деплоя.
+Резюме: У вас fantastic setup. Проект выглядит как коммерческий продукт уровня Middle+/Senior. Если исправить перечисленные баги (особенно в CI и Docker entrypoint), инфраструктура будет практически безупречной.
+
+
+В текущем виде в CI/CD (GitHub Actions) она упадет на 100%.
+Локально на компьютере разработчика (особенно если это Windows) всё может запускаться и даже проходить тесты. Но как только код попадает на сервер сборки (Ubuntu), пайплайн станет красным из-за двух гарантированных ошибок.
+Вот ровно 3 места, которые ломают работу прямо сейчас. Если их исправить (дело 2 минут), система станет полностью рабочей и надежной.
+🔧 Исправления "скопировал-вставил" (чтобы всё заработало)
+1. Сломает CI мгновенно (Ubuntu не понимает Windows-команды)
+Где: .github/workflows/ci.yml (строка ~45)
+Было:
+yaml
+
+1
+Сделать:
+yaml
+
+1
+2. Сломает проверку размера бандла (ошибка Node.js)
+Где: scripts/check-bundle-size.js (строка ~12)
+Файл начинается с import (это ES-модуль), но внутри используется require (это CommonJS). Node.js выдаст ReferenceError: require is not defined.
+Было:
+javascript
+
+123
+Сделать:
+javascript
+
+1234
+3. Убьет базу данных в продакшене (или при деплое)
+Где: docker/entrypoint.sh и .github/workflows/ci.yml
+prisma db push синхронизирует схему "в лоб", он может удалить таблицы или данные, если схема изменилась. Для CI и продакшена нужна безопасная команда.
+Было:
+bash
+
+1
+Сделать:
+bash
+
+1
+(Примечание: для этого в проекте должны быть созданы миграции через npx prisma migrate dev. Если их нет, оставьте db push только для локальной разработки, но в CI и entrypoint.sh это риск).
+Итог:
+Сейчас: Это "почти рабочая" конфигурация, которая спотыкается об опечатки и смешивание сред (Windows/Ubuntu, ESM/CommonJS).
+После правки этих 3 строк: Да, это отличная, полностью рабочая enterprise-инфраструктура, которую можно смело нести в прод.

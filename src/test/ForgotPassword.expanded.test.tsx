@@ -17,25 +17,25 @@ beforeEach(() => {
 describe('ForgotPassword', () => {
   it('renders forgot password form', () => {
     render(<ForgotPassword />, { wrapper: AllTheProviders })
-    expect(screen.getByText('Forgot password')).toBeInTheDocument()
+    expect(screen.getByText('auth.forgotPasswordTitle')).toBeInTheDocument()
   })
 
   it('shows email input', () => {
     render(<ForgotPassword />, { wrapper: AllTheProviders })
-    expect(screen.getByText("Enter your email and we'll send you a reset link")).toBeInTheDocument()
+    expect(screen.getByText('auth.forgotPasswordDesc')).toBeInTheDocument()
   })
 
   it('has disabled button when email is empty', () => {
     render(<ForgotPassword />, { wrapper: AllTheProviders })
-    expect(screen.getByText('Send reset link')).toBeDisabled()
+    expect(screen.getByText('auth.forgotPasswordSendBtn')).toBeDisabled()
   })
 
   it('enables button after typing email', async () => {
     const user = userEvent.setup()
     render(<ForgotPassword />, { wrapper: AllTheProviders })
-    const input = screen.getByPlaceholderText('Email')
+    const input = screen.getByPlaceholderText('auth.email')
     await user.type(input, 'test@example.com')
-    expect(screen.getByText('Send reset link')).toBeEnabled()
+    expect(screen.getByText('auth.forgotPasswordSendBtn')).toBeEnabled()
   })
 
   it('shows sent state after successful submit', async () => {
@@ -46,10 +46,10 @@ describe('ForgotPassword', () => {
     )
     const user = userEvent.setup()
     render(<ForgotPassword />, { wrapper: AllTheProviders })
-    await user.type(screen.getByPlaceholderText('Email'), 'test@example.com')
-    await user.click(screen.getByText('Send reset link'))
+    await user.type(screen.getByPlaceholderText('auth.email'), 'test@example.com')
+    await user.click(screen.getByText('auth.forgotPasswordSendBtn'))
     await waitFor(() => {
-      expect(screen.getByText('Check your email')).toBeInTheDocument()
+      expect(screen.getByText('auth.forgotPasswordEmailSent')).toBeInTheDocument()
     })
   })
 
@@ -57,8 +57,8 @@ describe('ForgotPassword', () => {
     server.use(http.post('http://localhost:4000/api/auth/forgot-password', () => new Promise(() => {})))
     const user = userEvent.setup()
     render(<ForgotPassword />, { wrapper: AllTheProviders })
-    await user.type(screen.getByPlaceholderText('Email'), 'test@example.com')
-    await user.click(screen.getByText('Send reset link'))
-    expect(screen.getByText('Send reset link')).toBeDisabled()
+    await user.type(screen.getByPlaceholderText('auth.email'), 'test@example.com')
+    await user.click(screen.getByText('auth.forgotPasswordSendBtn'))
+    expect(screen.getByText('auth.forgotPasswordSendBtn')).toBeDisabled()
   })
 })
