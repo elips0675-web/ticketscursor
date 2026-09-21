@@ -509,7 +509,15 @@
     "webhookUrl": "URL",
     "webhookSecret": "Secret",
     "webhookEvents": "События",
-    "webhooksEmpty": "Нет webhooks. Добавьте для интеграции с внешними системами."
+    "webhooksEmpty": "Нет webhooks. Добавьте для интеграции с внешними системами.",
+    "lockTicket": "Заблокировать",
+    "unlockTicket": "Разблокировать",
+    "lockedBy": "Заблокирован",
+    "lockExpired": "Блокировка истекла",
+    "forceUnlock": "Принудительно разблокировать",
+    "lockedByYou": "Вы заблокировали",
+    "lockedByUser": "Заблокирован {{name}}",
+    "lockWarning": "Другие пользователи не смогут изменять тикет"
   },
   "commandPalette": {
     "placeholder": "Введите команду или поищите...",

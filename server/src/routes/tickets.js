@@ -14,6 +14,7 @@ import { notifyTicketCreated, notifyStatusChanged, notifyPriorityChanged, notify
 import { createSurvey } from '../services/csat.service.js'
 import { sendCsatSurvey } from '../email.js'
 import { triggerWebhooks } from '../services/webhooks.service.js'
+import { acquireLock, releaseLock, forceRelease, getLockStatus } from '../services/collision.service.js'
 import { createTicketValidation, updateStatusValidation, updatePriorityValidation, assignTicketValidation, updateTagsValidation, bulkTicketValidation, addMessageValidation, addTimeValidation } from '../validate.js'
 import logger from '../logger.js'
 import { idempotent } from '../middleware/idempotency.js'
@@ -185,6 +186,10 @@ router.put('/:id/status', requireRole('admin', 'senior_agent'), updateStatusVali
   const ticketId = Number(req.params.id)
   const { status } = req.body
   try {
+    const lock = await getLockStatus(ticketId)
+    if (lock?.locked && lock.lockedBy.id !== req.user.userId && !hasRole(req.user.role, 'senior_agent')) {
+      return res.status(423).json({ success: false, message: `Ticket is locked by ${lock.lockedBy.name}` })
+    }
     const old = await updateTicketStatus(ticketId, status)
     if (!old) return res.status(404).json({ success: false, message: 'Ticket not found' })
     enqueueEvent('ticket:updated', null, { id: ticketId, status, updatedBy: req.user.userId })
@@ -233,6 +238,10 @@ router.put('/:id/priority', requireRole('admin', 'senior_agent'), updatePriority
   const ticketId = Number(req.params.id)
   const { priority } = req.body
   try {
+    const lock = await getLockStatus(ticketId)
+    if (lock?.locked && lock.lockedBy.id !== req.user.userId && !hasRole(req.user.role, 'senior_agent')) {
+      return res.status(423).json({ success: false, message: `Ticket is locked by ${lock.lockedBy.name}` })
+    }
     const result = await updateTicketPriority(ticketId, priority)
     if (!result) return res.status(404).json({ success: false, message: 'Ticket not found' })
     enqueueEvent('ticket:updated', null, { id: ticketId, priority, updatedBy: req.user.userId })
@@ -255,6 +264,10 @@ router.put('/:id/assign', requireRole('admin', 'senior_agent'), assignTicketVali
   const ticketId = Number(req.params.id)
   const { employeeId } = req.body
   try {
+    const lock = await getLockStatus(ticketId)
+    if (lock?.locked && lock.lockedBy.id !== req.user.userId && !hasRole(req.user.role, 'senior_agent')) {
+      return res.status(423).json({ success: false, message: `Ticket is locked by ${lock.lockedBy.name}` })
+    }
     const result = await updateTicketAssignee(ticketId, employeeId)
     if (!result) return res.status(404).json({ success: false, message: 'Ticket or employee not found' })
     enqueueEvent('ticket:updated', null, { id: ticketId, assignedTo: employeeId, updatedBy: req.user.userId })
@@ -527,6 +540,60 @@ router.post('/:id/time/timer/stop', requireRole('admin', 'senior_agent', 'agent'
   } catch (err) {
     logger.error('Stop timer error:', err)
     res.status(500).json({ success: false, message: 'Failed to stop timer' })
+  }
+})
+
+router.post('/:id/lock', async (req, res) => {
+  const ticketId = Number(req.params.id)
+  try {
+    const result = await acquireLock(ticketId, req.user.userId)
+    if (result.error === 'not_found') return res.status(404).json({ success: false, message: 'Ticket not found' })
+    if (result.error === 'locked') {
+      return res.status(423).json({ success: false, message: `Ticket is locked by ${result.lockedBy}`, lockedBy: result.lockedBy, lockedAt: result.lockedAt })
+    }
+    enqueueEvent('ticket:locked', null, { ticketId, userId: req.user.userId, userName: req.user.name })
+    res.json({ success: true })
+  } catch (err) {
+    logger.error('Lock ticket error:', err)
+    res.status(500).json({ success: false, message: 'Failed to lock ticket' })
+  }
+})
+
+router.delete('/:id/lock', async (req, res) => {
+  const ticketId = Number(req.params.id)
+  try {
+    const result = await releaseLock(ticketId, req.user.userId)
+    if (result.error === 'not_found') return res.status(404).json({ success: false, message: 'Ticket not found' })
+    if (result.error === 'not_owner') return res.status(403).json({ success: false, message: 'Cannot release lock of another user' })
+    enqueueEvent('ticket:unlocked', null, { ticketId, userId: req.user.userId })
+    res.json({ success: true })
+  } catch (err) {
+    logger.error('Unlock ticket error:', err)
+    res.status(500).json({ success: false, message: 'Failed to release lock' })
+  }
+})
+
+router.post('/:id/force-unlock', requireRole('admin', 'senior_agent'), async (req, res) => {
+  const ticketId = Number(req.params.id)
+  try {
+    await forceRelease(ticketId)
+    enqueueEvent('ticket:unlocked', null, { ticketId, userId: req.user.userId, forced: true })
+    res.json({ success: true })
+  } catch (err) {
+    logger.error('Force unlock error:', err)
+    res.status(500).json({ success: false, message: 'Failed to force unlock' })
+  }
+})
+
+router.get('/:id/lock', async (req, res) => {
+  const ticketId = Number(req.params.id)
+  try {
+    const status = await getLockStatus(ticketId)
+    if (!status) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    res.json({ success: true, data: status })
+  } catch (err) {
+    logger.error('Get lock status error:', err)
+    res.status(500).json({ success: false, message: 'Failed to get lock status' })
   }
 })
 

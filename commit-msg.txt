@@ -1,0 +1,1 @@
+feat(collision-avoidance): real-time ticket locking to prevent concurrent edits

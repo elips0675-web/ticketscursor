@@ -27,6 +27,7 @@ model employees {
 
   tickets_created_by  tickets[]          @relation("tickets_created_by")
   tickets_assigned_to tickets[]          @relation("tickets_assigned_to")
+  tickets_locked_by   tickets[]          @relation("tickets_locked_by")
   events              events[]
   polls               polls[]
   file_folders        file_folders[]
@@ -60,17 +61,22 @@ model tickets {
   sla_paused_at   DateTime?
   sla_accumulated_ms Int     @default(0)
   tags        Json?
+  locked_by   Int?
+  locked_at   DateTime?
   created_at  DateTime? @default(now())
   updated_at  DateTime? @default(now())
   deleted_at  DateTime?
 
   created_by_employee  employees?      @relation("tickets_created_by", fields: [created_by], references: [id])
   assigned_to_employee employees?      @relation("tickets_assigned_to", fields: [assigned_to], references: [id])
+  locked_by_employee   employees?      @relation("tickets_locked_by", fields: [locked_by], references: [id], onDelete: SetNull)
   ticket_messages      ticket_messages[]
   time_entries         time_entries[]
   ticket_timers        ticket_timers[]
   csat_surveys         csat_surveys[]
   custom_field_values  custom_field_values[]
+
+  @@index([locked_by])
 }
 
 model custom_field_definitions {

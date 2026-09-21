@@ -514,7 +514,15 @@
     "webhookUrl": "URL",
     "webhookSecret": "Secret",
     "webhookEvents": "Events",
-    "webhooksEmpty": "No webhooks. Add one to integrate with external systems."
+    "webhooksEmpty": "No webhooks. Add one to integrate with external systems.",
+    "lockTicket": "Lock",
+    "unlockTicket": "Unlock",
+    "lockedBy": "Locked",
+    "lockExpired": "Lock expired",
+    "forceUnlock": "Force unlock",
+    "lockedByYou": "You locked this",
+    "lockedByUser": "Locked by {{name}}",
+    "lockWarning": "Other users won't be able to modify this ticket"
   },
   "commandPalette": {
     "placeholder": "Type a command or search...",

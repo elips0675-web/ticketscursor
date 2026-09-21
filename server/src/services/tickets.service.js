@@ -144,6 +144,9 @@ export async function getTicketById(id, messagePage = 1, messageLimit = 50) {
         assigned_to_employee: {
           select: { name: true, email: true, avatar: true },
         },
+        locked_by_employee: {
+          select: { id: true, name: true },
+        },
         ticket_messages: {
           where: { deleted_at: null },
           orderBy: { created_at: 'asc' },
@@ -170,6 +173,8 @@ export async function getTicketById(id, messagePage = 1, messageLimit = 50) {
     value: cf.value,
   }))
   mapped.time_spent_minutes = timeAgg._sum.minutes || 0
+  mapped.locked_by = ticket.locked_by_employee ? { id: ticket.locked_by_employee.id, name: ticket.locked_by_employee.name } : null
+  mapped.locked_at = ticket.locked_at
   return mapped
 }
 
