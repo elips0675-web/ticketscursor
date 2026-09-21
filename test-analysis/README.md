@@ -72,8 +72,9 @@ React 19 + TypeScript 5 + Vite 8 + Tailwind v4 + shadcn/ui | Express 5 + Prisma 
 | Файл | Что содержит | Размер |
 |------|-------------|--------|
 | **e2e-tests.txt** | 16 Playwright-файлов — login, tickets, chats, admin, kanban, files, search, notifications, profile, calculator, ldap, sla, **user-flow** | 9 KB |
-| **server-tests.txt** | 30 серверных тестов (451 тест) — api, assistant, cache, middleware, time, sla, mentions, search, socket, notify, background, wiki, **files.route, push** | 16 KB |
+| **server-tests.txt** | 35 серверных тестов (523 теста) — api, assistant, cache, middleware, time, sla, mentions, search, socket, notify, background, wiki, files.route, push, email, csat, custom-fields, calendar, employees, news, polls, roleUtils, wiki, socket, metrics | 16 KB |
 | **frontend-tests.txt** | 52 фронтенд-тестов (411 тестов) — все реальные тесты с осмысленной логикой | 61 KB |
+| **test-inventory.json** | Машинно-читаемый инвентарь всех тестов (87 файлов, 934 теста) — для автоматической верификации | 12 KB |
 | **load-tests.txt** | k6 (chat, tickets) + Artillery конфиг | 3 KB |
 | **infra.txt** | CI/CD (ci.yml), Docker (Dockerfile, docker-compose.yml, entrypoint.sh), Nginx, скрипты | 14 KB |
 | **AGENTS.md** | Правила разработки, known pitfalls, roadmap этапов 1-30 | 29 KB |
@@ -108,7 +109,7 @@ React 19 + TypeScript 5 + Vite 8 + Tailwind v4 + shadcn/ui | Express 5 + Prisma 
 - ⚠️ Email ingestion — ~60% (service + route + background + tests; reply threading + UI в процессе)
 - ⚠️ Два ORM — Prisma chosen, миграция Knex → P2
 - ⚠️ Coverage 71% — целевой 80% (P2)
-- ⚠️ 86/570 тестов падают — vitest конфиг (нужен `vitest.config.ts` с `environment: 'jsdom'`)
+- ✅ Все 934 теста проходят (клиент 411 + сервер 523), 0 failures
 
 ---
 

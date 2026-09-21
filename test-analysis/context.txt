@@ -2,8 +2,9 @@
 
 ## Текущее состояние
 
-- **Фронт**: 485 тестов (102 suite)
-- **Сервер**: 523 тестов (35 suites)
+- **Фронт**: 52 файла / 71 suite / 411 тестов (все PASS)
+- **Сервер**: 35 файлов / 192 suite / 523 тестов (все PASS)
+- **Всего**: 87 файлов / 263 suite / 934 тестов, 0 failures
 - **E2E**: 17/17 страниц ALL OK (check-console.mjs) + 16 spec'ов (playwright)
 - **Prisma моделей**: 25 (включая event_outbox, custom_field_definitions, custom_field_values, api_tokens, webhooks, ticket_recurrences, automation_rules)
 - **API endpoints**: 90+ (Swagger + Health probes + k6 metrics + IMAP admin routes + API tokens + Webhooks + Lock + Recurrences + Rules + SSO)
@@ -12,7 +13,7 @@
 - **API**: порт 4000, Vite proxy 5173
 - **check-console**: пройден — 17 страниц без console.error, русский текст есть
 - **i18n**: исправлены дубли auth ключей, русификация ForgotPassword/ResetPassword/SSO (Этап 36)
-- **Известные баги**: 86/570 тестов падают из-за vitest конфига (нужен `vitest.config.ts` с `environment: 'jsdom'`)
+- **Известные баги**: нет (все 934 теста проходят)
 
 ## Ключевые файлы
 
@@ -38,7 +39,7 @@
 | middleware.js | - | ✅ JWT + API token auth |
 | socket.js | ~22% | ❌ (низкий приоритет — outbox паттерн снижает риски) |
 | background.js | ~50% | ✅ DLQ реализован (BullMQ + in-memory fallback) |
-| api.test.js | n/a | 145 интеграционных |
+| api.test.js | n/a | 179 интеграционных |
 
 ### Клиент (src/)
 | Файл | Coverage | Статус |
@@ -166,7 +167,7 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 **Тесты:**
 - Сервер: 5 тестов (GET defaults, PUT update, GET after update, non-admin rejection, invalid body)
 - Клиент: 3 теста (useFeature, useAllFeatures) + 2 теста (feature section rendering, toggle)
-- Фронт: 52 файла / 372 теста, сервер: 25 файлов / 352 теста
+- Фронт: 52 файла / 411 тестов, сервер: 35 файлов / 523 теста
 
 ## SLA Escalation — реализация (v1.5.0)
 
@@ -221,8 +222,8 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 - `TicketDetail.tsx` — карточка подключена после management-блока; `timeSpentMinutes` маппится в `mapTicketDetail`
 - MSW-хендлеры для всех time-эндпоинтов; тесты в `TicketDetail.test.tsx` (+4)
 
-**Тесты:** сервер 523/523, клиент 485/485 (102 файла); tsc чист, vite build OK, lint 0 ошибок
-- **Известный баг**: 86/570 тестов падают из-за vitest конфига (нужен `vitest.config.ts` с `environment: 'jsdom'`)
+**Тесты:** сервер 523/523, клиент 411/411 (52 файла); tsc чист, vite build OK, lint 0 ошибок
+- **Статус**: все 934 теста проходят, 0 failures
 
 ## Email Ingestion (IMAP) — реализация (v1.9.0+, ~60%)
 

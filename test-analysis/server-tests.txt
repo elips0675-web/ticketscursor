@@ -1,321 +1,48 @@
-===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest, 523 тестов) =====
+===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
-Запуск: cd server && cmd /c "npx vitest run 2>&1"
+Запуск: cd server && npx vitest run
+Реальный результат: 35 файла / 192 suite / 523 тестов (все PASS)
 
-===== FILE: server/src/api.test.js (179 тестов) =====
-Интеграционные тесты всех API-роутов. Используют Bun TestClient + AutoroutingRequest для_DEFINITE🗽 axios-совместимости.
-Импортирует app из '../app.js', LaunchDarkly mock из '../lib/feature-flags.js'.
+===== ФАЙЛЫ (35 шт, все реальные, сгенерировано скриптом) =====
 
---- Хелперы ---
-describe('GET /api/health') —.health-check, возвращает { success: true, data: { status: 'healthy' } }
-describe('Localization / i18n') —Accept-Language: ru → ru локаль, ru-RU тоже работает
+# Файлы | Тестов | Описание
+server/src/api.test.js | 159 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk)
+server/src/services/__tests__/tickets.service.sla.test.js | 40 | SLA: calculation, pause, business hours, breach detection, priority changes
+server/src/__tests__/middleware.test.js | 19 | Rate limiter, CORS, helmet, auth middleware, RBAC
+server/src/services/__tests__/custom-fields.service.test.js | 17 | Custom fields: CRUD, validation, types, required
+server/src/services/__tests__/notify.test.js | 17 | Notifications: create, in-app, email, telegram, push, dedup
+server/src/services/__tests__/assistant.service.test.js | 15 | AI assistant: RAG, wiki search, suggestions
+server/src/services/__tests__/csat.service.test.js | 15 | CSAT: survey creation, response recording, metrics
+server/src/services/__tests__/email-ingestion.service.test.js | 15 | IMAP: extractTicketReference, stripTicketReference, getImapConfig
+server/src/services/__tests__/time.service.test.js | 14 | Time tracking: start, stop, manual entry, total calculation
+server/src/__tests__/search-sync.expanded.test.js | 14 | Search: Meilisearch sync, FULLTEXT fallback, LIKE fallback
+server/src/services/__tests__/tickets.service.mentions.test.js | 13 | Mentions: @name parsing, notification creation, dedup
+server/src/services/__tests__/polls.service.test.js | 11 | Polls: CRUD, vote, close, expire
+server/src/__tests__/sla.test.js | 11 | SLA: timer logic, escalation levels, breach alerts
+server/src/__tests__/background.expanded.test.js | 10 | Background: BullMQ setup, queues, workers, schedulers, DLQ
+server/src/__tests__/push.test.js | 10 | Push: VAPID keys, subscribe, send, unsubscribe
+server/src/services/__tests__/chats.service.test.js | 9 | Chats: create, message, unread count, pagination
+server/src/__tests__/storage.test.js | 9 | Storage: file upload, delete, MIME validation
+server/src/__tests__/telegram.expanded.test.js | 9 | Telegram: init, /start, /link, /new, /tickets, notifications
+server/src/__tests__/clamav.expanded.test.js | 8 | ClamAV: scan, clean file, infected file, timeout
+server/src/services/__tests__/roleUtils.test.js | 7 | Role utils: hasRole, canManage, hierarchy checks
+server/src/services/__tests__/wiki.service.test.js | 7 | Wiki: CRUD, categories, search, soft delete
+server/src/__tests__/validateUpload.test.js | 7 | Upload validation: MIME, size, magic bytes
+server/src/services/__tests__/calendar.service.test.js | 6 | Calendar: CRUD, recurring events, conflicts
+server/src/services/__tests__/files.service.test.js | 6 | Files: upload, list, folder structure
+server/src/__tests__/cache.test.js | 6 | Cache: Redis fallback, invalidate, TTL
+server/src/__tests__/csat.route.test.js | 6 | CSAT routes: GET survey, POST response, metrics
+server/src/__tests__/socket.test.js | 6 | WebSocket: connection, rooms, events, rate limit
+server/src/middleware/__tests__/metrics.test.js | 5 | Metrics: request counting, response time
+server/src/services/__tests__/employees.service.test.js | 5 | Employees: list, search, role filter
+server/src/services/__tests__/news.service.test.js | 5 | News: CRUD, publish, archive
+server/src/__tests__/email.test.js | 5 | Email: SMTP transport, template rendering
+server/src/__tests__/files.route.test.js | 5 | Files routes: GET list, POST upload, DELETE
+server/src/__tests__/background.test.js | 4 | Background: setup, stop, warnAdminRedisMissing
+server/src/__tests__/clamav.test.js | 4 | ClamAV: basic scan, not installed fallback
+server/src/__tests__/search.test.js | 4 | Search: fulltext, LIKE fallback, empty query
 
---- Common (72) ---
-Auth routes (34):
-- GET /api/auth/me (2) —401 без токена, 200 с токеном (role, name)
-- POST /api/auth/login (6) —только email+password, 200/401/403, invalid-json, wrong-content-type
-- POST /api/auth/register (4) —400 name/email/password, 409 email exists, 200 register+token
-- POST /api/auth/dev-login (2) —200 dev-login, 401 без email в заголовке
-- POST /api/auth/logout (3) —204 logout, token in whitelist, ignores invalid token
-- GET /api/auth/whitelist (3) —200 с данными, empty array, 401 без токена
-- POST /api/auth/refresh (2) —400/401 refresh token, 200 rotate
-- POST /api/auth/forgot-password (3) —400 invalid email, 200 success, 200 invalid still returns success
-- GET /api/auth/verify-email/:token (3) —400 missing/invalid token, 200 verify
-- POST /api/auth/resend-verification (2) —400 missing email, 200 success
-
-Files (4):
-- GET /api/files (3) —200 файлы с пагинацией, фильтрация по parentId, пустой массив
-- POST /api/files (3) —400 invalid parentId, 201 файл создан, проверка папки
-
-Employees (15):
-- GET /api/employees (3) —200 список, filter by status, пустой массив
-- GET /api/employees/:id (2) —200 сотрудник, 404 не найден
-- POST /api/employees (7) —400 name/email/departmentId, 409 email exists, 200 Create
-- PUT /api/employees/:id (3) —400 invalid departmentId, 200 Update, 404 не найден
-
-Search (5):
-- GET /api/search (5) —200 пустой, file filter, employee filter, ticket filter, 400 invalid limit
-
-News (6):
-- GET /api/news (3) —200 список, filter by status, пустой массив
-- POST /api/news (3) —400 title, 200 Создать, 409 title exists
-
-Comments (5):
-- GET /api/comments/:ticketId (2) —200 комментарии с вложенностью, 400 invalid ticketId
-- POST /api/comments/:ticketId (3) —400 content, 200 комментарий создан, 404 не найден
-
-Notifications (5):
-- GET /api/notifications (3) —200 уведомления, UnreadOnly, пустой
-- PATCH /api/notifications/:id (2) —400 invalid ID, 200 отмечено прочитанным
-
-Profile (4):
-- GET /api/profile (2) —200 профиль, new fields
-- PUT /api/profile (2) —400 name, 200 updated
-
-Tags (7):
-- GET /api/tags (2) —200 теги, includeGlobal
-- POST /api/tags (4) —400 name, 200 тег создан, 409 duplicate, не-супер-админ без departmentId
-- DELETE /api/tags/:id (1) —200 удалён
-
---- Tickets (60) ---
-- GET /api/tickets (4) —200 список, status filter, sort, 400 invalid
-- GET /api/tickets/:id (2) —200 тикет, 404 не найден
-- POST /api/tickets (6) —400 title/priority/category, 200 тикет создан, ответ с номером-ссылкой, agent приоритет 1, без canAssign = auto-создатель назначен агентом
-- PUT /api/tickets/:id (4) —200 Обновить, 404, сfltByTitle, имя агента в аудите
-- PATCH /api/tickets/:id/status (3) —200 статус, InvalidStatus, 400 required
-- PATCH /api/tickets/:id/assign (2) —200 назначен, нужно departmentId
-- PATCH /api/tickets/:id/priority (2) —200 приоритет, 400 invalid priority
-- PATCH /api/tickets/:id/category (2) —200 категория, 400 required
-- PATCH /api/tickets/:id/tags (2) —200 теги set, 400 invalid tag
-- PATCH /api/tickets/:id/comment (4) —200 комментарий, 403 internal-only для не-agent, 400 empty
-- GET /api/tickets/:id/comments (2) —200 комментарии с тегами, 400 invalid
-- PATCH /api/tickets/:id/requester (3) —400 name/email, 200 contact, 404 ticket not found
-- GET /api/tickets/:id/audit (2) —200 аудит, 400 invalid
-- GET /api/tickets/:id/audit/csv (3) —200 CSV download, 400 invalid, пустой аудит
-- GET /api/tickets/:id/audit/pdf (3) —200 PDF bytes > 0, 400 invalid, пустой аудит
-
---- Chat (47) ---
-- GET /api/chats (4) —200 чаты, agentOnly, пустой массив, 400 invalid limit
-- POST /api/chats (5) —400 title/members, 200 чат создан, ответ member, 409 title exists, 400 invalid member id
-- POST /api/chats/group (3) —400 title, 200 группа, 409 title exists
-- GET /api/chats/:id (4) —200 чат, 404, 403 not member, 400 invalid id
-- PUT /api/chats/:id (2) —200 Обновить, 400 invalid title
-- DELETE /api/chats/:id (4) —200 удалён, 404 не найден, 403 не создатель, 400 invalid id
-- GET /api/chats/:id/messages (3) —200 сообщения, 403 не участник, 400 invalid
-- GET /api/chats/:id/participants (3) —200 участники, 403 не участник, 400 invalid id
-- GET /api/chats/:id/files (3) —200 файлы, 403 не участник, 400 invalid
-
---- Kanban (5) ---
-- GET /api/kanban (2) —200 доски, 400 invalid filter
-- GET /api/kanban/:id (2) —200 доска, 404 не найдена
-- GET /api/kanban/:id/stats (2) —200 статистика, 404 не найдена
-
---- Pricing (7) ---
-- GET /api/pricing (2) —200 Pricing[]
-- POST /api/pricing (3) —400 name/price, 200 Pricing, 409 name exists
-- POST /api/pricing/:id/clone (2) —200 Pricing (clone), 404
-
---- SLA (7) ---
-- GET /api/sla (2) —200 SLA[]
-- POST /api/sla (2) —400 name, 200 SLA
-- POST /api/sla/:id/clone (2) —200 SLA (clone), 404
-- DELETE /api/sla/:id (1) —404
-
---- User Settings (10) ---
-- GET /api/user/settings (3) —200 settings, 401, 400 invalid
-- PUT /api/user/settings (4) —200 updated, partial update, 401, 400 invalid
-- PUT /api/user/settings/notifications (3) —200 updated notifications, 401, 400 invalid
-
---- RBAC / Audit / Tags ---
-- GET /api/admin/tags (2) —200, 403
-- POST /api/employee-tags (2) —400 name, 200 тег создан
-- DELETE /api/employee-tags/:id (2) —400 invalid, 200 удалён
-
-===== FILE: server/src/services/__tests__/assistant.service.test.js (15 тестов) =====
-extractKeywords:
-1. Извлекает слова >= 4 символов (frequency → ticketId)
-2. Возвращает пустой массив для коротких слов
-3. Возвращает null для пустого текста
-4. Обрезает стоп-слова (это, который, для)
-5. Убирает дубликаты ключевых слов
-6. Выделяет email-адреса как отдельные ключевые слова
-7. Ограничивает 10 ключевыми словами
-
-searchWiki:
-1. Возвращает массив sources из БД
-2. Пустой массив для несуществующих тем
-
-buildAnswer:
-1. Генерирует ответ из Wikipedia-источников
-2. Возвращает заглушку при пустых sources
-
-generateLlmAnswer:
-1. Всегда возвращает строку (fallback)
-2. Не выбрасывает ошибок
-
-generateAssistantSuggestion:
-1. Возвращает { suggestion, sources, keywords }
-2. Возвращает sources из searchWiki
-3. Возвращает keywords из extractKeywords
-
-===== FILE: server/src/__tests__/cache.test.js (6 тестов) =====
-- Пропускает GET-запросы (без кэша)
-- Не кэширует POST-запросы
-- Добавляет заголовок X-Cache: HIT при попадании в кэш
-- Не добавляет X-Cache при промахе
-- Не кэширует ответы со статусом >= 400 (500)
-- Кэширует ответы со статусом 200
-
-===== FILE: server/src/__tests__/middleware.test.js (26 тестов) =====
-errorHandler (4):
-- Не скрывает ошибки в dev
-- Не скрывает ошибки в prod
-- Возвращает message + stack в dev
-- Возвращает message без stack в prod
-
-requestLogger (4):
-- Возвращает middleware функцию
-- Создаёт requestId на каждый запрос
-- Устанавливает заголовок X-Request-Id в ответе
-- Не создаёт дубликат X-Request-Id
-
-requirePermission (4):
-- Возвращает функцию middleware
-- Возвращает 403 при отсутствии разрешения
-- Не вызывает next если нет разрешения
-- Вызывает next если есть разрешение
-
-requireRole (6):
-- Возвращает функцию middleware
-- Возвращает 401 без пользователя
-- Возвращает 403 при неверной роли
-- Не блокирует authenticated с правильной ролью
-- Принимает multiple roles
-- Работает case-insensitive
-
-其他的:
-- rateLimiter: есть/нет LIMITER_STORE
-- mongoSanitize: sanitizes $-keys
-- bunSse: streamSSE/streamHivebab / streamLNB
-- validateObjectIds: валидирует invalid/valid IDs
-
-===== FILE: server/src/services/__tests__/time.service.test.js (12 тестов) =====
-- строковый вход → Date
-- Date вход → возврат
-- timestamp → Date
-- revert и invalid → выбрасывает ошибку
-- felizCumpleaños исключает текущую дату
-- Исключение даты работает
-- Исключение множества дат
-- Исключение дат в будущем
-- Исключение дней недели (5 weekly tests)
-
-===== FILE: server/src/services/__tests__/tickets.service.sla.test.js (11 тестов) =====
-getActiveSla:
-- Возвращает SLA по умолчанию для tickets/create
-- Возвращает SLA по умолчанию если ticketId не передан
-- Возвращает SLA по умолчанию если нет тикета
-- Возвращает SLA по умолчанию если нет category/priority
-- Возвращает первый SLA для отдельной category
-- Возвращает первый SLA для отдельной priority
-- Возвращает SLA с category.priority
-- Возвращает SLA для numeric priority
-- Возвращает null если нет SLA
-- Возвращает первый подходящий SLA если их несколько
-- Возвращает SLA по умолчанию если подходящих нет
-
-===== FILE: server/src/services/__tests__/search.service.test.js (27 тестов) =====
-- Поиск по ключевым словам (full text relevance)
-- Фильтрация по category
-- Фильтрация по status (multiple)
-- Фильтрация по priority
-- Фильтрация по tags
-- Фильтрация по assigneeId
-- Фильтрация по employeeId
-- Фильтрация по dateFrom/dateTo
-- Фильтрация по number
-- Limit 0 → unlimited (deprecated)
-- Limit 1 → first 1
-- Sort: title asc
-- Sort: title desc
-- Sort: number asc
-- Sort: number desc
-- Sort: createdAt asc
-- Sort: createdAt desc
-- Sort: status asc
-- Sort: status desc
-- Сортировка по умолчанию (updatedAt desc)
-- Пагинация (skip/limit)
-- Исключение тикетов с tag "archive" ( оба варианта: escape или noescape)
-- Включение archived тикетов (includeArchived = true)
-- Работает без user (unauthenticated)
-- withCount = false
-- withCount = true (содержит total)
-- operator = 'and'
-- operator = 'or' (OR-логика для tags)
-
-===== FILE: server/src/__tests__/socket.test.js (7 тестов) =====
-- handleConnection: user joined, user:online sent, disconnect sends user:left
-- addParticipant/removeParticipant
-- addToRoom/removeFromRoom: member set updated
-- handleDisconnection: cleanup
-
-===== FILE: server/src/lib/__tests__/notify.test.js (8 тестов) =====
-- notifyMention: работает с существующим тикетом
-- notifyMention: не падает при пустом ticketId
-- notifyMention: не падает при undefined user
-- notifyStatusChange: работает (создаёт уведомление)
-- notifyAssignment: создаёт два уведомления (assignee + requester)
-- notifyUser: создаёт уведомление
-- notifyNewTicket: создаёт уведомление
-- notifyComment: создаёт уведомление
-
-===== FILE: server/src/services/__tests__/background-jobs.test.js (18 тестов) =====
-- runSweep: unfinished tickets без SLA → rejected
-- runSweep: unfinished tickets с SLA и deadlineSoon → warning
-- runSweep: unfinished tickets с SLA и просроченным дедлайном → overdue
-- runSweep: deadline Soon = true
-- runSweep: rejected = true
-- runSweep: ticket с pendingDeadlineSent
-- runSweep: tickets without SLA = rejected
-- runSweep: ticket с expired deadline → warningSent
-- runSweep: ticket без expiresAt, нет warningSent
-- runSweep: ticket без status, warningSent
-- runSweep: ticket без SLA, deadlineSoon true
-- runSweep: canceled ticket → rejected
-- runSweep: ticket с status !== 'canceled', expired → warningSent
-- runSweep: failed SLA → error log
-- runSweep: empty tickets → no error
-- scheduleSweep: schedules sweep on interval
-- cleanupRefreshTokens: removes old refresh tokens
-
-===== FILE: server/src/services/__tests__/wiki.service.test.js (16 тестов) =====
-- Returns empty array for missing search
-- Returns empty array for short search
-- Search splits keywords correctly
-- searchWiki finds relevant entries
-- getArticleBySlug returns article
-- getArticleBySlug returns null for missing slug
-- getArticles returns all articles
-- getArticles filters by category
-- getArticles filters by authorId
-- getArticles searches by title
-- getArticles includes draft for admin
-- getArticles includes draft for super_admin
-- getArticles excludes draft for regular user
-- searchWiki returns snippet
-- searchWiki limits results
-- searchWiki searches in summary
-
-===== FILE: server/src/services/__tests__/tickets.service.mentions.test.js (5 тестов) =====
-- Extracts mentioned user names from text
-- Returns empty array for text without mentions
-- Handles multiple mentions
-- Returns empty array for empty text
-- Extracts single mention
-
-===== FILE: server/src/services/__tests__/prisma-transaction.service.test.js (5 тестов) =====
-- Возвращает данные из транзакции
-- Пробрасывает ошибки из callback'а
-- Пробрасывает ошибки Prisma
-- Возвращает undefined если callback возвращает undefined
-- Возвращает строку если callback возвращает строку
-
-===== FILE: server/src/services/__tests__/kanban.service.test.js (9 тестов) =====
-- listBoards returns boards
-- listBoards filters by status
-- listBoards sorts by name asc
-- listBoards sorts by name desc
-- listBoards returns all for super_admin
-- getBoard returns board with columns
-- getBoard returns null for missing board
-- validateSortOrder accepts valid input
-- validateSortOrder rejects invalid input
-
-===== FILE: server/src/services/__tests__/hr.service.test.js (6 тестов) =====
-- Returns employees list
-- Returns paginated employees
-- Filters by department
-- Filters by status
-- Returns single employee
-- Returns null for missing employee
+===== ИСТОЧНИК ДАННЫХ =====
+Количество тестов подсчитано скриптом (regex /\b(it|test)\s*\(/ в *.test.js).
+Фактический запуск: 35 файлов / 523 тестов / 0 failures.
+Данные актуальны на: 21.09.2026
