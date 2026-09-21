@@ -515,5 +515,13 @@
     "webhookSecret": "Secret",
     "webhookEvents": "Events",
     "webhooksEmpty": "No webhooks. Add one to integrate with external systems."
+  },
+  "commandPalette": {
+    "placeholder": "Type a command or search...",
+    "noResults": "Nothing found",
+    "navigation": "Navigation",
+    "actions": "Actions",
+    "createTicket": "Create ticket",
+    "globalSearch": "Global search"
   }
 }

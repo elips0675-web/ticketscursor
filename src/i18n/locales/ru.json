@@ -510,5 +510,13 @@
     "webhookSecret": "Secret",
     "webhookEvents": "События",
     "webhooksEmpty": "Нет webhooks. Добавьте для интеграции с внешними системами."
+  },
+  "commandPalette": {
+    "placeholder": "Введите команду или поищите...",
+    "noResults": "Ничего не найдено",
+    "navigation": "Навигация",
+    "actions": "Действия",
+    "createTicket": "Создать тикет",
+    "globalSearch": "Глобальный поиск"
   }
 }
