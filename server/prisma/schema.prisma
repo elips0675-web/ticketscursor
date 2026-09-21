@@ -30,6 +30,7 @@ model employees {
   tickets_locked_by   tickets[]          @relation("tickets_locked_by")
   recurrences_assigned ticket_recurrences[] @relation("RecurrenceAssignedTo")
   recurrences_created  ticket_recurrences[] @relation("RecurrenceCreatedBy")
+  rules_created        automation_rules[]   @relation("RuleCreatedBy")
   events              events[]
   polls               polls[]
   file_folders        file_folders[]
@@ -459,4 +460,24 @@ model webhooks {
 
   @@index([is_active])
   @@map("webhooks")
+}
+
+model automation_rules {
+  id             Int       @id @default(autoincrement())
+  name           String    @db.VarChar(255)
+  trigger_event  String    @db.VarChar(50)
+  conditions     Json
+  actions        Json
+  is_active      Boolean   @default(true)
+  last_run       DateTime?
+  run_count      Int       @default(0)
+  created_by     Int?
+  created_at     DateTime? @default(now())
+  updated_at     DateTime? @default(now())
+  deleted_at     DateTime?
+
+  creator_employee employees? @relation("RuleCreatedBy", fields: [created_by], references: [id], onDelete: SetNull)
+
+  @@index([is_active, trigger_event])
+  @@map("automation_rules")
 }

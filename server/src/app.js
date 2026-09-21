@@ -53,6 +53,7 @@ import csatRouter from './routes/csat.js'
 import apiTokensRouter from './routes/api-tokens.js'
 import webhooksRouter from './routes/webhooks.js'
 import recurrencesRouter from './routes/recurrences.js'
+import rulesRouter from './routes/rules.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './swagger.js'
 import path from 'path'
@@ -152,6 +153,7 @@ mount('/csat', csatRouter)
 mount('/api-tokens', apiTokensRouter, apiLimiter)
 mount('/webhooks', webhooksRouter, adminLimiter)
 mount('/recurrences', recurrencesRouter, adminLimiter)
+mount('/rules', rulesRouter, adminLimiter)
 
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customCss: '.swagger-ui .topbar { display: none }' }))
 

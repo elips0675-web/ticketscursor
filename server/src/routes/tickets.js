@@ -15,6 +15,7 @@ import { createSurvey } from '../services/csat.service.js'
 import { sendCsatSurvey } from '../email.js'
 import { triggerWebhooks } from '../services/webhooks.service.js'
 import { acquireLock, releaseLock, forceRelease, getLockStatus } from '../services/collision.service.js'
+import { evaluateRules } from '../services/rules.service.js'
 import { createTicketValidation, updateStatusValidation, updatePriorityValidation, assignTicketValidation, updateTagsValidation, bulkTicketValidation, addMessageValidation, addTimeValidation } from '../validate.js'
 import logger from '../logger.js'
 import { idempotent } from '../middleware/idempotency.js'
@@ -174,6 +175,7 @@ router.post('/', idempotent, createTicketValidation, async (req, res) => {
       logger.warn('Notification failed on ticket create:', notifyErr.message)
     }
     triggerWebhooks('ticket.created', { ticket }).catch(() => {})
+    evaluateRules('ticket.created', { ...ticket, userId: req.user.userId }).catch(() => {})
     invalidateCache('cache:/api/tickets*')
     res.status(201).json({ success: true, data: ticket })
   } catch (err) {
@@ -220,6 +222,7 @@ router.put('/:id/status', requireRole('admin', 'senior_agent'), updateStatusVali
       }
     }
     triggerWebhooks('ticket.updated', { id: ticketId, status, oldStatus: old.status }).catch(() => {})
+    evaluateRules('ticket.updated', { id: ticketId, status, oldStatus: old.status, userId: req.user.userId }).catch(() => {})
     if (status === 'closed') {
       triggerWebhooks('ticket.closed', { id: ticketId }).catch(() => {})
     }
@@ -252,6 +255,7 @@ router.put('/:id/priority', requireRole('admin', 'senior_agent'), updatePriority
       logger.warn('notifyPriorityChanged failed:', notifyErr.message)
     }
     triggerWebhooks('ticket.updated', { id: ticketId, priority, oldPriority: result.oldPriority }).catch(() => {})
+    evaluateRules('ticket.updated', { id: ticketId, priority, oldPriority: result.oldPriority, userId: req.user.userId }).catch(() => {})
     invalidateCache('cache:/api/tickets*')
     res.json({ success: true, data: { id: ticketId, priority } })
   } catch (err) {
@@ -278,6 +282,7 @@ router.put('/:id/assign', requireRole('admin', 'senior_agent'), assignTicketVali
       logger.warn('notifyTicketAssigned failed:', notifyErr.message)
     }
     triggerWebhooks('ticket.assigned', { id: ticketId, assignedTo: employeeId, assignedName: result.employeeName }).catch(() => {})
+    evaluateRules('ticket.assigned', { id: ticketId, assignedTo: employeeId, assignedName: result.employeeName, userId: req.user.userId }).catch(() => {})
     invalidateCache('cache:/api/tickets*')
     res.json({ success: true, data: { id: ticketId, assignedTo: employeeId || null } })
   } catch (err) {
@@ -396,6 +401,7 @@ router.post('/:id/messages', idempotent, addMessageValidation, async (req, res) 
       logger.warn('notifyTicketMessage failed:', notifyErr.message)
     }
     triggerWebhooks('ticket.message', { ticketId, message: { id: msg.id, sender_name: req.user.name, text } }).catch(() => {})
+    evaluateRules('ticket.message', { id: ticketId, ticketId, text, sender_name: req.user.name, userId: req.user.userId }).catch(() => {})
     res.status(201).json({ success: true, data: msg })
   } catch (err) {
     logger.error('Add message error:', err)

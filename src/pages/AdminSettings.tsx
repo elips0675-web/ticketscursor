@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { ApiTokensSection, WebhooksSection } from './AdminIntegrations'
+import { RulesSection } from './AdminRules'
 
 const FIELDS = [
   { key: 'COMPANY_NAME', label: 'companyName', type: 'text', section: 'companySettings' },
@@ -209,6 +210,8 @@ export default function AdminSettings() {
       <ApiTokensSection />
 
       <WebhooksSection />
+
+      <RulesSection />
 
       <Button onClick={save} disabled={saving} className="gap-2">
         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
