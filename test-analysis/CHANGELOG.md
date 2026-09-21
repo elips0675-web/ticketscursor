@@ -7,6 +7,47 @@
 
 ## [1.9.0] — 2026-09-19
 
+## [2.0.0] — 2026-09-21
+
+### 📧 Email Ingestion UI (доделка)
+
+- **Frontend** — `AdminSettings.tsx` ( ImapSection): IMAP настройки в админке — поля (host/port/user/pass), статус (настроен/не настроен, опрос активен/не активен), кнопка «Проверить соединение» (POST /api/admin/imap/test)
+- **i18n** — 15 ключей `admin.imap*` в ru.json/en.json
+
+### 🔗 Webhooks + API-токены (новая фича)
+
+- **Backend** — `api-tokens.service.js`: SHA-256 hash токенов, prefix `sd_`, валидация, list, delete с проверкой владельца
+- **Backend** — `webhooks.service.js`: 7 событий (ticket.created/updated/message/assigned/closed, employee.created/updated), HMAC SHA-256 подпись, retry 3 раза с exponential backoff
+- **Middleware** — `authenticateToken` в `middleware.js`: принимает JWT **или** API-токены (`sd_...`)
+- **Routes** — `api-tokens.js` (GET/POST/DELETE), `webhooks.js` (GET/POST/PUT/DELETE, admin-only)
+- **Триггеры** — `tickets.js`: webhook вызывается при ticket.created, ticket.updated (status/priority), ticket.assigned, ticket.message, ticket.closed
+- **Миграция** — `20260921_webhooks_api_tokens.sql`: таблицы `api_tokens` и `webhooks`
+- **Prisma** — модели `api_tokens` и `webhooks` в `schema.prisma`
+- **Frontend** — `AdminIntegrations.tsx`: компоненты `ApiTokensSection` и `WebhooksSection` с CRUD UI
+
+### ⌨️ Command Palette (Cmd+K)
+
+- **Frontend** — `CommandPalette.tsx`: диалог с поиском, навигация (11 страниц), быстрые действия (создать тикет, поиск), клавиши ↑↓ Enter Esc
+- **i18n** — 6 ключей `commandPalette.*` в ru.json/en.json
+- **App.tsx** — `CommandPalette` добавлен в корневой layout
+
+### 🧹 Обновления
+
+- **i18n** — добавлены `common.copy`, `common.disable`, `common.enable`
+- **App.tsx** — импорт и рендер `CommandPalette`
+- **AdminSettings.tsx** — импорт `ApiTokensSection`, `WebhooksSection`, `ImapSection`
+
+### Тесты и сборка
+
+- tsc: 0 ошибок ✅
+- vite build: OK ✅
+- ESLint: 0 ошибок (2 pre-existing warnings: react-hooks/set-state-in-effect)
+- Коммиты: `80dcff2` (IMAP UI), `d85011a` (webhooks+tokens), `c703618` (command palette), `2c0a77d` (cleanup)
+
+---
+
+## [1.9.0] — 2026-09-19
+
 ### 📧 Email Ingestion (IMAP) — этап 1
 
 - **Backend** — `email-ingestion.service.js`: IMAP polling (`imapflow`), парсинг писем (`mailparser`), создание тикетов из писем, поиск/создание employee по email, auto-reply «получили ваше письмо»

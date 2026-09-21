@@ -3,7 +3,7 @@
 ## Стек
 React 19 + TypeScript 5 + Vite 8 + Tailwind v4 + shadcn/ui | Express 5 + Prisma + MySQL 8 + Socket.IO + Redis
 
-## Текущее состояние (после исправлений 19.09.2026, этап 3)
+## Текущее состояние (после исправлений 21.09.2026, этап 4)
 
 | Метрика | Значение |
 |---------|----------|
@@ -16,23 +16,29 @@ React 19 + TypeScript 5 + Vite 8 + Tailwind v4 + shadcn/ui | Express 5 + Prisma 
 | Vite build | **OK** ✅ |
 | Coverage (клиент) | 71% stmts |
 | Coverage (сервер) | 71% stmts |
+| Prisma моделей | **22** (+api_tokens, webhooks) |
+| API endpoints | **70+** (+API tokens, Webhooks) |
 
-### Исправлено 19.09.2026 (этап 1 + этап 2)
+### Исправлено 21.09.2026 (этап 4 — важные фичи)
 
-**Этап 1 (μίξη):**
-- `vitest`, `supertest` перенесены в `devDependencies` (server/package.json)
-- `@tailwindcss/postcss` дубликат убран (остался в devDependencies)
-- Версия `package.json` синхронизирована с CHANGELOG (1.0.0 → 1.9.0)
-- Удалены временные файлы (temp-login.mjs, login-body.json)
+**Email Ingestion UI:**
+- `AdminSettings.tsx` — ImapSection: IMAP настройки в админке (host/port/user/pass), тест соединения, статус
+- i18n: 15 ключей `admin.imap*` в ru/en
 
-**Этап 2 (тесты + аудит):**
-- E2E тесты: создан `user-flow.spec.ts` (8 тестов: login, CRUD, navigation, search)
-- Kanban.test.tsx: 3→17 тестов (rendering, display, drag-drop, navigation, priority)
-- Files route тесты: `files.route.test.js` (+7 тестов)
-- Push route тесты: `push.test.js` (+8 тестов)
-- localStorage fix для vitest 4.x + Node 24 (`setup.ts`)
-- ORM: Prisma chosen (100+ vs Knex 3 call sites)
-- README/AGENTS.md/context.txt обновлены
+**Webhooks + API-токены:**
+- `api-tokens.service.js` — SHA-256 hash, prefix `sd_`, валидация, list, delete
+- `webhooks.service.js` — 7 событий, HMAC SHA-256, retry 3x
+- `middleware.js` — authenticateToken принимает JWT **или** API-токены
+- `api-tokens.js` — GET/POST/DELETE /api/api-tokens
+- `webhooks.js` — GET/POST/PUT/DELETE /api/webhooks (admin-only)
+- `tickets.js` — webhook триггеры (created/updated/closed/assigned/message)
+- `20260921_webhooks_api_tokens.sql` — миграция
+- `AdminIntegrations.tsx` — UI для API-токенов и webhooks
+
+**Command Palette (Cmd+K):**
+- `CommandPalette.tsx` — навигация (11 страниц), поиск, быстрые действия
+- `App.tsx` — добавлен CommandPalette в layout
+- i18n: 6 ключей `commandPalette.*` в ru/en
 
 ### Фактическая проверка AI-аудитов
 

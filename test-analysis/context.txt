@@ -1,30 +1,36 @@
-# Service Desk — технический долг (июль 2026)
+# Service Desk — технический долг (сентябрь 2026)
 
 ## Текущее состояние
 
 - **Фронт**: 485 тестов (102 suite)
 - **Сервер**: 523 тестов (35 suites)
 - **E2E**: 17/17 страниц ALL OK (check-console.mjs) + 8 user-flow (playwright)
-- **Prisma моделей**: 20 (включая event_outbox, custom_field_definitions, custom_field_values)
-- **API endpoints**: 65+ (Swagger + Health probes + k6 metrics + IMAP admin routes)
+- **Prisma моделей**: 22 (включая event_outbox, custom_field_definitions, custom_field_values, api_tokens, webhooks)
+- **API endpoints**: 70+ (Swagger + Health probes + k6 metrics + IMAP admin routes + API tokens + Webhooks)
 - **ESLint**: 0 errors, 10 warnings (pre-existing)
 - **MySQL**: запущен (Laragon), БД servicedesk
 - **API**: порт 4000, Vite proxy 5173
 - **check-console**: пройден — 17 страниц без console.error, русский текст есть
+- **Новые фичи**: IMAP UI, Webhooks (7 событий, HMAC), API-токены (sd_ prefix), Command Palette (Cmd+K)
 
 ## Ключевые файлы
 
 ### Сервер (server/src/)
 | Файл | Coverage | Статус |
 |------|----------|--------|
-| routes/tickets.js | ~75% | ✅ |
+| routes/tickets.js | ~75% | ✅ (+webhook триггеры) |
 | routes/auth.js | ~73% | ✅ |
 | routes/admin.js | ~79% | ✅ |
 | routes/notifications.js | ~73% | ✅ |
 | routes/push.js | ~66% | ✅ |
 | routes/search.js | 100% | ✅ |
 | routes/calendar.js | ~66% | ⚠️ |
+| routes/api-tokens.js | новый | ✅ CRUD API-токенов |
+| routes/webhooks.js | новый | ✅ CRUD webhooks (admin-only) |
 | services/tickets.service.js | ~91% | ✅ |
+| services/api-tokens.service.js | новый | ✅ SHA-256 hash, validate, list, delete |
+| services/webhooks.service.js | новый | ✅ 7 событий, HMAC, retry 3x |
+| middleware.js | - | ✅ JWT + API token auth |
 | socket.js | ~22% | ❌ (низкий приоритет — outbox паттерн снижает риски) |
 | background.js | ~50% | ✅ DLQ реализован (BullMQ + in-memory fallback) |
 | api.test.js | n/a | 145 интеграционных |
@@ -45,6 +51,9 @@
 | Kanban.tsx | 47% | ⚠️ |
 | ticket-context.tsx | 35% | ❌ |
 | Search.tsx | ~60% | ⚠️ |
+| AdminSettings.tsx | - | ✅ IMAP + Email Templates + Feature Flags |
+| AdminIntegrations.tsx | новый | ✅ API Tokens + Webhooks UI |
+| CommandPalette.tsx | новый | ✅ Cmd+K навигация + поиск |
 
 ## Проблемы (решённые)
 
