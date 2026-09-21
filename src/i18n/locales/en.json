@@ -34,6 +34,9 @@
     "confirmDelete": "Are you sure?",
     "all": "All",
     "error": "Error",
+    "copy": "Copy",
+    "disable": "Disable",
+    "enable": "Enable",
     "reset": "Reset"
   },
   "auth": {
@@ -497,6 +500,20 @@
     "imapTestBtn": "Test",
     "imapTesting": "Testing…",
     "imapTestOk": "Connection successful",
-    "imapTestFail": "Connection failed"
+    "imapTestFail": "Connection failed",
+    "apiTokens": "API Tokens",
+    "apiTokensSubtitle": "Personal access tokens for API authentication. Use header: Authorization: Bearer sd_...",
+    "apiTokenName": "Token name",
+    "apiTokenWarning": "Copy this token — it will not be shown again",
+    "apiTokenLastUsed": "Last used",
+    "apiTokensEmpty": "No tokens yet. Create a token to access the API.",
+    "webhooks": "Webhooks",
+    "webhooksSubtitle": "Outgoing HTTP notifications for events (tickets, employees). HMAC SHA-256 signature.",
+    "webhookCreate": "Add webhook",
+    "webhookName": "Name",
+    "webhookUrl": "URL",
+    "webhookSecret": "Secret",
+    "webhookEvents": "Events",
+    "webhooksEmpty": "No webhooks. Add one to integrate with external systems."
   }
 }

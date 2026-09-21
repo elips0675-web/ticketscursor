@@ -391,3 +391,41 @@ model event_outbox {
   @@index([sent_at, created_at])
   @@map("event_outbox")
 }
+
+model api_tokens {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  name       String    @db.VarChar(255)
+  token_hash String    @unique @db.VarChar(64)
+  prefix     String    @db.VarChar(12)
+  scopes     String?   @db.Text
+  expires_at DateTime?
+  last_used  DateTime?
+  created_at DateTime? @default(now())
+  deleted_at DateTime?
+
+  employee employees? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([token_hash])
+  @@map("api_tokens")
+}
+
+model webhooks {
+  id         Int       @id @default(autoincrement())
+  name       String    @db.VarChar(255)
+  url        String    @db.VarChar(500)
+  secret     String?   @db.VarChar(255)
+  events     String    @db.Text
+  is_active  Boolean   @default(true)
+  last_status Int?     @db.Int
+  last_error String?   @db.Text
+  last_triggered_at DateTime?
+  created_by Int?
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+  deleted_at DateTime?
+
+  @@index([is_active])
+  @@map("webhooks")
+}

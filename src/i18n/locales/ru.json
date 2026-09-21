@@ -33,7 +33,10 @@
     "confirm": "Подтвердить",
     "confirmDelete": "Вы уверены?",
     "all": "Все",
-    "error": "Ошибка"
+    "error": "Ошибка",
+    "copy": "Копировать",
+    "disable": "Выкл",
+    "enable": "Вкл"
   },
   "auth": {
     "login": "Войти",
@@ -492,6 +495,20 @@
     "imapTestBtn": "Проверить",
     "imapTesting": "Проверка…",
     "imapTestOk": "Подключение успешно",
-    "imapTestFail": "Ошибка подключения"
+    "imapTestFail": "Ошибка подключения",
+    "apiTokens": "API-токены",
+    "apiTokensSubtitle": "Персональные токены для доступа к API. Используйте заголовок Authorization: Bearer sd_...",
+    "apiTokenName": "Название токена",
+    "apiTokenWarning": "Скопируйте токен — он больше не будет показан",
+    "apiTokenLastUsed": "Последнее использование",
+    "apiTokensEmpty": "Нет токенов. Создайте токен для доступа к API.",
+    "webhooks": "Webhooks",
+    "webhooksSubtitle": "Исходящие HTTP-уведомления при событиях (тикеты, сотрудники). Подпись HMAC SHA-256.",
+    "webhookCreate": "Добавить webhook",
+    "webhookName": "Название",
+    "webhookUrl": "URL",
+    "webhookSecret": "Secret",
+    "webhookEvents": "События",
+    "webhooksEmpty": "Нет webhooks. Добавьте для интеграции с внешними системами."
   }
 }

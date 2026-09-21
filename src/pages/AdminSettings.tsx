@@ -23,6 +23,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import { api } from '@/lib/api'
+import { ApiTokensSection, WebhooksSection } from './AdminIntegrations'
 
 const FIELDS = [
   { key: 'COMPANY_NAME', label: 'companyName', type: 'text', section: 'companySettings' },
@@ -199,6 +200,10 @@ export default function AdminSettings() {
       <EmailTemplatesSection />
 
       <ImapSection />
+
+      <ApiTokensSection />
+
+      <WebhooksSection />
 
       <Button onClick={save} disabled={saving} className="gap-2">
         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

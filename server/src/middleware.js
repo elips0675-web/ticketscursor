@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken'
+import { validateToken } from './services/api-tokens.service.js'
 
 const JWT_SECRET = process.env.JWT_SECRET
 if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
@@ -10,9 +11,25 @@ export function authenticateToken(req, res, next) {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ message: 'No token provided' })
   }
+  const raw = authHeader.split(' ')[1]
+
+  if (raw.startsWith('sd_')) {
+    return validateToken(raw).then(user => {
+      if (!user) return res.status(401).json({ message: 'Invalid or expired API token' })
+      req.user = {
+        userId: user.userId,
+        role: user.role,
+        name: user.name,
+        email: user.email,
+        tokenId: user.tokenId,
+        scopes: user.scopes,
+      }
+      next()
+    }).catch(() => res.status(403).json({ message: 'Token validation failed' }))
+  }
+
   try {
-    const token = authHeader.split(' ')[1]
-    const decoded = jwt.verify(token, JWT_SECRET)
+    const decoded = jwt.verify(raw, JWT_SECRET)
     req.user = decoded
     next()
   } catch {
