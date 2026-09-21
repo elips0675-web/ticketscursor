@@ -1,1 +1,1 @@
-feat(rules-engine): JSON-based automation rules with triggers, conditions, actions
+feat(telegram-channel): two-way Telegram integration for ticket creation and replies
