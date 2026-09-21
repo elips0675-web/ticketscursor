@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { CommandPalette } from '@/components/CommandPalette'
+import { KeyboardShortcuts } from '@/components/KeyboardShortcuts'
 import { AppLayout } from '@/components/layout/app-layout'
 import { AdminLayout } from '@/components/layout/admin-layout'
 import { TicketProvider } from '@/context/ticket-context'
@@ -98,6 +99,7 @@ export default function App() {
                 >
                   <Toaster position="top-right" richColors closeButton />
                   <CommandPalette />
+                  <KeyboardShortcuts />
                   <SentryRoutes>
                     <Route
                       path="/login"

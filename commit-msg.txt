@@ -1,1 +1,1 @@
-feat(bulk-actions): bulk status and priority change for tickets
+feat(keyboard-shortcuts): cheatsheet modal with ? shortcut
