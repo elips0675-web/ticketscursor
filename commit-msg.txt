@@ -1,1 +1,1 @@
-feat(command-palette): Cmd+K command palette with navigation, search, actions
+chore: remove temp commit-msg.txt
