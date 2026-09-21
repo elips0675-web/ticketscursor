@@ -1,486 +1,142 @@
-# Что доделать — по результатам 3 AI-аудитов (фактическая проверка)
+# Что доделать — актуальный статус (21.09.2026)
 
-> Дата: 19.09.2026
+> Дата обновления: 21.09.2026
 > Источники: Kimi (6.5/10), Qwen (8.5/10), DeepSeek (7/10)
-> Фактическая проверка кодовой базы: 19.09.2026
+> Фактическая проверка кодовой базы: 21.09.2026
 
 ---
 
-## Оценки AI-анализаторов
+## Что сделано (сводка за все этапы)
 
-| AI | Оценка | Ключевая находка | Вердикт |
-|----|--------|------------------|---------|
-| **Kimi** | 6.5/10 | "~300 stub-тестов в src/hooks/\_\_tests\_\_/" | **Ошибся.** `src/hooks/` — пустая директория. Stub-тесты listed в `frontend-tests.txt` НЕ существуют в коде. Остальные замечания корректны |
-| **Qwen** | 8.5/10 | "Проеct крепкий, двойной ORM — главная проблема" | **Верно.** Лучшая оценка, корректный roadmap |
-| **DeepSeek** | 7/10 | (ссылка в предыдущем аудите, файл не сохранён) | Файл не найден |
-
-### Главная ошибка Kimi
-Kimi проанализировал `frontend-tests.txt` и увидел ~100 записей вида `src/hooks/__tests__/useTicketConviction2.test.ts`. Он принял их за реальные файлы и написал «~300 stub-тестов накручивают счётчик». **На деле:** `src/hooks/__tests__/` — несуществующая директория. Файлы listed в `frontend-tests.txt` — артефакт машинной генерации. Реальных stub-тестов **нет**. Все 411 тестов — настоящие.
-
----
-
-## Результаты проверки (что реально сломано, а что нет)
-
-| # | Проблема по аудиту | Факт | Статус |
-|---|-------------------|------|--------|
-| 1 | ~200 stub-тестов накручивают счётчик | **Нет.** `src/hooks/` — пустая директория. 411 тестов — все реальные. `frontend-tests.txt` содержит несуществующие пути | ✅ Не нужно |
-| 2 | CI: `cmd /c` на ubuntu-latest | **Уже исправлено.** CI использует `working-directory` | ✅ Не нужно |
-| 3 | Dockerfile: app = nginx | **Уже исправлено.** Multi-stage build | ✅ Не нужно |
-| 4 | E2E — smoke-тесты | **Было верно.** Теперь есть `user-flow.spec.ts` (8 тестов: login, CRUD, navigation, search) | ✅ Исправлено |
-| 5 | Два ORM: Prisma + Knex | **Да, верно.** Prisma — 100+ вызовов, Knex — 3 файла. Выбран Prisma | ⚠️ Решено (выбор), миграция — P2 |
-| 6 | Документационный дрейф | **Было верно.** Версии синхронизированы (1.9.0) | ✅ Исправлено |
-| 7 | vitest/supertest в dependencies | **Было верно.** Перенесены в devDependencies | ✅ Исправлено |
-| 8 | @tailwindcss/postcss дубликат | **Было верно.** Убран | ✅ Исправлено |
-| 9 | check-bundle-size.js require(zlib) | **Уже исправлено.** ESM import | ✅ Не нужно |
-| 10 | mongoSanitize в MySQL | **Уже удалён.** | ✅ Не нужно |
-| 11 | Coverage 71% — низковат | **Да, верно.** Целевой порог 80%+ | 🟡 P2 |
-| 12 | npm audit / Snyk отсутствует | **Да, верно.** | 🟢 P3 |
-| 13 | Нет API versioning | **Неверно.** `/api/v1/*` → `/api/` middleware уже есть в `app.js` | ✅ Не нужно |
-| 14 | zod + express-validator двойная валидация | **Да, верно.** Оба используются | 🟢 P3 (не критично) |
-| 15 | Prisma в dependencies (не devDependencies) | **Да, верно.** CLI — dev-инструмент | 🟢 P3 |
+| Этап | Что | Статус |
+|------|-----|--------|
+| 1-11 | Базовая настройка, навигация, push, RBAC, вёрстка, API, файлы | ✅ |
+| 12-15 | Swagger, E2E, Redis adapter, K8s, виртуализация | ✅ |
+| 16-17 | Полный аудит (200+ проверок), code review fixes | ✅ |
+| 19-25 | Coverage 71%, ESLint 0 warnings, read receipts, offline queue | ✅ |
+| 26-31 | Merge, DLQ, миграции, admin operations, email templates | ✅ |
+| 32 | Email Ingestion UI + Webhooks + API Tokens + Command Palette | ✅ |
+| 33 | Collision Avoidance + Recurring Tickets | ✅ |
+| 34 | SSO OIDC + Rules Engine + Telegram Channel | ✅ |
+| 35 | Public Portal + Public KB + Markdown Preview + Bulk Actions + Templates | ✅ |
+| 36 | i18n: исправлены дубли auth ключей, русификация ForgotPassword/ResetPassword/SSO | ✅ |
 
 ---
 
-## Что сделано 19.09.2026 (этап 2)
+## Текущие проблемы (нужно исправить)
 
-| # | Что сделали | Файл | Результат |
-|---|------------|------|-----------|
-| 1 | E2E тесты: `user-flow.spec.ts` (8 тестов) | `e2e/user-flow.spec.ts` | Login, CRUD ticket, navigation, search |
-| 2 | Kanban.test.tsx: 3→17 тестов | `src/test/Kanban.test.tsx` | Rendering, display, drag-drop, navigation, priority |
-| 3 | Files route тесты: +7 | `server/src/__tests__/files.route.test.js` | GET folders, POST folders, DELETE file |
-| 4 | Push route тесты: +8 | `server/src/__tests__/push.test.js` | VAPID, subscribe, unsubscribe, send, cleanup 410 |
-| 5 | localStorage fix для vitest 4.x | `src/test/setup.ts` | window + globalThis polyfill |
-| 6 | ORM: Prisma chosen (документировано) | `test-analysis/Что-доделать.txt` | 100+ vs 3 call sites |
-| 7 | README/AGENTS.md обновлены | `README.md`, `AGENTS.md` | 411/451 тестов |
+### 🔴 КРИТИЧНО
 
----
+| # | Проблема | Факт | Решение |
+|---|----------|------|---------|
+| 1 | **86/570 тестов падают** | Vitest по умолчанию использует `node` окружение → `localStorage is not defined`. Файл `vitest.client.config.ts` существует с `environment: 'jsdom'`, но не используется по умолчанию | Создать `vitest.config.ts` с `environment: 'jsdom'` + `globals: true`, либо добавить секцию `test` в `vite.config.ts` |
+| 2 | **Два ORM: Prisma + Knex** | Prisma — 100+ вызовов, Knex — 3 файла. Выбран Prisma, но Knex не удалён | P2: удалить Knex, оставить только Prisma |
+| 3 | **Server api.test.js падает** | POST /api/tickets → 500 вместо 201 (4 теста). Причина: миграции не применяются к тестовой БД или не хватает колонок | Проверить `vitest.global-setup.js`, убедиться что все колонки есть |
 
-## Что сделано 21.09.2026 (этап 3 — важные фичи)
+### 🟡 ВАЖНО
 
-| # | Что сделали | Файлы | Результат |
-|---|------------|-------|-----------|
-| 1 | **Email Ingestion UI** | `AdminSettings.tsx` (ImapSection), i18n (15 ключей RU/EN) | IMAP настройки в админке: поля (host/port/user/pass), тест соединения, статус (настроен/опрос) |
-| 2 | **Webhooks + API-токены** | `api-tokens.service.js`, `webhooks.service.js`, `api-tokens.js`, `webhooks.js`, `AdminIntegrations.tsx`, миграция, middleware, tickets.js триггеры | CRUD API-токенов (sd_ prefix, SHA-256 hash, scopes, expiry), CRUD webhooks (7 событий, HMAC SHA-256, retry 3x), middleware `authenticateToken` принимает JWT **или** API-токены, триггеры в tickets.js (created/updated/closed/assigned/message) |
-| 3 | **Command Palette (Cmd+K)** | `CommandPalette.tsx`, App.tsx | Навигация (11 страниц), поиск по ключевым словам, быстрые действия (создать тикет, поиск), клавиши ↑↓ Enter Esc, i18n RU/EN |
+| # | Что | Почему | Дней |
+|---|-----|--------|------|
+| 4 | **Canned responses 2.0** | Переменные `{{ticket.id}}`, `{{user.name}}` + горячие клавиши | 3-5 |
+| 5 | **Горячие клавиши** (C, /, J/K, Esc) | Ускорение работы агентов | 1-2 |
+| 6 | **Coverage → 80%** | Клиент 71%, сервер ~71%. Цель 80%+ | 5-7 |
+| 7 | **npm audit / Snyk** | Нет автоматической проверки зависимостей | 1 |
+| 8 | **zod + express-validator** | Двойная валидация — выбрать один | 1 |
+| 9 | **Prisma в dependencies** | CLI — dev-инструмент, должен быть в devDependencies | 0.5 |
 
-### Итого по этапу 3:
-- **13 новых файлов** (бэкенд + фронт + миграция + i18n)
-- **816+ строк кода**
-- tsc: 0 ошибок ✅
-- vite build: OK ✅
-- ESLint: 0 ошибок (2 pre-existing warnings: react-hooks/set-state-in-effect)
-- Коммиты: `80dcff2` (IMAP UI), `d85011a` (webhooks+tokens), `c703618` (command palette)
+### 🟢 ПОСЛЕ MVP (рост)
 
----
-
-## Что сделано 21.09.2026 (этап 4 — collision avoidance + recurring tickets)
-
-| # | Что сделали | Файлы | Результат |
-|---|------------|-------|-----------|
-| 1 | **Collision avoidance** | `collision.service.js`, `tickets.js` (lock/unlock endpoints + guards), `schema.prisma` (locked_by/locked_at), миграция `20260921_ticket_locking.sql` | Real-time блокировка тикетов: acquireLock с 30мин TTL, проверки при status/priority/assign, force-unlock для admin, WebSocket уведомления о блокировках |
-| 2 | **Recurring tickets** | `recurrence.service.js`, `recurrences.js` (CRUD), `schema.prisma` (ticket_recurrences), `background.js` (processRecurrences 60мин), миграция `20260921_ticket_recurrences.sql` | Cron-based автоматическое создание тикетов: валидация cron-выражений, admin UI, auto-создание с префиксом «[Плановое]» |
-
-### Итого по этапу 4:
-- **6 новых файлов** (бэкенд + миграции + schema)
-- **295+ строк кода**
-- tsc: 0 ошибок ✅
-- vite build: OK ✅
-- Коммиты: `915ffb9` (collision), `7ec60ad` (recurring)
+| # | Что | Сложность |
+|---|-----|-----------|
+| 10 | AI auto-triage (LLM → категория/приоритет/агент) | 2-3 недели |
+| 11 | Forms builder (конструктор форм) | 2 недели |
+| 12 | Gamification (бейджи, leaderboard, XP) | 1 неделя |
+| 13 | 2FA (TOTP — Google Authenticator) | 3-5 дней |
+| 14 | Marketplace / интеграции (Slack, GitHub, 1С/Битрикс24) | 3-5 дней each |
+| 15 | Multi-tenancy (организация → workspace → billing Stripe) | 4-6 недель |
+| 16 | Mobile app (React Native / Capacitor, offline mode) | 3-4 недели |
+| 17 | CMDB / Asset Management (компьютеры, ПО, лицензии) | 3-4 недели |
+| 18 | ITIL: Problem & Change Management | 4-6 недель |
+| 19 | On-call / дежурства (расписание, эскалация по цепочке) | 2-3 недели |
+| 20 | Voice / Video calls (Twilio/Vonage, Whisper транскрипция) | 3-4 недели |
+| 21 | Compliance (GDPR, Data residency, Audit log 2.0) | 3-4 недели |
+| 22 | Status page (публичная страница инцидентов) | 2-3 дня |
+| 23 | Advanced Analytics (конструктор дашбордов, экспорт Excel/PDF) | 2-3 недели |
+| 24 | Visual regression testing | 2-3 дня |
 
 ---
 
-## Что сделано 22.09.2026 (этап 5 — SSO, Rules Engine, Telegram Channel)
+## Gap-анализ vs аналоги (обновление)
 
-| # | Что сделали | Файлы | Результат |
-|---|------------|-------|-----------|
-| 1 | **SSO OIDC** | `auth/oidc.js`, `SSO.tsx`, `AdminSettings.tsx` (SSOSection), `Login.tsx` (SSO button), App.tsx routes, i18n (17 ключей) | Полная OIDC интеграция: discovery, authorization, callback, auto-provisioning, admin UI (issuer URL, client ID/secret, redirect URI, default role) |
-| 2 | **Rules Engine** | `rules.service.js`, `rules.js` (routes), `AdminRules.tsx`, `tickets.js` (evaluateRules), миграция, i18n (7 ключей) | JSON-правила: 5 триггеров, 5 действий, 9 операторов, and/or логика, UI конструктор conditions+actions |
-| 3 | **Telegram Channel** | `telegram.js` (расширен) | Two-way: /new (тикет), /reply (ответ), /tickets (список), /link (привязка), forwarding в активный тикет, auto-provisioning |
-
-### Итого по этапу 5:
-- **5 новых файлов** + 1 расширен (telegram.js)
-- **600+ строк кода**
-- tsc: 0 ошибок ✅
-- vite build: OK ✅
-- Коммиты: `2c3a970` (SSO), `d623bf7` (rules), `cf632b0` (telegram)
-
----
-
-## Оценка после исправлений (этап 5)
-
-| Метрика | После этапа 2 (19.09) | После этапа 3 (21.09) |
-|---------|----------------------|----------------------|
-| Email ingestion | ~60% (backend only) | **100%** (backend + UI) ✅ |
-| Webhooks + API tokens | ❌ не было | **✅ ГОТОВО** |
-| Command Palette | ❌ не было | **✅ ГОТОВО** |
-| Collision avoidance | ❌ не было | **✅ ГОТОВО** (lock/unlock + guards) |
-| Recurring tickets | ❌ не было | **✅ ГОТОВО** (cron + background) |
-| SSO OIDC | ❌ не было | **✅ ГОТОВО** (Keycloak/Entra ID/Okta) |
-| Rules Engine | ❌ не было | **✅ ГОТОВО** (JSON-правила + UI) |
-| Telegram Channel | ❌ не было | **✅ ГОТОВО** (two-way: /new, /reply, /tickets) |
-| tsc | 0 errors | 0 errors ✅ |
-| Vite build | OK | OK ✅ |
-| ESLint | 0 errors | 0 errors ✅ |
-
----
-
-## Что осталось доработать — по важности
-
-> Объединены все gap-анализы (vs Zendesk/Jira/Freshdesk/Zammad/GLPI/osTicket/Linear/HelpScout/YouTrack)
-> Coverage: ~54% от зрелого helpdesk. Цель: 70%+ к MVP.
-
----
-
-### 🔴 КРИТИЧНО — без этого не продать (2-4 недели)
-
-> Эти фичи есть У ВСЕХ аналогов. Без них helpdesk отклоняют в пользу покупного.
-
-| # | Задача | Дней | Почему критично |
-|---|--------|------|-----------------|
-| 1 | **SLA pause / business hours** | 3-5 | SLA-метрики врут без пауз. «Ожидает ответа клиента» → таймер стоит. Дедлайны только в рабочие часы | ✅ **ГОТОВО** |
-| 2 | **CSAT-опросы** | 5-7 | Email после закрытия → оценка 1-5 → метрика в дашборде. Без этого enterprise не продаётся | ✅ **ГОТОВО** |
-| 3 | **Custom fields (конструктор)** | 10 | Админ создаёт поля: текст, число, дата, select. Привязка к категориям. Без этого не продать enterprise | ✅ **ГОТОВО** |
-| 4 | **Email ingestion (IMAP)** | 10-15 | Письма на support@ → тикеты. Ответы → комментарии. **Все аналоги это имеют** | ✅ **ГОТОВО** (service + route + background + tests + UI в админке: настройки, тест соединения, статус) |
-| 5 | **SSO: OIDC/SAML** | 10-15 | Keycloak/Entra ID. LDAP есть, но корпорации требуют SAML | ✅ **ГОТОВО** (OIDC через openid-client) |
-
-**Итого: 7 задач, ~35-50 дней. Результат: автоматизация, omnichannel, self-service.**
-**Выполнено: SLA pause/business hours + CSAT + Custom fields + Email ingestion + Webhooks + API-токены + Command Palette + Collision avoidance + Recurring tickets + SSO OIDC + Rules Engine + Telegram Channel. Осталось: публичный портал, Public KB.**
-
----
-
-### 🟠 ВАЖНО — сильно повышает ценность (3-5 недель)
-
-> Эти фичи выделяют среди конкурентов и автоматизируют рутину.
-
-| # | Задача | Дней | Что даёт |
-|---|--------|------|----------|
-| 6 | **Rules Engine (базовый)** | 10-15 | JSON-правила: «ЕСЛИ статус=open И прошло>24ч → назначить manager». BullMQ | ✅ **ГОТОВО** |
-| 7 | **Telegram как канал** | 5-7 | Сообщения бота → тикет, ответ агента → обратно в чат | ✅ **ГОТОВО** |
-| 8 | **Публичный портал самообслуживания** | 7-10 | Клиент без учётки видит тикеты, создаёт заявки |
-| 9 | **Public KB (Knowledge Base 2.0)** | 5-7 | Wiki с SEO, «Похожие статьи» (AI), голосование «полезно/нет» |
-| 10 | **Collision avoidance** | 2-3 | Блокировка тикета при редактировании — нет дублей | ✅ **ГОТОВО** |
-| 11 | **Webhooks + API-токены** | 5-7 | Исходящие уведомления, персональные токены для интеграций | ✅ **ГОТОВО** |
-| 12 | **Повторяющиеся тикеты / плановое ТО** | 3-5 | BullMQ repeatable jobs → регламентные заявки | ✅ **ГОТОВО** |
-
-**Итого: 7 задач, ~35-50 дней. Результат: автоматизация, omnichannel, self-service.**
-
----
-
-### 🟡 ПОЛЕЗНО — UX и productivity (1-2 недели)
-
-> Быстрые победы: максимальный эффект за минимальное время.
-
-| # | Задача | Дней | Что даёт |
-|---|--------|------|----------|
-| 13 | **Canned responses 2.0** | 3-5 | Переменные `{{ticket.id}}`, `{{user.name}}` + горячие клавиши |
-| 14 | **Горячие клавиши** | 1-2 | C (создать), / (поиск), J/K (навигация), Esc (закрыть) |
-| 15 | **Command palette (Cmd+K)** | 1-2 | Быстрый доступ ко всему (как в Linear) | ✅ **ГОТОВО** |
-| 16 | **Dark mode** | 0.5 | Tailwind v4 CSS variables, toggle в settings |
-| 17 | **Markdown preview** | 1 | В комментариях в реальном времени |
-| 18 | **Ticket templates** | 1-2 | Шаблоны для частых типов обращений |
-| 19 | **Bulk actions 2.0** | 2-3 | Выделить 10 тикетов → массово сменить статус/агента |
-| 20 | **Keyboard shortcuts cheatsheet** | 0.5 | Модалка `?` со списком |
-| 21 | **Расширенная аналитика** | 5-7 | First Response Time, Resolution Time, планировщик отчётов |
-
-**Итого: 9 задач, ~12-20 дней. Результат: UX как у Linear/Zendesk.**
-
----
-
-### 🟢 ПОСЛЕ MVP — рост и дифференциация
-
-> Фичи, которые делают продукт уникальным или открывают новые рынки.
-
-| # | Задача | Сложность | Что даёт |
-|---|--------|-----------|----------|
-| 22 | **AI auto-triage** | 2-3 недели | LLM → категория/приоритет/агент при создании тикета |
-| 23 | **Forms builder** | 2 недели | Конструктор форм, условная логика, публичные ссылки |
-| 24 | **Gamification** | 1 неделя | Бейджи, leaderboard, XP |
-| 25 | **2FA** | 3-5 дней | TOTP (Google Authenticator) |
-| 26 | **Marketplace / Интеграции** | 3-5 дней each | Slack, GitHub, 1С/Битрикс24, Google Calendar |
-| 27 | **Multi-tenancy** | 4-6 недель | Организация → workspace → изоляция. Billing (Stripe) |
-| 28 | **Advanced Analytics** | 2-3 недели | Конструктор дашбордов, экспорт в Excel/PDF |
-| 29 | **Mobile app** | 3-4 недели | React Native / Capacitor. Offline mode |
-| 30 | **CMDB / Asset Management** | 3-4 недели | Учёт компьютеров, ПО, лицензий |
-| 31 | **ITIL: Problem & Change** | 4-6 недель | Связанные инциденты → проблема. CAB |
-| 32 | **On-call / дежурства** | 2-3 недели | Расписание дежурных, эскалация по цепочке |
-| 33 | **Voice / Video calls** | 3-4 недели | Twilio/Vonage, Whisper транскрипция |
-| 34 | **Compliance** | 3-4 недели | GDPR, Data residency, Audit log 2.0 |
-| 35 | **Status page** | 2-3 дня | Публичная страница инцидентов |
-
----
-
-### Сводная таблица по важности
-
-| Приоритет | Кол-во | Дней | Coverage после | Что даёт |
-|-----------|--------|------|----------------|----------|
-| 🔴 Критично | 5 → **1 осталось** | 30-45 → **~10** | 54% → 70% | Enterprise-ready, метрики, SLA |
-| 🟠 Важно | 7 → **2 осталось** | 35-50 → **~15** | 70% → 80% | Автоматизация, omnichannel |
-| 🟡 Полезно | 9 → **8 осталось** | 12-20 → **~18** | 80% → 85% | UX, productivity |
-| 🟢 После MVP | 14 | — | 85%+ | Рост, дифференциация |
-| **Итого** | **35 → 21** | **~80-115 → ~60** | **54% → 85%** | |
-
----
-
-### Порядок выполнения (рекомендация)
-
-```
-Неделя 1-2:   🔴 SLA pause + CSAT (самые быстрые из критичных)
-Неделя 3-4:   🔴 Custom fields
-Неделя 5-7:   🔴 Email ingestion
-Неделя 8-9:   🔴 SSO/SAML
-Неделя 10-11: 🟡 Canned 2.0 + hotkeys + dark mode (переключение)
-Неделя 12-14: 🟠 Rules Engine
-Неделя 15-16: 🟠 Telegram + Self-service portal
-Неделя 17+:   🟢 AI triage, Forms, Gamification...
-```
-
-> **Критичные фичи (🔴) делаем первыми.** Быстрые победы (🟡) — параллельно, для морали. Важные (🟠) — после критичных. Рост (🟢) — после MVP.
-
----
-
-## Gap-анализ vs аналоги (Zendesk, Jira SM, Zammad, GLPI, Freshdesk, osTicket)
-
-> Сравнение по принципу: развивать тикетное ядро, а не переростки (видео/SIP/E2E-шифрование — пропускаем).
-
-### Что уже реализовано (наше ядро)
+### Что реализовано (ядро + продвинутое)
 
 | Функция | Статус |
 |---------|--------|
-| Тикеты (CRUD, статусы, приоритеты, теги, кастомные поля) | ✅ |
-| SLA (таймеры, дедлайны, эскалация) | ✅ |
-| RBAC (6 ролей, permission matrix) | ✅ |
-| Чаты (real-time, WebSocket, read receipts, реакции) | ✅ |
-| Wiki / База знаний | ✅ |
+| Тикеты (CRUD, статусы, приоритеты, теги, кастомные поля, шаблоны) | ✅ |
+| SLA (таймеры, дедлайны, эскалация, пауза, бизнес-часы) | ✅ |
+| RBAC (5 ролей, permission matrix, ProtectedRoute) | ✅ |
+| Чаты (real-time, WebSocket, read receipts, offline queue) | ✅ |
+| Wiki / База знаний + Public KB | ✅ |
 | Календарь + события | ✅ |
 | Push-уведомления (VAPID) | ✅ |
-| Telegram-бот (базовый) | ✅ |
-| ИИ-ассистент (RAG по Wiki) | ✅ |
-| Time tracking | ✅ |
-| Canned responses | ✅ |
-| Bulk actions | ✅ |
-| Mentions (@) | ✅ |
+| Telegram-бот (two-way: /new, /reply, /tickets, /link) | ✅ |
+| ИИ-ассистент (RAG по Wiki, OpenAI) | ✅ |
+| Time tracking (таймер + ручной ввод) | ✅ |
+| Canned responses (базовые) | ✅ |
+| Bulk actions (статус/приоритет/назначение) | ✅ |
 | Feature flags | ✅ |
-| PWA | ✅ |
+| PWA (injectManifest, push, install prompt) | ✅ |
 | Экспорт (CSV, PDF) | ✅ |
-| LDAP-аутентификация | ✅ |
+| LDAP + SSO (OIDC — Keycloak/Entra ID/Okta) | ✅ |
 | Swagger API docs | ✅ |
-| Audit log | ✅ |
-| Админ-дашборд (метрики, аналитика) | ✅ |
+| Audit log + CSV экспорт | ✅ |
+| Collision avoidance (блокировка тикетов) | ✅ |
+| Recurring tickets (cron-based плановое ТО) | ✅ |
+| Webhooks (7 событий, HMAC SHA-256) | ✅ |
+| API tokens (sd_ prefix, SHA-256) | ✅ |
+| Command palette (Cmd+K) | ✅ |
+| Rules Engine (JSON-правила, 5 триггеров, 5 действий) | ✅ |
+| Public Portal (без авторизации) | ✅ |
+| Markdown preview (в комментариях) | ✅ |
+| Ticket templates (автозаполнение) | ✅ |
+| i18n (RU/EN, 600+ ключей) | ✅ |
+| Email ingestion (IMAP — backend + UI) | ✅ |
+| CSAT (опросы после закрытия) | ✅ |
+
+### Чего НЕТ (vs конкуренты)
+
+| Фича | Zendesk | Jira SM | Freshdesk | **У нас** |
+|-------|---------|---------|-----------|-----------|
+| Canned 2.0 (переменные) | ✅ | ✅ | ✅ | ❌ |
+| Горячие клавиши | ✅ | ✅ | ❌ | ❌ (cheatsheet есть) |
+| 2FA | ✅ | ✅ | ✅ | ❌ |
+| Marketplace | ✅ | ✅ | ✅ | ❌ |
+| Multi-tenancy | ✅ | ❌ | ✅ | ❌ |
+| AI auto-triage | ✅ | ✅ | ✅ | ⚠️ (ассистент есть) |
+| Voice calls | ✅ | ❌ | ✅ | ❌ |
+| Gamification | ❌ | ❌ | ✅ | ❌ |
 
 ---
 
-### P0 — Без этого helpdesk не «взрослый» (есть у всех аналогов)
+## Coverage (текущее)
 
-| Фича | Что это | Аналоги | Сложность | Наш статус |
-|-------|---------|---------|-----------|------------|
-| **Email ingestion (IMAP pipe)** | Письма на support@ → автоматически тикеты; ответы из письма → комментарии | Zendesk, osTicket, Zammad, GLPI — все | Высокая | ⚠️ ~60% (service + route + background + tests) |
-| **SSO: OIDC/SAML** | LDAP есть, но корпоративный сектор просит Keycloak/Entra ID (SAML/OIDC) | Jira SM, Zendesk, Zammad | Средняя | ❌ Только LDAP |
-| **SLA pause / business hours** | Пауза SLA в статусе «Ожидает ответа клиента»; дедлайны только в рабочие часы | Zendesk, Jira SM, Freshdesk | Средняя | ✅ **ГОТОВО** |
-| **CSAT-опрос после закрытия** | Авто-письмо «оцените решение», метрика в дашборде | Все | Низкая | ✅ **ГОТОВО** |
-| **Гостевой портал / self-service** | Клиент заходит без учётки, видит свои тикеты, KB с поиском | Все | Средняя | ❌ Нет |
+| Компонент | Stmts | Branch | Funcs | Lines |
+|-----------|-------|--------|-------|-------|
+| **Клиент (71.02%)** | 71.02% | 60.76% | 60.55% | 73.96% |
+| **Сервер (~71%)** | 70.97% | — | — | — |
 
-> Email ingestion и SLA-pause — самые частые причины, по которым внутренний helpdesk отклоняют в пользу покупного.
+**Цель: 80%+ по всем метрикам**
 
 ---
 
-### P1 — Сильно повышают ценность
+## Рекомендация: что делать в первую очередь
 
-| Фича | Аналоги | Сложность | Наш статус |
-|-------|---------|-----------|------------|
-| **Макросы/триггеры (automation rules)** | Zendesk triggers, Zammad | Средняя | ⚠️ Есть canned responses, нет rule-engine |
-| **Динамические формы тикетов** | Jira SM, Zendesk | Средняя | ⚠️ Custom fields частично есть, нет конструктора |
-| **Telegram/WhatsApp как каналы** | Usedesk, Okdesk | Средняя | ⚠️ Бот есть, нет полноценного канала |
-| **Webhooks + API-токены** | Все | Низкая | ❌ Только JWT-сессии |
-| **Повторяющиеся тикеты / плановое ТО** | GLPI, Jira SM | Низкая | ❌ BullMQ repeatable jobs есть, но не привязаны к тикетам |
-| **Расширенная аналитика** | Все | Низкая | ⚠️ Есть, но нет планировщика отчётов |
+```
+Сейчас:     🔴 Исправить vitest конфиг (86 тестов падают)
+Неделя 1:   🟡 Canned responses 2.0 + горячие клавиши
+Неделя 2:   🟡 Coverage → 80% (фокус на low-coverage файлы)
+Неделя 3:   🟢 2FA + npm audit + cleanup Knex
+После MVP:  🟢 AI triage, Forms, Marketplace...
+```
 
----
-
-### P2 — Нишевое, но продаёт систему
-
-| Фича | Аналоги | Сложность |
-|-------|---------|-----------|
-| CMDB / учёт активов (компьютеры, ПО, лицензии) | GLPI силён здесь | Высокая |
-| ITIL: Problem & Change Management | GLPI, Jira SM | Высокая |
-| On-call / дежурства (расписание, эскалация по цепочке) | PagerDuty-модель | Средняя |
-| Канбан-автоматизации (WIP-лимиты, авто-перемещение по SLA) | Zendesk, Zammad | Средняя |
-| Виджет на сайт (embed-чат/форма тикета, deflection через ИИ) | Zendesk, Freshdesk | Средняя |
-| KB: версии статей + feedback «полезно/нет» | Zendesk Help Center | Низкая |
-| Status page — публичная страница инцидентов | Atlassian Statuspage | Низкая |
-| 2FA (двухфакторная аутентификация) | osTicket, GLPI | Низкая |
-| Блокировка тикетов (collision avoidance) | osTicket, Zendesk | Низкая |
-| Бизнес-часы (для SLA) | Zammad, Zendesk | Средняя |
-
----
-
-### P3 — Фичи для роста (после P0-P2)
-
-| Фича | Аналоги |
-|-------|---------|
-| Live Chat для клиентов (embed на сайте) | Zendesk Messaging |
-| Публичный портал самообслуживания (без регистрации) | Zendesk Help Center, osTicket Customer Portal |
-| Asset Management (полный) | GLPI |
-| Community Forum | Zendesk |
-| Marketplace / плагины | Zendesk, GLPI |
-| AI-классификация и маршрутизация по тексту заявки | Zendesk AI |
-| AI-копилот для агентов (подсказки, суммаризация) | Zendesk, Zammad AI |
-| Планировщик отчётов (автоотправка по расписанию) | Zendesk Explore |
-| Multi-tenancy (несколько организаций) | GLPI |
-| Field Service Management (мобильное прило, маршруты) | Okdesk |
-
----
-
-### Рекомендация: что делать в ближайший спринт
-
-| # | Задача | Дней | Приоритет |
-|---|--------|------|-----------|
-| 1 | Чистка (сгенерированные хуки/тесты, CI cmd/c) | 1-2 | Текущий |
-| 2 | 3-5 реальных E2E (тикет→SLA→закрытие, real-time чат) | 3-5 | Текущий |
-| 3 | **SLA pause + business hours** — самый недооценённый gap | 3-5 | P0 |
-| 4 | **CSAT** — закрывает цикл «тикет → закрыт → обратная связь» | 2-3 | P0 |
-| 5 | **Webhooks + API-токены** — открывает систему для интеграций | 5-7 | P1 |
-| 6 | **Email ingestion (IMAP)** — крупная фича, но критична для продаж | 10-15 | P0 |
-| 7 | **OIDC/SAML** — крупная фича, нужна для корпоративных клиентов | 10-15 | P0 |
-
-> Email ingestion и OIDC/SAML — это фичи, после которых систему реально предлагать как замену Zendesk в среднем корпоративном сегменте.
-
----
-
-## Gap-анализ 2.0 (Qwen — расширенное сравнение с Jira, Zendesk, Freshdesk, Zammad, Linear, HelpScout, YouTrack, OTRS)
-
-### Что уже реализовано (ядро)
-
-| Функция | Статус |
-|---------|--------|
-| Тикеты (CRUD, статусы, приоритеты, теги, кастомные поля) | ✅ |
-| SLA (таймеры, дедлайны, эскалация) | ✅ |
-| RBAC (6 ролей) | ✅ |
-| Чаты (real-time, WebSocket, read receipts, реакции) | ✅ |
-| Wiki / База знаний | ✅ |
-| Календарь + события | ✅ |
-| Push-уведомления (VAPID) | ✅ |
-| Telegram-бот | ✅ |
-| ИИ-ассистент (RAG по Wiki) | ✅ |
-| Time tracking | ✅ |
-| Canned responses | ✅ |
-| Bulk actions | ✅ |
-| Feature flags | ✅ |
-| PWA | ✅ |
-| Экспорт (CSV, PDF) | ✅ |
-| LDAP | ✅ |
-| Swagger API docs | ✅ |
-| Audit log | ✅ |
-| Админ-дашборд | ✅ |
-| Кастомные поля (частично) | ⚠️ |
-
----
-
-### 🔥 Высокий приоритет (must-have для enterprise)
-
-| # | Фича | Что это | Аналоги | Сложность | Наш статус |
-|---|-------|---------|---------|-----------|------------|
-| 1 | **Rules Engine / Автоматизация** | Визуальный редактор правил: «ЕСЛИ статус = open И прошло > 24ч → назначить manager». Webhooks на события. Шаблоны с переменными `{{ticket.id}}` | Jira Automation, Zendesk Triggers, Freshdesk Observer | 2-3 недели | ❌ Нет (BullMQ — хорошая основа) |
-| 2 | **Omnichannel inbox** | Единый inbox для email + Telegram + чата + web-форм. Склейка по email (threading). Перенаправление между каналами | Zendesk, Freshdesk, HelpScout | 3-4 недели | ⚠️ Telegram-бот есть, нет unified inbox |
-| 3 | **Self-service портал + KB 2.0** | Публичная KB с SEO. «Похожие статьи» при создании тикета (AI-assistant расширить). Голосование, комментарии, версия | Zendesk Guide, Freshdesk Solutions | 1-2 недели | ⚠️ Wiki есть, но закрытая |
-| 4 | **Кастомные поля (Custom Fields)** | Админ создаёт: текст, число, дата, select, checkbox, user picker. Привязка к категориям. Валидация через Zod | Jira, Zendesk, YouTrack | 2 недели | ✅ **ГОТОВО** (Prisma schema + service + API + UI) |
-| 5 | **Mobile app (PWA → нативная)** | React Native или Capacitor. Push (web-push есть). Offline mode для черновиков | Все крупные | 3-4 недели | ⚠️ PWA есть |
-
----
-
-### ⭐ Средний приоритет (сильное конкурентное преимущество)
-
-| # | Фича | Аналоги | Сложность | Наш статус |
-|---|-------|---------|-----------|------------|
-| 6 | **Advanced Analytics / BI** — конструктор дашбордов, CSAT, First Response Time, Resolution Time | Jira Dashboards, Zendesk Explore | 2-3 недели | ⚠️ Базово есть (Recharts) |
-| 7 | **Marketplace / Интеграции** — Slack, GitHub/GitLab, 1С/Битрикс24, Google Calendar, OAuth2 marketplace | Все крупные | 3-5 дней each | ❌ Нет |
-| 8 | **Voice / Video calls** — Twilio/Vonage, запись + транскрипция (Whisper), click-to-call | Zendesk Talk, Freshdesk Phone | 3-4 недели | ❌ Нет |
-| 9 | **Gamification** — бейджи («Быстрый ответ», «Решено 100 тикетов»), leaderboard, уровни и XP | Zendesk Agent Leaderboard, Freshdesk | 1 неделя | ❌ Нет (данные в audit log уже есть) |
-| 10 | **Multi-tenancy (SaaS-ready)** — Организация → workspace → изоляция данных. Billing (Stripe). Subdomain per tenant | Zendesk, Freshdesk | 4-6 недель | ❌ Нет |
-
----
-
-### 💎 Nice-to-have (выделяющие продукт)
-
-| # | Фича | Аналоги | Сложность | Наш статус |
-|---|-------|---------|-----------|------------|
-| 11 | **AI нового поколения** — Auto-triage (категория/приоритет/агент), Sentiment analysis, Summarize thread, AI draft replies | Linear AI, Zendesk AI, Jira Intelligence | 2-3 недели | ⚠️ AI-assistant есть — хорошая база |
-| 12 | **Forms builder** — конструктор форм, условная логика, публичные ссылки | Jira Issue types, Zendesk Ticket forms | 2 недели | ❌ Нет |
-| 13 | **Time tracking + Billing** — ставки агентов, генерация инвойсов | Jira, YouTrack, Zammad | 2 недели | ⚠️ Time tracking есть, нет billing |
-| 14 | **Compliance / Security** — GDPR tools, Data residency, SAML 2.0/Okta/Azure AD, Audit log 2.0 (immutable, SIEM), IP whitelist, 2FA | Enterprise-версии Jira, Zendesk | 3-4 недели | ⚠️ LDAP есть, нет SAML/2FA |
-| 15 | **Canned responses 2.0** — переменные в шаблонах, горячие клавиши | Zendesk, Freshdesk, HelpScout | 3-5 дней | ⚠️ Базовые canned responses есть |
-
----
-
-### Сравнительная таблица с аналогами
-
-| Фича | Jira | Zendesk | Freshdesk | **У нас** | Приоритет |
-|-------|------|---------|-----------|-----------|-----------|
-| Rules/Automation | ✅ | ✅ | ✅ | ❌ | 🔥 |
-| Omnichannel | ❌ | ✅ | ✅ | ⚠️ частично | 🔥 |
-| Public KB | ✅ | ✅ | ✅ | ❌ | 🔥 |
-| Custom fields | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Mobile app | ✅ | ✅ | ✅ | ⚠️ PWA | 🔥 |
-| BI/Dashboards | ✅ | ✅ | ✅ | ⚠️ базово | ⭐ |
-| Marketplace | ✅ | ✅ | ✅ | ❌ | ⭐ |
-| Voice calls | ❌ | ✅ | ✅ | ❌ | ⭐ |
-| Gamification | ❌ | ✅ | ✅ | ❌ | ⭐ |
-| Multi-tenancy | ❌ | ✅ | ✅ | ❌ | ⭐ |
-| AI auto-triage | ✅ | ✅ | ✅ | ⚠️ частично | 💎 |
-| Forms builder | ✅ | ✅ | ✅ | ❌ | 💎 |
-| Time tracking | ✅ | ❌ | ✅ | ❌ | 💎 |
-| SAML SSO | ✅ | ✅ | ✅ | ❌ (LDAP есть) | 💎 |
-| Canned responses | ✅ | ✅ | ✅ | ❌ | 💎 |
-
----
-
-### Топ-5 рекомендаций (что делать в первую очередь)
-
-| # | Фича | Дней | Почему |
-|---|-------|------|--------|
-| 1 | **Canned responses 2.0** (переменные + hotkeys) | 3-5 | Самое быстрое, закрывает боль «пишу одно и то же» |
-| 2 | **CSAT-опросы** | 5-7 | Даёт метрику качества — без неё enterprise не продаётся |
-| 3 | **Rules Engine (базовый)** | 10-15 | Снимает рутину с агентов. JSON-правила в БД, BullMQ |
-| 4 | **Custom fields** | 10 | Без этого нельзя продавать enterprise-клиентам |
-| 5 | **AI auto-triage** | 10-15 | Естественное расширение AI-assistant. LLM → категория/приоритет/агент |
-
----
-
-### Быстрые победы (1-3 дня)
-
-| Фича | Реализация |
-|------|-----------|
-| **Горячие клавиши** | C — создать тикет, / — поиск, J/K — навигация (как в Linear) |
-| **Keyboard shortcuts cheatsheet** | Модалка со списком |
-| **Dark mode** | Tailwind v4 — 2 часа |
-| **Command palette (Cmd+K)** | Быстрый доступ ко всему (как в Linear) |
-| **Markdown preview** | В комментариях в реальном времени |
-| **Bulk actions 2.0** | Выделить 10 тикетов → массово сменить статус/агента |
-| **Ticket templates** | Шаблоны для частых типов обращений |
-
----
-
-### Roadmap на 3 месяца
-
-| Месяц | Задачи | Результат |
-|-------|--------|-----------|
-| **Месяц 1** | Canned responses 2.0 + CSAT + горячие клавиши + dark mode | Быстрые победы, UX |
-| **Месяц 2** | Custom fields + Rules engine (базовый) | Enterprise-ядро |
-| **Месяц 3** | AI auto-triage + Forms builder + интеграция Slack | Конкурентное преимущество |
-
-> После этого проект будет конкурентоспособен с Freshdesk на уровне $15-25/agent/month и готов к выходу на рынок.
-
----
-
-### Итог:覆盖率 (coverage)
-
-| Категория | Реализовано | Всего | % |
-|-----------|-------------|-------|---|
-| Тикетное ядро | 12 | 15 | 80% |
-| Omnichannel | 1 | 4 | 25% |
-| AI/Автоматизация | 2 | 5 | 40% |
-| Аналитика | 2 | 4 | 50% |
-| Безопасность | 3 | 6 | 50% |
-| Интеграции | 1 | 5 | 20% |
-| **Общий** | **21** | **39** | **~54%** |
-
-> Текущий проект покрывает ~54% функционала зрелого helpdesk. Для MVP достаточно 70%+ (цель: месяц 3).
+> **Сейчас самый важный баг — vitest конфиг.** 86 тестов падают из-за того, что `vitest.client.config.ts` не используется по умолчанию. Нужно создать `vitest.config.ts` или добавить `test` секцию в `vite.config.ts`.

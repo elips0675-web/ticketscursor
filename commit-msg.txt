@@ -1,0 +1,13 @@
+fix(i18n): merge duplicate auth keys in ru.json/en.json, add i18n to ForgotPassword/ResetPassword/SSO
+
+Root cause: both locale files had TWO auth blocks at top level.
+JSON parser uses the last one (only ssoLogin), wiping out all
+other auth translations (login, logout, email, password, etc.).
+
+Changes:
+- Merge ssoLogin into first auth block, remove duplicate second block
+- ForgotPassword.tsx: add useTranslation, replace hardcoded English
+- ResetPassword.tsx: add useTranslation, replace hardcoded English
+- SSO.tsx: replace hardcoded error messages with t() calls
+- Add 25+ new i18n keys (forgotPassword*, resetPassword*, sso.error*, common.reset)
+- check-console: 17/17 ALL OK
