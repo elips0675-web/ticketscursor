@@ -536,7 +536,15 @@
     "ssoRedirectUri": "Redirect URI",
     "ssoDefaultRole": "Роль по умолчанию",
     "portalSettings": "Публичный портал",
-    "portalSubtitle": "Клиент без учётки видит тикеты, создаёт заявки через /portal"
+    "portalSubtitle": "Клиент без учётки видит тикеты, создаёт заявки через /portal",
+    "template": "Шаблон",
+    "selectTemplate": "— Выбрать шаблон —",
+    "templates": "Шаблоны тикетов",
+    "templatesSubtitle": "Быстрые шаблоны для частых типов обращений",
+    "templateName": "Название шаблона",
+    "templateAdd": "Добавить шаблон",
+    "templateSave": "Сохранить шаблон",
+    "templateDelete": "Удалить шаблон"
   },
   "portal": {
     "createTicket": "Создать заявку",

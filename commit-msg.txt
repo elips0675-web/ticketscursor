@@ -1,1 +1,1 @@
-feat(markdown-preview): inline markdown preview for ticket messages
+feat(ticket-templates): quick-fill templates for common request types

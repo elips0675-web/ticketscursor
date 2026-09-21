@@ -32,12 +32,21 @@ export default function NewTicket() {
   const [userAccount, setUserAccount] = useState('')
   const [customFieldDefs, setCustomFieldDefs] = useState<CustomFieldDef[]>([])
   const [customFieldValues, setCustomFieldValues] = useState<Record<number, string>>({})
+  const [templates, setTemplates] = useState<
+    { name: string; title: string; description: string; priority: string; category: string }[]
+  >([])
 
   useEffect(() => {
+    try {
+      const saved = localStorage.getItem('ticketTemplates')
+      if (saved) setTemplates(JSON.parse(saved))
+    } catch {
+      /* ignore */
+    }
     const saved = localStorage.getItem('sysInfo')
     if (saved) {
       const { computerName: cn, userAccount: ua } = JSON.parse(saved)
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+
       if (cn) setComputerName(cn)
       if (ua) setUserAccount(ua)
     }
@@ -85,6 +94,32 @@ export default function NewTicket() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
+            {templates.length > 0 && (
+              <div className="space-y-1.5">
+                <label className="text-sm font-bold">{t('tickets.template')}</label>
+                <select
+                  value=""
+                  onChange={(e) => {
+                    const tpl = templates[Number(e.target.value)]
+                    if (tpl) {
+                      setTitle(tpl.title)
+                      setDescription(tpl.description)
+                      setPriority(tpl.priority as TicketPriority)
+                      setCategory(tpl.category)
+                    }
+                  }}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="">{t('tickets.selectTemplate')}</option>
+                  {templates.map((tpl, i) => (
+                    <option key={i} value={i}>
+                      {tpl.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <label className="text-sm font-bold">{t('tickets.subject')}</label>
               <Input

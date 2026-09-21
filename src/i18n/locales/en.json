@@ -541,7 +541,15 @@
     "ssoRedirectUri": "Redirect URI",
     "ssoDefaultRole": "Default Role",
     "portalSettings": "Public Portal",
-    "portalSubtitle": "Clients can view tickets and create requests without an account via /portal"
+    "portalSubtitle": "Clients can view tickets and create requests without an account via /portal",
+    "template": "Template",
+    "selectTemplate": "— Select template —",
+    "templates": "Ticket Templates",
+    "templatesSubtitle": "Quick templates for common request types",
+    "templateName": "Template name",
+    "templateAdd": "Add template",
+    "templateSave": "Save template",
+    "templateDelete": "Delete template"
   },
   "portal": {
     "createTicket": "Create Request",
