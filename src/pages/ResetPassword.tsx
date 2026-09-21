@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -7,6 +8,7 @@ import { useSearchParams, Link } from 'react-router-dom'
 import { API_URL } from '@/lib/api'
 
 export default function ResetPassword() {
+  const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token') || ''
   const [password, setPassword] = useState('')
@@ -17,11 +19,11 @@ export default function ResetPassword() {
 
   const submit = async () => {
     if (password !== confirm) {
-      setError("Passwords don't match")
+      setError(t('auth.passwordsNoMatch'))
       return
     }
     if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+      setError(t('auth.passwordTooShort'))
       return
     }
     setLoading(true)
@@ -34,10 +36,10 @@ export default function ResetPassword() {
       if (res.ok) setDone(true)
       else {
         const d = await res.json()
-        setError(d.message || 'Error')
+        setError(d.message || t('common.error'))
       }
     } catch {
-      setError('Network error')
+      setError(t('auth.connectionError'))
     }
     setLoading(false)
   }
@@ -47,8 +49,8 @@ export default function ResetPassword() {
       <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
         <Card className="w-full max-w-md text-center">
           <CardHeader>
-            <CardTitle>Invalid link</CardTitle>
-            <CardDescription>This reset link is invalid or expired.</CardDescription>
+            <CardTitle>{t('auth.resetPasswordInvalidLink')}</CardTitle>
+            <CardDescription>{t('auth.resetPasswordInvalidLinkDesc')}</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -61,12 +63,12 @@ export default function ResetPassword() {
         <Card className="w-full max-w-md text-center">
           <CardHeader>
             <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-2" />
-            <CardTitle>Password reset</CardTitle>
-            <CardDescription>Your password has been reset successfully.</CardDescription>
+            <CardTitle>{t('auth.resetPasswordSuccess')}</CardTitle>
+            <CardDescription>{t('auth.resetPasswordSuccessDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Link to="/login" className="text-sm text-primary hover:underline">
-              Go to login
+              {t('auth.goToLogin')}
             </Link>
           </CardContent>
         </Card>
@@ -78,8 +80,8 @@ export default function ResetPassword() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle>Set new password</CardTitle>
-          <CardDescription>Enter your new password</CardDescription>
+          <CardTitle>{t('auth.resetPasswordTitle')}</CardTitle>
+          <CardDescription>{t('auth.resetPasswordDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="relative">
@@ -87,7 +89,7 @@ export default function ResetPassword() {
             <Input
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="New password"
+              placeholder={t('auth.newPasswordPlaceholder')}
               className="pl-9"
               type="password"
             />
@@ -97,7 +99,7 @@ export default function ResetPassword() {
             <Input
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              placeholder="Confirm password"
+              placeholder={t('auth.confirmPasswordPlaceholder')}
               className="pl-9"
               type="password"
             />
@@ -105,7 +107,7 @@ export default function ResetPassword() {
           {error && <p className="text-xs text-red-500">{error}</p>}
           <Button onClick={submit} disabled={loading || !password.trim() || !confirm.trim()} className="w-full gap-2">
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            Reset password
+            {t('auth.resetPasswordBtn')}
           </Button>
         </CardContent>
       </Card>

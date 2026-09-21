@@ -36,7 +36,8 @@
     "error": "Ошибка",
     "copy": "Копировать",
     "disable": "Выкл",
-    "enable": "Вкл"
+    "enable": "Вкл",
+    "reset": "Сбросить"
   },
   "auth": {
     "login": "Войти",
@@ -73,7 +74,25 @@
     "fillRequired": "Заполните обязательные поля",
     "passwordTooShort": "Пароль должен быть минимум 6 символов",
     "registerError": "Ошибка регистрации",
-    "goToLogin": "Войти"
+    "goToLogin": "Войти",
+    "ssoLogin": "SSO / Корпоративный вход",
+    "forgotPasswordTitle": "Забыли пароль?",
+    "forgotPasswordDesc": "Введите email, и мы отправим ссылку для сброса",
+    "forgotPasswordEmailSent": "Проверьте email",
+    "forgotPasswordEmailSentDesc": "Если аккаунт с таким email существует, ссылка для сброса отправлена",
+    "forgotPasswordSendBtn": "Отправить ссылку",
+    "backToLogin": "Вернуться ко входу",
+    "resetPasswordTitle": "Новый пароль",
+    "resetPasswordDesc": "Введите новый пароль",
+    "resetPasswordBtn": "Сбросить пароль",
+    "resetPasswordSuccess": "Пароль сброшен",
+    "resetPasswordSuccessDesc": "Пароль успешно изменён",
+    "resetPasswordInvalidLink": "Неверная ссылка",
+    "resetPasswordInvalidLinkDesc": "Эта ссылка для сброса недействительна или истекла",
+    "passwordsNoMatch": "Пароли не совпадают",
+    "passwordTooShort": "Пароль должен быть минимум 6 символов",
+    "newPasswordPlaceholder": "Новый пароль",
+    "confirmPasswordPlaceholder": "Подтвердите пароль"
   },
   "tickets": {
     "title": "Тикеты",
@@ -602,10 +621,14 @@
     "redirecting": "Перенаправление...",
     "backToLogin": "Вернуться к обычному входу",
     "processing": "Обработка авторизации...",
-    "errorTitle": "Ошибка SSO"
-  },
-  "auth": {
-    "ssoLogin": "SSO / Корпоративный вход"
+    "errorTitle": "Ошибка SSO",
+    "notConfigured": "SSO не настроен",
+    "failedLoadConfig": "Не удалось загрузить конфигурацию SSO",
+    "failedGenerateUrl": "Не удалось сформировать URL для входа",
+    "loginFailed": "Ошибка входа через SSO",
+    "missingAuthCode": "Отсутствует код авторизации",
+    "noToken": "Не получен токен",
+    "authFailed": "Ошибка аутентификации SSO"
   },
   "commandPalette": {
     "placeholder": "Введите команду или поищите...",

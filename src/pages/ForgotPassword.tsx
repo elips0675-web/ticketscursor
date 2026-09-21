@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -7,6 +8,7 @@ import { Link } from 'react-router-dom'
 import { API_URL } from '@/lib/api'
 
 export default function ForgotPassword() {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -31,12 +33,12 @@ export default function ForgotPassword() {
       <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle>Check your email</CardTitle>
-            <CardDescription>If an account with that email exists, a reset link has been sent.</CardDescription>
+            <CardTitle>{t('auth.forgotPasswordEmailSent')}</CardTitle>
+            <CardDescription>{t('auth.forgotPasswordEmailSentDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
             <Link to="/login" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
-              <ArrowLeft className="w-3 h-3" /> Back to login
+              <ArrowLeft className="w-3 h-3" /> {t('auth.backToLogin')}
             </Link>
           </CardContent>
         </Card>
@@ -48,8 +50,8 @@ export default function ForgotPassword() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle>Forgot password</CardTitle>
-          <CardDescription>Enter your email and we'll send you a reset link</CardDescription>
+          <CardTitle>{t('auth.forgotPasswordTitle')}</CardTitle>
+          <CardDescription>{t('auth.forgotPasswordDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="relative">
@@ -57,18 +59,18 @@ export default function ForgotPassword() {
             <Input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
+              placeholder={t('auth.email')}
               className="pl-9"
               type="email"
             />
           </div>
           <Button onClick={submit} disabled={loading || !email.trim()} className="w-full gap-2">
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            Send reset link
+            {t('auth.forgotPasswordSendBtn')}
           </Button>
           <div className="text-center">
             <Link to="/login" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
-              <ArrowLeft className="w-3 h-3" /> Back to login
+              <ArrowLeft className="w-3 h-3" /> {t('auth.backToLogin')}
             </Link>
           </div>
         </CardContent>

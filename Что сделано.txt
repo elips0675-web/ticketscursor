@@ -524,3 +524,12 @@
 - **Routes**: `/portal`, `/portal/track`, `/portal/track/:token`, `/kb`, `/kb/:slug`
 - **i18n**: portal (27 ключей) + kb (14 ключей) + tickets (4 ключа bulk)
 - Коммиты: `883c563` (portal), `fb0b97c` (kb), `b71a121` (markdown), `836a375` (templates), `767c232` (bulk), `14f3a75` (shortcuts)
+
+### Этап 36 — i18n: исправлены ключи auth + русификация ForgotPassword/ResetPassword/SSO
+- **Корневая причина**: `ru.json` и `en.json` содержали **два ключа `"auth"`** на верхнем уровне. JSON-парсер берёт последний → все ключи (login, logout, email, password, ...) были потеряны, `t('auth.logout')` возвращал буквальный ключ
+- **Исправление**: объединены два блока `auth` в один, `ssoLogin` добавлен в первый блок
+- **ForgotPassword.tsx**: полностью переписан с useTranslation (был захардкожен на английском)
+- **ResetPassword.tsx**: полностью переписан с useTranslation (был захардкожен на английском)
+- **SSO.tsx**: ошибки переведены на i18n (notConfigured, failedLoadConfig, loginFailed, missingAuthCode, noToken, authFailed)
+- **ru.json/en.json**: добавлены 25+ новых ключей (forgotPassword*, resetPassword*, sso.error*, common.reset)
+- **check-console.mjs**: 17/17 ALL OK

@@ -18,11 +18,11 @@ export function SSOLogin() {
       .get('/auth/sso/config')
       .then((d: { data: { enabled: boolean } }) => {
         if (!d.data?.enabled) {
-          setError('SSO is not configured')
+          setError(t('sso.notConfigured'))
         }
       })
-      .catch(() => setError('Failed to load SSO config'))
-  }, [])
+      .catch(() => setError(t('sso.failedLoadConfig')))
+  }, [t])
 
   const startSSO = async () => {
     setLoading(true)
@@ -32,11 +32,11 @@ export function SSOLogin() {
       if (d.data?.url) {
         window.location.href = d.data.url
       } else {
-        setError('Failed to generate SSO URL')
+        setError(t('sso.failedGenerateUrl'))
         setLoading(false)
       }
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'SSO login failed')
+      setError(e instanceof Error ? e.message : t('sso.loginFailed'))
       setLoading(false)
     }
   }
@@ -84,13 +84,13 @@ export function SSOCallback() {
     const ssoError = searchParams.get('error')
 
     if (ssoError) {
-      setError(`SSO error: ${searchParams.get('error_description') || ssoError}`)
+      setError(`${t('sso.errorTitle')}: ${searchParams.get('error_description') || ssoError}`)
       setLoading(false)
       return
     }
 
     if (!code || !state) {
-      setError('Missing authorization code')
+      setError(t('sso.missingAuthCode'))
       setLoading(false)
       return
     }
@@ -102,15 +102,15 @@ export function SSOCallback() {
           login(d.data.token)
           navigate('/')
         } else {
-          setError('No token received')
+          setError(t('sso.noToken'))
           setLoading(false)
         }
       })
       .catch((e: unknown) => {
-        setError(e instanceof Error ? e.message : 'SSO authentication failed')
+        setError(e instanceof Error ? e.message : t('sso.authFailed'))
         setLoading(false)
       })
-  }, [searchParams, login, navigate])
+  }, [searchParams, login, navigate, t])
 
   if (loading) {
     return (

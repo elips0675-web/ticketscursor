@@ -74,7 +74,24 @@
     "fillRequired": "Fill in required fields",
     "passwordTooShort": "Password must be at least 6 characters",
     "registerError": "Registration error",
-    "goToLogin": "Login"
+    "goToLogin": "Login",
+    "ssoLogin": "SSO / Corporate login",
+    "forgotPasswordTitle": "Forgot password?",
+    "forgotPasswordDesc": "Enter your email and we'll send you a reset link",
+    "forgotPasswordEmailSent": "Check your email",
+    "forgotPasswordEmailSentDesc": "If an account with that email exists, a reset link has been sent",
+    "forgotPasswordSendBtn": "Send reset link",
+    "backToLogin": "Back to login",
+    "resetPasswordTitle": "Set new password",
+    "resetPasswordDesc": "Enter your new password",
+    "resetPasswordBtn": "Reset password",
+    "resetPasswordSuccess": "Password reset",
+    "resetPasswordSuccessDesc": "Your password has been reset successfully",
+    "resetPasswordInvalidLink": "Invalid link",
+    "resetPasswordInvalidLinkDesc": "This reset link is invalid or expired",
+    "passwordsNoMatch": "Passwords don't match",
+    "newPasswordPlaceholder": "New password",
+    "confirmPasswordPlaceholder": "Confirm password"
   },
   "tickets": {
     "title": "Tickets",
@@ -607,10 +624,14 @@
     "redirecting": "Redirecting...",
     "backToLogin": "Back to regular login",
     "processing": "Processing authorization...",
-    "errorTitle": "SSO Error"
-  },
-  "auth": {
-    "ssoLogin": "SSO / Corporate login"
+    "errorTitle": "SSO Error",
+    "notConfigured": "SSO is not configured",
+    "failedLoadConfig": "Failed to load SSO config",
+    "failedGenerateUrl": "Failed to generate SSO URL",
+    "loginFailed": "SSO login failed",
+    "missingAuthCode": "Missing authorization code",
+    "noToken": "No token received",
+    "authFailed": "SSO authentication failed"
   },
   "commandPalette": {
     "placeholder": "Type a command or search...",
