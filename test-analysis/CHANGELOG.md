@@ -90,6 +90,26 @@
 - **Forwarding** — обычные сообщения автоматически попадают в последний активный тикет
 - **Экспорт** — `sendTelegramToUser()`, `isTelegramBotActive()`
 
+### 🌐 Public Portal — самообслуживание без регистрации (новая фича)
+
+- **Backend** — `public-portal.js`: POST /portal/tickets (создание тикета без авторизации, tracking token), GET /portal/track/:token (просмотр тикета), POST /portal/track/:token/reply (ответ)
+- **Frontend** — `Portal.tsx` (форма создания заявки), `PortalTrack.tsx` (отслеживание статуса + ответы)
+- **Auto-provisioning** — создаёт employee с ролью `requester` при первом обращении
+- **Email** — уведомление с tracking URL при создании тикета
+
+### 📚 Public KB 2.0 — публичная база знаний (новая фича)
+
+- **Backend** — `public-kb.js`: GET /kb/articles (поиск + категории + пагинация), GET /kb/articles/:slug (статья + похожие + голоса), POST /kb/articles/:id/vote (голосование), GET /kb/categories, GET /kb/search
+- **Frontend** — `PublicKB.tsx` (список статей + поиск + фильтр по категориям), `PublicKBArticle.tsx` (просмотр статьи + голосование «полезно/нет» + похожие статьи)
+- **SEO** — slug-based URL, excerpt для превью
+
+### ⚡ Quick Wins — UX-улучшения
+
+- **Markdown Preview** — `MarkdownEditor.tsx` + toggle в TicketDetail для предпросмотра Markdown в сообщениях
+- **Ticket Templates** — шаблоны тикетов в localStorage, автозаполнение полей при выборе шаблона
+- **Bulk Actions 2.0** — массовое изменение статуса (open/in_progress/resolved/closed) + приоритета (low/medium/high/critical)
+- **Keyboard Shortcuts Cheatsheet** — модалка с горячими клавишами, открывается по `?`
+
 ---
 
 ## [1.9.0] — 2026-09-19

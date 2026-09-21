@@ -1,1 +1,1 @@
-docs: update for public portal, KB, quick wins
+docs: update CHANGELOG with portal, KB, quick wins
