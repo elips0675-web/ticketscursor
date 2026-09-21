@@ -1,1 +1,1 @@
-feat(public-kb): knowledge base 2.0 with search, categories, voting, and similar articles
+feat(markdown-preview): inline markdown preview for ticket messages

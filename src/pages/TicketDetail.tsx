@@ -132,6 +132,7 @@ export default function TicketDetail() {
   }, [id, token])
 
   const [messageText, setMessageText] = useState('')
+  const [mdPreview, setMdPreview] = useState(false)
   const mentionAtIdxRef = useRef<number>(-1)
   const [mentionQuery, setMentionQuery] = useState('')
   const [mentionIndex, setMentionIndex] = useState(0)
@@ -517,15 +518,44 @@ export default function TicketDetail() {
 
               <Separator className="my-3" />
               <div className="space-y-2 relative">
-                <Textarea
-                  ref={textareaRef}
-                  value={messageText}
-                  onChange={handleMessageTextChange}
-                  onKeyDown={handleMessageKeyDown}
-                  placeholder={t('tickets.messagePlaceholder')}
-                  className="min-h-[80px]"
-                  id="ticket-message"
-                />
+                <div className="flex items-center justify-end">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs gap-1"
+                    onClick={() => setMdPreview(!mdPreview)}
+                  >
+                    {mdPreview ? '✏️' : '👁️'}
+                    {mdPreview ? 'Редактировать' : 'Просмотр'}
+                  </Button>
+                </div>
+                {mdPreview ? (
+                  <div
+                    className="min-h-[80px] rounded-md border border-input bg-muted/30 px-3 py-2 text-sm prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{
+                      __html: messageText
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                        .replace(/`(.*?)`/g, '<code>$1</code>')
+                        .replace(/^- (.+)$/gm, '<li>$1</li>')
+                        .replace(/\n/g, '<br/>'),
+                    }}
+                  />
+                ) : (
+                  <Textarea
+                    ref={textareaRef}
+                    value={messageText}
+                    onChange={handleMessageTextChange}
+                    onKeyDown={handleMessageKeyDown}
+                    placeholder={t('tickets.messagePlaceholder')}
+                    className="min-h-[80px]"
+                    id="ticket-message"
+                  />
+                )}
                 {showMentions && filteredMentions.length > 0 && (
                   <div
                     className="absolute z-50 w-64 max-h-48 overflow-y-auto rounded-md border bg-background shadow-md"
