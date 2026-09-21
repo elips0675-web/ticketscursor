@@ -469,3 +469,28 @@
 - ✅ **Lint-очистка**: 0 errors — пустые catch в AdminCannedResponses/AdminSettings (/* ignore */), `/* global console, process */` в check-bundle-size.js, k6-глобалы в test/load, удалён неиспользуемый `keywords` из generateLlmAnswer
 - ✅ Тесты: сервер 436/436 (+23, 28 файлов), клиент 397/397 (+4, 52 файла); tsc чист, vite build OK, eslint 0 errors (10 warnings — все pre-existing)
 - Коммит Этапов 6–7
+
+────────────────────────────────────────────────────────────────────────────
+
+### Этап 32 — Email Ingestion UI + Webhooks + API Tokens + Command Palette (21.09.2026)
+- **Email Ingestion UI**: `AdminSettings.tsx` ( ImapSection): IMAP настройки в админке, тест соединения, статус; i18n 15 ключей RU/EN
+- **API Tokens**: `api-tokens.service.js` (SHA-256 hash, prefix `sd_`, валидация, list, delete), `api-tokens.js` (GET/POST/DELETE), middleware `authenticateToken` принимает JWT **или** API-токены
+- **Webhooks**: `webhooks.service.js` (7 событий, HMAC SHA-256, retry 3x), `webhooks.js` (CRUD, admin-only), триггеры в tickets.js (created/updated/closed/assigned/message)
+- **Миграция**: `20260921_webhooks_api_tokens.sql` — таблицы `api_tokens` и `webhooks`
+- **Command Palette**: `CommandPalette.tsx` (Cmd+K, навигация 11 страниц, поиск, быстрые действия), App.tsx
+- **AdminIntegrations.tsx**: UI для API-токенов и webhooks
+- **i18n**: 20+ ключей в ru.json/en.json
+- Коммиты: `80dcff2` (IMAP UI), `d85011a` (webhooks+tokens), `c703618` (command palette)
+
+### Этап 33 — Collision Avoidance + Recurring Tickets (21.09.2026)
+- **Collision avoidance**: `collision.service.js` (acquire/release/forceRelease/getLockStatus), 30мин TTL
+- **Замки**: `locked_by`/`locked_at` на tickets, проверка при status/priority/assign обновлениях (senior_agent+ может обходить)
+- **API**: `POST /:id/lock`, `DELETE /:id/lock`, `POST /:id/force-unlock`, `GET /:id/lock`
+- **WebSocket**: `ticket:locked`/`ticket:unlocked` эмиты через outbox
+- **Миграция**: `20260921_ticket_locking.sql`
+- **Recurring Tickets**: `recurrence.service.js` (CRUD, processRecurrences с cron-parser), `recurrences.js` (admin/senior_agent)
+- **Background**: processRecurrences каждые 60мин через BullMQ/setInterval
+- **Миграция**: `20260921_ticket_recurrences.sql`
+- **Prisma**: модели `ticket_recurrences`, `locked_by`/`locked_at` на tickets
+- **i18n**: 9 ключей lock* + 6 ключей recurrence* в ru.json/en.json
+- Коммиты: `915ffb9` (collision), `7ec60ad` (recurring)

@@ -44,6 +44,25 @@
 - ESLint: 0 ошибок (2 pre-existing warnings: react-hooks/set-state-in-effect)
 - Коммиты: `80dcff2` (IMAP UI), `d85011a` (webhooks+tokens), `c703618` (command palette), `2c0a77d` (cleanup)
 
+### 🔒 Collision Avoidance (новая фича)
+
+- **Backend** — `collision.service.js`: acquireLock (30мин TTL), releaseLock, forceRelease, getLockStatus
+- **Schema** — `locked_by` + `locked_at` на `tickets`, FK на `employees`, индекс `idx_tickets_locked_by`
+- **Middleware** — проверка блокировки при `PUT /:id/status`, `/priority`, `/assign` (senior_agent+ может обходить)
+- **API** — `POST /:id/lock`, `DELETE /:id/lock`, `POST /:id/force-unlock` (admin/senior_agent), `GET /:id/lock`
+- **WebSocket** — `ticket:locked`/`ticket:unlocked` эмиты через outbox
+- **Detail** — `getTicketById` возвращает `locked_by` и `locked_at`
+- **Миграция** — `20260921_ticket_locking.sql`
+- **i18n** — 9 ключей `admin.lock*` в ru.json/en.json
+
+### 🔄 Recurring Tickets / Planовое ТО (новая фича)
+
+- **Backend** — `recurrence.service.js`: CRUD + processRecurrences (cron-parser), auto-создание тикетов с префиксом «[Плановое]»
+- **Schema** — `ticket_recurrences` (title, description, priority, category, assigned_to, cron_expr, next_run, is_active, last_run)
+- **Routes** — `recurrences.js` (GET/POST/PUT/DELETE /api/recurrences, admin/senior_agent only), валидация cron-выражений
+- **Background** — `processRecurrences()` каждые 60мин через BullMQ/setInterval в `background.js`
+- **Миграция** — `20260921_ticket_recurrences.sql`
+
 ---
 
 ## [1.9.0] — 2026-09-19

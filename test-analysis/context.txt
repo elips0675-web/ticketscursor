@@ -5,8 +5,8 @@
 - **Фронт**: 485 тестов (102 suite)
 - **Сервер**: 523 тестов (35 suites)
 - **E2E**: 17/17 страниц ALL OK (check-console.mjs) + 8 user-flow (playwright)
-- **Prisma моделей**: 22 (включая event_outbox, custom_field_definitions, custom_field_values, api_tokens, webhooks)
-- **API endpoints**: 70+ (Swagger + Health probes + k6 metrics + IMAP admin routes + API tokens + Webhooks)
+- **Prisma моделей**: 24 (включая event_outbox, custom_field_definitions, custom_field_values, api_tokens, webhooks, ticket_recurrences)
+- **API endpoints**: 80+ (Swagger + Health probes + k6 metrics + IMAP admin routes + API tokens + Webhooks + Lock + Recurrences)
 - **ESLint**: 0 errors, 10 warnings (pre-existing)
 - **MySQL**: запущен (Laragon), БД servicedesk
 - **API**: порт 4000, Vite proxy 5173
@@ -30,6 +30,8 @@
 | services/tickets.service.js | ~91% | ✅ |
 | services/api-tokens.service.js | новый | ✅ SHA-256 hash, validate, list, delete |
 | services/webhooks.service.js | новый | ✅ 7 событий, HMAC, retry 3x |
+| services/collision.service.js | новый | ✅ Lock/unlock/force, 30мин TTL |
+| services/recurrence.service.js | новый | ✅ Cron-parser, processRecurrences |
 | middleware.js | - | ✅ JWT + API token auth |
 | socket.js | ~22% | ❌ (низкий приоритет — outbox паттерн снижает риски) |
 | background.js | ~50% | ✅ DLQ реализован (BullMQ + in-memory fallback) |
