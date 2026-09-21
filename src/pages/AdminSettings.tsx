@@ -18,6 +18,9 @@ import {
   Flag,
   ToggleLeft,
   Mail,
+  Inbox,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react'
 import { api } from '@/lib/api'
 
@@ -194,6 +197,8 @@ export default function AdminSettings() {
       <FeatureFlagsSection />
 
       <EmailTemplatesSection />
+
+      <ImapSection />
 
       <Button onClick={save} disabled={saving} className="gap-2">
         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -460,6 +465,159 @@ interface FeatureFlag {
   key: string
   enabled: boolean
   description: string
+}
+
+function ImapSection() {
+  const { t } = useTranslation()
+  const [values, setValues] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<'ok' | 'fail' | null>(null)
+  const [testMsg, setTestMsg] = useState('')
+  const [configured, setConfigured] = useState(false)
+  const [polling, setPolling] = useState(false)
+
+  useEffect(() => {
+    api
+      .get('/admin/settings')
+      .then((data: Record<string, string>) => {
+        setValues({
+          IMAP_HOST: data?.IMAP_HOST || '',
+          IMAP_PORT: data?.IMAP_PORT || '993',
+          IMAP_USER: data?.IMAP_USER || '',
+          IMAP_PASS: data?.IMAP_PASS || '',
+        })
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+
+    api
+      .get('/admin/imap/status')
+      .then((d: { configured: boolean; polling: boolean }) => {
+        setConfigured(d.configured)
+        setPolling(d.polling)
+      })
+      .catch(() => {})
+  }, [])
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      await api.put('/admin/settings', values)
+      const s = await api.get('/admin/imap/status')
+      setConfigured(s.configured)
+      setPolling(s.polling)
+      toast.success(t('admin.saveSuccess'))
+    } catch {
+      /* handled */
+    }
+    setSaving(false)
+  }
+
+  const test = async () => {
+    setTesting(true)
+    setTestResult(null)
+    setTestMsg('')
+    try {
+      const d = await api.post('/admin/imap/test')
+      setTestResult('ok')
+      setTestMsg(d.message || t('admin.imapTestOk'))
+    } catch (e: unknown) {
+      setTestResult('fail')
+      setTestMsg(e instanceof Error ? e.message : t('admin.imapTestFail'))
+    }
+    setTesting(false)
+  }
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Inbox className="w-4 h-4 text-primary" />
+            {t('admin.imapSettings')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-center py-4">
+            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Inbox className="w-4 h-4 text-primary" />
+          {t('admin.imapSettings')}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-xs text-muted-foreground">{t('admin.imapSubtitle')}</p>
+
+        <div className="flex items-center gap-3 rounded-lg border p-3">
+          {configured ? (
+            <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+          ) : (
+            <XCircle className="w-4 h-4 text-muted-foreground shrink-0" />
+          )}
+          <div className="flex-1">
+            <p className="text-xs font-medium">
+              {configured ? t('admin.imapConfigured') : t('admin.imapNotConfigured')}
+            </p>
+            {configured && (
+              <p className="text-[11px] text-muted-foreground">
+                {t('admin.imapPolling')}: {polling ? t('admin.imapPollingOn') : t('admin.imapPollingOff')}
+              </p>
+            )}
+          </div>
+          <Button size="sm" variant="outline" onClick={test} disabled={testing} className="shrink-0 gap-1.5">
+            {testing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
+            {testing ? t('admin.imapTesting') : t('admin.imapTestBtn')}
+          </Button>
+        </div>
+
+        {testResult && (
+          <div
+            className={`text-xs rounded-lg p-2 ${testResult === 'ok' ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'}`}
+          >
+            {testMsg}
+          </div>
+        )}
+
+        {(
+          [
+            { key: 'IMAP_HOST', label: t('admin.imapHost'), type: 'text' },
+            { key: 'IMAP_PORT', label: t('admin.imapPort'), type: 'text' },
+            { key: 'IMAP_USER', label: t('admin.imapUser'), type: 'text' },
+            { key: 'IMAP_PASS', label: t('admin.imapPass'), type: 'password' },
+          ] as const
+        ).map((f) => (
+          <div key={f.key}>
+            <Label htmlFor={f.key} className="text-xs font-bold">
+              {f.label}
+            </Label>
+            <Input
+              id={f.key}
+              type={f.type}
+              value={values[f.key] || ''}
+              onChange={(e) => setValues((prev) => ({ ...prev, [f.key]: e.target.value }))}
+              className="mt-1"
+            />
+          </div>
+        ))}
+
+        <Button size="sm" onClick={save} disabled={saving} className="gap-1.5">
+          {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+          {t('common.save')}
+        </Button>
+      </CardContent>
+    </Card>
+  )
 }
 
 function FeatureFlagsSection() {

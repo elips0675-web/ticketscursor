@@ -3,12 +3,12 @@
 ## Стек
 React 19 + TypeScript 5 + Vite 8 + Tailwind v4 + shadcn/ui | Express 5 + Prisma + MySQL 8 + Socket.IO + Redis
 
-## Текущее состояние (после исправлений 19.09.2026, этап 2)
+## Текущее состояние (после исправлений 19.09.2026, этап 3)
 
 | Метрика | Значение |
 |---------|----------|
-| Frontend тесты | **52 файла / 411 тестов** ✅ |
-| Серверные тесты | **30 файлов / 451 тестов** ✅ |
+| Frontend тесты | **102 файла / 485 тестов** ✅ |
+| Серверные тесты | **35 файлов / 523 тестов** ✅ |
 | E2E тесты | **16 spec'ов** (включая user-flow: login, CRUD, navigation, search) ✅ |
 | E2E (check-console) | **17/17 страниц** ALL OK ✅ |
 | TypeScript | **0 errors** ✅ |
@@ -79,8 +79,12 @@ React 19 + TypeScript 5 + Vite 8 + Tailwind v4 + shadcn/ui | Express 5 + Prisma 
 
 ### Консенсус
 - ✅ Архитектура и стек — сильные (8-9/10)
-- ✅ Серверные тесты — качественные интеграционные (451)
+- ✅ Серверные тесты — качественные интеграционные (523)
 - ✅ E2E — расширены до user-flow (16 spec'ов)
+- ✅ Custom Fields — реализованы (Prisma schema + service + API + UI)
+- ✅ SLA pause/business hours — реализованы
+- ✅ CSAT — реализован
+- ⚠️ Email ingestion — ~60% (service + route + background + tests; reply threading + UI в процессе)
 - ⚠️ Два ORM — Prisma chosen, миграция Knex → P2
 - ⚠️ Coverage 71% — целевой 80% (P2)
 

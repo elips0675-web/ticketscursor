@@ -39,7 +39,7 @@
 | **При коммите** | Husky → lint-staged | `eslint --fix` + `prettier --write` на изменённых файлах |
 | **В CI (GitHub Actions)** | `tsc --noEmit` | TypeScript strict type-check |
 | | `eslint . --max-warnings 100` | Синтаксис, неисп. переменные, импорты |
-| | `vitest run` | Юнит-тесты (411 клиентских + 451 серверных) |
+| | `vitest run` | Юнит-тесты (485 клиентских + 523 серверных) |
 | | `vite build` | Сборка production |
 | **Тестовая БД** | `vitest.global-setup.js` | Создаёт `servicedesk_test`, мигрирует, сидит, фиксит колонки |
 | **Rate limiter** | `app.js` | Отключён при `NODE_ENV=test` через `skip` |
@@ -358,4 +358,16 @@ docker compose up -d --build
 - **VAPID try-catch**: push.js не падает без VAPID ключей
 - **QueueScheduler mock**: добавлен в bullMqMock для тестов
 - **Тесты**: сервер 346/346, клиент 366/366, Vite build ✅
+
+### Этап 31 — Email Ingestion (IMAP, ~60%), Custom Fields, SLA/CSAT, тесты +15
+- **email-ingestion.service.js**: IMAP polling (`imapflow`), парсинг (`mailparser`), создание тикетов из писем, поиск/создание employee по email, auto-reply
+- **Миграция**: `024_email_ingestion.sql` — `email_message_id` на `tickets` для thread-связки
+- **Admin routes**: `GET /api/admin/imap/status`, `POST /api/admin/imap/test`; IMAP settings в `ALLOWED_SETTINGS`
+- **background.js**: `startImapPolling()` + `stopImapPolling()` интегрированы
+- **Тесты**: 15 unit-тестов `email-ingestion.service.test.js` (extractTicketReference, stripTicketReference, getImapConfig)
+- **Custom Fields**: `custom_field_definitions` + `custom_field_values` таблицы, service + API + UI полностью
+- **SLA pause/business hours**: `sla.service.js`, пауза при «Ожидает ответа клиента», бизнес-часы Mon-Fri 9-18
+- **CSAT**: `csat.service.js`, auto-опрос при закрытии, метрика в дашборде
+- **vitest.global-setup.js**: `email_message_id`, `custom_field_definitions`, `custom_field_values` в test DB
+- **Тесты**: сервер 523/523 (35 файлов), клиент 485 passing (102 файла), Vite build ✅
 - **Документация**: CHANGELOG, AGENTS, context, PLAYBOOK, README обновлены

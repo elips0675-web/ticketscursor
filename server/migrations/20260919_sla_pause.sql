@@ -1,0 +1,2 @@
+ALTER TABLE tickets ADD COLUMN sla_paused_at DATETIME NULL;
+ALTER TABLE tickets ADD COLUMN sla_accumulated_ms INT NOT NULL DEFAULT 0;

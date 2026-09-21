@@ -8,7 +8,16 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useTickets } from '@/context/ticket-context'
 import { ArrowLeft, Monitor, Send } from 'lucide-react'
+import { api } from '@/lib/api'
 import type { TicketPriority } from '@/types'
+
+interface CustomFieldDef {
+  id: number
+  name: string
+  type: string
+  options: string[] | null
+  required: boolean
+}
 
 export default function NewTicket() {
   const { t } = useTranslation()
@@ -21,6 +30,8 @@ export default function NewTicket() {
   const [tagsText, setTagsText] = useState('')
   const [computerName, setComputerName] = useState('')
   const [userAccount, setUserAccount] = useState('')
+  const [customFieldDefs, setCustomFieldDefs] = useState<CustomFieldDef[]>([])
+  const [customFieldValues, setCustomFieldValues] = useState<Record<number, string>>({})
 
   useEffect(() => {
     const saved = localStorage.getItem('sysInfo')
@@ -30,12 +41,23 @@ export default function NewTicket() {
       if (cn) setComputerName(cn)
       if (ua) setUserAccount(ua)
     }
+    api
+      .get('/tickets/custom-fields')
+      .then((data) => setCustomFieldDefs(data || []))
+      .catch(() => {})
   }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim() || !description.trim()) return
-    const tags = tagsText.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 20)
+    const tags = tagsText
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 20)
+    const cfPayload = Object.entries(customFieldValues)
+      .filter(([, v]) => v !== '')
+      .map(([fieldId, value]) => ({ fieldId: Number(fieldId), value }))
     createTicket({
       title,
       description,
@@ -44,6 +66,7 @@ export default function NewTicket() {
       tags: tags.length > 0 ? tags : undefined,
       computerName: computerName || undefined,
       userAccount: userAccount || undefined,
+      customFields: cfPayload.length > 0 ? cfPayload : undefined,
     })
     navigate('/tickets')
   }
@@ -124,6 +147,59 @@ export default function NewTicket() {
                 placeholder={t('tickets.tagsPlaceholder')}
               />
             </div>
+
+            {customFieldDefs.length > 0 && (
+              <div className="space-y-3">
+                <label className="text-sm font-bold">Additional Fields</label>
+                {customFieldDefs.map((f) => (
+                  <div key={f.id} className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      {f.name} {f.required && <span className="text-destructive">*</span>}
+                    </label>
+                    {f.type === 'select' ? (
+                      <Select
+                        value={customFieldValues[f.id] || ''}
+                        onValueChange={(v) => setCustomFieldValues((p) => ({ ...p, [f.id]: v }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {f.options?.map((opt) => (
+                            <SelectItem key={opt} value={opt}>
+                              {opt}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : f.type === 'textarea' ? (
+                      <Textarea
+                        value={customFieldValues[f.id] || ''}
+                        onChange={(e) => setCustomFieldValues((p) => ({ ...p, [f.id]: e.target.value }))}
+                      />
+                    ) : f.type === 'checkbox' ? (
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={customFieldValues[f.id] === 'true'}
+                          onChange={(e) =>
+                            setCustomFieldValues((p) => ({ ...p, [f.id]: e.target.checked ? 'true' : '' }))
+                          }
+                        />
+                        <span className="text-sm">{f.name}</span>
+                      </label>
+                    ) : (
+                      <Input
+                        type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}
+                        value={customFieldValues[f.id] || ''}
+                        onChange={(e) => setCustomFieldValues((p) => ({ ...p, [f.id]: e.target.value }))}
+                        required={f.required}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="space-y-1.5 p-3 rounded-lg bg-muted/30">
               <label className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">

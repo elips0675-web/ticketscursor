@@ -2,7 +2,10 @@
   "name": "tickets-server",
   "version": "1.9.0",
   "type": "module",
-  "engines": { "node": ">=22.0.0", "npm": ">=10.0.0" },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
@@ -29,9 +32,11 @@
     "express-validator": "^7.3.2",
     "file-type": "^22.0.1",
     "helmet": "^8.2.0",
+    "imapflow": "^2.0.5",
     "ioredis": "^5.11.1",
     "jsonwebtoken": "^9.0.2",
     "knex": "^3.3.0",
+    "mailparser": "^3.9.28",
     "meilisearch": "^0.59.0",
     "multer": "^2.2.0",
     "mysql2": "^3.11.0",

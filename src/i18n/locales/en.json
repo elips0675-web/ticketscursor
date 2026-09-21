@@ -478,9 +478,25 @@
     "emailTemplates": "Email Templates",
     "emailTemplatesSubtitle": "Use {{variable}} placeholders — they will be replaced with actual values when sending",
     "cannedResponses": "Canned Responses",
+    "customFields": "Custom Fields",
     "cannedTitle": "Template Title",
     "cannedCategory": "Category",
     "cannedText": "Template Text",
-    "cannedEmpty": "No canned responses yet"
+    "cannedEmpty": "No canned responses yet",
+    "imapSettings": "Email (IMAP)",
+    "imapSubtitle": "Automatically create tickets from incoming emails to support@. Emails are parsed, tickets are created, and email replies are added as comments.",
+    "imapHost": "IMAP Host",
+    "imapPort": "IMAP Port",
+    "imapUser": "IMAP User",
+    "imapPass": "IMAP Password",
+    "imapConfigured": "IMAP configured",
+    "imapNotConfigured": "IMAP not configured",
+    "imapPolling": "Email polling",
+    "imapPollingOn": "Active (every 2 min)",
+    "imapPollingOff": "Inactive",
+    "imapTestBtn": "Test",
+    "imapTesting": "Testing…",
+    "imapTestOk": "Connection successful",
+    "imapTestFail": "Connection failed"
   }
 }

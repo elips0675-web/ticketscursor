@@ -2,11 +2,11 @@
 
 ## Текущее состояние
 
-- **Фронт**: 397 теста (52 suite)
-- **Сервер**: 436 тестов (28 suites)
-- **E2E**: 17/17 страниц ALL OK (check-console.mjs)
-- **Prisma моделей**: 18 (включая event_outbox)
-- **API endpoints**: 60+ (Swagger + Health probes + k6 metrics)
+- **Фронт**: 485 тестов (102 suite)
+- **Сервер**: 523 тестов (35 suites)
+- **E2E**: 17/17 страниц ALL OK (check-console.mjs) + 8 user-flow (playwright)
+- **Prisma моделей**: 20 (включая event_outbox, custom_field_definitions, custom_field_values)
+- **API endpoints**: 65+ (Swagger + Health probes + k6 metrics + IMAP admin routes)
 - **ESLint**: 0 errors, 10 warnings (pre-existing)
 - **MySQL**: запущен (Laragon), БД servicedesk
 - **API**: порт 4000, Vite proxy 5173
@@ -205,3 +205,41 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 - MSW-хендлеры для всех time-эндпоинтов; тесты в `TicketDetail.test.tsx` (+4)
 
 **Тесты:** сервер 413/413 (+19: 14 time.service + 5 API), клиент 393/393 (+4); tsc чист, vite build OK, lint 0 новых ошибок
+
+## Email Ingestion (IMAP) — реализация (v1.9.0+, ~60%)
+
+**Что делает:** письма на support@ → автоматически создаются тикеты. Ответы на письма → комментарии к тикету (threading через In-Reply-To).
+
+**Backend:**
+- `server/src/services/email-ingestion.service.js` — IMAP polling (`imapflow`), парсинг писем (`mailparser`), `extractTicketReference` (ищет `[Ticket #N]` в теме), `stripTicketReference`, `getImapConfig`, `processEmailMessage` (создание тикета + employee по email), `testImapConnection`, `getEmailStats`
+- Миграция `024_email_ingestion.sql` — колонка `email_message_id VARCHAR(500)` на `tickets` для thread-связки
+- `server/src/routes/admin.js` — `GET /api/admin/imap/status` (статистика писем), `POST /api/admin/imap/test` (проверка IMAP-соединения)
+- `ALLOWED_SETTINGS` расширен: `IMAP_HOST`, `IMAP_PORT`, `IMAP_USER`, `IMAP_PASS`
+- `server/src/background.js` — `startImapPolling()` при старте сервера, `stopImapPolling()` при shutdown
+
+**Осталось (~40%):**
+- Reply threading (In-Reply-To → поиск тикета по `email_message_id`)
+- HTML/plain-text multipart парсинг
+- Admin UI для IMAP settings (в `AdminSettings.tsx`)
+- Attachment handling (вложения → files)
+- Тесты reply threading
+
+**Тесты:** 15 unit-тестов `email-ingestion.service.test.js` (extractTicketReference, stripTicketReference, getImapConfig)
+
+## SLA Pause / Business Hours — реализация (v1.9.0)
+
+**Что делает:** SLA-таймеры считаются только в рабочие часы (Mon-Fri 9:00-18:00). Статус «Ожидает ответа клиента» → SLA на паузе.
+
+**Backend:**
+- `server/src/services/sla.service.js` — `addBusinessHours()`, `isWithinBusinessHours()`, `getBusinessHoursSettings()`
+- `server/src/routes/tickets.js` — проверка `sla_paused_at` при обновлении статуса
+- `server/src/background.js` — SLA check учитывает бизнес-часы
+
+## CSAT — реализация (v1.9.0)
+
+**Что делает:** после закрытия тикета отправляется email-опрос «оцените решение» (1-5 звёзд). Метрика в дашборде.
+
+**Backend:**
+- `server/src/services/csat.service.js` — `createCsatSurvey()`, `getCsatResponses()`, `getCsatStats()`
+- `server/src/routes/tickets.js` — интеграция при статусе `resolved`
+- `server/src/email.js` — `sendCsatSurvey()`

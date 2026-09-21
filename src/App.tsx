@@ -38,9 +38,11 @@ const AdminPush = lazy(() => import('@/pages/AdminPush'))
 const AdminSettings = lazy(() => import('@/pages/AdminSettings'))
 const AdminAudit = lazy(() => import('@/pages/AdminAudit'))
 const AdminCannedResponses = lazy(() => import('@/pages/AdminCannedResponses'))
+const AdminCustomFields = lazy(() => import('@/pages/AdminCustomFields'))
 const WikiPage = lazy(() => import('@/pages/Wiki'))
 const SearchPage = lazy(() => import('@/pages/Search'))
 const FilesPage = lazy(() => import('@/pages/Files'))
+const CsatisfactionPage = lazy(() => import('@/pages/Csatisfaction'))
 
 function Page({ children }: { children: ReactNode }) {
   return <ErrorBoundary>{children}</ErrorBoundary>
@@ -183,6 +185,14 @@ export default function App() {
                           </Page>
                         }
                       />
+                      <Route
+                        path="custom-fields"
+                        element={
+                          <Page>
+                            <AdminCustomFields />
+                          </Page>
+                        }
+                      />
                     </Route>
 
                     <Route element={<AppLayout />}>
@@ -319,6 +329,14 @@ export default function App() {
                         element={
                           <Page>
                             <SearchPage />
+                          </Page>
+                        }
+                      />
+                      <Route
+                        path="/csat/:token"
+                        element={
+                          <Page>
+                            <CsatisfactionPage />
                           </Page>
                         }
                       />

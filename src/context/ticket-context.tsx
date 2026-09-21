@@ -35,6 +35,7 @@ interface TicketContextType {
     tags?: string[]
     computerName?: string
     userAccount?: string
+    customFields?: { fieldId: number; value: string }[]
   }) => Promise<void>
 }
 
@@ -398,6 +399,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       tags?: string[]
       computerName?: string
       userAccount?: string
+      customFields?: { fieldId: number; value: string }[]
     }) =>
       authFetch(`${API_URL}/tickets`, token, {
         method: 'POST',
@@ -483,6 +485,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       tags?: string[]
       computerName?: string
       userAccount?: string
+      customFields?: { fieldId: number; value: string }[]
     }) => createTicketMutation.mutateAsync(data),
     [createTicketMutation],
   )

@@ -1,5 +1,5 @@
-===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL, 411 тестов) =====
-Стек: Vitest 4.1.10, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
+===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL, 485 тестов) =====
+Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
 
 ===== ФАЙЛЫ (реальные, 13 штук) =====

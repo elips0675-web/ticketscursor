@@ -16,6 +16,28 @@ export async function setup() {
   await fix.execute('ALTER TABLE employees MODIFY COLUMN role VARCHAR(20) NOT NULL')
   await fix.execute('ALTER TABLE tickets MODIFY COLUMN status VARCHAR(20) NOT NULL')
   await fix.execute('ALTER TABLE tickets MODIFY COLUMN priority VARCHAR(20) NOT NULL')
+  await fix.execute('ALTER TABLE tickets ADD COLUMN sla_paused_at DATETIME NULL')
+  await fix.execute('ALTER TABLE tickets ADD COLUMN sla_accumulated_ms INT NOT NULL DEFAULT 0')
+  await fix.execute('ALTER TABLE tickets ADD COLUMN email_message_id VARCHAR(500) DEFAULT NULL')
+  await fix.execute(`CREATE TABLE IF NOT EXISTS custom_field_definitions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    field_type VARCHAR(50) NOT NULL DEFAULT 'text',
+    options JSON,
+    required TINYINT(1) NOT NULL DEFAULT 0,
+    sort_order INT NOT NULL DEFAULT 0,
+    enabled TINYINT(1) NOT NULL DEFAULT 1,
+    created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
+    updated_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3)
+  )`)
+  await fix.execute(`CREATE TABLE IF NOT EXISTS custom_field_values (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ticket_id INT NOT NULL,
+    definition_id INT NOT NULL,
+    value TEXT,
+    created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
+    updated_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3)
+  )`)
   await fix.end()
 
   execSync('npx knex seed:run --knexfile knexfile.js', { stdio: 'pipe', env: knexEnv })

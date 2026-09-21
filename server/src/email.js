@@ -43,3 +43,34 @@ export async function sendTicketNotification({ to, subject, text }) {
     logger.error('Email send error:', err)
   }
 }
+
+export async function sendCsatSurvey({ to, ticketTitle, surveyUrl }) {
+  const t = await getTransporter()
+  if (!t) {
+    logger.info(`CSAT survey skipped (no SMTP): ticket="${ticketTitle}" to=${to} url=${surveyUrl}`)
+    return
+  }
+  try {
+    const db = await getSettings()
+    const user = db.SMTP_USER || process.env.SMTP_USER
+    const from = db.SMTP_FROM || process.env.SMTP_FROM || user
+    const companyName = db.COMPANY_NAME || 'Service Desk'
+    const subject = `${companyName} — Оцените качество обслуживания`
+    const text = [
+      `Здравствуйте!`,
+      ``,
+      `Ваш тикет «${ticketTitle}» был закрыт.`,
+      `Пожалуйста, оцените качество обслуживания по шкале от 1 до 5:`,
+      ``,
+      surveyUrl,
+      ``,
+      `Спасибо за обратную связь!`,
+      ``,
+      `— ${companyName}`,
+    ].join('\n')
+    await t.sendMail({ from, to, subject, text })
+    logger.info(`CSAT survey sent to ${to}: ticket="${ticketTitle}"`)
+  } catch (err) {
+    logger.error('CSAT survey email error:', err)
+  }
+}

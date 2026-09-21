@@ -17,6 +17,12 @@ vi.mock('../../prisma.js', () => ({
 
 vi.mock('../../settings.js', () => ({ getSettings: vi.fn().mockResolvedValue({}) }))
 
+vi.mock('../../sla.js', () => ({
+  addBusinessHours: vi.fn((start, hours) => new Date(start.getTime() + hours * 3600000)),
+  getRemainingBusinessMs: vi.fn(),
+  isWithinBusinessHours: vi.fn().mockReturnValue(true),
+}))
+
 import prisma from '../../prisma.js'
 import { getSettings } from '../../settings.js'
 import {
@@ -97,7 +103,10 @@ describe('SLA — due_at on create', () => {
 
 describe('SLA — first_response_at', () => {
   it('sets first_response_at on status change to in_progress', async () => {
-    prisma.tickets.findUnique.mockResolvedValue({ status: 'open', first_response_at: null, resolved_at: null })
+    prisma.tickets.findUnique.mockResolvedValue({
+      status: 'open', first_response_at: null, resolved_at: null,
+      sla_paused_at: null, sla_accumulated_ms: 0, due_at: new Date(), created_at: new Date(), priority: 'medium', category: 'support',
+    })
     await updateTicketStatus(1, 'in_progress')
     const updateData = prisma.tickets.update.mock.calls[0][0].data
     expect(updateData.first_response_at).toBeInstanceOf(Date)
@@ -105,28 +114,40 @@ describe('SLA — first_response_at', () => {
 
   it('does not override existing first_response_at', async () => {
     const existing = new Date(Date.now() - 86400000)
-    prisma.tickets.findUnique.mockResolvedValue({ status: 'open', first_response_at: existing, resolved_at: null })
+    prisma.tickets.findUnique.mockResolvedValue({
+      status: 'open', first_response_at: existing, resolved_at: null,
+      sla_paused_at: null, sla_accumulated_ms: 0, due_at: new Date(), created_at: new Date(), priority: 'medium', category: 'support',
+    })
     await updateTicketStatus(1, 'in_progress')
     const updateData = prisma.tickets.update.mock.calls[0][0].data
     expect(updateData).not.toHaveProperty('first_response_at')
   })
 
   it('throws for invalid transition', async () => {
-    prisma.tickets.findUnique.mockResolvedValue({ status: 'open', first_response_at: null, resolved_at: null })
+    prisma.tickets.findUnique.mockResolvedValue({
+      status: 'open', first_response_at: null, resolved_at: null,
+      sla_paused_at: null, sla_accumulated_ms: 0, due_at: new Date(), created_at: new Date(), priority: 'medium', category: 'support',
+    })
     await expect(updateTicketStatus(1, 'resolved')).rejects.toThrow('Invalid status transition')
   })
 })
 
 describe('SLA — resolved_at', () => {
   it('sets resolved_at on status change to resolved', async () => {
-    prisma.tickets.findUnique.mockResolvedValue({ status: 'in_progress', first_response_at: new Date(), resolved_at: null })
+    prisma.tickets.findUnique.mockResolvedValue({
+      status: 'in_progress', first_response_at: new Date(), resolved_at: null,
+      sla_paused_at: null, sla_accumulated_ms: 0, due_at: new Date(), created_at: new Date(), priority: 'medium', category: 'support',
+    })
     await updateTicketStatus(1, 'resolved')
     const updateData = prisma.tickets.update.mock.calls[0][0].data
     expect(updateData.resolved_at).toBeInstanceOf(Date)
   })
 
   it('clears resolved_at on reopen', async () => {
-    prisma.tickets.findUnique.mockResolvedValue({ status: 'resolved', first_response_at: new Date(), resolved_at: new Date() })
+    prisma.tickets.findUnique.mockResolvedValue({
+      status: 'resolved', first_response_at: new Date(), resolved_at: new Date(),
+      sla_paused_at: null, sla_accumulated_ms: 0, due_at: new Date(), created_at: new Date(), priority: 'medium', category: 'support',
+    })
     await updateTicketStatus(1, 'reopened')
     const updateData = prisma.tickets.update.mock.calls[0][0].data
     expect(updateData.resolved_at).toBeNull()
@@ -135,7 +156,10 @@ describe('SLA — resolved_at', () => {
 
 describe('SLA — priority change recalculates due_at', () => {
   it('updates due_at when priority changes', async () => {
-    prisma.tickets.findUnique.mockResolvedValue({ priority: 'low', category: 'support' })
+    prisma.tickets.findUnique.mockResolvedValue({
+      priority: 'low', category: 'support',
+      sla_paused_at: null, sla_accumulated_ms: 0, created_at: new Date(),
+    })
     await updateTicketPriority(1, 'critical')
     const updateData = prisma.tickets.update.mock.calls[0][0].data
     expect(updateData.due_at).toBeInstanceOf(Date)
@@ -150,8 +174,9 @@ describe('getSlaStats', () => {
     expect(stats).toHaveProperty('total')
     expect(stats).toHaveProperty('overdue')
     expect(stats).toHaveProperty('onTime')
+    expect(stats).toHaveProperty('paused')
     expect(stats).toHaveProperty('noSla')
-    expect(prisma.tickets.count).toHaveBeenCalledTimes(4)
+    expect(prisma.tickets.count).toHaveBeenCalledTimes(5)
   })
 })
 
@@ -329,5 +354,98 @@ describe('bulkUpdateTickets', () => {
     ])
     prisma.employees.findUnique.mockResolvedValue(null)
     await expect(bulkUpdateTickets({ ids: [1], action: 'assign', employeeId: 999 })).rejects.toMatchObject({ statusCode: 404 })
+  })
+})
+
+describe('SLA — pause on waiting_for_customer', () => {
+  it('sets sla_paused_at when transitioning to waiting_for_customer', async () => {
+    prisma.tickets.findUnique.mockResolvedValue({
+      status: 'in_progress', first_response_at: new Date(), resolved_at: null,
+      sla_paused_at: null, sla_accumulated_ms: 0, due_at: new Date(), created_at: new Date(), priority: 'medium', category: 'support',
+    })
+    await updateTicketStatus(1, 'waiting_for_customer')
+    const updateData = prisma.tickets.update.mock.calls[0][0].data
+    expect(updateData.sla_paused_at).toBeInstanceOf(Date)
+    expect(updateData.status).toBe('waiting_for_customer')
+  })
+
+  it('does not re-pause if already paused', async () => {
+    const existingPause = new Date(Date.now() - 60000)
+    prisma.tickets.findUnique.mockResolvedValue({
+      status: 'waiting_for_customer', first_response_at: new Date(), resolved_at: null,
+      sla_paused_at: existingPause, sla_accumulated_ms: 0, due_at: new Date(), created_at: new Date(), priority: 'medium', category: 'support',
+    })
+    await updateTicketStatus(1, 'waiting_for_customer')
+    const updateData = prisma.tickets.update.mock.calls[0][0].data
+    expect(updateData).not.toHaveProperty('sla_paused_at')
+  })
+})
+
+describe('SLA — resume from waiting_for_customer', () => {
+  it('clears sla_paused_at and recalculates due_at on resume', async () => {
+    const created = new Date(Date.now() - 3600000)
+    const paused = new Date(Date.now() - 1800000)
+    prisma.tickets.findUnique.mockResolvedValue({
+      status: 'waiting_for_customer', first_response_at: new Date(), resolved_at: null,
+      sla_paused_at: paused, sla_accumulated_ms: 0, due_at: new Date(Date.now() + 7200000),
+      created_at: created, priority: 'medium', category: 'support',
+    })
+    await updateTicketStatus(1, 'in_progress')
+    const updateData = prisma.tickets.update.mock.calls[0][0].data
+    expect(updateData.sla_paused_at).toBeNull()
+    expect(updateData.due_at).toBeInstanceOf(Date)
+    expect(updateData.status).toBe('in_progress')
+  })
+
+  it('accumulates paused time correctly across multiple pauses', async () => {
+    const created = new Date(Date.now() - 7200000)
+    const paused = new Date(Date.now() - 3600000)
+    prisma.tickets.findUnique.mockResolvedValue({
+      status: 'waiting_for_customer', first_response_at: new Date(), resolved_at: null,
+      sla_paused_at: paused, sla_accumulated_ms: 1800000, due_at: new Date(Date.now() + 3600000),
+      created_at: created, priority: 'high', category: 'bug',
+    })
+    await updateTicketStatus(1, 'in_progress')
+    const updateData = prisma.tickets.update.mock.calls[0][0].data
+    expect(updateData.sla_accumulated_ms).toBe(1800000 + 3600000)
+    expect(updateData.sla_paused_at).toBeNull()
+  })
+})
+
+describe('SLA — waiting_for_customer valid transitions', () => {
+  it('allows waiting_for_customer from open', async () => {
+    prisma.tickets.findUnique.mockResolvedValue({
+      status: 'open', first_response_at: null, resolved_at: null,
+      sla_paused_at: null, sla_accumulated_ms: 0, due_at: new Date(), created_at: new Date(), priority: 'medium', category: 'support',
+    })
+    await updateTicketStatus(1, 'waiting_for_customer')
+    expect(prisma.tickets.update).toHaveBeenCalled()
+  })
+
+  it('allows waiting_for_customer from reopened', async () => {
+    prisma.tickets.findUnique.mockResolvedValue({
+      status: 'reopened', first_response_at: new Date(), resolved_at: null,
+      sla_paused_at: null, sla_accumulated_ms: 0, due_at: new Date(), created_at: new Date(), priority: 'medium', category: 'support',
+    })
+    await updateTicketStatus(1, 'waiting_for_customer')
+    expect(prisma.tickets.update).toHaveBeenCalled()
+  })
+
+  it('allows reopening from waiting_for_customer', async () => {
+    prisma.tickets.findUnique.mockResolvedValue({
+      status: 'waiting_for_customer', first_response_at: new Date(), resolved_at: null,
+      sla_paused_at: new Date(), sla_accumulated_ms: 1000, due_at: new Date(), created_at: new Date(), priority: 'medium', category: 'support',
+    })
+    await updateTicketStatus(1, 'reopened')
+    const updateData = prisma.tickets.update.mock.calls[0][0].data
+    expect(updateData.status).toBe('reopened')
+  })
+
+  it('rejects invalid transition: waiting_for_customer → resolved', async () => {
+    prisma.tickets.findUnique.mockResolvedValue({
+      status: 'waiting_for_customer', first_response_at: new Date(), resolved_at: null,
+      sla_paused_at: new Date(), sla_accumulated_ms: 0, due_at: new Date(), created_at: new Date(), priority: 'medium', category: 'support',
+    })
+    await expect(updateTicketStatus(1, 'resolved')).rejects.toThrow('Invalid status transition')
   })
 })

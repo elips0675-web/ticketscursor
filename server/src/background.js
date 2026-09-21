@@ -2,6 +2,7 @@ import logger from './logger.js'
 import { sendTicketNotification } from './email.js'
 import { notifySlaBreached, notifySlaEscalated } from './notify.js'
 import { getSettings } from './settings.js'
+import { startImapPolling, stopImapPolling } from './services/email-ingestion.service.js'
 
 const CLEANUP_INTERVAL = 6 * 60 * 60 * 1000
 const SLA_CHECK_INTERVAL = 15 * 60 * 1000
@@ -98,6 +99,7 @@ export function stopBackgroundJobs() {
   if (cleanupTimer) clearInterval(cleanupTimer)
   if (slaTimer) clearInterval(slaTimer)
   if (dlqAlertTimer) clearInterval(dlqAlertTimer)
+  stopImapPolling()
 }
 
 export async function setupBackgroundJobs(prisma) {
@@ -164,6 +166,7 @@ export async function setupBackgroundJobs(prisma) {
     logger.warn('Redis not configured — background jobs using setInterval with in-memory retry + DLQ')
     warnAdminRedisMissing(prisma)
   }
+  startImapPolling()
 }
 
 async function runCleanup(prisma) {
@@ -182,6 +185,7 @@ async function runSlaCheck(prisma) {
       status: { in: ['open', 'in_progress'] },
       due_at: { lt: new Date() },
       deleted_at: null,
+      sla_paused_at: null,
     },
     select: { id: true, priority: true, due_at: true, escalation_level: true, escalated_at: true },
     take: 200,

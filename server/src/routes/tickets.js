@@ -11,6 +11,8 @@ import { invalidateCache } from '../cache.js'
 import { enqueueEvent } from '../outbox.js'
 import { logAudit } from '../audit.js'
 import { notifyTicketCreated, notifyStatusChanged, notifyPriorityChanged, notifyTicketAssigned, notifyTicketMessage, notifyTicketMention } from '../notify.js'
+import { createSurvey } from '../services/csat.service.js'
+import { sendCsatSurvey } from '../email.js'
 import { createTicketValidation, updateStatusValidation, updatePriorityValidation, assignTicketValidation, updateTagsValidation, bulkTicketValidation, addMessageValidation, addTimeValidation } from '../validate.js'
 import logger from '../logger.js'
 import { idempotent } from '../middleware/idempotency.js'
@@ -41,6 +43,7 @@ import {
   stopTimer,
 } from '../services/time.service.js'
 import { generateAssistantSuggestion } from '../services/assistant.service.js'
+import { listFieldDefinitions, getTicketCustomFields, setTicketCustomFields } from '../services/custom-fields.service.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ticketUploads = path.join(__dirname, '..', '..', 'uploads', 'tickets')
@@ -98,6 +101,17 @@ router.get('/sla/stats', requireRole('admin', 'senior_agent'), async (req, res) 
   } catch (err) {
     logger.error('SLA stats error:', err)
     res.status(500).json({ success: false, message: 'Failed to fetch SLA stats' })
+  }
+})
+
+router.get('/custom-fields', async (req, res) => {
+  try {
+    const category = req.query.category || undefined
+    const data = await listFieldDefinitions(category)
+    res.json({ success: true, data })
+  } catch (err) {
+    logger.error('Custom fields list error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch custom fields' })
   }
 })
 
@@ -178,6 +192,26 @@ router.put('/:id/status', requireRole('admin', 'senior_agent'), updateStatusVali
     } catch (notifyErr) {
       logger.warn('notifyStatusChanged failed:', notifyErr.message)
     }
+    if ((status === 'resolved' || status === 'closed') && old.status !== 'resolved' && old.status !== 'closed') {
+      try {
+        const ticket = await prisma.tickets.findUnique({
+          where: { id: ticketId },
+          select: { title: true, created_by: true, created_by_employee: { select: { email: true, name: true } } },
+        })
+        if (ticket?.created_by_employee?.email) {
+          const survey = await createSurvey(ticketId, ticket.created_by_employee.email)
+          const baseUrl = process.env.BASE_URL || process.env.CORS_ORIGIN?.split(',')[0]?.trim() || 'http://localhost:5173'
+          const surveyUrl = `${baseUrl}/csat/${survey.token}`
+          await sendCsatSurvey({
+            to: ticket.created_by_employee.email,
+            ticketTitle: ticket.title,
+            surveyUrl,
+          })
+        }
+      } catch (csatErr) {
+        logger.warn('CSAT survey creation failed:', csatErr.message)
+      }
+    }
     invalidateCache('cache:/api/tickets*')
     res.json({ success: true, data: { id: ticketId, status } })
   } catch (err) {
@@ -244,6 +278,24 @@ router.put('/:id/tags', requireRole('admin', 'senior_agent', 'agent'), updateTag
   } catch (err) {
     logger.error('Update ticket tags error:', err)
     res.status(500).json({ success: false, message: 'Failed to update tags' })
+  }
+})
+
+router.put('/:id/custom-fields', requireRole('admin', 'senior_agent', 'agent'), async (req, res) => {
+  const ticketId = Number(req.params.id)
+  const { fields } = req.body
+  try {
+    const ticket = await prisma.tickets.findUnique({ where: { id: ticketId }, select: { id: true } })
+    if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    await setTicketCustomFields(ticketId, fields)
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'custom_fields_updated', entityType: 'ticket', entityId: ticketId, details: { fieldCount: fields?.length || 0 } })
+    invalidateCache('cache:/api/tickets*')
+    const updatedFields = await getTicketCustomFields(ticketId)
+    res.json({ success: true, data: updatedFields })
+  } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ success: false, message: err.message })
+    logger.error('Update custom fields error:', err)
+    res.status(500).json({ success: false, message: 'Failed to update custom fields' })
   }
 })
 

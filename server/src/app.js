@@ -49,6 +49,7 @@ import pushRouter from './routes/push.js'
 import authRouter from './routes/auth.js'
 import adminRouter from './routes/admin.js'
 import cannedResponsesRouter from './routes/canned-responses.js'
+import csatRouter from './routes/csat.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './swagger.js'
 import path from 'path'
@@ -144,6 +145,7 @@ mount('/push', pushRouter, apiLimiter)
 mount('/search', searchRouter, apiLimiter)
 mount('/admin', adminRouter, adminLimiter)
 mount('/canned-responses', cannedResponsesRouter, apiLimiter)
+mount('/csat', csatRouter)
 
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customCss: '.swagger-ui .topbar { display: none }' }))
 

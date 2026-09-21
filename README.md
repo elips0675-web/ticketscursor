@@ -30,6 +30,10 @@
 | **Dead Letter Queue** | BullMQ retry+DLQ + in-memory `withRetry()` fallback, алерты при >10 failed задач/час |
 | **Feature Flags** | `useFeature()` hook, toggle UI в админке, кэш Redis 30с |
 | **SLA** | Мониторинг + оповещения о просрочках, пересчёт при смене приоритета |
+| **SLA Pause** | Пауза SLA в статусе «Ожидает ответа клиента», бизнес-часы (Mon-Fri 9-18) |
+| **CSAT** | Авто-опрос после закрытия тикета, метрика в дашборде |
+| **Custom Fields** | Конструктор кастомных полей (текст, число, дата, select, checkbox, textarea) |
+| **Email Ingestion** | IMAP polling — письма на support@ → тикеты, ответы → комментарии (в разработке) |
 | **Health / Readiness** | Probes для K8s — liveness + readiness endpoints |
 | **Load Testing** | k6 сценарии в `k6/` для тикетов, чатов, поиска |
 | **Grafana** | Дашборд с метриками API, WS, Redis, бизнес-показателями |

@@ -22,6 +22,7 @@ const ALLOWED_SETTINGS = [
   'AUTO_ASSIGN', 'SLA_RESPONSE_HOURS', 'SLA_ESCALATION_ENABLED', 'SLA_ESCALATION_HOURS',
   'LDAP_URL', 'LDAP_BASE_DN', 'LDAP_BIND_DN', 'LDAP_BIND_CREDENTIALS',
   'EMAIL_TEMPLATES',
+  'IMAP_HOST', 'IMAP_PORT', 'IMAP_USER', 'IMAP_PASS',
 ]
 
 router.get('/settings', async (req, res) => {
@@ -70,6 +71,28 @@ router.put('/settings', async (req, res) => {
   } catch (err) {
     logger.error('Settings update error:', err)
     res.status(500).json({ success: false, message: 'Failed to update settings' })
+  }
+})
+
+router.get('/imap/status', async (req, res) => {
+  try {
+    const { getEmailStats } = await import('../services/email-ingestion.service.js')
+    const stats = await getEmailStats()
+    res.json({ success: true, data: stats })
+  } catch (err) {
+    logger.error('IMAP status error:', err)
+    res.status(500).json({ success: false, message: 'Failed to get IMAP status' })
+  }
+})
+
+router.post('/imap/test', async (req, res) => {
+  try {
+    const { testImapConnection } = await import('../services/email-ingestion.service.js')
+    const result = await testImapConnection()
+    res.json({ success: true, data: result })
+  } catch (err) {
+    logger.error('IMAP test error:', err)
+    res.status(400).json({ success: false, message: err.message })
   }
 })
 
@@ -381,6 +404,81 @@ router.post('/employees/import', async (req, res) => {
   } catch (err) {
     logger.error('Employees import error:', err)
     res.status(500).json({ success: false, message: 'Ошибка импорта сотрудников' })
+  }
+})
+
+router.get('/custom-fields', async (req, res) => {
+  try {
+    const { listAllFieldDefinitions } = await import('../services/custom-fields.service.js')
+    const data = await listAllFieldDefinitions()
+    res.json({ success: true, data })
+  } catch (err) {
+    logger.error('Custom fields list error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch custom fields' })
+  }
+})
+
+router.post('/custom-fields', async (req, res) => {
+  try {
+    const { createFieldDefinition } = await import('../services/custom-fields.service.js')
+    const { name, type, options, required, category, sortOrder } = req.body
+    if (!name || !type) {
+      return res.status(400).json({ success: false, message: 'name and type are required' })
+    }
+    const field = await createFieldDefinition({ name, type, options, required, category, sortOrder })
+    res.status(201).json({ success: true, data: field })
+  } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ success: false, message: err.message })
+    logger.error('Custom field create error:', err)
+    res.status(500).json({ success: false, message: 'Failed to create custom field' })
+  }
+})
+
+router.put('/custom-fields/:id', async (req, res) => {
+  try {
+    const { updateFieldDefinition } = await import('../services/custom-fields.service.js')
+    const field = await updateFieldDefinition(Number(req.params.id), req.body)
+    if (!field) return res.status(404).json({ success: false, message: 'Field not found' })
+    res.json({ success: true, data: field })
+  } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ success: false, message: err.message })
+    logger.error('Custom field update error:', err)
+    res.status(500).json({ success: false, message: 'Failed to update custom field' })
+  }
+})
+
+router.delete('/custom-fields/:id', async (req, res) => {
+  try {
+    const { deleteFieldDefinition } = await import('../services/custom-fields.service.js')
+    const deleted = await deleteFieldDefinition(Number(req.params.id))
+    if (!deleted) return res.status(404).json({ success: false, message: 'Field not found' })
+    res.json({ success: true, data: { deleted: true } })
+  } catch (err) {
+    logger.error('Custom field delete error:', err)
+    res.status(500).json({ success: false, message: 'Failed to delete custom field' })
+  }
+})
+
+router.get('/csat/stats', async (req, res) => {
+  try {
+    const { getCsatStats } = await import('../services/csat.service.js')
+    const data = await getCsatStats()
+    res.json({ success: true, data })
+  } catch (err) {
+    logger.error('CSAT stats error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch CSAT stats' })
+  }
+})
+
+router.get('/csat/recent', async (req, res) => {
+  try {
+    const { getRecentSurveys } = await import('../services/csat.service.js')
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20))
+    const data = await getRecentSurveys(limit)
+    res.json({ success: true, data })
+  } catch (err) {
+    logger.error('CSAT recent error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch recent surveys' })
   }
 })
 

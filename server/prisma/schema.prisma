@@ -57,6 +57,8 @@ model tickets {
   resolved_at DateTime?
   escalated_at DateTime?
   escalation_level Int       @default(0)
+  sla_paused_at   DateTime?
+  sla_accumulated_ms Int     @default(0)
   tags        Json?
   created_at  DateTime? @default(now())
   updated_at  DateTime? @default(now())
@@ -67,6 +69,38 @@ model tickets {
   ticket_messages      ticket_messages[]
   time_entries         time_entries[]
   ticket_timers        ticket_timers[]
+  csat_surveys         csat_surveys[]
+  custom_field_values  custom_field_values[]
+}
+
+model custom_field_definitions {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(255)
+  type        String    @db.VarChar(20)
+  options     Json?
+  required    Boolean?  @default(false)
+  category    String?   @default("general") @db.VarChar(50)
+  sort_order  Int?      @default(0)
+  enabled     Boolean?  @default(true)
+  created_at  DateTime? @default(now())
+  updated_at  DateTime? @default(now())
+
+  values custom_field_values[]
+}
+
+model custom_field_values {
+  id              Int       @id @default(autoincrement())
+  field_id        Int
+  ticket_id       Int
+  value           String?   @db.Text
+  created_at      DateTime? @default(now())
+  updated_at      DateTime? @default(now())
+
+  field  custom_field_definitions? @relation(fields: [field_id], references: [id], onDelete: Cascade)
+  ticket tickets?                  @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+
+  @@unique([field_id, ticket_id])
+  @@index([ticket_id])
 }
 
 model time_entries {
@@ -326,6 +360,24 @@ model canned_responses {
   updated_at DateTime? @default(now())
 
   @@map("canned_responses")
+}
+
+model csat_surveys {
+  id          Int       @id @default(autoincrement())
+  ticket_id   Int
+  token       String    @unique @db.VarChar(100)
+  rating      Int?      @db.Int
+  comment     String?   @db.Text
+  requester_email String? @db.VarChar(255)
+  sent_at     DateTime?
+  responded_at DateTime?
+  created_at  DateTime? @default(now())
+
+  ticket tickets? @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+
+  @@index([ticket_id])
+  @@index([token])
+  @@map("csat_surveys")
 }
 
 model event_outbox {

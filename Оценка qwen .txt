@@ -1,0 +1,123 @@
+Комплексная оценка проекта Service Desk
+🎯 Общая оценка: 8.5 / 10
+Проект уровня production-ready enterprise с современным стеком, богатым функционалом и зрелой инженерной культурой. Ниже — детальный разбор.
+✅ Сильные стороны
+1. Стек — современный и актуальный (сент. 2026)
+Компонент
+Версия
+Оценка
+React
+19.1
+🟢 latest
+Vite
+8.0
+🟢 latest
+Tailwind
+4.1
+🟢 latest (v4 — значимый апгрейд)
+TypeScript
+5.9
+🟢 latest
+Express
+5.2
+🟢 latest (новая мажорка)
+Node.js
+≥22
+🟢 LTS
+Vitest
+4.1
+🟢 latest
+Zod
+4.4
+🟡 очень свежий, следить за breaking changes
+2. Функционал — enterprise-grade
+Real-time: Socket.IO + Redis adapter (горизонтальное масштабирование)
+Очереди: BullMQ для фоновых задач (SLA sweep, cleanup)
+Поиск: Meilisearch (не MySQL LIKE — правильно)
+Хранилище: AWS S3 + presigned URLs
+Мониторинг: Sentry (client + server)
+Notifications: web-push + Telegram bot + email (nodemailer)
+Auth: JWT + refresh tokens + LDAP + RBAC
+AI: AI-assistant с Wikipedia-источниками, feature flags (LaunchDarkly)
+SLA/ Kanban / Wiki / Audit log / i18n — полный набор
+3. Тестирование — зрелая пирамида
+Уровень
+Кол-во
+Качество
+Frontend unit/component
+397
+✅ реальные, не stub
+Server API + services
+436
+✅ интеграционные + юнит
+E2E (Playwright)
+36
+⚠️ smoke-уровень
+Load (k6 + Artillery)
+2 сценария
+⚠️ базовый
+Итого
+~870 тестов
+🟢 отлично
+4. Инфраструктура
+Docker (multi-stage, раздельные Dockerfile для api/client)
+CI/CD (GitHub Actions)
+Nginx reverse proxy
+Husky + lint-staged + Prettier + ESLint
+Миграции через Knex, seed-скрипты
+Скрипты backup/analytics/deploy
+⚠️ Архитектурные долги и риски
+🔴 Критично
+1. Двойной ORM: Prisma + Knex
+В server-package.json есть и prisma/@prisma/client, и knex/mysql2
+Это рассинхрон схем, двойная поддержка миграций, путаница в коде
+Рекомендация: выбрать один. Prisma — для типобезопасности, Knex — для сложных запросов. Идеально — мигрировать на Prisma полностью, Knex оставить только для миграций/seed.
+🟡 Средний приоритет
+2. E2E тесты — только smoke
+17 страниц проверены на check-console, но реальных user flows мало
+Рекомендация: добавить критические сценарии:
+Создание тикета → назначение → SLA → закрытие
+Real-time чат между двумя пользователями
+LDAP login flow
+3. Load tests — узкое покрытие
+Только tickets и chat
+Нет тестов для: auth, search (Meilisearch), file uploads, WebSocket на 1000+ соединений
+Рекомендация: добавить сценарий "100 одновременных создателей тикетов" и "WebSocket stress"
+4. Coverage 71% — можно выше
+Для enterprise-проекта целевой порог — 80%+ statements
+Рекомендация: дописать тесты для edge-cases в tickets.service, search.service, background-jobs
+🟢 Низкий приоритет, но важно
+5. Нет упоминаний:
+npm audit / Snyk в CI — security scanning
+API versioning (/api/v1/...) — при breaking changes будет больно
+Observability кроме Sentry (OpenTelemetry, Prometheus метрики)
+Rate limiting — есть express-rate-limit, но нет тестов на его поведение под нагрузкой
+Backup strategy — скрипт есть, но нет тестов на восстановление
+6. Свежие зависимости — риск breaking changes
+zod@4.4, express@5.2, vite@8 — все в первых мажорных/полумажорных версиях
+Рекомендация: закрепить lock-файл, добавить Renovate/Dependabot с группировкой обновлений
+📈 Сравнение с оценками других AI
+AI
+Оценка
+Вердикт
+Kimi
+7/10
+Занизил из-за ложного "200 stub-тестов"
+DeepSeek
+7/10
+Занизил, проблемы уже были исправлены
+Qwen
+8/10
+Ближе к истине, верно отметил Prisma+Knex
+Моя оценка
+8.5/10
+С учётом исправлений и зрелости инфраструктуры
+🎯 Топ-5 рекомендаций (roadmap)
+Унифицировать ORM — оставить Prisma как основной, Knex → только для миграций
+Поднять coverage до 80% — сфокусироваться на services/ и edge-cases
+Расширить E2E — 5-7 критических user flows с assertions, не только console-check
+Добавить security-scan в CI (npm audit --audit-level=high)
+Внедрить API versioning — пока проект молодой, это дёшево; потом — дорого
+💡 Итог
+Проект — крепкий середняк между "хорошим стартапом" и "enterprise-ready". Архитектура продуманная, стек современный, тесты осмысленные. Главная техническая проблема — двойной ORM, всё остальное — точечные улучшения.
+Если закрыть вопросы из раздела "архитектурные долги" — проект легко тянет на 9/10 и готов к масштабированию на тысячи пользователей.

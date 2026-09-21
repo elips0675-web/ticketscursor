@@ -59,8 +59,8 @@ Kimi проанализировал `frontend-tests.txt` и увидел ~100 з
 
 | Метрика | До (19.09 утро) | После (19.09 вечер) |
 |---------|-----------------|---------------------|
-| Frontend тесты | 397/397 (52 файла) | **411/411** (52 файла) ✅ |
-| Серверные тесты | 436/436 (28 файлов) | **451/451** (30 файлов) ✅ |
+| Frontend тесты | 397/397 (52 файла) | **485/485 passing** (102 файла) ✅ |
+| Серверные тесты | 436/436 (28 файлов) | **523/523** (35 файла) ✅ |
 | E2E тесты | smoke-only (36 tests) | +8 реальных user-flow ✅ |
 | ESLint | 0 errors | 0 errors ✅ |
 | tsc | 0 errors | 0 errors ✅ |
@@ -81,13 +81,14 @@ Kimi проанализировал `frontend-tests.txt` и увидел ~100 з
 
 | # | Задача | Дней | Почему критично |
 |---|--------|------|-----------------|
-| 1 | **SLA pause / business hours** | 3-5 | SLA-метрики врут без пауз. «Ожидает ответа клиента» → таймер стоит. Дедлайны только в рабочие часы |
-| 2 | **CSAT-опросы** | 5-7 | Email после закрытия → оценка 1-5 → метрика в дашборде. Без этого enterprise не продаётся |
-| 3 | **Custom fields (конструктор)** | 10 | Админ создаёт поля: текст, число, дата, select. Привязка к категориям. Без этого не продать enterprise |
-| 4 | **Email ingestion (IMAP)** | 10-15 | Письма на support@ → тикеты. Ответы → комментарии. **Все аналоги это имеют** |
+| 1 | **SLA pause / business hours** | 3-5 | SLA-метрики врут без пауз. «Ожидает ответа клиента» → таймер стоит. Дедлайны только в рабочие часы | ✅ **ГОТОВО** |
+| 2 | **CSAT-опросы** | 5-7 | Email после закрытия → оценка 1-5 → метрика в дашборде. Без этого enterprise не продаётся | ✅ **ГОТОВО** |
+| 3 | **Custom fields (конструктор)** | 10 | Админ создаёт поля: текст, число, дата, select. Привязка к категориям. Без этого не продать enterprise | ✅ **ГОТОВО** |
+| 4 | **Email ingestion (IMAP)** | 10-15 | Письма на support@ → тикеты. Ответы → комментарии. **Все аналоги это имеют** | ⚠️ **~60% ГОТОВО** (service + route + background + tests; UI + reply threading + multipart в процессе) |
 | 5 | **SSO: OIDC/SAML** | 10-15 | Keycloak/Entra ID. LDAP есть, но корпорации требуют SAML |
 
 **Итого: 5 задач, ~30-45 дней. Результат: SLA точность, метрики качества, enterprise-ядро.**
+**Выполнено: SLA pause/business hours + CSAT + Custom fields + Email ingestion (~60%). Осталось: Email ingestion доделать, SSO/SAML.**
 
 ---
 
@@ -216,10 +217,10 @@ Kimi проанализировал `frontend-tests.txt` и увидел ~100 з
 
 | Фича | Что это | Аналоги | Сложность | Наш статус |
 |-------|---------|---------|-----------|------------|
-| **Email ingestion (IMAP pipe)** | Письма на support@ → автоматически тикеты; ответы из письма → комментарии | Zendesk, osTicket, Zammad, GLPI — все | Высокая | ❌ Нет |
+| **Email ingestion (IMAP pipe)** | Письма на support@ → автоматически тикеты; ответы из письма → комментарии | Zendesk, osTicket, Zammad, GLPI — все | Высокая | ⚠️ ~60% (service + route + background + tests) |
 | **SSO: OIDC/SAML** | LDAP есть, но корпоративный сектор просит Keycloak/Entra ID (SAML/OIDC) | Jira SM, Zendesk, Zammad | Средняя | ❌ Только LDAP |
-| **SLA pause / business hours** | Пауза SLA в статусе «Ожидает ответа клиента»; дедлайны только в рабочие часы | Zendesk, Jira SM, Freshdesk | Средняя | ❌ Нет |
-| **CSAT-опрос после закрытия** | Авто-письмо «оцените решение», метрика в дашборде | Все | Низкая | ❌ Нет |
+| **SLA pause / business hours** | Пауза SLA в статусе «Ожидает ответа клиента»; дедлайны только в рабочие часы | Zendesk, Jira SM, Freshdesk | Средняя | ✅ **ГОТОВО** |
+| **CSAT-опрос после закрытия** | Авто-письмо «оцените решение», метрика в дашборде | Все | Низкая | ✅ **ГОТОВО** |
 | **Гостевой портал / self-service** | Клиент заходит без учётки, видит свои тикеты, KB с поиском | Все | Средняя | ❌ Нет |
 
 > Email ingestion и SLA-pause — самые частые причины, по которым внутренний helpdesk отклоняют в пользу покупного.
@@ -325,7 +326,7 @@ Kimi проанализировал `frontend-tests.txt` и увидел ~100 з
 | 1 | **Rules Engine / Автоматизация** | Визуальный редактор правил: «ЕСЛИ статус = open И прошло > 24ч → назначить manager». Webhooks на события. Шаблоны с переменными `{{ticket.id}}` | Jira Automation, Zendesk Triggers, Freshdesk Observer | 2-3 недели | ❌ Нет (BullMQ — хорошая основа) |
 | 2 | **Omnichannel inbox** | Единый inbox для email + Telegram + чата + web-форм. Склейка по email (threading). Перенаправление между каналами | Zendesk, Freshdesk, HelpScout | 3-4 недели | ⚠️ Telegram-бот есть, нет unified inbox |
 | 3 | **Self-service портал + KB 2.0** | Публичная KB с SEO. «Похожие статьи» при создании тикета (AI-assistant расширить). Голосование, комментарии, версия | Zendesk Guide, Freshdesk Solutions | 1-2 недели | ⚠️ Wiki есть, но закрытая |
-| 4 | **Кастомные поля (Custom Fields)** | Админ создаёт: текст, число, дата, select, checkbox, user picker. Привязка к категориям. Валидация через Zod | Jira, Zendesk, YouTrack | 2 недели | ⚠️ Частично есть, нет конструктора |
+| 4 | **Кастомные поля (Custom Fields)** | Админ создаёт: текст, число, дата, select, checkbox, user picker. Привязка к категориям. Валидация через Zod | Jira, Zendesk, YouTrack | 2 недели | ✅ **ГОТОВО** (Prisma schema + service + API + UI) |
 | 5 | **Mobile app (PWA → нативная)** | React Native или Capacitor. Push (web-push есть). Offline mode для черновиков | Все крупные | 3-4 недели | ⚠️ PWA есть |
 
 ---
@@ -361,7 +362,7 @@ Kimi проанализировал `frontend-tests.txt` и увидел ~100 з
 | Rules/Automation | ✅ | ✅ | ✅ | ❌ | 🔥 |
 | Omnichannel | ❌ | ✅ | ✅ | ⚠️ частично | 🔥 |
 | Public KB | ✅ | ✅ | ✅ | ❌ | 🔥 |
-| Custom fields | ✅ | ✅ | ✅ | ❌ | 🔥 |
+| Custom fields | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Mobile app | ✅ | ✅ | ✅ | ⚠️ PWA | 🔥 |
 | BI/Dashboards | ✅ | ✅ | ✅ | ⚠️ базово | ⭐ |
 | Marketplace | ✅ | ✅ | ✅ | ❌ | ⭐ |

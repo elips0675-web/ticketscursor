@@ -473,9 +473,25 @@
     "geoRunning": "Миграция…",
     "geoDone": "Геопоиск включён",
     "cannedResponses": "Шаблоны ответов",
+    "customFields": "Пользовательские поля",
     "cannedTitle": "Название шаблона",
     "cannedCategory": "Категория",
     "cannedText": "Текст шаблона",
-    "cannedEmpty": "Нет шаблонов ответов"
+    "cannedEmpty": "Нет шаблонов ответов",
+    "imapSettings": "Email (IMAP)",
+    "imapSubtitle": "Автоматическое создание тикетов из входящих писем на support@. Письма парсятся, создаются тикеты, ответы на письма добавляются как комментарии.",
+    "imapHost": "IMAP Host",
+    "imapPort": "IMAP Port",
+    "imapUser": "IMAP User",
+    "imapPass": "IMAP Password",
+    "imapConfigured": "IMAP настроен",
+    "imapNotConfigured": "IMAP не настроен",
+    "imapPolling": "Опрос почты",
+    "imapPollingOn": "Активен (каждые 2 мин)",
+    "imapPollingOff": "Не активен",
+    "imapTestBtn": "Проверить",
+    "imapTesting": "Проверка…",
+    "imapTestOk": "Подключение успешно",
+    "imapTestFail": "Ошибка подключения"
   }
 }

@@ -5,7 +5,16 @@
 
 ---
 
-## [1.9.0] — 2026-09-18
+## [1.9.0] — 2026-09-19
+
+### 📧 Email Ingestion (IMAP) — этап 1
+
+- **Backend** — `email-ingestion.service.js`: IMAP polling (`imapflow`), парсинг писем (`mailparser`), создание тикетов из писем, поиск/создание employee по email, auto-reply «получили ваше письмо»
+- **Миграция** — `024_email_ingestion.sql`: колонка `email_message_id` на `tickets` для thread-связки (In-Reply-To)
+- **API** — `GET /api/admin/imap/status` (статистика писем), `POST /api/admin/imap/test` (проверка IMAP-соединения); IMAP-settings (`IMAP_HOST/PORT/USER/PASS`) в `ALLOWED_SETTINGS`
+- **Background** — `startImapPolling()` + `stopImapPolling()` интегрированы в `background.js` (запуск при старте сервера, остановка при shutdown)
+- **Тесты** — 15 unit-тестов `email-ingestion.service.test.js` (extractTicketReference, stripTicketReference, getImapConfig)
+- **Global setup** — `vitest.global-setup.js` обновлён: `custom_field_definitions` + `custom_field_values` CREATE TABLE, `email_message_id` ALTER
 
 ### 🔄 API versioning (Этап 6 роадмапа)
 
