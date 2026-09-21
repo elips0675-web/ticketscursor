@@ -65,9 +65,9 @@ router.get('/articles/:slug', async (req, res) => {
 
     let similar = []
     if (article.content) {
-      const words = article.content.split(/\s+/).filter((w: string) => w.length > 4).slice(0, 5)
+      const words = article.content.split(/\s+/).filter((w) => w.length > 4).slice(0, 5)
       if (words.length > 0) {
-        const searchCondition = words.map((w: string) => ({ content: { contains: w } }))
+        const searchCondition = words.map((w) => ({ content: { contains: w } }))
         similar = await prisma.wiki_articles.findMany({
           where: { published: true, deleted_at: null, id: { not: article.id }, OR: searchCondition },
           take: 3,

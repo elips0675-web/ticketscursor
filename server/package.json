@@ -43,7 +43,7 @@
     "mysql2": "^3.11.0",
     "node-telegram-bot-api": "^1.1.2",
     "nodemailer": "^9.0.3",
-    "openid-client": "^6.8.8",
+    "openid-client": "^5.7.1",
     "passport": "^0.7.0",
     "passport-ldapauth": "^3.0.1",
     "prisma": "^5.22.0",

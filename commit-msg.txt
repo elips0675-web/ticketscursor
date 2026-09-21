@@ -1,1 +1,1 @@
-docs: update CHANGELOG with portal, KB, quick wins
+fix: remove TS syntax from public-kb.js, downgrade openid-client to v5
