@@ -1,1 +1,1 @@
-feat(keyboard-shortcuts): cheatsheet modal with ? shortcut
+docs: update for public portal, KB, quick wins

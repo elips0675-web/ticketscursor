@@ -511,3 +511,16 @@
 - **i18n**: SSO (17 ключей) + Rules (7 ключей) в ru.json/en.json
 - **npm**: установлен `openid-client` для OIDC discovery
 - Коммиты: `2c3a970` (SSO), `d623bf7` (rules), `cf632b0` (telegram)
+
+### Этап 35 — Public Portal + Public KB + Quick Wins (22.09.2026)
+- **Public Portal**: `public-portal.js` — POST /portal/tickets (создание тикета без авторизации, tracking token), GET /portal/track/:token, POST /portal/track/:token/reply
+- **Portal UI**: `Portal.tsx` (форма создания), `PortalTrack.tsx` (отслеживание + ответы)
+- **Public KB**: `public-kb.js` — GET /kb/articles (поиск + категории + пагинация), GET /kb/articles/:slug (статья + похожие + голоса), POST /kb/articles/:id/vote, GET /kb/categories, GET /kb/search
+- **KB UI**: `PublicKB.tsx` (список статей + поиск + фильтр), `PublicKBArticle.tsx` (просмотр + голосование + похожие)
+- **Markdown Preview**: `MarkdownEditor.tsx` — toggle preview/edit в TicketDetail
+- **Ticket Templates**: шаблоны в localStorage, автозаполнение полей при выборе
+- **Bulk Actions 2.0**: массовое изменение статуса + приоритета
+- **Keyboard Shortcuts Cheatsheet**: модалка с горячими клавишами (? для открытия)
+- **Routes**: `/portal`, `/portal/track`, `/portal/track/:token`, `/kb`, `/kb/:slug`
+- **i18n**: portal (27 ключей) + kb (14 ключей) + tickets (4 ключа bulk)
+- Коммиты: `883c563` (portal), `fb0b97c` (kb), `b71a121` (markdown), `836a375` (templates), `767c232` (bulk), `14f3a75` (shortcuts)
