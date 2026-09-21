@@ -1,1 +1,1 @@
-feat(collision-avoidance): real-time ticket locking to prevent concurrent edits
+feat(recurring-tickets): scheduled ticket creation with cron expressions

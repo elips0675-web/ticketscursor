@@ -3,9 +3,11 @@ import { sendTicketNotification } from './email.js'
 import { notifySlaBreached, notifySlaEscalated } from './notify.js'
 import { getSettings } from './settings.js'
 import { startImapPolling, stopImapPolling } from './services/email-ingestion.service.js'
+import { processRecurrences } from './services/recurrence.service.js'
 
 const CLEANUP_INTERVAL = 6 * 60 * 60 * 1000
 const SLA_CHECK_INTERVAL = 15 * 60 * 1000
+const RECURRENCE_INTERVAL = 60 * 60 * 1000
 const MAX_RETRIES = 3
 const DLQ_ALERT_THRESHOLD = 10
 
@@ -93,12 +95,13 @@ async function warnAdminRedisMissing(prisma) {
   }
 }
 
-let cleanupTimer, slaTimer, dlqAlertTimer
+let cleanupTimer, slaTimer, dlqAlertTimer, recurrenceTimer
 
 export function stopBackgroundJobs() {
   if (cleanupTimer) clearInterval(cleanupTimer)
   if (slaTimer) clearInterval(slaTimer)
   if (dlqAlertTimer) clearInterval(dlqAlertTimer)
+  if (recurrenceTimer) clearInterval(recurrenceTimer)
   stopImapPolling()
 }
 
@@ -146,6 +149,20 @@ export async function setupBackgroundJobs(prisma) {
     await cleanupQueue.upsertJobScheduler('default', { every: CLEANUP_INTERVAL })
     await slaQueue.upsertJobScheduler('default', { every: SLA_CHECK_INTERVAL })
 
+    const recurrenceQueue = new Queue('recurrence-check', {
+      connection,
+      defaultJobOptions: {
+        attempts: MAX_RETRIES,
+        backoff: { type: 'exponential', delay: 2000 },
+        removeOnComplete: false,
+        removeOnFail: false,
+      },
+    })
+    new Worker('recurrence-check', async () => {
+      return processRecurrences()
+    }, { connection, concurrency: 1 })
+    await recurrenceQueue.upsertJobScheduler('default', { every: RECURRENCE_INTERVAL })
+
     new Worker('service-desk-dlq', async (job) => {
       logger.error('DLQ job received:', { jobId: job.id, data: job.data })
       dlqAlertTimer = setInterval(() => checkDlqAlert(prisma), 60 * 60 * 1000)
@@ -159,9 +176,11 @@ export async function setupBackgroundJobs(prisma) {
   } else {
     setTimeout(() => withRetry(runCleanup, 'notification-cleanup', prisma), 5000)
     setTimeout(() => withRetry(runSlaCheck, 'sla-overdue-check', prisma), 5000)
+    setTimeout(() => withRetry(() => processRecurrences(), 'recurrence-check', prisma), 10000)
     setTimeout(() => withRetry(async () => checkDlqAlert(prisma), 'dlq-check', prisma), 30000)
     cleanupTimer = setInterval(() => withRetry(runCleanup, 'notification-cleanup', prisma), CLEANUP_INTERVAL)
     slaTimer = setInterval(() => withRetry(runSlaCheck, 'sla-overdue-check', prisma), SLA_CHECK_INTERVAL)
+    recurrenceTimer = setInterval(() => withRetry(() => processRecurrences(), 'recurrence-check', prisma), RECURRENCE_INTERVAL)
     dlqAlertTimer = setInterval(() => withRetry(async () => checkDlqAlert(prisma), 'dlq-check', prisma), 60 * 60 * 1000)
     logger.warn('Redis not configured — background jobs using setInterval with in-memory retry + DLQ')
     warnAdminRedisMissing(prisma)

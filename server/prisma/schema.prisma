@@ -28,6 +28,8 @@ model employees {
   tickets_created_by  tickets[]          @relation("tickets_created_by")
   tickets_assigned_to tickets[]          @relation("tickets_assigned_to")
   tickets_locked_by   tickets[]          @relation("tickets_locked_by")
+  recurrences_assigned ticket_recurrences[] @relation("RecurrenceAssignedTo")
+  recurrences_created  ticket_recurrences[] @relation("RecurrenceCreatedBy")
   events              events[]
   polls               polls[]
   file_folders        file_folders[]
@@ -384,6 +386,29 @@ model csat_surveys {
   @@index([ticket_id])
   @@index([token])
   @@map("csat_surveys")
+}
+
+model ticket_recurrences {
+  id             Int       @id @default(autoincrement())
+  title          String    @db.VarChar(500)
+  description    String?   @db.Text
+  priority       String?   @default("medium") @db.VarChar(20)
+  category       String?   @db.VarChar(50)
+  assigned_to    Int?
+  cron_expr      String    @db.VarChar(100)
+  next_run       DateTime?
+  is_active      Boolean?  @default(true)
+  last_run       DateTime?
+  created_by     Int?
+  created_at     DateTime? @default(now())
+  updated_at     DateTime? @default(now())
+  deleted_at     DateTime?
+
+  assigned_employee employees? @relation("RecurrenceAssignedTo", fields: [assigned_to], references: [id], onDelete: SetNull)
+  creator_employee  employees? @relation("RecurrenceCreatedBy", fields: [created_by], references: [id], onDelete: SetNull)
+
+  @@index([is_active, next_run])
+  @@map("ticket_recurrences")
 }
 
 model event_outbox {
