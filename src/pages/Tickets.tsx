@@ -6,7 +6,19 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Search, ArrowUpDown, Filter, Plus, MessageSquare, User, Download, FileText, Tag as TagIcon, CheckSquare, Square } from 'lucide-react'
+import {
+  Search,
+  ArrowUpDown,
+  Filter,
+  Plus,
+  MessageSquare,
+  User,
+  Download,
+  FileText,
+  Tag as TagIcon,
+  CheckSquare,
+  Square,
+} from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useSocket } from '@/context/SocketContext'
@@ -129,6 +141,20 @@ export default function Tickets() {
     setSelected(new Set())
   }
 
+  const handleBulkPriority = async (priority: string) => {
+    const ids = Array.from(selected)
+    if (ids.length === 0) return
+    await bulkUpdateTickets({ ids, action: 'priority', priority } as const).catch(() => setSelected(new Set()))
+    setSelected(new Set())
+  }
+
+  const handleBulkStatusChange = async (status: string) => {
+    const ids = Array.from(selected)
+    if (ids.length === 0) return
+    await bulkUpdateTickets({ ids, action: 'status', status } as const).catch(() => setSelected(new Set()))
+    setSelected(new Set())
+  }
+
   const EXPORT_LIMIT = 10000
   const exportCSV = () => {
     const data = filtered.slice(0, EXPORT_LIMIT)
@@ -218,16 +244,8 @@ export default function Tickets() {
           <p className="text-sm text-muted-foreground mt-1">{t('tickets.total', { count: filtered.length })}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={toggleSelectAllVisible}
-            className="hidden md:flex items-center"
-          >
-            {allVisibleSelected ? (
-              <CheckSquare className="w-4 h-4 mr-1.5" />
-            ) : (
-              <Square className="w-4 h-4 mr-1.5" />
-            )}
+          <Button variant="outline" onClick={toggleSelectAllVisible} className="hidden md:flex items-center">
+            {allVisibleSelected ? <CheckSquare className="w-4 h-4 mr-1.5" /> : <Square className="w-4 h-4 mr-1.5" />}
             {allVisibleSelected ? t('tickets.bulkDeselectAll') : `${t('tickets.bulkSelectAll')} (${idsInView.length})`}
           </Button>
           <Button onClick={() => navigate('/tickets/new')}>
@@ -338,9 +356,7 @@ export default function Tickets() {
       {selected.size > 0 && (
         <Card className="p-4 border-primary/40 bg-primary/5">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <span className="text-sm font-bold">
-              {t('tickets.bulkSelected', { count: selected.size })}
-            </span>
+            <span className="text-sm font-bold">{t('tickets.bulkSelected', { count: selected.size })}</span>
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="default"
@@ -367,12 +383,46 @@ export default function Tickets() {
               </Button>
               <Select
                 value=""
+                onValueChange={(v) =>
+                  handleBulkStatusChange(v).then(() =>
+                    toast.success(t('tickets.bulkStatusChanged', { count: selected.size })),
+                  )
+                }
+              >
+                <SelectTrigger className="w-full sm:w-[160px]">
+                  <SelectValue placeholder={t('tickets.bulkStatusPlaceholder')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="open">{t('tickets.open')}</SelectItem>
+                  <SelectItem value="in_progress">{t('tickets.inProgress')}</SelectItem>
+                  <SelectItem value="resolved">{t('tickets.resolved')}</SelectItem>
+                  <SelectItem value="closed">{t('tickets.closed')}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value=""
+                onValueChange={(v) =>
+                  handleBulkPriority(v).then(() =>
+                    toast.success(t('tickets.bulkPriorityChanged', { count: selected.size })),
+                  )
+                }
+              >
+                <SelectTrigger className="w-full sm:w-[160px]">
+                  <SelectValue placeholder={t('tickets.bulkPriorityPlaceholder')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">{t('tickets.low')}</SelectItem>
+                  <SelectItem value="medium">{t('tickets.medium')}</SelectItem>
+                  <SelectItem value="high">{t('tickets.high')}</SelectItem>
+                  <SelectItem value="critical">{t('tickets.critical')}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value=""
                 onValueChange={(v) => {
                   const empId = Number(v)
                   if (!Number.isFinite(empId)) return
-                  handleBulkAssign(empId).then(() =>
-                    toast.success(t('tickets.bulkAssigned', { count: selected.size })),
-                  )
+                  handleBulkAssign(empId).then(() => toast.success(t('tickets.bulkAssigned', { count: selected.size })))
                 }}
               >
                 <SelectTrigger className="w-full sm:w-[180px]">
