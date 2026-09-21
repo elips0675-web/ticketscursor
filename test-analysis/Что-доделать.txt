@@ -89,7 +89,24 @@ Kimi проанализировал `frontend-tests.txt` и увидел ~100 з
 
 ---
 
-## Оценка после исправлений (этап 4)
+## Что сделано 22.09.2026 (этап 5 — SSO, Rules Engine, Telegram Channel)
+
+| # | Что сделали | Файлы | Результат |
+|---|------------|-------|-----------|
+| 1 | **SSO OIDC** | `auth/oidc.js`, `SSO.tsx`, `AdminSettings.tsx` (SSOSection), `Login.tsx` (SSO button), App.tsx routes, i18n (17 ключей) | Полная OIDC интеграция: discovery, authorization, callback, auto-provisioning, admin UI (issuer URL, client ID/secret, redirect URI, default role) |
+| 2 | **Rules Engine** | `rules.service.js`, `rules.js` (routes), `AdminRules.tsx`, `tickets.js` (evaluateRules), миграция, i18n (7 ключей) | JSON-правила: 5 триггеров, 5 действий, 9 операторов, and/or логика, UI конструктор conditions+actions |
+| 3 | **Telegram Channel** | `telegram.js` (расширен) | Two-way: /new (тикет), /reply (ответ), /tickets (список), /link (привязка), forwarding в активный тикет, auto-provisioning |
+
+### Итого по этапу 5:
+- **5 новых файлов** + 1 расширен (telegram.js)
+- **600+ строк кода**
+- tsc: 0 ошибок ✅
+- vite build: OK ✅
+- Коммиты: `2c3a970` (SSO), `d623bf7` (rules), `cf632b0` (telegram)
+
+---
+
+## Оценка после исправлений (этап 5)
 
 | Метрика | После этапа 2 (19.09) | После этапа 3 (21.09) |
 |---------|----------------------|----------------------|
@@ -98,6 +115,9 @@ Kimi проанализировал `frontend-tests.txt` и увидел ~100 з
 | Command Palette | ❌ не было | **✅ ГОТОВО** |
 | Collision avoidance | ❌ не было | **✅ ГОТОВО** (lock/unlock + guards) |
 | Recurring tickets | ❌ не было | **✅ ГОТОВО** (cron + background) |
+| SSO OIDC | ❌ не было | **✅ ГОТОВО** (Keycloak/Entra ID/Okta) |
+| Rules Engine | ❌ не было | **✅ ГОТОВО** (JSON-правила + UI) |
+| Telegram Channel | ❌ не было | **✅ ГОТОВО** (two-way: /new, /reply, /tickets) |
 | tsc | 0 errors | 0 errors ✅ |
 | Vite build | OK | OK ✅ |
 | ESLint | 0 errors | 0 errors ✅ |
@@ -121,10 +141,10 @@ Kimi проанализировал `frontend-tests.txt` и увидел ~100 з
 | 2 | **CSAT-опросы** | 5-7 | Email после закрытия → оценка 1-5 → метрика в дашборде. Без этого enterprise не продаётся | ✅ **ГОТОВО** |
 | 3 | **Custom fields (конструктор)** | 10 | Админ создаёт поля: текст, число, дата, select. Привязка к категориям. Без этого не продать enterprise | ✅ **ГОТОВО** |
 | 4 | **Email ingestion (IMAP)** | 10-15 | Письма на support@ → тикеты. Ответы → комментарии. **Все аналоги это имеют** | ✅ **ГОТОВО** (service + route + background + tests + UI в админке: настройки, тест соединения, статус) |
-| 5 | **SSO: OIDC/SAML** | 10-15 | Keycloak/Entra ID. LDAP есть, но корпорации требуют SAML |
+| 5 | **SSO: OIDC/SAML** | 10-15 | Keycloak/Entra ID. LDAP есть, но корпорации требуют SAML | ✅ **ГОТОВО** (OIDC через openid-client) |
 
 **Итого: 7 задач, ~35-50 дней. Результат: автоматизация, omnichannel, self-service.**
-**Выполнено: SLA pause/business hours + CSAT + Custom fields + Email ingestion + Webhooks + API-токены + Command Palette + Collision avoidance + Recurring tickets. Осталось: SSO/SAML, Rules Engine, Telegram канал, публичный портал, Public KB.**
+**Выполнено: SLA pause/business hours + CSAT + Custom fields + Email ingestion + Webhooks + API-токены + Command Palette + Collision avoidance + Recurring tickets + SSO OIDC + Rules Engine + Telegram Channel. Осталось: публичный портал, Public KB.**
 
 ---
 
@@ -134,8 +154,8 @@ Kimi проанализировал `frontend-tests.txt` и увидел ~100 з
 
 | # | Задача | Дней | Что даёт |
 |---|--------|------|----------|
-| 6 | **Rules Engine (базовый)** | 10-15 | JSON-правила: «ЕСЛИ статус=open И прошло>24ч → назначить manager». BullMQ |
-| 7 | **Telegram как канал** | 5-7 | Сообщения бота → тикет, ответ агента → обратно в чат |
+| 6 | **Rules Engine (базовый)** | 10-15 | JSON-правила: «ЕСЛИ статус=open И прошло>24ч → назначить manager». BullMQ | ✅ **ГОТОВО** |
+| 7 | **Telegram как канал** | 5-7 | Сообщения бота → тикет, ответ агента → обратно в чат | ✅ **ГОТОВО** |
 | 8 | **Публичный портал самообслуживания** | 7-10 | Клиент без учётки видит тикеты, создаёт заявки |
 | 9 | **Public KB (Knowledge Base 2.0)** | 5-7 | Wiki с SEO, «Похожие статьи» (AI), голосование «полезно/нет» |
 | 10 | **Collision avoidance** | 2-3 | Блокировка тикета при редактировании — нет дублей | ✅ **ГОТОВО** |
@@ -193,11 +213,11 @@ Kimi проанализировал `frontend-tests.txt` и увидел ~100 з
 
 | Приоритет | Кол-во | Дней | Coverage после | Что даёт |
 |-----------|--------|------|----------------|----------|
-| 🔴 Критично | 5 → **2 осталось** | 30-45 → **~20** | 54% → 70% | Enterprise-ready, метрики, SLA |
-| 🟠 Важно | 7 → **3 осталось** | 35-50 → **~18** | 70% → 80% | Автоматизация, omnichannel |
+| 🔴 Критично | 5 → **1 осталось** | 30-45 → **~10** | 54% → 70% | Enterprise-ready, метрики, SLA |
+| 🟠 Важно | 7 → **2 осталось** | 35-50 → **~15** | 70% → 80% | Автоматизация, omnichannel |
 | 🟡 Полезно | 9 → **8 осталось** | 12-20 → **~18** | 80% → 85% | UX, productivity |
 | 🟢 После MVP | 14 | — | 85%+ | Рост, дифференциация |
-| **Итого** | **35 → 25** | **~80-115 → ~75** | **54% → 85%** | |
+| **Итого** | **35 → 21** | **~80-115 → ~60** | **54% → 85%** | |
 
 ---
 

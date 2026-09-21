@@ -63,6 +63,33 @@
 - **Background** — `processRecurrences()` каждые 60мин через BullMQ/setInterval в `background.js`
 - **Миграция** — `20260921_ticket_recurrences.sql`
 
+### 🔐 SSO: OIDC Single Sign-On (новая фича)
+
+- **Backend** — `auth/oidc.js`: OIDC discovery (`openid-client`), authorization URL, callback handling, auto-provisioning
+- **Routes** — `GET /auth/sso/config`, `GET /auth/sso/login`, `POST /auth/sso/callback`
+- **Frontend** — `SSO.tsx`: SSOLogin (кнопка входа) + SSOCallback (обработка redirect)
+- **Admin UI** — `SSOSection` в `AdminSettings.tsx`: toggle вкл/выкл, issuer URL, client ID/secret, redirect URI, default role
+- **Settings** — 7 ключей `SSO_*` в `ALLOWED_SETTINGS`
+- **Login** — кнопка «SSO / Корпоративный вход» на странице логина
+- **i18n** — 17 ключей `sso.*` + `admin.sso*` в ru.json/en.json
+
+### ⚡ Rules Engine — JSON-правила автоматизации (новая фича)
+
+- **Backend** — `rules.service.js`: evaluateConditions (and/or logic, 9 operators), executeActions (5 типов), evaluateRules on events
+- **Schema** — `automation_rules` (name, trigger_event, conditions JSON, actions JSON, is_active, run_count)
+- **Routes** — `GET/POST/PUT/DELETE /api/rules` (admin-only), `GET /api/rules/triggers`, `GET /api/rules/actions`
+- **Integration** — `evaluateRules()` вызывается в tickets.js при ticket.created/updated/assigned/message
+- **Frontend** — `AdminRules.tsx`: CRUD с conditions builder (field/operator/value) + actions builder (5 типов)
+- **Миграция** — `20260921_automation_rules.sql`
+- **i18n** — 7 ключей `admin.rules*` в ru.json/en.json
+
+### 📱 Telegram Channel — двусторонняя интеграция (новая фича)
+
+- **Backend** — `telegram.js`: `/start`, `/link` (привязка аккаунта), `/new` (создать тикет), `/tickets` (список), `/reply <id>` (ответить)
+- **Auto-provisioning** — создаёт employee с email `<telegramId>@telegram.bot`
+- **Forwarding** — обычные сообщения автоматически попадают в последний активный тикет
+- **Экспорт** — `sendTelegramToUser()`, `isTelegramBotActive()`
+
 ---
 
 ## [1.9.0] — 2026-09-19

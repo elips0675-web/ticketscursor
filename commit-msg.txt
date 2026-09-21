@@ -1,1 +1,1 @@
-feat(telegram-channel): two-way Telegram integration for ticket creation and replies
+docs: update for SSO OIDC, Rules Engine, Telegram Channel

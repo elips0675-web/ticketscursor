@@ -494,3 +494,20 @@
 - **Prisma**: модели `ticket_recurrences`, `locked_by`/`locked_at` на tickets
 - **i18n**: 9 ключей lock* + 6 ключей recurrence* в ru.json/en.json
 - Коммиты: `915ffb9` (collision), `7ec60ad` (recurring)
+
+### Этап 34 — SSO OIDC + Rules Engine + Telegram Channel (22.09.2026)
+- **SSO OIDC**: `auth/oidc.js` — discovery, authorization URL, callback, auto-provisioning пользователей
+- **SSO Routes**: `GET /auth/sso/config`, `GET /auth/sso/login`, `POST /auth/sso/callback`
+- **SSO UI**: `SSO.tsx` (SSOLogin + SSOCallback страницы), кнопка на странице логина
+- **SSO Admin**: `SSOSection` в `AdminSettings.tsx` — issuer URL, client ID/secret, redirect URI, default role, toggle вкл/выкл
+- **SSO Settings**: `SSO_ENABLED`, `SSO_ISSUER_URL`, `SSO_CLIENT_ID`, `SSO_CLIENT_SECRET`, `SSO_REDIRECT_URI`, `SSO_DEFAULT_ROLE`, `SSO_PROVIDER` в ALLOWED_SETTINGS
+- **Rules Engine**: `rules.service.js` — evaluateRules (conditions: and/or, operators: equals/contains/gt/lt/in/empty), executeActions (set_priority, set_status, assign_to, add_tag, send_notification)
+- **Rules Routes**: `GET/POST/PUT/DELETE /api/rules` (admin-only), triggers, actions metadata
+- **Rules UI**: `AdminRules.tsx` — CRUD правил с conditions builder + actions builder
+- **Rules Integration**: `evaluateRules()` вызывается в tickets.js при created/updated/assigned/message
+- **Telegram Channel**: `telegram.js` — two-way: `/new` (создать тикет), `/reply <id>` (ответить), `/tickets` (список), `/link` (привязать аккаунт), forwarding сообщений в активный тикет
+- **Telegram Auto-Provisioning**: создаёт employee с email `<telegramId>@telegram.bot`
+- **Миграция**: `20260921_automation_rules.sql`
+- **i18n**: SSO (17 ключей) + Rules (7 ключей) в ru.json/en.json
+- **npm**: установлен `openid-client` для OIDC discovery
+- Коммиты: `2c3a970` (SSO), `d623bf7` (rules), `cf632b0` (telegram)

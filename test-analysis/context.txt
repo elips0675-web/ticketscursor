@@ -5,8 +5,8 @@
 - **Фронт**: 485 тестов (102 suite)
 - **Сервер**: 523 тестов (35 suites)
 - **E2E**: 17/17 страниц ALL OK (check-console.mjs) + 8 user-flow (playwright)
-- **Prisma моделей**: 24 (включая event_outbox, custom_field_definitions, custom_field_values, api_tokens, webhooks, ticket_recurrences)
-- **API endpoints**: 80+ (Swagger + Health probes + k6 metrics + IMAP admin routes + API tokens + Webhooks + Lock + Recurrences)
+- **Prisma моделей**: 25 (включая event_outbox, custom_field_definitions, custom_field_values, api_tokens, webhooks, ticket_recurrences, automation_rules)
+- **API endpoints**: 90+ (Swagger + Health probes + k6 metrics + IMAP admin routes + API tokens + Webhooks + Lock + Recurrences + Rules + SSO)
 - **ESLint**: 0 errors, 10 warnings (pre-existing)
 - **MySQL**: запущен (Laragon), БД servicedesk
 - **API**: порт 4000, Vite proxy 5173
@@ -32,6 +32,8 @@
 | services/webhooks.service.js | новый | ✅ 7 событий, HMAC, retry 3x |
 | services/collision.service.js | новый | ✅ Lock/unlock/force, 30мин TTL |
 | services/recurrence.service.js | новый | ✅ Cron-parser, processRecurrences |
+| services/rules.service.js | новый | ✅ Evaluate conditions, execute actions |
+| auth/oidc.js | новый | ✅ OIDC discovery, auto-provisioning |
 | middleware.js | - | ✅ JWT + API token auth |
 | socket.js | ~22% | ❌ (низкий приоритет — outbox паттерн снижает риски) |
 | background.js | ~50% | ✅ DLQ реализован (BullMQ + in-memory fallback) |
@@ -55,6 +57,8 @@
 | Search.tsx | ~60% | ⚠️ |
 | AdminSettings.tsx | - | ✅ IMAP + Email Templates + Feature Flags |
 | AdminIntegrations.tsx | новый | ✅ API Tokens + Webhooks UI |
+| AdminRules.tsx | новый | ✅ Rules Engine CRUD UI |
+| SSO.tsx | новый | ✅ SSO Login + Callback pages |
 | CommandPalette.tsx | новый | ✅ Cmd+K навигация + поиск |
 
 ## Проблемы (решённые)
