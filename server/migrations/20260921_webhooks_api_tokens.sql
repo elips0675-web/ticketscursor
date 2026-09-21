@@ -1,7 +1,7 @@
 -- API Tokens
 CREATE TABLE IF NOT EXISTS api_tokens (
-  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  user_id INT UNSIGNED NOT NULL,
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
   name VARCHAR(255) NOT NULL,
   token_hash VARCHAR(64) NOT NULL UNIQUE,
   prefix VARCHAR(12) NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS webhooks (
   last_status INT,
   last_error TEXT,
   last_triggered_at DATETIME,
-  created_by INT UNSIGNED,
+  created_by INT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME,

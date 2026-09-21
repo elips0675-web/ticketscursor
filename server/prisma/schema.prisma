@@ -45,6 +45,8 @@ model employees {
   ticket_messages     ticket_messages[]
   time_entries        time_entries[]
   ticket_timers       ticket_timers[]
+  api_tokens          api_tokens[]
+  webhooks_created    webhooks[]           @relation("WebhookCreatedBy")
 }
 
 model tickets {
@@ -457,6 +459,8 @@ model webhooks {
   created_at DateTime? @default(now())
   updated_at DateTime? @default(now())
   deleted_at DateTime?
+
+  creator_employee employees? @relation("WebhookCreatedBy", fields: [created_by], references: [id], onDelete: SetNull)
 
   @@index([is_active])
   @@map("webhooks")

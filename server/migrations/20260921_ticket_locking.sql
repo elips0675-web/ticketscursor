@@ -1,6 +1,6 @@
 -- Ticket locking for collision avoidance
 ALTER TABLE tickets
-  ADD COLUMN locked_by INT UNSIGNED NULL,
+  ADD COLUMN locked_by INT NULL,
   ADD COLUMN locked_at DATETIME NULL,
   ADD INDEX idx_tickets_locked_by (locked_by);
 

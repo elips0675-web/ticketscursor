@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
-import { Users, RefreshCw, UserCheck, UserX, Upload } from 'lucide-react'
+import { Users, RefreshCw, UserCheck, UserX, Upload, FileText } from 'lucide-react'
+import mammoth from 'mammoth'
 
 interface User {
   id: number
@@ -89,34 +91,60 @@ export default function AdminUsers() {
       agent: { label: t('employees.agent'), variant: 'outline' },
     }
     const c = map[role] || { label: role, variant: 'outline' as const }
-    const handleImport = async () => {
-      if (!importText.trim()) return
-      setImporting(true)
-      setImportResult(null)
-      const token = localStorage.getItem('token')
-      try {
-        const res = await fetch('/api/admin/employees/import', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ text: importText, defaultPassword }),
-        })
-        const data = await res.json()
-        if (data.success) {
-          setImportResult(data.data)
-          fetchUsers()
-        }
-      } catch (err) {
-        console.error('Import error:', err)
-      }
-      setImporting(false)
-    }
-
     return (
       <Badge variant={c.variant} className="text-[10px]">
         {c.label}
       </Badge>
     )
   }
+
+  const handleImport = async () => {
+    if (!importText.trim()) return
+    setImporting(true)
+    setImportResult(null)
+    const token = localStorage.getItem('token')
+    try {
+      const res = await fetch('/api/admin/employees/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ text: importText, defaultPassword }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setImportResult(data.data)
+        fetchUsers()
+      }
+    } catch (err) {
+      console.error('Import error:', err)
+    }
+    setImporting(false)
+  }
+
+  const handleDocxUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.name.endsWith('.docx')) {
+      toast.error('Поддерживаются только файлы .docx')
+      return
+    }
+    try {
+      const arrayBuffer = await file.arrayBuffer()
+      const result = await mammoth.extractRawText({ arrayBuffer })
+      if (result.value) {
+        setImportText(result.value)
+        setImportOpen(true)
+        setImportResult(null)
+      } else {
+        toast.error('Не удалось извлечь текст из файла')
+      }
+    } catch (err) {
+      console.error('DOCX parse error:', err)
+      toast.error('Ошибка чтения файла .docx')
+    }
+    e.target.value = ''
+  }
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   return (
     <div className="space-y-6">
@@ -140,6 +168,11 @@ export default function AdminUsers() {
         >
           <Upload className="w-4 h-4 mr-1.5" />
           Импорт из Word
+        </Button>
+        <input ref={fileInputRef} type="file" accept=".docx" className="hidden" onChange={handleDocxUpload} />
+        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+          <FileText className="w-4 h-4 mr-1.5" />
+          Загрузить .docx
         </Button>
       </div>
 
@@ -227,7 +260,8 @@ export default function AdminUsers() {
             <div className="p-6">
               <h2 className="text-lg font-bold mb-4">Импорт сотрудников из Word</h2>
               <p className="text-sm text-muted-foreground mb-4">
-                Откройте таблицу в Word, выделите все строки (без шапки), скопируйте (Ctrl+C) и вставьте сюда.
+                Загрузите файл <strong>.docx</strong> кнопкой «Загрузить .docx» или скопируйте таблицу из Word (Ctrl+C)
+                и вставьте сюда.
                 <br />
                 Формат:{' '}
                 <code className="bg-muted px-1 rounded">
@@ -244,6 +278,29 @@ export default function AdminUsers() {
                   onChange={(e) => setDefaultPassword(e.target.value)}
                   className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
                 />
+              </div>
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                }}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  const file = e.dataTransfer.files[0]
+                  if (file?.name.endsWith('.docx')) {
+                    file.arrayBuffer().then((buf) =>
+                      mammoth.extractRawText({ arrayBuffer: buf }).then((r) => {
+                        if (r.value) setImportText(r.value)
+                      }),
+                    )
+                  }
+                }}
+                className="mb-3 border-2 border-dashed rounded-md p-3 text-center text-xs text-muted-foreground hover:border-primary/50 transition-colors cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <FileText className="w-5 h-5 mx-auto mb-1 opacity-40" />
+                Перетащите .docx файл сюда или нажмите для выбора
               </div>
               <textarea
                 value={importText}
