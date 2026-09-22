@@ -652,9 +652,17 @@
 - **Что-доделать.txt**: добавлены полные разборы «Оценка kimi.rtf» (обновлённая) и «Доделать.rtf» (БД/Админка/Тесты/Промты) с вердиктами по каждому пункту
 - **Итог**: тесты не менялись (1264, 0 failures), конфиги/deps/доки/CI согласованы; server vitest + клиент vitest + build + check-console 17/17 — зелёные
 
+### Этап 54 — socket.js coverage 22%→83%: реальный сервер (порт 0) + реальная БД (22.09.2026)
+- **socket.test.js переписан**: 6 → **27 тестов**. `socket.io` НЕ мокается — поднимается настоящий HTTP-сервер (`http.createServer` + `setupSocket`, порт 0) и реальный клиент `socket.io-client` (добавлен в devDeps). БД — реальная `servicedesk_test` из global-setup (prisma без моков)
+- **Покрыто (Промт 1 полностью)**: JWT-handshake (invalid/expired → `connect_error`, без токена → `No token`); rate-limit `message:send` (6-е за 1с → `rate:limited`, ровно 5 ack); внутренние/NAT-подсети не режутся conn-лимитом (12 подключений подряд); join/leave комнат `ticket:` (broadcast до leave, тишина после); `chat:typing` (доходит участникам, не отправителю); `chat:read` → `chat:read` участникам + **персист** `chat_read_receipts` + `unread=0`; disconnect → `user:status offline` + `online=false` в БД; reconnect → **offline queue flush** (пропущенные `message:new`); `message:send` (пустой текст игнор, >2000 → error, несуществующий чат → catch, уведомление участникам `createNotification` + персист); `message:delete` (senior_agent, владелец, не-владелец-агент отклонён, несуществующий msgId игнор); `notify:all` broadcast; `getIO()`
+- **Coverage socket.js**: stmts 22%→**82.96%**, branch→**64.61%**, funcs→**82.6%**, lines→**86.66%** (цель 60%+). Непокрытое — средовые ветки: Redis-адаптер без REDIS_URL, лимитер для публичных IP (localhost всегда internal), catch-ветки асинхронных ошибок
+- **Найден латентный баг**: `ldapjs` импортировался в `auth/ldap.js`, но НЕ был в `server/package.json` — жил orphan'ом в node_modules после удаления passport-ldapauth (Этап 53). `npm ci` (CI/Docker) упал бы. → добавлен в dependencies (`ldapjs@3.0.7`)
+- **Инвентарь (правило 10)**: `test-inventory.json` перегенерирован из фактического прогона (**108 файлов / 1285 тестов**: клиент 61/507, сервер 47/778, 0 failures); `server-tests.txt` 757→**778** (+21 тест socket); E2E 16 spec / 51
+- **Проверки**: server vitest 47/778 ✅, клиент vitest 61/507 ✅, build/lint/type-check/check-console — см. ниже
+
 ## ПЛАН ДОРАБОТКИ ПО ЭТАПАМ
 
-- Этап 54 — socket.js coverage 22%→60% (Промт 1 «Доделать.rtf»: JWT/disconnect, rate-limit, комнаты, typing, read, reconnect — реальный сервер порт 0)
+- ~~Этап 54 — socket.js coverage 22%→60% (Промт 1 «Доделать.rtf»: JWT/disconnect, rate-limit, комнаты, typing, read, reconnect — реальный сервер порт 0)~~ ✅ **закрыт 22.09** — см. Этап 54 выше
 - Этап 55 — E2E ticket-lifecycle вместо smoke (Промт 2: create→assign→status→resolved→reopen + API-проверки)
 - Этап 56 — IDOR-аудит всех `:id` эндпоинтов + 5 тестов (Промт 3)
 - Этап 57 — N+1 audit: prisma log query, топ-10 эндпоинтов (Промт 5); FULLTEXT/индексы, каскады FK, soft-delete тесты

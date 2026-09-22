@@ -1,7 +1,7 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 47 файлов / 311 suite / 757 тестов (все PASS, vitest --reporter=json от 22.09.2026)
+Реальный результат: 47 файлов / 311 suite / 778 тестов (все PASS, vitest --reporter=json от 22.09.2026)
 
 ===== ФАЙЛЫ (47 шт, все реальные, сгенерировано скриптом) =====
 
@@ -10,6 +10,7 @@ server/src/api.test.js | 183 | Интеграционные тесты всех 
 server/src/__tests__/rbac-matrix.test.js | 41 | RBAC: матрица 5×5, requireRole, hasRole, JWT/API-токены
 server/src/services/__tests__/tickets.service.sla.test.js | 40 | SLA: calculation, pause, business hours, breach detection, priority changes
 server/src/services/__tests__/email-ingestion.service.test.js | 28 | IMAP: extractTicketReference, stripTicketReference, getImapConfig, testImapConnection, pollOnce, reply/add, новый тикет, empty skip, errors
+server/src/__tests__/socket.test.js | 27 | WebSocket (реальный сервер на порту 0): JWT handshake, rate-limit, комнаты, typing, chat:read, disconnect, offline flush, delete, notify, getIO
 server/src/__tests__/public-portal.test.js | 22 | Public portal: POST /tickets (новый/существующий employee), 400-валидация, track, 500, upload
 server/src/services/__tests__/rules.service.test.js | 20 | Rules: правила и цепочки, условия, действия
 server/src/__tests__/middleware.test.js | 19 | Rate limiter, CORS, helmet, auth middleware, RBAC
@@ -42,7 +43,6 @@ server/src/services/__tests__/roleUtils.test.js | 7 | Role utils: hasRole, canMa
 server/src/services/__tests__/wiki.service.test.js | 7 | Wiki: CRUD, categories, search, soft delete
 server/src/__tests__/cache.test.js | 6 | Cache: Redis fallback, invalidate, TTL
 server/src/__tests__/csat.route.test.js | 6 | CSAT routes: GET survey, POST response, metrics
-server/src/__tests__/socket.test.js | 6 | WebSocket: connection, rooms, events, rate limit
 server/src/services/__tests__/calendar.service.test.js | 6 | Calendar: CRUD, recurring events, conflicts
 server/src/services/__tests__/files.service.test.js | 6 | Files: upload, list, folder structure
 server/src/__tests__/email.test.js | 5 | Email: SMTP transport, template rendering
@@ -56,6 +56,6 @@ server/src/__tests__/search.test.js | 4 | Search: fulltext, LIKE fallback, empty
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона `npx vitest run --reporter=json` (server-report.json).
-Фактический запуск: 47 файлов / 757 тестов / 0 failures.
+Фактический запуск: 47 файлов / 778 тестов / 0 failures.
 Coverage (22.09.2026): stmts 67.74 / branches 61.54 / functions 65.98 / lines 68.73 (пороги обновлены).
 Данные актуальны на: 22.09.2026

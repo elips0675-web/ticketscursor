@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-22T08:07:23.205Z",
+  "generated": "2026-09-22T10:50:56.924Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
@@ -13,7 +13,7 @@
   "server": {
     "files": 47,
     "suites": 311,
-    "tests": 757,
+    "tests": 778,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
@@ -21,7 +21,7 @@
   "total": {
     "files": 108,
     "suites": 456,
-    "tests": 1264,
+    "tests": 1285,
     "all_passing": true
   },
   "e2e": {
@@ -312,6 +312,10 @@
       "tests": 28
     },
     {
+      "file": "server/src/__tests__/socket.test.js",
+      "tests": 27
+    },
+    {
       "file": "server/src/__tests__/public-portal.test.js",
       "tests": 22
     },
@@ -437,10 +441,6 @@
     },
     {
       "file": "server/src/__tests__/csat.route.test.js",
-      "tests": 6
-    },
-    {
-      "file": "server/src/__tests__/socket.test.js",
       "tests": 6
     },
     {
