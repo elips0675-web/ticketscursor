@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-22T06:44:48.740Z",
+  "generated": "2026-09-22T08:07:23.205Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
@@ -11,17 +11,17 @@
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 42,
-    "suites": 273,
-    "tests": 657,
+    "files": 47,
+    "suites": 311,
+    "tests": 757,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 103,
-    "suites": 418,
-    "tests": 1164,
+    "files": 108,
+    "suites": 456,
+    "tests": 1264,
     "all_passing": true
   },
   "e2e": {
@@ -308,6 +308,14 @@
       "tests": 40
     },
     {
+      "file": "server/src/services/__tests__/email-ingestion.service.test.js",
+      "tests": 28
+    },
+    {
+      "file": "server/src/__tests__/public-portal.test.js",
+      "tests": 22
+    },
+    {
       "file": "server/src/services/__tests__/rules.service.test.js",
       "tests": 20
     },
@@ -316,12 +324,24 @@
       "tests": 19
     },
     {
+      "file": "server/src/__tests__/public-kb.test.js",
+      "tests": 18
+    },
+    {
+      "file": "server/src/__tests__/recurrences.route.test.js",
+      "tests": 17
+    },
+    {
       "file": "server/src/services/__tests__/custom-fields.service.test.js",
       "tests": 17
     },
     {
       "file": "server/src/services/__tests__/notify.test.js",
       "tests": 17
+    },
+    {
+      "file": "server/src/__tests__/rules.route.test.js",
+      "tests": 16
     },
     {
       "file": "server/src/services/__tests__/collision.service.test.js",
@@ -340,11 +360,11 @@
       "tests": 15
     },
     {
-      "file": "server/src/services/__tests__/email-ingestion.service.test.js",
-      "tests": 15
+      "file": "server/src/__tests__/search-sync.expanded.test.js",
+      "tests": 14
     },
     {
-      "file": "server/src/__tests__/search-sync.expanded.test.js",
+      "file": "server/src/__tests__/webhooks.route.test.js",
       "tests": 14
     },
     {

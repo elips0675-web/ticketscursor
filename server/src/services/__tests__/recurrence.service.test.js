@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('cron-parser', () => ({
-  default: {
-    parseExpression: vi.fn(),
+  CronExpressionParser: {
+    parse: vi.fn(),
   },
 }))
 
@@ -29,13 +29,13 @@ describe('recurrence.service', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
     prisma = (await import('../../prisma.js')).default
-    cronParser = (await import('cron-parser')).default
+    cronParser = (await import('cron-parser')).CronExpressionParser
   })
 
   describe('createRecurrence', () => {
     it('creates recurrence with computed next_run', async () => {
       const nextDate = new Date('2026-10-01T09:00:00Z')
-      cronParser.parseExpression.mockReturnValue({ next: () => ({ toDate: () => nextDate }) })
+      cronParser.parse.mockReturnValue({ next: () => ({ toDate: () => nextDate }) })
       prisma.ticket_recurrences.create.mockResolvedValue({ id: 1, cron_expr: '0 9 * * 1' })
 
       const { createRecurrence } = await import('../../services/recurrence.service.js')
@@ -59,7 +59,7 @@ describe('recurrence.service', () => {
     })
 
     it('sets next_run null for invalid cron', async () => {
-      cronParser.parseExpression.mockImplementation(() => { throw new Error('bad cron') })
+      cronParser.parse.mockImplementation(() => { throw new Error('bad cron') })
       prisma.ticket_recurrences.create.mockResolvedValue({ id: 2 })
 
       const { createRecurrence } = await import('../../services/recurrence.service.js')
@@ -71,7 +71,7 @@ describe('recurrence.service', () => {
     })
 
     it('passes through description, priority, category, assignedTo', async () => {
-      cronParser.parseExpression.mockReturnValue({ next: () => ({ toDate: () => new Date() }) })
+      cronParser.parse.mockReturnValue({ next: () => ({ toDate: () => new Date() }) })
       prisma.ticket_recurrences.create.mockResolvedValue({ id: 3 })
 
       const { createRecurrence } = await import('../../services/recurrence.service.js')
@@ -102,7 +102,7 @@ describe('recurrence.service', () => {
     it('updates fields and recomputes next_run when cron changes', async () => {
       prisma.ticket_recurrences.findFirst.mockResolvedValue({ id: 1 })
       const nextDate = new Date('2026-11-01T08:00:00Z')
-      cronParser.parseExpression.mockReturnValue({ next: () => ({ toDate: () => nextDate }) })
+      cronParser.parse.mockReturnValue({ next: () => ({ toDate: () => nextDate }) })
       prisma.ticket_recurrences.update.mockResolvedValue({ id: 1 })
 
       const { updateRecurrence } = await import('../../services/recurrence.service.js')
@@ -192,7 +192,7 @@ describe('recurrence.service', () => {
   describe('processRecurrences', () => {
     it('creates tickets for due recurrences with [Плановое] prefix', async () => {
       const next = new Date('2026-12-01T09:00:00Z')
-      cronParser.parseExpression.mockReturnValue({ next: () => ({ toDate: () => next }) })
+      cronParser.parse.mockReturnValue({ next: () => ({ toDate: () => next }) })
       prisma.ticket_recurrences.findMany.mockResolvedValue([
         { id: 1, title: 'Backup', description: 'Ежедневный', priority: 'medium', category: 'support', assigned_to: null, created_by: 3, cron_expr: '0 9 * * *' },
       ])
@@ -244,7 +244,7 @@ describe('recurrence.service', () => {
 
     it('continues on ticket creation failure', async () => {
       const next = new Date('2026-12-01T09:00:00Z')
-      cronParser.parseExpression.mockReturnValue({ next: () => ({ toDate: () => next }) })
+      cronParser.parse.mockReturnValue({ next: () => ({ toDate: () => next }) })
       prisma.ticket_recurrences.findMany.mockResolvedValue([
         { id: 1, title: 'A', description: null, priority: 'medium', category: 'support', assigned_to: null, created_by: 1, cron_expr: '0 9 * * *' },
         { id: 2, title: 'B', description: null, priority: 'low', category: 'incident', assigned_to: null, created_by: 1, cron_expr: '0 9 * * *' },

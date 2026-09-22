@@ -1,10 +1,10 @@
-import cronParser from 'cron-parser'
+import { CronExpressionParser } from 'cron-parser'
 import prisma from '../prisma.js'
 import logger from '../logger.js'
 
 function parseCron(expr) {
   try {
-    return cronParser.parseExpression(expr)
+    return CronExpressionParser.parse(expr)
   } catch {
     return null
   }

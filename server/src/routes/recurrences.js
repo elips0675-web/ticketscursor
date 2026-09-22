@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { authenticateToken, requireRole } from '../middleware.js'
 import { createRecurrence, updateRecurrence, deleteRecurrence, listRecurrences, getRecurrenceById } from '../services/recurrence.service.js'
-import cronParser from 'cron-parser'
+import { CronExpressionParser } from 'cron-parser'
 import logger from '../logger.js'
 
 const router = Router()
@@ -34,7 +34,7 @@ router.post('/', async (req, res) => {
     if (!cron_expr?.trim()) return res.status(400).json({ success: false, message: 'Cron expression is required' })
 
     try {
-      cronParser.parseExpression(cron_expr)
+      CronExpressionParser.parse(cron_expr)
     } catch {
       return res.status(400).json({ success: false, message: 'Invalid cron expression' })
     }
@@ -59,7 +59,7 @@ router.put('/:id', async (req, res) => {
   try {
     if (req.body.cron_expr) {
       try {
-        cronParser.parseExpression(req.body.cron_expr)
+        CronExpressionParser.parse(req.body.cron_expr)
       } catch {
         return res.status(400).json({ success: false, message: 'Invalid cron expression' })
       }

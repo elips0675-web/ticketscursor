@@ -48,7 +48,7 @@ async function findTicketByEmailMessageId(messageId) {
     where: { email_message_id: messageId, deleted_at: null },
     select: { id: true },
   })
-  return ticket
+  return ticket ? ticket.id : null
 }
 
 async function findTicketBySubject(subject) {
@@ -58,7 +58,7 @@ async function findTicketBySubject(subject) {
     where: { id: ticketId, deleted_at: null },
     select: { id: true },
   })
-  return ticket
+  return ticket ? ticket.id : null
 }
 
 async function findOrCreateRequester(fromEmail, fromName) {
@@ -82,21 +82,21 @@ async function findOrCreateRequester(fromEmail, fromName) {
 async function processEmail(parsed, client) {
   const fromEmail = parsed.from?.text || ''
   const fromName = parsed.from?.value?.[0]?.name || ''
-  const subject = parsed.subject || '(No subject)'
+  const rawSubject = parsed.subject || ''
   const body = extractTextBody(parsed)
   const messageId = parsed.messageId || parsed.headers?.get('message-id')
   const inReplyTo = parsed.inReplyTo || parsed.headers?.get('in-reply-to')
-  const references = parsed.references || parsed.headers?.get('references')
 
-  if (!body && !subject) {
+  if (!body && !rawSubject) {
     logger.warn('IMAP: empty email, skipping')
     return
   }
+  const subject = rawSubject || '(No subject)'
 
   const requesterId = await findOrCreateRequester(fromEmail, fromName)
 
   const ticketIdFromReply = await findTicketByEmailMessageId(inReplyTo)
-  const ticketIdFromSubject = findTicketBySubject(subject)
+  const ticketIdFromSubject = await findTicketBySubject(subject)
   const existingTicketId = ticketIdFromReply || ticketIdFromSubject
 
   if (existingTicketId) {

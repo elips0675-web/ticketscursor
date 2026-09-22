@@ -1,7 +1,7 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 61 файл / 145 suite / 507 теста (все PASS, vitest --reporter=json)
+Реальный результат: 61 файл / 145 suite / 507 тестов (все PASS, vitest --reporter=json от 22.09.2026)
 
 ===== ФАЙЛЫ (61 шт, все реальные, сгенерировано скриптом) =====
 
@@ -14,26 +14,37 @@ src/test/Calendar.expanded.test.tsx | 18 | Calendar: клик по дню, со�
 src/test/Dashboard.expanded.test.tsx | 18 | Dashboard: stat cards, charts, employees, onClick/onKeyDown handlers
 src/test/Kanban.test.tsx | 17 | Kanban: rendering, DnD, column counts, ticket cards, empty state
 src/test/Polls.expanded.test.tsx | 14 | Polls: форма, голосование, empty, closed, delete
+src/test/useFeature.test.tsx | 14 | useFeature: enabled, disabled, rollout buckets, user bucket 50%, loading
 src/test/Wiki.expanded.test.tsx | 14 | Wiki: categories, search, create, edit, delete, markdown
+src/test/AdminIntegrations.test.tsx | 13 | AdminIntegrations: список интеграций, toggle, save
 src/test/AdminPush.expanded.test.tsx | 13 | AdminPush: подписка, отправка, loading, error
+src/test/AdminRules.test.tsx | 13 | AdminRules: список правил, create/delete, RBAC
 src/test/Employees.expanded.test.tsx | 13 | Employees: list, search, filter, role, cards/table toggle
+src/test/SSO.test.tsx | 13 | SSO: вход через SSO, обмен кода, ошибки, i18n
 src/test/ChatDetail.test.tsx | 11 | ChatDetail: messages, send, loading, empty, virtual scroll
 src/test/Login.expanded.test.tsx | 11 | Login: form, submit, validation, error, loading, SSO button
 src/test/News.expanded.test.tsx | 11 | News: search, filter, create, CSV, empty, pagination
+src/test/CommandPalette.test.tsx | 10 | CommandPalette: open/close, поиск, навигация, Enter
 src/test/Search.expanded.test.tsx | 9 | Search: query, results, sections, empty, keyboard
 src/test/AppLayout.test.tsx | 8 | AppLayout: sidebar, navigation, Ctrl+K shortcut
 src/test/Login.test.tsx | 8 | Login: renders, submit, redirect, validation
+src/test/MarkdownEditor.test.tsx | 8 | MarkdownEditor: редактирование, preview, toolbar
 src/test/ResetPassword.expanded.test.tsx | 8 | ResetPassword: form, validation, API error, loading, success
 src/test/SocketContext.test.tsx | 8 | SocketContext: connect, disconnect, events, reconnection
 src/test/Calculator.test.tsx | 7 | Calculator: renders, operations, keyboard
+src/test/PortalTrack.test.tsx | 7 | PortalTrack: поиск обращения, статус, события
+src/test/PublicKB.test.tsx | 7 | PublicKB: статьи, категории, поиск
 src/test/Register.test.tsx | 7 | Register: form, validation, submit, error
 src/test/AdminAudit.test.tsx | 6 | AdminAudit: renders, filter, export
 src/test/AdminLayout.test.tsx | 6 | AdminLayout: sidebar, navigation, RBAC
+src/test/AdminSettings.test.tsx | 6 | AdminSettings: renders, toggles, rollout percent, Save, clamp
 src/test/api.test.ts | 6 | api.ts: handleResponse, authFetch, error handling
 src/test/AuthContext.test.tsx | 6 | AuthContext: login, logout, token refresh
 src/test/ForgotPassword.expanded.test.tsx | 6 | ForgotPassword: form, submit, sent, loading, validation
 src/test/News.test.tsx | 6 | News: renders, create, pagination
 src/test/NewTicket.test.tsx | 6 | NewTicket: form, submit, validation, category
+src/test/Portal.test.tsx | 6 | Portal: создание обращения без авторизации
+src/test/PublicKBArticle.test.tsx | 6 | PublicKBArticle: рендер статьи, markdown, назад
 src/test/utils.test.ts | 6 | utils: formatDate, formatNumber, debounce
 src/test/Dashboard.test.tsx | 5 | Dashboard: renders, stat cards
 src/test/ProtectedRoute.test.tsx | 5 | ProtectedRoute: redirect, adminOnly, loading
@@ -43,9 +54,7 @@ src/test/Employees.test.tsx | 4 | Employees: renders, list
 src/test/Files.test.tsx | 4 | Files: renders, folders
 src/test/NotificationsPage.test.tsx | 4 | Notifications: renders, mark read
 src/test/use-push.test.ts | 4 | usePush: subscribe, unsubscribe, permission
-src/test/useFeature.test.tsx | 14 | useFeature: enabled, disabled, rollout buckets, user bucket 50%, loading
 src/test/Wiki.test.tsx | 4 | Wiki: renders, categories
-src/test/AdminSettings.test.tsx | 6 | AdminSettings: renders, toggles, rollout percent, Save, clamp
 src/test/Chats.test.tsx | 3 | Chats: renders, list
 src/test/ErrorBoundary.test.tsx | 3 | ErrorBoundary: catches, renders fallback
 src/test/Polls.test.tsx | 3 | Polls: renders, vote
@@ -59,26 +68,12 @@ src/test/AdminPush.test.tsx | 1 | AdminPush: renders
 src/test/Profile.test.tsx | 1 | Profile: renders
 src/test/Tickets.test.tsx | 1 | Tickets: renders
 
-===== ФАЙЛЫ, ДОБАВЛЕННЫЕ ПОСЛЕ 21.09.2026 (инвентарь от 22.09.2026, +83 теста) =====
-src/test/SSO.test.tsx | 13 | SSO: вход через SSO, обмен кода, ошибки, i18n
-src/test/AdminRules.test.tsx | 13 | AdminRules: список правил, create/delete, RBAC
-src/test/AdminIntegrations.test.tsx | 13 | AdminIntegrations: список интеграций, toggle, save
-src/test/CommandPalette.test.tsx | 10 | CommandPalette: open/close, поиск, навигация, Enter
-src/test/MarkdownEditor.test.tsx | 8 | MarkdownEditor: редактирование, preview, toolbar
-src/test/PortalTrack.test.tsx | 7 | PortalTrack: поиск обращения, статус, события
-src/test/PublicKB.test.tsx | 7 | PublicKB: статьи, категории, поиск
-src/test/Portal.test.tsx | 6 | Portal: создание обращения без авторизации
-src/test/PublicKBArticle.test.tsx | 6 | PublicKBArticle: рендер статьи, markdown, назад
-
-===== ФАЙЛЫ, ОБНОВЛЁННЫЕ 22.09.2026 (Этап 51: feature flags rollout, +13 теста) =====
-src/test/useFeature.test.tsx | 4 → 14 | rollout: getRolloutBucket, isFeatureEnabledForUser, user in/out 50%, 100%
-src/test/AdminSettings.test.tsx | 3 → 6 | rollout input: рендер, редактирование, Save, клампинг 0-100
-
 Вспомогательные (не тесты):
 src/test/setup.ts — global test setup (msw server)
 src/test/test-utils.tsx — renderWithProviders, mockAuth
 
 ===== ИСТОЧНИК ДАННЫХ =====
-Количество тестов подсчитано скриптом (regex /\b(it|test)\s*\(/ в *.test.{ts,tsx}).
-Фактический запуск: 61 файл / 507 теста / 0 failures.
+Список файлов и количество тестов — из фактического прогона `vitest run --config vitest.client.config.ts --reporter=json` (client-report.json).
+Фактический запуск: 61 файл / 507 тестов / 0 failures.
+Coverage (22.09.2026): stmts 66.69 / branches 58.83 / functions 57.76 / lines 69.19 (пороги обновлены).
 Данные актуальны на: 22.09.2026
