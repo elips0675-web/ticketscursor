@@ -57,5 +57,5 @@ server/src/__tests__/search.test.js | 4 | Search: fulltext, LIKE fallback, empty
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона `npx vitest run --reporter=json` (server-report.json).
 Фактический запуск: 47 файлов / 757 тестов / 0 failures.
-Coverage (22.09.2026): stmts 67.77 / branches 61.54 / functions 65.98 / lines 68.76 (пороги обновлены).
+Coverage (22.09.2026): stmts 67.74 / branches 61.54 / functions 65.98 / lines 68.73 (пороги обновлены).
 Данные актуальны на: 22.09.2026

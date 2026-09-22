@@ -1,7 +1,8 @@
 # Service Desk — корпоративная система тикетов
 
 [![CI](https://github.com/elips0675-web/ticketscursor/actions/workflows/ci.yml/badge.svg)](https://github.com/elips0675-web/ticketscursor/actions)
-[![Coverage](https://img.shields.io/badge/coverage-68%25-green)](https://github.com/elips0675-web/ticketscursor)
+[![Coverage client](https://img.shields.io/badge/coverage_client-66.69%25-green)](https://github.com/elips0675-web/ticketscursor)
+[![Coverage server](https://img.shields.io/badge/coverage_server-67.74%25-green)](https://github.com/elips0675-web/ticketscursor)
 [![k6](https://img.shields.io/badge/k6-load%20tested-blue)](https://github.com/elips0675-web/ticketscursor)
 [![Grafana](https://img.shields.io/badge/Grafana-dashboard-orange)](https://github.com/elips0675-web/ticketscursor)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)]()
@@ -161,7 +162,7 @@ npm run test:e2e
 | Серверные тесты | 757 тестов, 47 файлов | ✅ Пройдены |
 | E2E тесты (Playwright) | 16 spec'ов, 51 тест; check-console 6 страниц | ✅ Пройдены |
 | Покрытие кода (клиент) | 66.69% stmts (порог: 66/58/57/69) | ✅ Честно (по факту 22.09.2026) |
-| Покрытие кода (сервер) | 67.77% stmts (порог: 67/61/65/68) | ✅ Честно (по факту 22.09.2026) |
+| Покрытие кода (сервер) | 67.74% stmts (порог: 67/61/65/68) | ✅ Честно (по факту 22.09.2026) |
 | ESLint | 0 errors, 0 warnings | ✅ Чисто |
 | check-console (E2E) | 17/17 страниц без ошибок, русский текст | ✅ Пройден |
 | Prisma моделей | 25 (включая event_outbox, custom_fields, api_tokens, webhooks, automation_rules, feature_flags) | ✅ |

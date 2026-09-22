@@ -7,7 +7,7 @@
 - **Итого**: 1264 теста, 0 failures (test-analysis/test-inventory.json)
 - **E2E (check-console.mjs)**: 17/17 страниц ALL OK — без console.error, русский текст есть
 - **E2E (Playwright)**: 16 spec-файлов / 51 тест (e2e/*.spec.ts)
-- **Coverage пороги (факт 22.09.2026)**: клиент stmts 66 / branch 58 / funcs 57 / lines 69 (факт 66.69/58.83/57.76/69.19); сервер stmts 67 / branch 61 / funcs 65 / lines 68 (факт 67.77/61.54/65.98/68.76)
+- **Coverage пороги (факт 22.09.2026)**: клиент stmts 66 / branch 58 / funcs 57 / lines 69 (факт 66.69/58.83/57.76/69.19); сервер stmts 67 / branch 61 / funcs 65 / lines 68 (факт 67.74/61.54/65.98/68.73)
 - **Prisma моделей**: 32 (employees … api_tokens, webhooks, automation_rules)
 - **API endpoints**: 60+ (Swagger + Health probes + k6 metrics)
 - **ESLint**: 0 errors, 56 warnings (в пределах лимита 100)
