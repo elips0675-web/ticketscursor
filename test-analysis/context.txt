@@ -1,16 +1,21 @@
-# Service Desk — технический долг (июль 2026)
+# Service Desk — технический долг (актуализировано 22.09.2026)
 
 ## Текущее состояние
 
-- **Фронт**: 411 тестов (52 suite)
-- **Сервер**: 451 тестов (30 suites)
-- **E2E**: 17/17 страниц ALL OK (check-console.mjs)
-- **Prisma моделей**: 18 (включая event_outbox)
+- **Фронт**: 507 тестов (61 файл / 145 suite)
+- **Сервер**: 757 тестов (47 файлов / 311 suite)
+- **Итого**: 1264 теста, 0 failures (test-analysis/test-inventory.json)
+- **E2E (check-console.mjs)**: 17/17 страниц ALL OK — без console.error, русский текст есть
+- **E2E (Playwright)**: 16 spec-файлов / 51 тест (e2e/*.spec.ts)
+- **Coverage пороги (факт 22.09.2026)**: клиент stmts 66 / branch 58 / funcs 57 / lines 69 (факт 66.69/58.83/57.76/69.19); сервер stmts 67 / branch 61 / funcs 65 / lines 68 (факт 67.77/61.54/65.98/68.76)
+- **Prisma моделей**: 32 (employees … api_tokens, webhooks, automation_rules)
 - **API endpoints**: 60+ (Swagger + Health probes + k6 metrics)
-- **ESLint**: 0 errors, 10 warnings (pre-existing)
+- **ESLint**: 0 errors, 56 warnings (в пределах лимита 100)
 - **MySQL**: запущен (Laragon), БД servicedesk
 - **API**: порт 4000, Vite proxy 5173
-- **check-console**: пройден — 17 страниц без console.error, русский текст есть
+
+> Ниже — исторические срезы (этапы, релизы, coverage по файлам на момент их реализации).
+> Актуальные агрегаты на 22.09.2026 — в шапке выше и в `test-analysis/test-inventory.json`.
 
 ## Ключевые файлы
 
@@ -59,13 +64,13 @@
 
 ## Команды
 ```bash
-cd E:\Tickets cursor\ticketscursor
+cd D:\Tickets Cursor nout\repo
 npm run test                  # фронт
 npx vitest run --coverage     # coverage фронт
 cd server && npm test         # сервер
 npx vitest run --coverage     # coverage сервер
 npm run build                 # production сборка
-node check-console.mjs        # E2E проверка (требует MySQL + оба dev-сервера)
+node check-console.mjs        # E2E проверка 17 страниц (требует MySQL + оба dev-сервера)
 ```
 
 ## Аудит по Промты.txt
@@ -77,7 +82,7 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 - ✅ Health check + Readiness probe — `/api/health`, `/api/ready`
 - ✅ CSP (Helmet strict) — connect-src разрешён localhost:*
 - ✅ Audit log — `audit_log` таблица + middleware
-- ✅ Load testing (k6) — сценарии в `k6/`
+- ✅ Load testing (k6) — сценарии в `test/load/` (5 скриптов: tickets, chat, wiki, search, news)
 - ✅ Grafana dashboard — мониторинг API/WS/Redis
 - ✅ Bundle size check в CI — лимит 2MB
 

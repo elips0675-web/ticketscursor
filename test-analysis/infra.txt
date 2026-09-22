@@ -6,7 +6,7 @@
 | Секция ниже | Файл в репо? | Где актуальная версия |
 |-------------|-------------|----------------------|
 | .github/workflows/ci.yml | ✅ Есть | .github/workflows/ci.yml (2 job'а: frontend, backend) |
-| docker-compose.yml | ✅ Есть | docker-compose.yml (mysql 3307, meilisearch 7700, db_backup, api, frontend; Redis НЕТ) |
+| docker-compose.yml | ✅ Есть | docker-compose.yml (mysql 3307, meilisearch 7700, redis 6379, db_backup, api, frontend) |
 | nginx/default.conf | ✅ Есть | nginx/default.conf |
 | Dockerfile | ✅ Есть | Dockerfile (multi-stage) |
 | scripts/test-e2e-api.js | ❌ УДАЛЁН из репо | см. e2e/*.spec.ts (Playwright) |
@@ -18,7 +18,7 @@
 | scripts/test-analytics.js | ❌ УДАЛЁН | — |
 | docker/entrypoint.sh | ❌ УДАЛЁН (docker-compose + healthcheck вместо него) | — |
 | scripts/docker-deploy.sh | ❌ УДАЛЁН | — |
-| **Актуальные scripts/** | ✅ | check-bundle-size.js, count-tests.js, backup-mysql.ps1, get-system-info.ps1 |
+| **Актуальные scripts/** | ✅ | api-smoke.mjs, backup-mysql.ps1, check-bundle-size.js, count-tests.js, get-system-info.ps1, refresh-auth.mjs, regenerate-test-inventory.js |
 
 Правило для AI-аудиторов: источник правды — только живые файлы репозитория.
 Файлы ниже приведены как исторический снапшот.
