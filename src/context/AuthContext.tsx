@@ -40,7 +40,7 @@ interface User {
   role: 'super_admin' | 'admin' | 'senior_agent' | 'agent' | 'requester'
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null
   token: string | null
   login: (token: string, user: User) => void

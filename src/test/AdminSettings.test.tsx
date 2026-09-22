@@ -29,4 +29,37 @@ describe('AdminSettings', () => {
     await userEvent.click(toggle)
     expect(toggle).toHaveAttribute('aria-checked', 'true')
   })
+
+  it('shows rollout percent input for each flag', async () => {
+    render(<AdminSettings />, { wrapper: AllTheProviders })
+    await waitFor(() => {
+      expect(screen.getByTestId('feature-rollout-kanban_view')).toBeTruthy()
+    })
+    const input = screen.getByTestId('feature-rollout-kanban_view') as HTMLInputElement
+    expect(input).toHaveValue(40)
+  })
+
+  it('edits rollout percent and shows Save', async () => {
+    render(<AdminSettings />, { wrapper: AllTheProviders })
+    await waitFor(() => {
+      expect(screen.getByTestId('feature-rollout-kanban_view')).toBeTruthy()
+    })
+    const input = screen.getByTestId('feature-rollout-kanban_view') as HTMLInputElement
+    await userEvent.clear(input)
+    await userEvent.type(input, '30')
+    expect(input).toHaveValue(30)
+    expect(screen.getByTestId('features-save')).toBeTruthy()
+  })
+
+  it('clamps rollout percent to 0-100', async () => {
+    render(<AdminSettings />, { wrapper: AllTheProviders })
+    await waitFor(() => {
+      expect(screen.getByTestId('feature-rollout-dark_theme')).toBeTruthy()
+    })
+    const input = screen.getByTestId('feature-rollout-dark_theme') as HTMLInputElement
+    expect(input).toHaveValue(100)
+    await userEvent.clear(input)
+    await userEvent.type(input, '150')
+    expect(input).toHaveValue(100)
+  })
 })

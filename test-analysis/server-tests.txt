@@ -1,12 +1,12 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 42 файла / 273 suite / 653 теста (все PASS, vitest --reporter=json)
+Реальный результат: 42 файла / 273 suite / 657 тестов (все PASS, vitest --reporter=json)
 
 ===== ФАЙЛЫ (42 шт, все реальные, сгенерировано скриптом) =====
 
 # Файлы | Тестов | Описание
-server/src/api.test.js | 159 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk)
+server/src/api.test.js | 163 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk, feature rollout)
 server/src/services/__tests__/tickets.service.sla.test.js | 40 | SLA: calculation, pause, business hours, breach detection, priority changes
 server/src/__tests__/middleware.test.js | 19 | Rate limiter, CORS, helmet, auth middleware, RBAC
 server/src/services/__tests__/custom-fields.service.test.js | 17 | Custom fields: CRUD, validation, types, required
@@ -51,7 +51,10 @@ server/src/services/__tests__/recurrence.service.test.js | 14 | Recurrence: по
 server/src/services/__tests__/webhooks.service.test.js | 14 | Webhooks: подписки, доставка, retry
 server/src/__tests__/limiters.test.js | 10 | Rate limiters: auth 10/мин, api 100/мин, admin 30/мин
 
+===== ФАЙЛЫ, ОБНОВЛЁННЫЕ 22.09.2026 (Этап 51: feature flags rollout, +4 теста) =====
+server/src/api.test.js | 159 → 163 | GET/PUT rollout_percent, клампинг 0-100, дефолт 100
+
 ===== ИСТОЧНИК ДАННЫХ =====
 Количество тестов подсчитано скриптом (regex /\b(it|test)\s*\(/ в *.test.js).
-Фактический запуск: 42 файла / 653 теста / 0 failures.
+Фактический запуск: 42 файла / 657 тестов / 0 failures.
 Данные актуальны на: 22.09.2026

@@ -600,9 +600,9 @@ export const handlers = [
     return HttpResponse.json({
       success: true,
       data: [
-        { key: 'new_ticket_form', enabled: true, description: 'New ticket form' },
-        { key: 'kanban_view', enabled: false, description: 'Kanban view' },
-        { key: 'dark_theme', enabled: true, description: 'Dark theme' },
+        { key: 'new_ticket_form', enabled: true, description: 'New ticket form', rollout_percent: 100 },
+        { key: 'kanban_view', enabled: false, description: 'Kanban view', rollout_percent: 40 },
+        { key: 'dark_theme', enabled: true, description: 'Dark theme', rollout_percent: 100 },
       ],
     })
   }),

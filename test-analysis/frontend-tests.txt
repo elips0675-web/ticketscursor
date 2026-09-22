@@ -1,7 +1,7 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 61 файл / 143 suite / 494 теста (все PASS, vitest --reporter=json)
+Реальный результат: 61 файл / 145 suite / 507 теста (все PASS, vitest --reporter=json)
 
 ===== ФАЙЛЫ (61 шт, все реальные, сгенерировано скриптом) =====
 
@@ -43,9 +43,9 @@ src/test/Employees.test.tsx | 4 | Employees: renders, list
 src/test/Files.test.tsx | 4 | Files: renders, folders
 src/test/NotificationsPage.test.tsx | 4 | Notifications: renders, mark read
 src/test/use-push.test.ts | 4 | usePush: subscribe, unsubscribe, permission
-src/test/useFeature.test.tsx | 4 | useFeature: enabled, disabled, loading
+src/test/useFeature.test.tsx | 14 | useFeature: enabled, disabled, rollout buckets, user bucket 50%, loading
 src/test/Wiki.test.tsx | 4 | Wiki: renders, categories
-src/test/AdminSettings.test.tsx | 3 | AdminSettings: renders, save
+src/test/AdminSettings.test.tsx | 6 | AdminSettings: renders, toggles, rollout percent, Save, clamp
 src/test/Chats.test.tsx | 3 | Chats: renders, list
 src/test/ErrorBoundary.test.tsx | 3 | ErrorBoundary: catches, renders fallback
 src/test/Polls.test.tsx | 3 | Polls: renders, vote
@@ -70,11 +70,15 @@ src/test/PublicKB.test.tsx | 7 | PublicKB: статьи, категории, п�
 src/test/Portal.test.tsx | 6 | Portal: создание обращения без авторизации
 src/test/PublicKBArticle.test.tsx | 6 | PublicKBArticle: рендер статьи, markdown, назад
 
+===== ФАЙЛЫ, ОБНОВЛЁННЫЕ 22.09.2026 (Этап 51: feature flags rollout, +13 теста) =====
+src/test/useFeature.test.tsx | 4 → 14 | rollout: getRolloutBucket, isFeatureEnabledForUser, user in/out 50%, 100%
+src/test/AdminSettings.test.tsx | 3 → 6 | rollout input: рендер, редактирование, Save, клампинг 0-100
+
 Вспомогательные (не тесты):
 src/test/setup.ts — global test setup (msw server)
 src/test/test-utils.tsx — renderWithProviders, mockAuth
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Количество тестов подсчитано скриптом (regex /\b(it|test)\s*\(/ в *.test.{ts,tsx}).
-Фактический запуск: 61 файл / 494 теста / 0 failures.
+Фактический запуск: 61 файл / 507 теста / 0 failures.
 Данные актуальны на: 22.09.2026

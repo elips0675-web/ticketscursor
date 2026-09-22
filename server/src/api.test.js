@@ -1600,4 +1600,59 @@ describe('Admin — feature flags', () => {
       .send({ key: 'test' })
     expect(res.status).toBe(400)
   })
+
+  it('GET returns rollout_percent for every flag', async () => {
+    const res = await request(app)
+      .get('/api/admin/features')
+      .set('Authorization', `Bearer ${devToken}`)
+    expect(res.status).toBe(200)
+    for (const f of res.body.data) {
+      expect(f).toHaveProperty('rollout_percent')
+      expect(typeof f.rollout_percent).toBe('number')
+    }
+  })
+
+  it('PUT persists rollout_percent', async () => {
+    await request(app)
+      .put('/api/admin/features')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send([{ key: 'kanban_view', enabled: true, description: 'Rollout test', rollout_percent: 40 }])
+      .expect(200)
+    const res = await request(app)
+      .get('/api/admin/features')
+      .set('Authorization', `Bearer ${devToken}`)
+    const kanban = res.body.data.find((f) => f.key === 'kanban_view')
+    expect(kanban.rollout_percent).toBe(40)
+  })
+
+  it('clamps rollout_percent to 0-100', async () => {
+    await request(app)
+      .put('/api/admin/features')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send([
+        { key: 'new_ticket_form', enabled: true, description: 'High', rollout_percent: 150 },
+        { key: 'dark_theme', enabled: true, description: 'Low', rollout_percent: -5 },
+      ])
+      .expect(200)
+    const res = await request(app)
+      .get('/api/admin/features')
+      .set('Authorization', `Bearer ${devToken}`)
+    const ntf = res.body.data.find((f) => f.key === 'new_ticket_form')
+    const dark = res.body.data.find((f) => f.key === 'dark_theme')
+    expect(ntf.rollout_percent).toBe(100)
+    expect(dark.rollout_percent).toBe(0)
+  })
+
+  it('defaults rollout_percent to 100 when absent', async () => {
+    await request(app)
+      .put('/api/admin/features')
+      .set('Authorization', `Bearer ${devToken}`)
+      .send([{ key: 'kanban_view', enabled: true, description: 'No percent' }])
+      .expect(200)
+    const res = await request(app)
+      .get('/api/admin/features')
+      .set('Authorization', `Bearer ${devToken}`)
+    const kanban = res.body.data.find((f) => f.key === 'kanban_view')
+    expect(kanban.rollout_percent).toBe(100)
+  })
 })

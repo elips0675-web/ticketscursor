@@ -3,7 +3,7 @@
 > Дата обновления: 22.09.2026
 > Источники: Kimi (7/10), DeepSeek (6.5/10), Qwen (8.2/10)
 > Фактическая проверка кодовой базы: 22.09.2026
-> Тесты: 61 файл / 494 клиентских + 42 файла / 653 серверных = **1147 тестов, 0 failures**
+> Тесты: 61 файл / 507 клиентских + 42 файла / 657 серверных = **1164 теста, 0 failures**
 > E2E: 16 spec'ов / 51 тест (Playwright)
 
 ---
@@ -35,6 +35,7 @@
 | 47 | RBAC-матрица (5×5) + security-тесты (rate-limit, dev-login 404 в prod) → 653 серверных | ✅ |
 | 49 | Redis-сервис в docker-compose (REDIS_URL для cache/BullMQ/Socket.io) | ✅ |
 | 50 | Инвентарь тестов перегенерирован из фактического vitest (61/494 + 42/653 = 1147), устаревшие копии test-analysis синхронизированы, добавлены scripts/regenerate-test-inventory.js + api-smoke.mjs (17/17 ок) | ✅ |
+| 51 | Feature flags: percentage rollout — rollout_percent (миграция+Prisma+API с клампингом 0-100), детерминированный гейт по id сотрудника (hash % 100), UI в админке (инпут %), i18n ru/en, тесты +13 клиент/ +4 сервер → 507/657 = 1164 | ✅ |
 
 ---
 
@@ -74,7 +75,7 @@
 | 5 | Нет distributed tracing | Qwen P1 | OpenTelemetry (infrastructure) | ⏳ |
 | 6 | Нет CDN для статики | Qwen P1 | CloudFlare / CloudFront (infra) | ⏳ |
 | 7 | Email: нет SPF/DKIM | Qwen P1 | DNS настройки (infra) | ⏳ |
-| 8 | Feature flags: нет rollout strategy | Qwen P2 | Percentage rollout | ⏳ |
+| 8 | Feature flags: нет rollout strategy | Qwen P2 | Percentage rollout | ✅ Этап 51 |
 | 9 | Fresh major versions (React 19, Vite 8, Express 5) | Qwen P1 | Мониторить CVE | — |
 
 ---
@@ -112,3 +113,4 @@
 | "require в check-bundle-size, cmd/c в CI" | ❌ stale — уже исправлено (как и в DeepSeek) |
 | "Redis нет в docker-compose" | ✅ ВАЛИДНО, ИСПРАВЛЕНО | io-redis в deps, Redis сервиса в compose не было (fallback in-memory) → добавлен сервис `redis` + `REDIS_URL` для api — Этап 49 |
 | "E2E поверхностные" | ✅ ВАЛИДНО — Частично закрыто Этапом 44 |
+| "Feature flags без rollout strategy" | ✅ СДЕЛАНО | Этап 51: rollout_percent (0-100) на флагах, детерминированный гейт по пользователю, UI в админке, миграция идемпотентная |

@@ -271,11 +271,26 @@ router.put('/settings/redis', async (req, res) => {
   }
 })
 
+const ROLLOUT_DEFAULT = 100
+
+const toRolloutPercent = (value) => {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return ROLLOUT_DEFAULT
+  return Math.min(100, Math.max(0, Math.round(n)))
+}
+
 const DEFAULT_FEATURES = [
-  { key: 'new_ticket_form', enabled: true, description: 'Новая форма создания тикета' },
-  { key: 'kanban_view', enabled: true, description: 'Kanban-доска вместо списка' },
-  { key: 'dark_theme', enabled: true, description: 'Тёмная тема интерфейса' },
+  { key: 'new_ticket_form', enabled: true, description: 'Новая форма создания тикета', rollout_percent: ROLLOUT_DEFAULT },
+  { key: 'kanban_view', enabled: true, description: 'Kanban-доска вместо списка', rollout_percent: ROLLOUT_DEFAULT },
+  { key: 'dark_theme', enabled: true, description: 'Тёмная тема интерфейса', rollout_percent: ROLLOUT_DEFAULT },
 ]
+
+const toFeaturePayload = (f) => ({
+  key: f.key,
+  enabled: Boolean(f.enabled),
+  description: f.description || '',
+  rollout_percent: toRolloutPercent(f.rollout_percent),
+})
 
 router.get('/features', cacheMiddleware(30), async (req, res) => {
   try {
@@ -283,7 +298,10 @@ router.get('/features', cacheMiddleware(30), async (req, res) => {
     if (rows.length === 0) {
       return res.json({ success: true, data: DEFAULT_FEATURES })
     }
-    res.json({ success: true, data: rows.map(r => ({ key: r.key, enabled: r.enabled, description: r.description })) })
+    res.json({
+      success: true,
+      data: rows.map((r) => ({ key: r.key, enabled: r.enabled, description: r.description, rollout_percent: r.rollout_percent ?? ROLLOUT_DEFAULT })),
+    })
   } catch (err) {
     logger.error('Features get error:', err)
     res.status(500).json({ success: false, message: 'Failed to fetch features' })
@@ -297,10 +315,11 @@ router.put('/features', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Expected array of { key, enabled }' })
     }
     for (const f of flags) {
+      const payload = toFeaturePayload(f)
       await prisma.feature_flags.upsert({
         where: { key: f.key },
-        update: { enabled: Boolean(f.enabled), updated_at: new Date() },
-        create: { key: f.key, enabled: Boolean(f.enabled), description: f.description || '', updated_at: new Date() },
+        update: { ...payload, updated_at: new Date() },
+        create: { ...payload, updated_at: new Date() },
       })
     }
     await invalidateCache('cache:*')

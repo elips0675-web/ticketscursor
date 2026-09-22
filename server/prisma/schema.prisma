@@ -353,10 +353,11 @@ model password_resets {
 }
 
 model feature_flags {
-  key         String    @id @db.VarChar(100)
-  enabled     Boolean   @default(true)
-  description String?   @default("") @db.VarChar(500)
-  updated_at  DateTime? @default(now())
+  key            String    @id @db.VarChar(100)
+  enabled        Boolean   @default(true)
+  description    String?   @default("") @db.VarChar(500)
+  rollout_percent Int      @default(100)
+  updated_at     DateTime? @default(now())
 
   @@map("feature_flags")
 }

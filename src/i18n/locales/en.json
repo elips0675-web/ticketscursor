@@ -499,6 +499,7 @@
     "geoDone": "Fulltext search enabled",
     "features": "Feature Flags",
     "featuresSubtitle": "Enable/disable features without deployment",
+    "featuresPercent": "Audience rollout",
     "emailTemplates": "Email Templates",
     "emailTemplatesSubtitle": "Use {{variable}} placeholders — they will be replaced with actual values when sending",
     "cannedResponses": "Canned Responses",

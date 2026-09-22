@@ -478,6 +478,7 @@ interface FeatureFlag {
   key: string
   enabled: boolean
   description: string
+  rollout_percent?: number
 }
 
 function ImapSection() {
@@ -807,6 +808,12 @@ function FeatureFlagsSection() {
     setChanged(true)
   }
 
+  const setRollout = (key: string, percent: number) => {
+    const p = Number.isFinite(percent) ? Math.min(100, Math.max(0, Math.round(percent))) : 100
+    setFlags((prev) => prev.map((f) => (f.key === key ? { ...f, rollout_percent: p } : f)))
+    setChanged(true)
+  }
+
   const save = async () => {
     setSaving(true)
     try {
@@ -865,6 +872,22 @@ function FeatureFlagsSection() {
               <div>
                 <p className="text-sm font-medium">{f.key}</p>
                 <p className="text-xs text-muted-foreground">{f.description}</p>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <label htmlFor={`rollout-${f.key}`} className="text-xs text-muted-foreground">
+                    {t('admin.featuresPercent')}
+                  </label>
+                  <input
+                    id={`rollout-${f.key}`}
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={f.rollout_percent ?? 100}
+                    data-testid={`feature-rollout-${f.key}`}
+                    onChange={(e) => setRollout(f.key, Number(e.target.value))}
+                    className="w-16 rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                  <span className="text-xs text-muted-foreground">%</span>
+                </div>
               </div>
             </div>
             <button
@@ -884,11 +907,11 @@ function FeatureFlagsSection() {
         ))}
         {changed && (
           <div className="flex gap-2 pt-2">
-            <Button size="sm" onClick={save} disabled={saving} className="gap-1.5">
+            <Button size="sm" onClick={save} disabled={saving} className="gap-1.5" data-testid="features-save">
               {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
               {t('common.save')}
             </Button>
-            <Button size="sm" variant="outline" onClick={reset} className="gap-1.5">
+            <Button size="sm" variant="outline" onClick={reset} className="gap-1.5" data-testid="features-reset">
               <RefreshCw className="w-3 h-3" />
               {t('common.reset')}
             </Button>

@@ -619,3 +619,18 @@
 - **AGENTS.md (корень + test-analysis)**: добавлено правило 10 — после изменения тестов перегенерировать инвентарь; таблица CI обновлена (411+523 → 494+653); добавлен указатель «Этапы 32–49»
 - **scripts/api-smoke.mjs**: live-проверка приложения — dev-login + 17 ключевых эндпоинтов (health, tickets, employees, sla/stats, news, wiki, polls, calendar, chats, notifications, files, search, admin/users, rules, features) → **17/17 ок** (приложение работает живьём)
 - Инвентарь подтверждён фактическими прогонами: клиент 494 ✅, сервер 653 ✅
+
+### Этап 51 — Feature flags: percentage rollout (22.09.2026)
+- **Миграция**: `server/migrations/20260922_feature_flags_rollout.js` (идемпотентная) — колонка `rollout_percent INT NOT NULL DEFAULT 100` в `feature_flags`; применена к dev-БД через идемпотентный ALTER (dev-БД создана из seed.sql, knex-истории нет)
+- **Prisma**: поле `rollout_percent Int @default(100)` в модели `feature_flags` + `prisma generate` (клиент v5.22.0)
+- **API** (`admin.js`): `GET /api/admin/features` отдаёт `rollout_percent` (fallback 100); `PUT` принимает и клампит 0–100 (`toRolloutPercent`), дефолт 100
+- **Хук** `useFeature.ts`: экспортированы чистые `getRolloutBucket(id)` (hash % 100) и `isFeatureEnabledForUser()`; `useFeature(key)` — детерминированный гейт: включён ⇒ `bucket(userId) < rollout_percent`; без учётки (аноним/нет провайдера) — консервативный fallback `true`; `useMemo` для стабильности; устойчив к отсутствию `AuthProvider` (прямой `useContext(AuthContext)`)
+- **UI** (`AdminSettings.tsx`): в строке каждого флага инпут «Охват аудитории» (0–100%), `data-testid="feature-rollout-<key>"`, кнопки Save/Reset с `data-testid="features-save"/"features-reset"`; `AuthContextType` теперь экспортируется
+- **i18n**: добавлены `admin.features`, `admin.featuresSubtitle`, `admin.featuresPercent` (ru/en) — раньше ключи `features` в ru.json отсутствовали (сырой key в UI)
+- **MSW**: мок `/admin/features` с `rollout_percent`
+- **Тесты**: клиент +13 (useFeature.test.tsx 4→14: pure-логика rollout + «пользователь в/вне 50%» через `server.use` + 100%), AdminSettings.test.tsx 3→6 (рендер инпута 40%, редактирование + Save, клампинг 150→100); сервер +4 (GET отдаёт rollout_percent, PUT персистит 40, клампинг 150/-5 → 100/0, дефолт 100 без поля) → api.test.js 159→163
+- **Итог**: клиент **61 файл / 507 тестов**, сервер **42 файла / 657 тестов** = **1164 теста, 0 failures**; lint 0 errors / 56 warnings; type-check ✅; vite build ✅; API smoke 17/17 ✅; инвентарь перегенерирован, счётчики в AGENTS.md/Что-доделать.txt/frontend-tests.txt/server-tests.txt обновлены; P2 #8 (Qwen) закрыт
+
+## ПЛАН ДОРАБОТКИ ПО ЭТАПАМ
+
+- Этап 52 — по решению (после внешних аудитов свежей папкой test-analysis)

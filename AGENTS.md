@@ -40,7 +40,7 @@
 | **При коммите** | Husky → lint-staged | `eslint --fix` + `prettier --write` на изменённых файлах |
 | **В CI (GitHub Actions)** | `tsc --noEmit` | TypeScript strict type-check |
 | | `eslint . --max-warnings 100` | Синтаксис, неисп. переменные, импорты |
-| | `vitest run` | Юнит-тесты (494 клиентских + 653 серверных) |
+| | `vitest run` | Юнит-тесты (507 клиентских + 657 серверных) |
 | | `vite build` | Сборка production |
 | **Тестовая БД** | `vitest.global-setup.js` | Создаёт `servicedesk_test`, мигрирует, сидит, фиксит колонки |
 | **Rate limiter** | `app.js` | Отключён при `NODE_ENV=test` через `skip` |
@@ -374,5 +374,5 @@ docker compose up -d --build
 - **Документация**: CHANGELOG, AGENTS, context, PLAYBOOK, README обновлены
 
 ### Этапы 32–49 — см. «Что сделано.txt»
-- Актуальный инвентарь на 22.09.2026: клиент **61 файл / 494 теста**, сервер **42 файла / 653 теста** = **1147 тестов, 0 failures**, E2E 16 spec'ов / 51 тест
+- Актуальный инвентарь на 22.09.2026: клиент **61 файл / 507 тестов**, сервер **42 файла / 657 тестов** = **1164 теста, 0 failures**, E2E 16 spec'ов / 51 тест
 - Машинно-читаемый: `test-analysis/test-inventory.json` (регенерация: `node scripts/regenerate-test-inventory.js`)
