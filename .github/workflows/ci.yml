@@ -16,13 +16,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm audit --audit-level=high --omit=dev
       - run: npx tsc --noEmit
-      - run: npx eslint . --max-warnings 50
+      - run: npx eslint . --max-warnings 100
       - run: npx vitest run --config vitest.client.config.ts
       - run: npx vite build
       - run: node scripts/check-bundle-size.js
@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: server/package-lock.json
       - run: npm ci

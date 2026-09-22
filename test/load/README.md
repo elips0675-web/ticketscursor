@@ -17,7 +17,10 @@ sudo apt install k6
 ## Запуск
 
 ```bash
-# 1. Получить токен (админский):
+# 1. Получить админский токен (dev / тестовые окружения):
+#    - локально в dev-режиме: POST http://localhost:4000/api/auth/dev-login (см. server/src/routes/auth.js)
+#    - в production: выдайте токен через вашу админку/SSO; dev-login там 404
+# Пример (dev):
 TOKEN=$(curl -s -X POST http://localhost:4000/api/auth/dev-login | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).data?.token||JSON.parse(d).token))")
 
 # 2. Тест тикетов (200 concurrent, список + создание)

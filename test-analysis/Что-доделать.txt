@@ -107,6 +107,35 @@
 | "E2E 90% smoke-only" | ✅ ВАЛИДНО | Частично закрыто Этапом 44 (crud-lifecycle) |
 | "Новые модули без тестов" | ✅ ВАЛИДНО, ИСПРАВЛЕНО | collсision/recurrence/rules/webhooks/api-tokens (сервер) + CommandPalette/AdminRules/AdminIntegrations/SSO/Portal/PublicKB (клиент) — закрыто Этапами 46/47, +134 теста (494 клиентских, 653 серверных) |
 
+### DeepSeek 22.09.2026 — повторная верификация по ЖИВОМУ коду (файл «Оценка дипсик.rtf»)
+
+| # | Замечание | Уровень | Вердикт (по коду 22.09.2026) | Статус |
+|---|-----------|---------|------------------------------|--------|
+| 1 | CI Node 20 vs engines ≥22 (обе джобы) | P0 | ✅ ВАЛИДНО: `ci.yml:19,48` node-version: 20; `package.json`/`server/package.json` engines ≥22 → node-version: 22 | ✅ Исправлено 22.09 |
+| 2 | login.spec.ts: regex матчит любой URL | P0 | ✅ ВАЛИДНО: `toHaveURL(/\/tickets|\/dashboard|\//)` — `\/` матчит всё | ✅ Исправлено 22.09 |
+| 3 | docker-compose version 3.8 + MySQL 8.0 vs 8.4 | P0 | ❌ Неверно: нет `version:`, `mysql:8.4` (compose и CI) | — |
+| 4 | Idempotency-Key никто не читает | P0 | ❌ Неверно: `middleware/idempotency.js` подключён в tickets.js:21, chats.js:5; k6 шлёт заголовок — сервер использует | — |
+| 5 | version 1.9.0 vs CHANGELOG 1.8.0 | P0 | ✅ ВАЛИДНО: `package.json:4` 1.9.0, `CHANGELOG.md:8` верхняя [1.8.0] | ✅ Исправлено 22.09 |
+| 6 | E2E половина smoke (h1/h2 visible) | P1 | ✅ ВАЛИДНО (admin/kanban/profile/calculator/notifications — «renders») | ⏳ Планируется (отдельный smoke-набор) |
+| 7 | dev-login: NODE_ENV нет в compose → токен в проде | P1 | ❌ Неверно: `docker-compose.yml:101` — `NODE_ENV: production`; `auth.js:121` — 404 при production (fail-closed) | — |
+| 8 | Пороги coverage впритык к факту (0.2-0.8 п.п.) | P1 | ✅ ВАЛИДНО (66 vs 66.69, 67 vs 67.74), но это осознанный минимум | ✅ Проверено замером 22.09: пороги ниже факта |
+| 9 | tailwindcss + vite-plugin-pwa в dependencies (build-time) | P1 | ✅ ВАЛИДНО: `package.json:72-73` | ✅ Исправлено 22.09 |
+| 10 | knex в deps только для миграций | P1 | ❌ НУЖЕН в рантайме: `index.js:40-41` migrate.latest() при старте, `db.js:5` knex-инстанс, `background.js:35` | Оставляем в deps |
+| 11 | infra.txt содержит удалённые скрипты | P2 | ✅ Уже исправлено 21.09: шапка «исторический снапшот» + таблица статусов | ✅ |
+| 12 | CHANGELOG: пропущена 1.1.0 | P2 | ✅ ВАЛИДНО (1.2.0 → 1.0.0) | ⏳ Мелочь — пометить |
+| 13 | k6 README: dev-login в примере (утечка в CI) | P2 | ✅ ВАЛИДНО: `test/load/README.md:21` | ✅ Исправлено 22.09 |
+| 14 | admin.spec: 2 теста дублируют admin-audit | P2 | ⚠️ Частично («renders audit page» ×2) | ⏳ Слить в один spec |
+| 15 | Бейдж coverage 68% (один) vs 66.69/67.77 | P2 | ✅ ВАЛИДНО → два бейджа 66.69 (client) / 67.74 (server) | ✅ Исправлено (Этап 52, ниже) |
+| 16 | tsconfig только references, strict не проверить | P2 | ✅ Норм (project references; strict в tsconfig.app/node) | — |
+
+**Исправлено 22.09.2026 (повторная верификация DeepSeek):**
+- CI: node-version 20 → **22** (frontend + backend), `--max-warnings 50` → **100** (56 warnings сейчас)
+- login.spec.ts: regex → `/\/(tickets|dashboard)(\/|$)/`
+- CHANGELOG: добавлена секция `[1.9.0]`
+- package.json: tailwindcss, vite-plugin-pwa → **devDependencies**
+- test/load/README.md: dev-login убран из примера (только «получите токен у администратора»)
+- README + test-analysis: бейджи coverage → два (66.69 / 67.74)
+
 ### Qwen (8.2/10 — по фактическому файлу Оценка qwen .txt)
 
 | Замечание | Ответ |

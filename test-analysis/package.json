@@ -69,8 +69,6 @@
     "socket.io-client": "^4.8.3",
     "sonner": "^1.7.4",
     "tailwind-merge": "^3.2.0",
-    "tailwindcss": "^4.1.4",
-    "vite-plugin-pwa": "^1.3.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -94,9 +92,11 @@
     "msw": "^2.15.0",
     "postcss": "^8.5.15",
     "prettier": "^3.9.4",
+    "tailwindcss": "^4.1.4",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.63.0",
     "vite": "^8.0.16",
+    "vite-plugin-pwa": "^1.3.0",
     "vitest": "^4.1.10"
   }
 }
