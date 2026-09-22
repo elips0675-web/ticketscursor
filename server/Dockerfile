@@ -2,13 +2,14 @@ FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma
-RUN npm ci --omit=dev && npx prisma generate
+# prisma CLI в devDeps: устанавливаем всё (npm ci), генерируем клиент,
+# затем вычищаем devDeps (npm prune). Иначе npx prisma generate не найдёт CLI.
+RUN npm ci && npx prisma generate && npm prune --omit=dev
 
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npx prisma generate 2>/dev/null || true
 
 FROM node:22-alpine
 RUN apk add --no-cache wget

@@ -138,8 +138,8 @@ npm run test:e2e
 
 | Зона риска | Было (на момент аудита) | Стало (после доработок) |
 |---|---|---|
-| Покрытие тестами | 47 client / 93 server / 13 E2E | 411 client / 451 server / 36+ E2E |
-| Процент покрытия | 20-25% | 70% client / 71% server |
+| Покрытие тестами | 47 client / 93 server / 13 E2E | 507 client / 757 server / 51 E2E (1264, 0 failures) |
+| Процент покрытия | 20-25% | 66.69% client / 67.74% server (замер 22.09.2026) |
 | TanStack Query | Только Context API | ✅ Внедрён QueryClientProvider |
 | Meilisearch | MySQL FULLTEXT | ✅ Meilisearch + fallback цепочка |
 | Skeleton loaders | Нет | ✅ Все списки |
@@ -160,7 +160,7 @@ npm run test:e2e
 |---|---|---|
 | Клиентские тесты | 507 тестов, 61 файл | ✅ Пройдены |
 | Серверные тесты | 757 тестов, 47 файлов | ✅ Пройдены |
-| E2E тесты (Playwright) | 16 spec'ов, 51 тест; check-console 6 страниц | ✅ Пройдены |
+| E2E тесты (Playwright) | 16 spec'ов, 51 тест; check-console 17 страниц | ✅ Пройдены |
 | Покрытие кода (клиент) | 66.69% stmts (порог: 66/58/57/69) | ✅ Честно (по факту 22.09.2026) |
 | Покрытие кода (сервер) | 67.74% stmts (порог: 67/61/65/68) | ✅ Честно (по факту 22.09.2026) |
 | ESLint | 0 errors, 0 warnings | ✅ Чисто |

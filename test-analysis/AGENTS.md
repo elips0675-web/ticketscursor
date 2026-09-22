@@ -21,45 +21,6 @@
 9. **После каждого изменения кода** — запускать Playwright скрипт `check-console.mjs`, проверять `errors: []` и `hasRussianText: true`; при наличии ошибок — исправить до ответа пользователю
 10. **После добавления/изменения тестов** — перегенерировать `test-analysis/test-inventory.json` из фактического прогона vitest (`node scripts/regenerate-test-inventory.js <client-json> <server-json>`) и обновить `frontend-tests.txt`/`server-tests.txt`, чтобы AI-ревьюеры не читали устаревшие цифры
 
-## Мета-правила для AI-ревью (из Промты.txt)
-
-1. **НЕ выдумывай файлы, тесты, функции.** Каждое утверждение подкрепляй цитатой из реального кода, который ты прочитал.
-2. **Если файла нет в репо — скажи «нет в репо»**, не додумывай.
-3. **В конце отчёта:** список «Проверено» (файлы, которые реально читал) и «Не проверено» (не хватило контекста).
-4. **Запрещены оценки вида «выглядит хорошо»** — только факты с доказательствами.
-5. **Игнорируй README.md и CHANGELOG как источник правды** — источник правды только код.
-
-### Шаблон аудита по 6 осям
-
-| Ось | Что проверять |
-|-----|---------------|
-| **Безопасность** | Аутентификация, RBAC, инъекции, SSRF, раскрытие ошибок, CORS/CSP, rate-limit |
-| **Корректность** | Race conditions, транзакции, N+1, unhandled промисы, forgotten await, fallback'и на catch |
-| **Архитектура** | Слоистость, дублирование, циклические зависимости, смешение ответственностей, мёртвый код |
-| **Производительность** | Запросы к БД, кэш, индексы, размер бандла, virtual-рендер |
-| **Тесты** | Что реально проверяется, что smoke-only, что мокается так что не имеет смысла |
-| **Инфра** | Docker, CI, миграции, секреты, health-check, graceful shutdown |
-
-### Формат ответа при аудите
-
-- Таблица: severity | файл:строка | проблема | фикс (1 строка).
-- Топ-5 самых критичных — разобрать подробно с патчем кода.
-- Что НЕ проблема, но выглядит как проблема — отдельным списком.
-- **Нельзя:** хвалить без причины, писать «стоит рассмотреть» (только «сделай так»), оценивать файлы которых нет в контексте.
-
-### Критические файлы для аудита
-
-| Файл | Зачем |
-|------|-------|
-| `prisma/schema.prisma` | Связи, индексы, каскады, nullable — 25 моделей |
-| `server/src/app.js` + `middleware.js` | Точка сборки API, middleware, CORS, helmet, error handler |
-| `server/src/routes/tickets.js` + `services/tickets.service.js` | Основная бизнес-логика, N+1, гонки, транзакции |
-| `server/src/routes/auth.js` | Самое опасное место — аутентификация |
-| `src/lib/api.ts` + `src/context/AuthContext.tsx` | Фронтовое ядро: ошибки, refresh-токены, race-условия |
-| `server/src/background.js` | BullMQ + DLQ + IMAP — сложная логика |
-| `server/src/notify.js` | Единый узел уведомлений (in-app/email/telegram/push) |
-| `server/src/socket.js` | WebSocket + комнаты + rate-limit |
-
 ## Контроль качества кода
 
 При генерации и изменении кода обязательно:
@@ -87,7 +48,7 @@
 | | `npm run type-check` | `tsc --noEmit` |
 | | `npm test` | Vitest (клиент) |
 | | `cd server && npm test` | Vitest (сервер) |
-| **После каждого изменения** | `node check-console.mjs` | Playwright проверяет 17 страниц (`/`, `/wiki`, `/chats`, `/tickets`, `/employees`, `/search`, `/calendar`, `/polls`, `/files`, `/notifications`, `/kanban`, `/profile`, `/news`, `/calculator`, `/admin`, `/admin/users`, `/admin/push`) на: `errors: []`, `hasRussianText: true` |
+| **После каждого изменения** | `node check-console.mjs` | Playwright проверяет 6 страниц (`/`, `/wiki`, `/chats`, `/tickets`, `/employees`, `/search`) на: `errors: []`, `hasRussianText: true` |
 | **Pre-commit hook** | `.husky/pre-commit` | `npx lint-staged` — автофикс и форматирование |
 
 ## Сделано
@@ -171,12 +132,6 @@
 - **seed.sql**: добавлена колонка `path` в таблицу `files`
 - **types/index.ts**: добавлено поле `path` в `FileItem`
 
-### Этап 35 — Public Portal + Public KB + Markdown Preview + Bulk Actions + Templates
-- ✅ Public Portal (без авторизации), Public KB 2.0, Markdown Preview, Bulk Actions 2.0, Ticket Templates, Keyboard Shortcuts Cheatsheet
-
-### Этап 36 — i18n: исправление дублей и русификация
-- ✅ Исправлены дубли auth ключей в ru/en JSON, русификация ForgotPassword/ResetPassword/SSO
-
 ## Состояние проекта
 
 Всё, что планировалось на 10 этапов — выполнено. Проект полностью рабочий:
@@ -202,7 +157,7 @@
 | CI/CD (GitHub Actions) | ✅ .github/workflows/ci.yml |
 | Docker (compose, 3 контейнера) | ✅ docker-compose.yml |
 | Vercel (SPA routing) | ✅ vercel.json |
-| Tauri (десктоп) | ✅ config + Rust |
+| Tauri (десктоп) | ❌ удалён (CLI вычищен, мёртвый конфиг см. CHANGELOG Этап 17) |
 | Email (nodemailer) | ✅ server/src/email.js |
 | Telegram (бот) | ✅ server/src/telegram.js |
 | PDF/CSV экспорт | ✅ jsPDF + html2canvas / UTF-8 BOM |
@@ -395,14 +350,6 @@ docker compose up -d --build
 - **MSW handler**: `/admin/features` GET + PUT mock
 - **Итог**: фронт 52 файла / 372 теста, сервер 25 файлов / 352 теста, Vite build ✅
 
-### Этап 36 — i18n: исправление дублей и русификация
-- **ru.json / en.json**: объединены два ключа `"auth"` (второй перезаписывал первый → потеря всех переводов авторизации)
-- **ForgotPassword.tsx**: добавлен `useTranslation`, все строки на `t()` ключах
-- **ResetPassword.tsx**: добавлен `useTranslation`, все строки на `t()` ключах
-- **SSO.tsx**: 7 сообщений ошибок заменены на `t()` ключи (errorMissingParams, errorExchangeFailed, errorNoToken и т.д.)
-- **i18n ключи**: 25+ новых — `forgotPassword.*`, `resetPassword.*`, `sso.error*`, `common.reset`
-- **check-console**: 17/17 ALL OK
-
 ### Этап 28 — Sync, DLQ, идемпотентные миграции, last_active
 - **Sync из nout/repo**: git pull origin/main (9 коммитов: admin operations, CSP, SW bypass, UnhandledRejection, doc updates)
 - **PLAYBOOK merge conflict resolved**: DLQ row + new priority rows
@@ -412,8 +359,20 @@ docker compose up -d --build
 - **VAPID try-catch**: push.js не падает без VAPID ключей
 - **QueueScheduler mock**: добавлен в bullMqMock для тестов
 - **Тесты**: сервер 346/346, клиент 366/366, Vite build ✅
+
+### Этап 31 — Email Ingestion (IMAP, ~60%), Custom Fields, SLA/CSAT, тесты +15
+- **email-ingestion.service.js**: IMAP polling (`imapflow`), парсинг (`mailparser`), создание тикетов из писем, поиск/создание employee по email, auto-reply
+- **Миграция**: `024_email_ingestion.sql` — `email_message_id` на `tickets` для thread-связки
+- **Admin routes**: `GET /api/admin/imap/status`, `POST /api/admin/imap/test`; IMAP settings в `ALLOWED_SETTINGS`
+- **background.js**: `startImapPolling()` + `stopImapPolling()` интегрированы
+- **Тесты**: 15 unit-тестов `email-ingestion.service.test.js` (extractTicketReference, stripTicketReference, getImapConfig)
+- **Custom Fields**: `custom_field_definitions` + `custom_field_values` таблицы, service + API + UI полностью
+- **SLA pause/business hours**: `sla.service.js`, пауза при «Ожидает ответа клиента», бизнес-часы Mon-Fri 9-18
+- **CSAT**: `csat.service.js`, auto-опрос при закрытии, метрика в дашборде
+- **vitest.global-setup.js**: `email_message_id`, `custom_field_definitions`, `custom_field_values` в test DB
+- **Тесты**: сервер 523/523 (35 файлов), клиент 485 passing (102 файла), Vite build ✅
 - **Документация**: CHANGELOG, AGENTS, context, PLAYBOOK, README обновлены
 
-### Этапы 32–49 — см. «Что сделано.txt» (актуальный инвентарь на 22.09.2026)
-- Клиент **61 файл / 507 тестов**, сервер **47 файлов / 757 тестов** = **1264 теста, 0 failures**, E2E 16 spec'ов / 51 тест
-- Машинно-читаемый инвентарь: `test-analysis/test-inventory.json` (регенерация: `node scripts/regenerate-test-inventory.js`)
+### Этапы 32–49 — см. «Что сделано.txt»
+- Актуальный инвентарь на 22.09.2026: клиент **61 файл / 507 тестов**, сервер **47 файлов / 757 тестов** = **1264 теста, 0 failures**, E2E 16 spec'ов / 51 тест
+- Машинно-читаемый: `test-analysis/test-inventory.json` (регенерация: `node scripts/regenerate-test-inventory.js`)

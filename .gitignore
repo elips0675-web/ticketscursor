@@ -17,3 +17,6 @@ auth.json
 # Uploaded files (not part of source)
 server/uploads/files/
 *.pdf
+
+# MySQL dumps (backup-mysql.ps1 → backups/)
+backups/

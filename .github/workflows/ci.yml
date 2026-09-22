@@ -5,6 +5,8 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  schedule:
+    - cron: "17 3 * * *"  # ежедневно 03:17 UTC — backup-verify (Промт 4 «Доделать.rtf»)
 
 jobs:
   frontend:
@@ -60,3 +62,36 @@ jobs:
           DB_NAME: servicedesk_test
           JWT_SECRET: test-secret
       - run: node --check src/index.js
+
+  backup-verify:
+    # Ежедневная проверка, что mysqldump реально разворачивается (Промт 4 «Доделать.rtf»).
+    # В CI валидируем seed.sql (содержит CREATE TABLE + INSERT — те же проверки COUNT>0);
+    # локально: node scripts/verify-backup.mjs — берёт последний .sql из backups/.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: servicedesk
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+      # 1. Наполняем БД сервиса из seed.sql (схема + данные)
+      - run: mysql -h 127.0.0.1 -u root -proot servicedesk < server/seed.sql
+      # 2. Снимаем настоящий mysqldump — именно такие файлы лежат в backups/
+      - run: mysqldump -h 127.0.0.1 -u root -proot servicedesk > /tmp/backup-verify.sql
+      # 3. Проверяем, что дамп разворачивается (CREATE → INSERT → COUNT>0 → DROP)
+      - run: node scripts/verify-backup.mjs /tmp/backup-verify.sql
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: root
+          DB_PASSWORD: root
+          DB_NAME: servicedesk

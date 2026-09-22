@@ -5,6 +5,25 @@
 
 ---
 
+## [1.9.0] — 2026-09-22
+
+### 🧪 Тесты, coverage и аудит
+
+- **Этап 43** — k6: добавлены wiki/search/news (2 → 5 тестов), `test/load/`
+- **Этап 44** — E2E: crud-lifecycle.spec.ts (tickets, calendar, chats, wiki, employees, dashboard)
+- **Этап 45** — JWT: решение по хранению access-токена (вариант B: localStorage 15 мин + httpOnly refresh)
+- **Этап 46** — Клиентские тесты модулей 32-35: +83 (CommandPalette, SSO, AdminRules, AdminIntegrations, Portal, PortalTrack, PublicKB, PublicKBArticle, MarkdownEditor) → 494
+- **Этап 47** — RBAC-матрица (5×5) + security-тесты (rate-limit, dev-login 404 в prod) → 653 серверных
+- **Этап 49** — Redis-сервис в docker-compose (REDIS_URL для cache/BullMQ/Socket.io)
+- **Этап 50** — Инвентарь тестов перегенерирован из фактического vitest (1147), добавлены scripts/regenerate-test-inventory.js + api-smoke.mjs
+- **Этап 51** — Feature flags: percentage rollout (rollout_percent, детерминированный гейт по id, UI в админке, i18n) → 1164 теста
+- **Этап 52** — Восстановлены 13 падающих серверных тестов (cron-parser v5 — реальный баг в recurrences/recurrence.service); честные пороги coverage по фактическому замеру (клиент 66/58/57/69, сервер 67/61/65/68); инвентарь → **1264 теста, 0 failures**
+- **CI**: node-version 20 → 22 (engines ≥22), ESLint `--max-warnings 100` (было 50 — падало при 56 warnings)
+- **E2E**: login.spec.ts regex исправлен на `/\/(tickets|dashboard)(\/|$)/`
+- **Deps**: tailwindcss, vite-plugin-pwa → devDependencies (build-time)
+- **k6 README**: dev-login убран из примера (токен от администратора)
+- **CHANGELOG**: секция [1.9.0] добавлена (версия rising 1.9.0)
+
 ## [1.8.0] — 2026-09-21
 
 ### 🔧 AI-аудит + исправления

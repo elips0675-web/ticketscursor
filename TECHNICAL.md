@@ -35,7 +35,7 @@
 | | Tailwind CSS | 4.x | CSS-first подход, @theme |
 | | shadcn/ui | latest | Компоненты на Radix UI |
 | | Framer Motion | latest | Анимации |
-| | Recharts | 2.x | Графики дашборда |
+| | Recharts | 3.8.1 | Графики дашборда |
 | | i18next | latest | Интернационализация (RU/EN) |
 | | Zustand / Context | — | State management |
 | **Backend** | Express | 5.2.1 | HTTP сервер |
@@ -43,9 +43,9 @@
 | | Zod | 4.x | Валидация входных данных |
 | | Socket.io | 4.x | Real-time коммуникации |
 | | JWT (jsonwebtoken) | 9.x | Аутентификация |
-| | bcrypt | 5.x | Хеширование паролей |
+| | bcryptjs | 2.4.3 | Хеширование паролей |
 | | Winston | 3.x | Логирование |
-| | Multer | 1.x | Загрузка файлов |
+| | Multer | 2.2.0 | Загрузка файлов |
 | | nodemailer | latest | Email-уведомления |
 | | node-telegram-bot-api | latest | Telegram-уведомления |
 | | web-push | latest | Push-уведомления |
@@ -55,7 +55,7 @@
 | | FULLTEXT INDEX | — | Полнотекстовый поиск |
 | **Кэш / Real-time** | Redis | 7.x | Кэш, Socket.io adapter |
 | | In-memory Map | — | Fallback при отсутствии Redis |
-| **Тестирование** | Vitest | 2.x | Unit / Integration тесты |
+| **Тестирование** | Vitest | 4.x | Unit / Integration тесты |
 | | jsdom | — | DOM для клиентских тестов |
 | | MSW | — | Mock Service Worker |
 | | Supertest | — | HTTP тесты |
@@ -131,7 +131,7 @@ server/src/
 │       └── ...
 │
 ├── prisma/
-│   ├── schema.prisma           # 17 моделей
+│   ├── schema.prisma           # 32 модели
 │   └── migrations/             # Knex + Prisma migrations
 │
 └── __tests__/
@@ -207,7 +207,7 @@ router.get('/api/tickets/sla/overdue',
 
 ## База данных
 
-### Схема Prisma (17 моделей)
+### Схема Prisma (32 модели)
 
 ```prisma
 model Employee {
@@ -751,12 +751,12 @@ server/__tests__/
 
 ```json
 {
-  "client": { "statements": 71.62, "branches": 61.15, "functions": 61.21, "lines": 74.57 },
-  "server": { "statements": 70.97, "branches": 62, "functions": 68, "lines": 72 }
+  "client": { "statements": 66.69, "branches": 58.83, "functions": 57.76, "lines": 69.19 },
+  "server": { "statements": 67.74, "branches": 61.54, "functions": 65.98, "lines": 68.73 }
 }
 ```
 
-> **Примечание**: 360 клиентских / 336 серверных / 36 E2E тестов. Пороги заданы в `vitest.client.config.ts` и `server/vitest.config.ts`.
+> **Примечание**: 507 клиентских / 757 серверных / 51 E2E тестов (=1264, 0 failures). Пороги заданы в `vitest.client.config.ts` и `server/vitest.config.ts`.
 
 ---
 
@@ -1045,7 +1045,7 @@ spec:
 | F | Роль requester (видит только свои тикеты) | Medium | ✅ Выполнено |
 | G | TanStack Query + optimistic updates | Medium | ✅ Выполнено |
 | H | Skeleton loaders для всех списков | Low | ✅ Выполнено |
-| I | Покрытие тестов 70%+ | High | ✅ (360 клиентских / 336 серверных) |
+| I | Покрытие тестов 70%+ | High | ⚠️ Пересмотрено: честные пороги по замеру 22.09.2026 (клиент 66.69%, сервер 67.74%; 507/757 = 1264 теста) |
 | I | E2E: эскалация SLA, автоназначение, экспорт | Medium | ✅ (покрыто unit-тестами) |
 | J | Volume для MySQL-бэкапов в docker-compose | Low | ✅ Выполнено |
 | J | Healthcheck всех сервисов | Low | ✅ Выполнено |

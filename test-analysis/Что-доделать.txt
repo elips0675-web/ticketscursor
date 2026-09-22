@@ -1,7 +1,7 @@
 # Что доделать — актуальный статус (22.09.2026)
 
 > Дата обновления: 22.09.2026
-> Источники: Kimi (7/10), DeepSeek (6.5/10), Qwen (8.2/10)
+> Источники: Kimi (7.5/10 — обновлённая оценка), DeepSeek (6.5/10), Qwen (8.2/10), Доделать.rtf (промты 1-6)
 > Фактическая проверка кодовой базы: 22.09.2026
 > Тесты: 61 файл / 507 клиентских + 47 файлов / 757 серверных = **1264 теста, 0 failures**
 > E2E: 16 spec'ов / 51 тест (Playwright)
@@ -144,3 +144,132 @@
 | "Redis нет в docker-compose" | ✅ ВАЛИДНО, ИСПРАВЛЕНО | io-redis в deps, Redis сервиса в compose не было (fallback in-memory) → добавлен сервис `redis` + `REDIS_URL` для api — Этап 49 |
 | "E2E поверхностные" | ✅ ВАЛИДНО — Частично закрыто Этапом 44 |
 | "Feature flags без rollout strategy" | ✅ СДЕЛАНО | Этап 51: rollout_percent (0-100) на флагах, детерминированный гейт по пользователю, UI в админке, миграция идемпотентная |
+
+---
+
+## Kimi 22.09.2026 — ОБНОВЛЁННАЯ оценка (7.5/10, файл «Оценка kimi.rtf»)
+
+> Kimi снова читал ТОЛЬКО документы/infra.txt (исходники не в загрузке), поэтому пункты 1, 2, 7 — гипотезы,
+> требующие проверки по живому коду. Ниже — верификация каждой по коду 22.09.2026.
+
+### Реальные проблемы (по порядку приоритета Kimi)
+
+| # | Замечание | Вердикт по живому коду | Статус |
+|---|-----------|------------------------|--------|
+| 1 | CI Node 20 vs engines ≥22 | ✅ ВАЛИДНО → исправлено 22.09 (node-version 22 в обеих джобах) | ✅ |
+| 2 | Dockerfile: `npm ci --omit=dev` + `npx prisma generate` (prisma в devDeps) | ✅ **ПРОД-РИСК ПОДТВЕРЖДЁН**: `server/Dockerfile:5` — `--omit=dev` не ставит prisma CLI → generate свалится или зависнет; строка 11 `|| true` скрывала ошибку | ✅ Исправлено 22.09: `npm ci && npx prisma generate && npm prune --omit=dev` |
+| 3 | Пороги coverage = точный замер → хрупкий CI | ⚠️ Частично: пороги 66/67 vs факт 66.69/67.74 — буфер 0.3-0.7 п.п. | ⏳ Зафиксировать правило в AGENTS.md |
+| 4 | Doc rot: Что сделано.txt (934), PLAYBOOK (71%, 724), TECHNICAL (360/336/17 моделей/старые версии), README (Tauri) | ✅ ВАЛИДНО по всем пунктам | ✅ Исправлено 22.09 (doc-pass, раздел ниже) |
+| 5 | E2E: количество есть, глубины нет | ✅ ВАЛИДНО: login 1 тест (URL), kanban/notifications/profile — «рендерит h1» | ⏳ Планируется (ticket-lifecycle по Промту №2) |
+| 6 | Дыры покрытия ядра real-time: socket.js 22%, ticket-context 35%, TicketDetail 51%, ChatDetail 51%, Kanban 47% | ✅ ВАЛИДНО (совпадает со свежим замером) | ⏳ План: socket.js → ticket-context → TicketDetail (Промт 1) |
+| 7 | Мёртвые deps: passport/passport-ldapauth (LDAP на ldapjs), mammoth | ✅ **passport ПОДТВЕРЖДЁН мёртвым**: 0 импортов, LDAP в `auth/ldap.js` через `ldapjs`. ❌ mammoth оправдан: импортируется в AdminUsers.tsx:10 (preview docx) | ✅ passport/passport-ldapauth удалены из deps 22.09 |
+| 8 | Feature bloat (портал/KB/SSO/rules/webhooks за 3 дня) | ⚠️ Мнение, тестами закрыто (Этапы 46/47: +134 теста) | — |
+
+### Это НЕ проблема (Kimi сам снял)
+
+- JWT в localStorage — принятое решение (вариант B, 15 мин TTL + httpOnly refresh) ✅
+- k6 без setup() — токен через env, dev-login в итерациях нет ✅
+- MySQL replica удалена осознанно ✅
+- Дубли Login/Login.expanded — комплементарные ✅
+- Покрытие ~67% — честный средний уровень для корп. системы ✅
+
+### Приоритет действий Kimi → что сделано
+
+| Приоритет | Действие | Статус 22.09 |
+|-----------|----------|--------------|
+| 1 | ci.yml → node 22 | ✅ Сделано (ранее, DeepSeek-верификация) |
+| 2 | **Dockerfile + prisma generate** (прод-инцидент) | ✅ Сделано (этап выше) |
+| 3 | doc-pass: PLAYBOOK/TECHNICAL/Что сделано/README Tauri | ✅ Сделано (doc-pass ниже) |
+| 4 | depcheck → passport/passport-ldapauth | ✅ Сделано (удалены) |
+| 5 | Один глубокий E2E (ticket-lifecycle) | ⏳ Следующий этап |
+| 6 | Coverage ядра: socket.js → ticket-context → TicketDetail | ⏳ Следующие этапы |
+
+### Doc-pass 22.09.2026 (Kimi #4 + Промт 6 из «Доделать.rtf»)
+
+| Файл | Было (устарело) | Стало (по fact) |
+|------|-----------------|-----------------|
+| Что сделано.txt:103-111 | 934 теста, 411/523, 71%, 15 spec, 0 warnings | 1264 теста, 507/757, 66.69/67.74%, 16 spec/51, 56 warnings |
+| PLAYBOOK.md:170-174,547 | 724 теста, 71%, июль 2026 | 1264 теста, 66.69/67.74%, 22.09.2026 |
+| TECHNICAL.md | Recharts 2.x, bcrypt 5.x, Multer 1.x, Vitest 2.x, 17 моделей, 360/336/36 тестов, 71.62/70.97% | Recharts 3.8.1, bcryptjs 2.4.3, Multer 2.2.0, Vitest 4.x, **32 модели**, 507/757/51, 66.69/67.74% |
+| README.md:141-142,163 | 411/451/36, 70/71%, «check-console 6 страниц» | 507/757/51, 66.69/67.74%, 17 страниц |
+| AGENTS.md:160 | Tauri ✅ config + Rust | Tauri ❌ удалён |
+| context.txt:5-10 | 411/451/18 моделей/10 warnings | 507/757/32 модели/56 warnings |
+| Service Desk против аналогов:126,182 | Tauri в комбинации | Tauri убран из списка |
+
+---
+
+## «Доделать.rtf» (22.09.2026) — полный разбор по 4 блокам
+
+> Документ-«чеклист»: БД, Админка, Тесты, Промты. Разбирает задачи с «почему» и «где доказательство».
+
+### 1. БД
+
+| # | Задача | Статус |
+|---|--------|--------|
+| 1 | **Backup verification** — автопроверка, что mysqldump разворачивается | ✅ Сделано 22.09: `scripts/verify-backup.mjs` + CI job `backup-verify` (schedule 03:17 UTC daily) + локальный тест (tickets=13, employees=15) |
+| 2 | Secrets rotation: 2-ключевой JWT (sign=new, verify=[old,new]) | ⏳ Планируется |
+| 3 | N+1 audit: prisma log query на staging, топ-10 эндпоинтов | ⏳ Планируется (Промт 5) |
+| 4 | FULLTEXT/индексы проверить фактически | ⏳ Планируется |
+| 5 | MySQL read replica вернуть | ⏳ Низкий приоритет (удалена осознанно, Этап 13) |
+| 6 | knex migrate:latest в CI перед тестами | ⏳ Часть: CI делает `mysql < seed.sql`; vitest.global-setup мигрирует test-БД |
+| 7 | Каскады FK (onDelete) — проверить все relation | ⏳ Планируется |
+| 8 | Soft-delete целостность — тесты «нельзя вернуть удалённого» | ⏳ Планируется |
+| 9 | Транзакции для многошаговых операций (bulk, assign, escalation) | ⏳ Планируется |
+| 10 | Idempotency keys TTL 24ч → при падении Redis нет защиты | ⏳ Планируется |
+| 11 | ANALYZE TABLE раз в сутки для FULLTEXT | ⏳ Планируется |
+
+### 2. Админка
+
+| # | Фича | Статус |
+|---|------|--------|
+| 1 | RBAC-матрица UI (роль × действие, редактирование) | ⏳ Планируется |
+| 2 | Backup/restore UI (список бэкапов + «восстановить из точки») | ⏳ Планируется (сейчас только backup) |
+| 3 | Audit log: фильтры по дате/типу + CSV | ⏳ Планируется |
+| 4 | Health dashboard: БД, Redis, Meili, SMTP, IMAP, очередь | ⏳ Планируется (сейчас /api/health/ready только DB) |
+| 5 | Feature flags: расписание rollout («включить завтра в 9:00») | ⏳ Планируется |
+| 6 | Queue monitor (BullMQ dashboard / Bull-Board) | ⏳ Планируется |
+| 7 | User sessions: список сессий + «разлогинить везде» | ⏳ Планируется |
+| 8 | Rate-limit override для IP/юзера | ⏳ Планируется |
+| 9 | Email templates preview ({{ticketId}} рендер до сохранения) | ⏳ Планируется |
+| 10 | Reindex Meilisearch кнопка | ⏳ Планируется |
+| 11 | Migrations status (applied/pending) | ⏳ Планируется |
+
+### 3. Тесты
+
+| # | Файл | Сейчас | Цель | Статус |
+|---|------|--------|------|--------|
+| 1 | server/src/socket.js | ~22% | 60%+ | ⏳ Промт 1 (10 кейсов: JWT disconnect, rate-limit, комнаты, typing, read, reconnect) |
+| 2 | src/context/ticket-context.tsx | 35% | 60%+ | ⏳ |
+| 3 | src/pages/Kanban.tsx | 47% | 70%+ | ⏳ |
+| 4 | src/pages/TicketDetail.tsx | 51% | 75%+ | ⏳ |
+| 5 | src/pages/ChatDetail.tsx | 51% | 75%+ | ⏳ |
+| 6 | src/pages/Employees.tsx | 56% | 75%+ | ⏳ |
+| 7 | E2E tickets-lifecycle.spec.ts (create→assign→status→close) | — | вместо smoke | ⏳ Промт 2 |
+| 8 | E2E sla-escalation.spec.ts | — | — | ⏳ |
+| 9 | E2E rbac-matrix.spec.ts | — | — | ⏳ |
+| 10 | E2E websocket-chat.spec.ts (2 браузера) | — | — | ⏳ |
+| 11 | Contract tests (zod-схема ответов API) | — | — | ⏳ |
+| 12 | Load: авторизация в setup() | — | — | ⏳ |
+| 13 | Mutation testing (Stryker) | — | — | ⏳ |
+| 14 | Visual regression (Chromatic/Loki) | — | — | ⏳ |
+| 15 | Security: IDOR (requester тянет чужой тикет) | — | — | ⏳ Промт 3 |
+| 16 | Границы: XSS в title, SQL в search, 10k тикетов, файл 51MB, JWT expired | — | — | ⏳ |
+| 17 | Backup restore test | — | — | ✅ Промт 4 сделан |
+
+### 4. Промты (рекомендация «Доделать.rtf»)
+
+| Промт | Задача | Статус |
+|-------|--------|--------|
+| 1 | Аудит socket.js (22%→60%, реальный сервер на порту 0) | ⏳ |
+| 2 | E2E lifecycle вместо smoke (create→assign→status→resolved→reopen + API-проверки) | ⏳ |
+| 3 | IDOR-аудит всех `:id` эндпоинтов + 5 тестов | ⏳ |
+| 4 | **Backup restore test** `scripts/verify-backup.mjs` + CI job daily | ✅ Сделано 22.09 |
+| 5 | N+1 audit (запросы в циклах, findMany без include, без limit) | ⏳ |
+| 6 | Синхронизация документации (1264/66.69/1.9.0/32/51) | ✅ Сделано 22.09 (doc-pass выше) |
+
+### Антипаттерны (что НЕ делать — из «Доделать.rtf»)
+
+- 12 отдельных «ролей» AI — нужен конкретный файл + конкретная ось
+- «Оцени проект целиком» — AI усредняет
+- Промты > 1500 токенов — модель теряет конец
+- «Выглядит хорошо» в ответах — только факты с цитатами

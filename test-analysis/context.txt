@@ -1,21 +1,17 @@
-# Service Desk — технический долг (актуализировано 22.09.2026)
+# Service Desk — технический долг (22.09.2026)
 
 ## Текущее состояние
 
-- **Фронт**: 507 тестов (61 файл / 145 suite)
-- **Сервер**: 757 тестов (47 файлов / 311 suite)
-- **Итого**: 1264 теста, 0 failures (test-analysis/test-inventory.json)
-- **E2E (check-console.mjs)**: 17/17 страниц ALL OK — без console.error, русский текст есть
-- **E2E (Playwright)**: 16 spec-файлов / 51 тест (e2e/*.spec.ts)
-- **Coverage пороги (факт 22.09.2026)**: клиент stmts 66 / branch 58 / funcs 57 / lines 69 (факт 66.69/58.83/57.76/69.19); сервер stmts 67 / branch 61 / funcs 65 / lines 68 (факт 67.74/61.54/65.98/68.73)
-- **Prisma моделей**: 32 (employees … api_tokens, webhooks, automation_rules)
+- **Фронт**: 507 тестов (61 файл)
+- **Сервер**: 757 тестов (47 файлов)
+- **Итого**: 1264 теста, 0 failures
+- **E2E**: 16 spec'ов / 51 тест (Playwright) + 17/17 страниц ALL OK (check-console.mjs)
+- **Prisma моделей**: 32 (включая event_outbox)
 - **API endpoints**: 60+ (Swagger + Health probes + k6 metrics)
-- **ESLint**: 0 errors, 56 warnings (в пределах лимита 100)
+- **ESLint**: 0 errors, 56 warnings (порог лимита 100 в CI)
 - **MySQL**: запущен (Laragon), БД servicedesk
 - **API**: порт 4000, Vite proxy 5173
-
-> Ниже — исторические срезы (этапы, релизы, coverage по файлам на момент их реализации).
-> Актуальные агрегаты на 22.09.2026 — в шапке выше и в `test-analysis/test-inventory.json`.
+- **check-console**: пройден — 17 страниц без console.error, русский текст есть
 
 ## Ключевые файлы
 
@@ -32,7 +28,7 @@
 | services/tickets.service.js | ~91% | ✅ |
 | socket.js | ~22% | ❌ (низкий приоритет — outbox паттерн снижает риски) |
 | background.js | ~50% | ✅ DLQ реализован (BullMQ + in-memory fallback) |
-| api.test.js | n/a | 145 интеграционных |
+| api.test.js | n/a | 163 интеграционных (71 describe) |
 
 ### Клиент (src/)
 | Файл | Coverage | Статус |
@@ -64,13 +60,13 @@
 
 ## Команды
 ```bash
-cd D:\Tickets Cursor nout\repo
+cd E:\Tickets cursor\ticketscursor
 npm run test                  # фронт
 npx vitest run --coverage     # coverage фронт
 cd server && npm test         # сервер
 npx vitest run --coverage     # coverage сервер
 npm run build                 # production сборка
-node check-console.mjs        # E2E проверка 17 страниц (требует MySQL + оба dev-сервера)
+node check-console.mjs        # E2E проверка (требует MySQL + оба dev-сервера)
 ```
 
 ## Аудит по Промты.txt
@@ -82,7 +78,7 @@ node check-console.mjs        # E2E проверка 17 страниц (треб
 - ✅ Health check + Readiness probe — `/api/health`, `/api/ready`
 - ✅ CSP (Helmet strict) — connect-src разрешён localhost:*
 - ✅ Audit log — `audit_log` таблица + middleware
-- ✅ Load testing (k6) — сценарии в `test/load/` (5 скриптов: tickets, chat, wiki, search, news)
+- ✅ Load testing (k6) — сценарии в `k6/`
 - ✅ Grafana dashboard — мониторинг API/WS/Redis
 - ✅ Bundle size check в CI — лимит 2MB
 

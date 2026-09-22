@@ -157,7 +157,7 @@
 | CI/CD (GitHub Actions) | ✅ .github/workflows/ci.yml |
 | Docker (compose, 3 контейнера) | ✅ docker-compose.yml |
 | Vercel (SPA routing) | ✅ vercel.json |
-| Tauri (десктоп) | ✅ config + Rust |
+| Tauri (десктоп) | ❌ удалён (CLI вычищен, мёртвый конфиг см. CHANGELOG Этап 17) |
 | Email (nodemailer) | ✅ server/src/email.js |
 | Telegram (бот) | ✅ server/src/telegram.js |
 | PDF/CSV экспорт | ✅ jsPDF + html2canvas / UTF-8 BOM |

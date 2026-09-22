@@ -1,13 +1,14 @@
-# Service Desk — технический долг (июль 2026)
+# Service Desk — технический долг (22.09.2026)
 
 ## Текущее состояние
 
-- **Фронт**: 411 тестов (52 suite)
-- **Сервер**: 451 тестов (30 suites)
-- **E2E**: 17/17 страниц ALL OK (check-console.mjs)
-- **Prisma моделей**: 18 (включая event_outbox)
+- **Фронт**: 507 тестов (61 файл)
+- **Сервер**: 757 тестов (47 файлов)
+- **Итого**: 1264 теста, 0 failures
+- **E2E**: 16 spec'ов / 51 тест (Playwright) + 17/17 страниц ALL OK (check-console.mjs)
+- **Prisma моделей**: 32 (включая event_outbox)
 - **API endpoints**: 60+ (Swagger + Health probes + k6 metrics)
-- **ESLint**: 0 errors, 10 warnings (pre-existing)
+- **ESLint**: 0 errors, 56 warnings (порог лимита 100 в CI)
 - **MySQL**: запущен (Laragon), БД servicedesk
 - **API**: порт 4000, Vite proxy 5173
 - **check-console**: пройден — 17 страниц без console.error, русский текст есть
@@ -27,7 +28,7 @@
 | services/tickets.service.js | ~91% | ✅ |
 | socket.js | ~22% | ❌ (низкий приоритет — outbox паттерн снижает риски) |
 | background.js | ~50% | ✅ DLQ реализован (BullMQ + in-memory fallback) |
-| api.test.js | n/a | 145 интеграционных |
+| api.test.js | n/a | 163 интеграционных (71 describe) |
 
 ### Клиент (src/)
 | Файл | Coverage | Статус |

@@ -100,15 +100,15 @@
 
 ────────────────────────────────────────────────────────────────────────────
 
-ТЕСТЫ (934 тестов, 0 failures)
+ТЕСТЫ (1264 теста, 0 failures)
 
-   • Клиентские: 411/411 (52 файла, 71 suite, vitest + jsdom + RTL)
-   • Серверные: 523/523 (35 файлов, 192 suite, vitest + supertest)
-   • E2E: 15 spec'ов (Playwright) + 17/17 страниц (check-console.mjs)
-   • Coverage: клиент 71% stmts, сервер 71% stmts
-   • ESLint: 0 errors, 0 warnings (no-explicit-any исправлен)
+   • Клиентские: 507/507 (61 файл, vitest + jsdom + RTL)
+   • Серверные: 757/757 (47 файлов, vitest + supertest)
+   • E2E: 16 spec'ов / 51 тест (Playwright) + 17/17 страниц (check-console.mjs)
+   • Coverage: клиент 66.69% stmts, сервер 67.74% stmts (замер 22.09.2026)
+   • ESLint: 0 errors, 56 warnings
    • Type-check + build: успешно
-   • test-analysis/: test-inventory.json + scripts/count-tests.js
+   • test-analysis/: test-inventory.json (пишется из фактического прогона vitest)
 
 ────────────────────────────────────────────────────────────────────────────
 
@@ -642,6 +642,22 @@
   - Сервер: факт **67.74 / 61.54 / 65.98 / 68.73** → пороги 65/56/63/64 → **67/61/65/68**
 - **Итог**: клиент **61 файл / 507 тестов**, сервер **47 файлов / 757 тестов** = **1264 теста, 0 failures**; инвентарь `test-inventory.json` перегенерирован (108 файлов); frontend-tests.txt/server-tests.txt обновлены полными реальными списками; счётчики в AGENTS.md (оба), README.md (оба), Что-доделать.txt синхронизированы; конфиги клиента и сервера больше не «врут»
 
+### Этап 53 — Kimi 7.5/10 (обновлённая оценка) + «Доделать.rtf»: верификация и фиксы (22.09.2026)
+- **Dockerfile (прод-риск Kimi #2)**: `npm ci --omit=dev && npx prisma generate` не ставил prisma CLI (он в devDeps) → generate зависал/падал, строка `|| true` маскировала. Исправлено: `npm ci && npx prisma generate && npm prune --omit=dev` в deps-стадии, убран `|| true`
+- **Мёртвые deps (Kimi #7)**: passport + passport-ldapauth удалены из `server/package.json` (0 импортов — LDAP в `auth/ldap.js` на `ldapjs`); lock-файл перегенерирован
+- **mammoth оправдан**: реально используется в AdminUsers.tsx (preview docx) — оставлен
+- **Backup verification (Доделать.rtf, БД #1 / Промт 4)**: новый `scripts/verify-backup.mjs` — берёт последний .sql из `backups/`, создаёт `servicedesk_verify`, импортирует, проверяет `COUNT(tickets)/COUNT(employees) > 0`, DROP, exit 0/1; протестирован локально на живом mysqldump (tickets=13, employees=15)
+- **CI**: добавлен job `backup-verify` (только main, schedule `17 3 * * *`): seed → mysqldump → verify-backup; `.gitignore` += `backups/`
+- **Doc-pass (Kimi #4 / Промт 6)**: Что сделано (934→1264 теста), PLAYBOOK (724→1264, 71%→66.69/67.74%), TECHNICAL (Recharts 2.x→3.8.1, bcrypt 5.x→bcryptjs 2.4.3, Multer 1.x→2.2.0, Vitest 2.x→4.x, 17→32 модели, 360/336/36→507/757/51, 71.62/70.97→66.69/67.74%), README (411/451/36→507/757/51, 70/71→66.69/67.74, «6 страниц»→17), AGENTS (Tauri ✅→❌ удалён), context.txt (411/451/18→507/757/32, 10→56 warnings), «Service Desk против аналогов» (Tauri убран)
+- **Что-доделать.txt**: добавлены полные разборы «Оценка kimi.rtf» (обновлённая) и «Доделать.rtf» (БД/Админка/Тесты/Промты) с вердиктами по каждому пункту
+- **Итог**: тесты не менялись (1264, 0 failures), конфиги/deps/доки/CI согласованы; server vitest + клиент vitest + build + check-console 17/17 — зелёные
+
 ## ПЛАН ДОРАБОТКИ ПО ЭТАПАМ
 
-- Этап 53 — по решению (после внешних аудитов свежей папкой test-analysis)
+- Этап 54 — socket.js coverage 22%→60% (Промт 1 «Доделать.rtf»: JWT/disconnect, rate-limit, комнаты, typing, read, reconnect — реальный сервер порт 0)
+- Этап 55 — E2E ticket-lifecycle вместо smoke (Промт 2: create→assign→status→resolved→reopen + API-проверки)
+- Этап 56 — IDOR-аудит всех `:id` эндпоинтов + 5 тестов (Промт 3)
+- Этап 57 — N+1 audit: prisma log query, топ-10 эндпоинтов (Промт 5); FULLTEXT/индексы, каскады FK, soft-delete тесты
+- Этап 58 — Админка: RBAC-матрица UI, backup/restore, audit log фильтры, health dashboard
+- Этап 59 — Secrets rotation (2-ключевой JWT), idempotency TTL, транзакции multi-step
+- Этап 60 — Правило порогов coverage зафиксировать в AGENTS.md (буфер vs обязательные тесты); финальный re-аудит свежей папкой test-analysis
