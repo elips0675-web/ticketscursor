@@ -1,4 +1,3 @@
-/* global console, process */
 import { readFileSync } from 'fs'
 import { gzipSync } from 'zlib'
 import { join, dirname } from 'path'

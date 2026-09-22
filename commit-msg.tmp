@@ -1,7 +1,13 @@
-test-analysis: синхронизация со живым кодом (Этап 48)
+﻿Этапы 46-49: тесты модулей 32-35, RBAC-матрица, Redis в compose
 
-- server-package.json: prisma -> devDeps, удалён express-validator (источник ложных P0 DeepSeek)
-- infra.txt: актуальный ci.yml (2 job, без cmd /c), статус файлов (9 удалены), Redis нет в compose
-- e2e-tests.txt: 16 spec / 51 тест (добавлены user-flow, crud-lifecycle)
-- test-inventory.json: добавлена e2e-секция
-- README.md + Что-доделать.txt: фактические оценки (DeepSeek 6.5, Qwen 8.2), JWT решение B
+- Этап 46: клиентские тесты новых модулей +83 (CommandPalette, SSO, AdminRules,
+  AdminIntegrations, Portal, PortalTrack, PublicKB, PublicKBArticle, MarkdownEditor)
+  -> 61 файл / 494 теста
+- Этап 47: RBAC-матрица 5x5 + security-тесты +51 (rbac-matrix 41, limiters 10):
+  createLimiters() вынесен в limits.js, dev-login фиксируется 404 в production
+  и 10/мин в dev; lint 0 errors (bcrypt import в admin.js - реальный баг,
+  vi в sla.test.js, cause в email-ingestion.service.js, eslint config для *.mjs)
+  -> 42 файла / 653 серверных теста
+- Этап 49: Redis-сервис в docker-compose (REDIS_URL для cache/BullMQ/Socket.io,
+  healthcheck, том redis_data) + depends_on для api
+- Документация: Что сделано.txt (45-49), test-analysis/Что-доделать.txt (1147 тестов)

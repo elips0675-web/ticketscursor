@@ -228,7 +228,7 @@ export async function testImapConnection() {
     return { success: true, message: 'Connected successfully' }
   } catch (err) {
     await client.logout().catch(() => {})
-    throw new Error(`Connection failed: ${err.message}`)
+    throw new Error(`Connection failed: ${err.message}`, { cause: err })
   }
 }
 

@@ -3,7 +3,6 @@ import express from 'express'
 import { createServer } from 'http'
 import cors from 'cors'
 import helmet from 'helmet'
-import rateLimit from 'express-rate-limit'
 import cookieParser from 'cookie-parser'
 import os from 'os'
 import * as Sentry from '@sentry/node'
@@ -63,15 +62,13 @@ import { fileURLToPath } from 'url'
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET, authenticateToken } from './middleware.js'
 import { cacheMiddleware } from './cache.js'
+import { createLimiters } from './limits.js'
 
 const app = express()
 app.set('trust proxy', 1)
 const server = createServer(app)
 
-const rateLimitConfig = { windowMs: 60_000, skip: () => process.env.NODE_ENV === 'test' }
-const authLimiter = rateLimit({ ...rateLimitConfig, max: 10, message: { message: 'Too many auth requests' } })
-const apiLimiter = rateLimit({ ...rateLimitConfig, max: 100, message: { message: 'Too many requests' } })
-const adminLimiter = rateLimit({ ...rateLimitConfig, max: 30, message: { message: 'Too many admin requests' } })
+const { authLimiter, apiLimiter, adminLimiter } = createLimiters()
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())

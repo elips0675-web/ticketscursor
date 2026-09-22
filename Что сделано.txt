@@ -577,3 +577,36 @@
 ### Этап 44 — E2E: crud-lifecycle.spec.ts (21.09.2026)
 - **crud-lifecycle.spec.ts**: 6 тестов — UI ticket creation, calendar, chats, wiki, employees, dashboard
 - **Итого E2E**: 15→16 spec'ов
+
+### Этап 45 — JWT: решение по хранению access-токена (22.09.2026)
+- DeepSeek P1 «JWT в localStorage» → принят **вариант B**: access-токен остаётся в localStorage (TTL 15 мин), refresh — httpOnly cookie (уже был)
+- XSS-вектор для корп. интранета закрыт коротким TTL + httpOnly refresh; инфраструктурные решения (secrets manager) — вне кодовой базы
+
+### Этап 46 — Клиентские тесты модулей Этапов 32-35: +83 теста (22.09.2026)
+- **CommandPalette.test.tsx**: +10 (поиск, выбор команды, Ctrl+K через AppLayout)
+- **SSO.test.tsx**: +13 (редирект на IdP, ошибки обмена кода, отсутствие токена)
+- **AdminRules.test.tsx**: +13 (CRUD правил, условия, действия, toast-ошибки, loading/empty)
+- **AdminIntegrations.test.tsx**: +13 (API-токены + Webhooks: создание, toggle, удаление, валидация)
+- **Portal.test.tsx**: +6, **PortalTrack.test.tsx**: +7 (публичный портал: форма, трекинг, ответы)
+- **PublicKB.test.tsx**: +7, **PublicKBArticle.test.tsx**: +6 (публичная БЗ: категории, фильтры, поиск, голосование)
+- **MarkdownEditor.test.tsx**: +8 (write/preview режимы, вставка, кнопки)
+- **Итого клиент**: 52 файла/411 → **61 файл/494 теста**
+
+### Этап 47 — RBAC-матрица + security-тесты: +51 серверный тест (22.09.2026)
+- **rbac-matrix.test.js**: +41 — полная матрица «5 ролей × 5 уровней прав» (25 кейсов `it.each`), граничные случаи requireRole (нет user, неизвестная роль, мульти-роли), hasRole, authenticateToken (API-токены `sd_*`: валидный → scopes/tokenId, 401, 403; JWT: валидный/403; заголовки)
+- **limiters.test.js**: +10 — поведение rate-limit (auth 10/мин, api 100/мин, admin 30/мин, независимость счётчиков, default skip в test env) + проверка реальной проводки в app.js (dev-login за authLimiter, /api/rules за adminLimiter, /api/news за apiLimiter)
+- **limits.js**: фабрика `createLimiters()` вынесена из app.js — тестируемая, без побочных эффектов
+- **dev-login**: тест фиксирует, что в production эндпоинт отдаёт 404 (guard), в dev — за лимитером 10/мин
+- **Lint 0 errors**: исправлены pre-existing ошибки — missing `import bcrypt` в admin.js (реальный баг `/employees/import` → ReferenceError), `vi` в sla.test.js, `{ cause: err }` в email-ingestion.service.js (preserve-caught-error), eslint-конфиг покрывает корневые `*.mjs` и `scripts/*.js` (node globals), убран `/* global */` в check-bundle-size.js
+- **Итого сервер**: 40 файлов/602 → **42 файла/653 теста**, lint 0 errors/57 warnings
+
+### Этап 48 — Синхронизация doc-файлов с живым кодом (22.09.2026)
+- `test-analysis/Что-доделать.txt` синхронизирован: JWT → «✅ Решено (вариант B)», «stale-копии DeepSeek» разобраны, комментарии Qwen проверены по коду
+- Коммит `97b1357`
+
+### Этап 49 — Redis в docker-compose (22.09.2026)
+- **docker-compose.yml**: добавлен сервис `redis` (redis:7-alpine, AOF appendonly, healthcheck `redis-cli ping`, порт 6379, том `redis_data`)
+- **api**: `REDIS_URL: redis://redis:6379` + `depends_on: redis: { condition: service_healthy }`
+- Итог: cache.js (кэш), background.js (BullMQ+DLQ) и socket.js (Redis adapter) в compose-окружении реально используют Redis вместо fallback на in-memory
+- YAML провалидирован парсером (docker CLI недоступен в среде разработки)
+- Итого сервисов: 7 → 8 (mysql, meilisearch, redis, db_backup, api, frontend, prometheus, grafana)

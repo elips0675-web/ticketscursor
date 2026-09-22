@@ -3,7 +3,7 @@
 > Дата обновления: 22.09.2026
 > Источники: Kimi (7/10), DeepSeek (6.5/10), Qwen (8.2/10)
 > Фактическая проверка кодовой базы: 22.09.2026
-> Тесты: 52 файла / 411 клиентских + 35 файлов / 523 серверных = **934 теста, 0 failures**
+> Тесты: 61 файл / 494 клиентских + 42 файла / 653 серверных = **1147 тестов, 0 failures**
 > E2E: 16 spec'ов / 51 тест (Playwright)
 
 ---
@@ -30,6 +30,10 @@
 | 42 | npm audit в CI, README 15 spec'ов, CHANGELOG приведён к порядку | ✅ |
 | 43 | k6: добавлены wiki/search/news (2 → 5 тестов) | ✅ |
 | 44 | E2E: crud-lifecycle.spec.ts (UI ticket creation, calendar, chats, wiki, employees, dashboard) | ✅ |
+| 45 | JWT: решение по хранению access-токена (вариант B: localStorage 15мин + httpOnly refresh) | ✅ |
+| 46 | Клиентские тесты модулей 32-35: +83 (CommandPalette, SSO, AdminRules, AdminIntegrations, Portal, PortalTrack, PublicKB, PublicKBArticle, MarkdownEditor) → 494 | ✅ |
+| 47 | RBAC-матрица (5×5) + security-тесты (rate-limit, dev-login 404 в prod) → 653 серверных | ✅ |
+| 49 | Redis-сервис в docker-compose (REDIS_URL для cache/BullMQ/Socket.io) | ✅ |
 
 ---
 
@@ -98,12 +102,12 @@
 | "express-validator + prisma в deps" | ❌ Неверно | `server/package.json` — express-validator удалён, prisma в devDeps. Читал stale `test-analysis/server-package.json` |
 | "CHANGELOG сломан" | ✅ Уже исправлено | Этап 42: 1.8.0→1.2.0→1.0.0, без дублей |
 | "E2E 90% smoke-only" | ✅ ВАЛИДНО | Частично закрыто Этапом 44 (crud-lifecycle) |
-| "Новые модули без тестов" | ✅ ВАЛИДНО | collсision/recurrence/rules/webhooks/api-tokens + CommandPalette/AdminRules/AdminIntegrations/SSO/Portal/PublicKB — см. Этап 50 |
+| "Новые модули без тестов" | ✅ ВАЛИДНО, ИСПРАВЛЕНО | collсision/recurrence/rules/webhooks/api-tokens (сервер) + CommandPalette/AdminRules/AdminIntegrations/SSO/Portal/PublicKB (клиент) — закрыто Этапами 46/47, +134 теста (494 клиентских, 653 серверных) |
 
 ### Qwen (8.2/10 — по фактическому файлу Оценка qwen .txt)
 
 | Замечание | Ответ |
 |-----------|-------|
 | "require в check-bundle-size, cmd/c в CI" | ❌ stale — уже исправлено (как и в DeepSeek) |
-| "Redis нет в docker-compose" | ✅ ВАЛИДНО — ioredis в deps, Redis сервиса в compose нет (fallback in-memory) |
+| "Redis нет в docker-compose" | ✅ ВАЛИДНО, ИСПРАВЛЕНО | io-redis в deps, Redis сервиса в compose не было (fallback in-memory) → добавлен сервис `redis` + `REDIS_URL` для api — Этап 49 |
 | "E2E поверхностные" | ✅ ВАЛИДНО — Частично закрыто Этапом 44 |

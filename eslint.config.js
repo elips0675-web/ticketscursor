@@ -38,5 +38,15 @@ export default tseslint.config(
       'no-empty': ['warn', { allowEmptyCatch: true }],
     },
   },
+  {
+    files: ['*.mjs', 'scripts/**/*.js'],
+    languageOptions: {
+      globals: { ...globals.node },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    },
+  },
   prettier,
 )
