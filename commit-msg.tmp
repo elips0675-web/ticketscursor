@@ -1,0 +1,7 @@
+test-analysis: синхронизация со живым кодом (Этап 48)
+
+- server-package.json: prisma -> devDeps, удалён express-validator (источник ложных P0 DeepSeek)
+- infra.txt: актуальный ci.yml (2 job, без cmd /c), статус файлов (9 удалены), Redis нет в compose
+- e2e-tests.txt: 16 spec / 51 тест (добавлены user-flow, crud-lifecycle)
+- test-inventory.json: добавлена e2e-секция
+- README.md + Что-доделать.txt: фактические оценки (DeepSeek 6.5, Qwen 8.2), JWT решение B

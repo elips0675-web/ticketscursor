@@ -1,87 +1,77 @@
-Комплексная оценка проекта Service Desk
-🎯 Общая оценка: 8.5 / 10
-Проект находится на уровне production-ready enterprise решения. Видна зрелая инженерная культура: итеративное развитие, покрытие тестами, инфраструктура как код, документирование изменений. Для monolith-архитектуры — очень высокий уровень проработки.
-📈 Детальная оценка по критериям
-Критерий
-Балл
-Комментарий
-Архитектура и стек
-9/10
-Современный стек (React 19, Vite 8, Node 22, Express 5, Prisma, TS). Monolith, но хорошо структурирован
-Функциональная полнота
-10/10
-30+ фич: от базовых тикетов до AI-ассистента, SSO, Rules Engine, Telegram, Public Portal
-Тестирование
-9/10
-436+ серверных, 397+ клиентских, E2E Playwright, k6+Artillery. Не хватает contract/perf в CI
-Инфраструктура / DevOps
-8/10
-GitHub Actions, Docker, Prometheus+Grafana, multi-stage build. Нет security scanning, OpenTelemetry
-Безопасность
-8/10
-RBAC, JWT+refresh, Helmet, CORS, rate limiting, Zod, Prisma. Нет SAST/DAST, secrets manager
-Производительность
-9/10
-Meilisearch, Redis, BullMQ, optimistic updates, virtualization, skeleton loaders
-UX / a11y / i18n
-9/10
-Command Palette, dark theme, PWA, i18n RU/EN, a11y (ARIA, keyboard, reduced-motion)
-Observability
-7/10
-Winston + Sentry + requestId + health probes. Нет distributed tracing, structured logs в JSON
-Масштабируемость
-7/10
-Redis adapter для WS, MySQL replica, S3. Monolith — потолок ~500 RPS, дальше нужно делить
-Сопровождаемость
-8/10
-Changelog, Husky + lint-staged, ESLint/Prettier, TypeScript. Нет ADR, runbook
-✅ Сильные стороны (топ-10)
-Огромный функциональный охват — SSO/OIDC, Rules Engine, AI-ассистент, Webhooks, API-токены, Collision Avoidance, Recurring Tickets, Public Portal, Telegram, IMAP ingestion. Это уровень Jira/Zendesk.
-Зрелая тестовая пирамида — unit → integration → E2E → load. Покрытие ~80%+ критичных путей.
-Outbox Pattern + BullMQ DLQ — гарантированная доставка событий, retry с exponential backoff, алёртинг при >10 DLQ/час. Это production-grade reliability.
-Multi-tier search — Meilisearch → FULLTEXT → LIKE fallback. Отличный UX при любом состоянии инфраструктуры.
-Оптимистичные обновления + React Query — мгновенный UI, rollback при ошибке. Ощущение native-приложения.
-RBAC + иерархия ролей — 5 ролей с super_admin-override, hasRole() utility, ProtectedRoute на фронте.
-Гибридная аутентификация — JWT (15м) + refresh (7д, httpOnly) + API-токены (sd_…, SHA-256) + LDAP + OIDC.
-Observability из коробки — Prometheus /metrics, Grafana dashboards, health/readiness probes для K8s.
-i18n + a11y как first-class citizens — не "потом", а сразу. useTranslation, aria-label, prefers-reduced-motion.
-Graceful shutdown + DLQ + retry — три уровня отказоустойчивости.
-⚠️ Слабые стороны и риски
-🔴 Критичные (для production)
-Prisma + Knex одновременно — дублирование ORM/migration слоёв. Рассинхрон схем, путаница в команде.
-Нет security scanning в CI — ни npm audit, ни Snyk/Trivy, ни SAST (Semgrep/SonarQube). Уязвимости зависимостей могут уйти в прод.
-Secrets только в env vars — нет Vault/Secrets Manager. JWT_SECRET, DB_PASSWORD, OpenAI key в .env — риск утечки через логи/бекапы.
-Нагрузочные тесты вне CI — k6/Artillery сценарии есть, но не запускаются автоматически. Регресс производительности можно не заметить.
-🟡 Важные
-Express 5 + React 19 + Zod 4 + Vite 8 — все мажорные версии свежие. Риск несовместимостей библиотек, меньше community knowledge.
-Нет distributed tracing — OpenTelemetry/Jaeger не подключены. При инциденте в monolith сложно отследить цепочку (IMAP → ticket → webhook → notification).
-Монолитный ceiling — при >500 RPS или >10k concurrent WS-соединений потребуется разделение. Нет плана миграции.
-MySQL вместо PostgreSQL — для JSON-правил (automation_rules.conditions), full-text, JSONB-агрегаций PG был бы выгоднее.
-Нет CDN для статики — dist/ раздаётся через nginx на том же сервере. При DDoS/трафик-пике упадёт и API, и фронт.
-Email deliverability — нет упоминания SPF/DKIM/DMARC. Письма с service desk будут попадать в спам.
-🟢 Мелкие
-k6 сценарии покрывают только /tickets и /comments. Нет тестов для auth, admin, webhook, AI assistant.
-Artillery capture: $.data.token — хрупкий путь, зависит от формата ответа.
-Нет idempotency keys для POST — при retry можно создать дубликаты тикетов.
-Feature flags без rollout strategy (canary, %-ный rollout) — только toggle on/off.
-Нет ADR (Architecture Decision Records) — почему Prisma+Knex? Почему MySQL? Почему monolith?
-🎯 Рекомендации (приоритизированные)
-🔥 P0 — до production
+Оценка проекта Tickets Service Desk (v1.9.0)
+📊 Общая оценка: 8.2 / 10 — крепкий enterprise-уровень
+Проект выглядит как зрелая service-desk система с современным стеком и продуманной инфраструктурой. Видно, что над ним работали опытные разработчики. Ниже — детальный разбор.
+🏗 Архитектура и стек
+Сильные стороны:
+Свежий стек: Node 22, React 19, Vite 8, Express 5, Tailwind 4 — всё на передовой
+Разделение client/server с независимыми package.json — правильно
+Enterprise-набор: Sentry (ошибки), Socket.io (realtime), BullMQ (очереди), Meilisearch (поиск), S3 (файлы), web-push, Telegram-бот, LDAP
+UI-кит на Radix + shadcn-подход — доступность и кастомизация из коробки
+i18next — интернационализация заложена
+Риски / вопросы:
+⚠️ Prisma + Knex одновременно — дублирование ORM. Обычно это признак незавершённой миграции. Нужно определиться с одним.
+⚠️ В docker-compose.yml нет Redis и Meilisearch, хотя они есть в зависимостях сервера (ioredis, @socket.io/redis-adapter, meilisearch). Локальный запуск через Docker упадёт или будет работать в деградированном режиме.
+⚠️ Express 5 всё ещё relatively fresh — стоит проверить совместимость middleware.
+🚀 Инфраструктура и CI/CD — 9/10
+Что сделано отлично:
+Multi-stage Dockerfile (builder → server → frontend) — оптимальный размер образов
+Nginx как reverse proxy с поддержкой WebSocket (/ws) и SPA fallback
+GitHub Actions с 6 параллельными job'ами: lint, typecheck, test, bundle, playwright, e2e-api
+Проверка размера бандла (лимит 2MB gzipped) — защита от деградации
+entrypoint.sh с ожиданием MySQL — правильный graceful start
+deploy.ps1 и docker-deploy.sh — удобные скрипты для разных ОС
+Что подправить:
+🐛 В scripts/check-bundle-size.js используется require('zlib') внутри ESM-модуля ("type": "module") — это упадёт в рантайме. Нужен import zlib from 'node:zlib'.
+🐛 В CI test job: cd server && cmd /c "npx vitest run 2>&1" — cmd /c это Windows-команда, на ubuntu-latest не сработает. Должно быть просто npx vitest run.
+⚠️ Нет job'а для деплоя на прод (только локальный deploy.ps1).
+⚠️ Нет бэкапов MySQL в docker-compose.
+🧪 Тестирование — 7/10
+Структура хорошая:
+Unit/интеграционные: Vitest (client + server)
+E2E: Playwright — 15 файлов, 36 тестов
+API E2E: кастомный скрипт на fetch
+Нагрузочные: k6 + Artillery (2 сценария)
+Главная проблема — E2E тесты поверхностные:
+ts
 
-12345
-⚡ P1 — в течение квартала
-
-12345
-🌱 P2 — стратегические
-
-12345
-💡 Что особенно впечатлило
-Outbox Pattern + WebSocket — редкое сочетание для service desk. Гарантированная доставка событий без потерь.
-AI-ассистент с гибридным ответом — LLM если есть ключ, иначе качественный шаблон. Graceful degradation.
-Collision Avoidance с force-unlock — продуманная модель для совместного редактирования.
-Public Portal без регистрации — снижает барьер для пользователей, tracking token для безопасности.
-Rules Engine с JSON-conditions — no-code автоматизация без привлечения разработчиков.
-📌 Итог
-Проект — крепкий enterprise-уровень. Если бы это был реальный продукт для заказчика, я бы рекомендовал его к запуску после закрытия P0-пунктов (особенно security scanning и secrets). Архитектурных тупиков нет, все "технические долги" из changelog закрываются итеративно, что говорит о зрелом процессе разработки.
-Сравнение с внешним аудитом Kimi (7.7/10) — согласен, но с учётом последних фич (2.0.0–2.1.0: SSO, Rules Engine, AI, Public Portal) проект значительно вырос. Моя оценка 8.5/10 отражает этот прогресс.
-Главный риск — монолит + свежие мажорные версии. Если команда <5 человек, стоит зафиксировать версии и не гнаться за обновлениями. Если команда растёт — начинать планировать domain-based разделение уже сейчас.
+1234
+Почти все 36 тестов — это «страница открылась и что-то отрендерилось». Нет реальных пользовательских сценариев:
+❌ Создание тикета → назначение → закрытие
+❌ SLA-эскалация
+❌ Realtime-чат (Socket.io)
+❌ Загрузка файлов
+❌ Поиск через Meilisearch
+❌ RBAC (кроме одной проверки 403 в API-скрипте)
+Нагрузочные тесты:
+Есть сценарии для tickets и chat — хорошо
+Но TICKET_ID = 'test-ticket-id' — захардкожен, в реальности такого ID нет, тест будет давать 404
+Пороги p(95)<500ms — адекватные для internal tool
+🔐 Безопасность
+Плюсы:
+helmet, cors, express-rate-limit — базовая защита есть
+JWT + bcryptjs + passport + LDAP
+cookie-parser для httpOnly cookies
+Чего не хватает:
+Нет упоминания CSP-политик в Nginx
+Нет rate-limit на /api/auth/dev-login (видно в тестах) — брутфорс-уязвимость
+JWT_SECRET: test-secret-key в CI — ок для тестов, но нужно следить, чтобы не попало в прод
+📈 Что улучшить в приоритете
+Приоритет
+Задача
+🔴 High
+Починить cmd /c в CI и require('zlib') в check-bundle-size
+🔴 High
+Добавить Redis и Meilisearch в docker-compose.yml
+🟡 Medium
+Переписать E2E-тесты: реальные сценарии вместо «страница рендерится»
+🟡 Medium
+Убрать дублирование Prisma/Knex
+🟡 Medium
+Добавить бэкапы MySQL и healthcheck-алерты
+🟢 Low
+Добавить CSP-заголовки в Nginx
+🟢 Low
+Починить TICKET_ID в k6-тестах (получать динамически)
+🎯 Итог
+Это production-ready проект уровня middle+/senior команды. Архитектурные решения современные, CI/CD выстроен грамотно, стек актуальный. Основные проблемы — не концептуальные, а тактические: баги в скриптах CI, неполный docker-compose и поверхностные E2E-тесты, которые дают ложное чувство покрытия.
+Если починить указанные мелочи и дописать 5–10 настоящих E2E-сценариев — проект будет на 9/10.

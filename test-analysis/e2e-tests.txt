@@ -1,6 +1,8 @@
-===== E2E ТЕСТЫ (Playwright, 15 файлов, 36 тестов) =====
+===== E2E ТЕСТЫ (Playwright, 16 файлов, 51 тест) =====
 Стек: Playwright + TypeScript, базовый URL http://localhost:5173
 Запуск: npx playwright test
+Файлы: login, tickets, chats, admin, admin-audit, search, kanban, files, file-upload, notifications,
+        profile, calculator, ldap-login, sla-autoassign-export, user-flow, crud-lifecycle
 
 ===== FILE: e2e/global-setup.ts =====
 import { chromium, type FullConfig } from '@playwright/test'
@@ -255,3 +257,66 @@ test.describe('SLA / Auto-assign / Export', () => {
     await expect(page.getByRole('button').filter({ hasText: /csv/i }).first()).toBeVisible()
   })
 })
+
+===== FILE: e2e/user-flow.spec.ts =====
+import { test, expect } from '@playwright/test'
+
+const API = 'http://localhost:4000'
+
+async function devLogin(page: import('@playwright/test').Page, email = 'alexey@example.com') {
+  const token = await page.evaluate(async (e) => {
+    const r = await fetch(`${API}/api/auth/dev-login`, {
+      method: 'POST',
+      headers: { 'X-Email': e },
+    })
+    const d = await r.json()
+    return d?.data?.token || d?.token
+  }, email)
+  await page.evaluate((t) => localStorage.setItem('token', t), token)
+  return token
+}
+
+async function createTicketViaApi(page, token, title, description) {
+  const res = await page.evaluate(async (args) => {
+    const r = await fetch(`${API}/api/tickets`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${args.token}`,
+      },
+      body: JSON.stringify({
+        title: args.title,
+        description: args.description,
+        priority: 'medium',
+        category: 'incident',
+      }),
+    })
+    return r.json()
+  }, { token, title, description })
+  return res?.data
+}
+
+// 9 тестов: dev-login → redirect, имя пользователя,
+// создание тикета через API → виден в списке, открытие детали, комментарий,
+// смена статуса, навигация по sidebar, admin доступ, Ctrl+K поиск
+
+===== FILE: e2e/crud-lifecycle.spec.ts =====
+import { test, expect } from '@playwright/test'
+
+const API = 'http://localhost:4000'
+
+async function devLogin(page: import('@playwright/test').Page, email = 'alexey@example.com') {
+  const token = await page.evaluate(async (e) => {
+    const r = await fetch(`${API}/api/auth/dev-login`, {
+      method: 'POST',
+      headers: { 'X-Email': e },
+    })
+    const d = await r.json()
+    return d?.data?.token || d?.token
+  }, email)
+  await page.evaluate((t) => localStorage.setItem('token', t), token)
+  return token
+}
+
+// 6 тестов: создание тикета через UI форму → виден в списке,
+// calendar/chats/wiki/employees/dashboard — навигация после логина

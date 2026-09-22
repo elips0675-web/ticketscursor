@@ -1,83 +1,130 @@
 Оценка проекта Service Desk
-На основе предоставленных файлов (README, context.txt, Что-доделать.txt, AGENTS.md, CHANGELOG.md, тесты, инфраструктура, package.json) можно сделать комплексную оценку.
+Итоговая оценка: 6.5/10
+Проект амбициозный и функционально богатый, но между заявленным состоянием в документации и фактическим содержимым файлов — системные расхождения. Ниже — по осям из AGENTS.md.
 
-Общая оценка: 7.5 / 10
-Проект представляет собой зрелый, многофункциональный Service Desk с современным стеком, широким покрытием тестами и продуманной архитектурой. Однако есть критичные проблемы в инфраструктуре (CI/Docker) и заметный технический долг, которые не позволяют поставить более высокую оценку.
+🔴 Критические проблемы (P0) — документация лжёт о фиксах
+1. scripts/check-bundle-size.js — ESM/CommonJS конфликт НЕ исправлен
+Что-доделать.txt (P0 #3) утверждает: «Исправлено (import { gzipSync })». Фактически в файле:
 
-Детальная оценка по категориям
-Категория	Оценка	Комментарий
-Архитектура и стек	9/10	React 19 + TS + Vite 8 + Tailwind v4 + Express 5 + Prisma + MySQL + Socket.IO + Redis. Современно, масштабируемо, много паттернов (outbox, soft-delete, DLQ, кэш, виртуализация).
-Функциональность	9/10	Реализовано почти всё: тикеты, SLA (эскалация, пауза, бизнес-часы), RBAC (5 ролей), чаты (read receipts, offline queue), wiki, календарь, файлы, push, Telegram, SSO, Rules Engine, Webhooks, API-токены, Public Portal, CSAT, Time tracking, Feature flags, Command Palette.
-Тесты	7/10	934 теста (411 клиент + 523 сервер), 0 failures, coverage ~71%. Но E2E в основном smoke-only (проверка видимости заголовков), хотя есть user-flow.spec.ts. Пороги покрытия равны текущему, а не целевому 80%.
-Инфраструктура	4/10	CI содержит критические баги: cmd /c на Ubuntu, неверный target в Docker, require в ESM, entrypoint не скопирован, Playwright job без сервера. Dockerfile требует доработки.
-Безопасность	6/10	JWT в localStorage (XSS-вектор), dev-login без явного guard (нужно проверить), двойная валидация (zod + express-validator), два ORM (Prisma + Knex).
-Документация	8/10	Много файлов (README, context, AGENTS, CHANGELOG, PLAYBOOK). Но есть противоречия: README говорит 52 файла/411 тестов, server-tests.txt — 35/523, в итоге 87/934. Где-то устаревшие данные.
-Технический долг	6/10	Knex → Prisma (мёртвый вес), prisma в dependencies вместо devDependencies, knex-миграции, express-validator + zod, отсутствие npm audit.
-Сильные стороны
-Современный и продуманный стек — React 19, Vite 8, Express 5, Prisma, Socket.IO, BullMQ, Redis. Используются паттерны: Outbox, DLQ, Soft Delete, Optimistic Updates, Virtual Scroll.
+js
+const gzipSize = require('zlib').gzipSync(content).length
+package.json содержит "type": "module" → require упадёт с ReferenceError: require is not defined in ES module scope. CI job bundle сломан.
 
-Богатая функциональность — покрыты практически все сценарии helpdesk: SLA с эскалацией и бизнес-часами, кастомные поля, шаблоны, webhooks, API-токены, SSO, Rules Engine, Telegram-бот, CSAT, Time tracking, Feature flags.
+2. CI: cmd /c на Ubuntu НЕ исправлен
+Что-доделать.txt (P0 #1) утверждает: «Исправлено (working-directory: server)». Фактически в ci.yml:
 
-Высокое покрытие тестами — 934 теста, все проходят. Серверные тесты интеграционные (523), клиентские — компонентные (411). E2E расширены до user-flow.
+yaml
+- run: cd server && cmd /c "npx vitest run 2>&1"
+  env:
+    DATABASE_URL: mysql://root:test@localhost:3306/service_desk
+cmd /c — Windows-only команда, на ubuntu-latest job test падает сразу.
 
-Активная работа над качеством — исправляются баги, ведутся аудиты (Kimi, Qwen, DeepSeek), есть план доработок (Что-доделать.txt) с приоритетами.
+3. K6: dev-login на каждой итерации НЕ исправлен
+Что-доделать.txt (P1 #5) утверждает: «Kimi ошибся, TOKEN из env, не dev-login». Фактически test/load/tickets.k6.js:
 
-Хорошая документация — README, context.txt, AGENTS.md, CHANGELOG.md, PLAYBOOK.md. Описаны этапы, проблемы, решения.
+js
+export default function () {
+  const loginRes = http.post(`${BASE_URL}/api/auth/dev-login`, ...)
+Логин на каждой из ~30 итераций. Это искажает нагрузочный профиль (auth становится доминирующей нагрузкой).
 
-Слабые стороны и критические проблемы
-🔴 P0 — критические (ломают CI/Docker)
-CI: cmd /c на Ubuntu — не работает, нужно working-directory: server + npx vitest run.
+4. express-validator и prisma в dependencies НЕ убраны
+Что-доделать.txt (P1 #2, #3) утверждает: оба удалены / перемещены. Фактически server-package.json:
 
-Docker: неправильный stage — build: . без target соберёт nginx вместо node.
+json
+"dependencies": {
+    "express-validator": "^7.3.2",   // ← должен быть удалён
+    "prisma": "^5.22.0",              // ← должен быть в devDeps
+    "knex": "^3.3.0"                  // ← дублирующий ORM
+}
+express-validator в зависимостях — мёртвый вес ~200KB + CVE-риски.
 
-check-bundle-size.js: require в ESM — ReferenceError, catch молча глотает.
+5. Playwright job в CI — сервер запускается некорректно
+yaml
+- run: cd server && node src/index.js &
+- run: npm run build
+- run: npx vite preview --port 5173 &
+- run: npx playwright test
+Между запуском сервера и тестами нет ожидания готовности (нет wait-for-it, нет healthcheck-loop). На медленном runner'е тесты начнутся до старта БД → flaky.
 
-entrypoint.sh не скопирован — Dockerfile не содержит COPY docker/entrypoint.sh.
+6. docker-compose.yml vs Dockerfile — конфликт build-контекста
+yaml
+app:
+  build: .        # контекст = корень
+dockerfile
+COPY --from=builder /app/server ./server
+RUN cd server && npm ci --production
+В builder-стейдже копируется COPY package*.json ./ (только корневые), но не копируется server/package.json — npm ci в server/ упадёт без package-lock.json. Multi-stage сломан.
 
-Playwright job без сервера — не устанавливает зависимости сервера, нет wait-on.
+🟡 Важные проблемы (P1)
+7. CHANGELOG.md структурно повреждён
+[1.9.0] — 2026-09-19 стоит дважды (первый — пустой, второй — с контентом)
 
-🟡 P1 — важные
-E2E smoke-only — 99% тестов проверяют только видимость заголовков, не бизнес-логику.
+[2.1.0] и [2.0.0] стоят выше [1.9.0] с контентом, но ниже пустого [1.9.0]
 
-Knex → Prisma — два ORM, 3 файла миграций на Knex, мёртвый вес.
+При этом package.json = 1.9.0, а CHANGELOG описывает 2.1.0
 
-Prisma в dependencies — CLI тянет 100+ МБ в prod, нужно в devDependencies.
+Файл обесценивает сам себя. Нельзя использовать как источник правды.
 
-Двойная валидация — zod + express-validator, выбрать один.
+8. README противоречит сам себе
+Где	Что заявлено
+Таблица сверху	Coverage (клиент) — 71% stmts
+Таблица файлов	«thresholds 71/61/61/74»
+vitest.client.config.ts	72/62/62/75
+Что-доделать.txt (Этап 39)	«Поднять до 72/62/62/75»
+Три разных числа в одном репозитории.
 
-k6: dev-login на каждой итерации — тестируется логин, а не бизнес-логика.
+9. docker/entrypoint.sh — «мёртвый файл»
+README утверждает: «Dockerfile: entrypoint.sh не скопирован → Файл удалён из репо». Но infra.txt содержит его содержимое. Значит, файл либо есть (тогда README врёт), либо его нет (тогда зачем он в infra.txt?). Не определиться с источником правды.
 
-JWT в localStorage — XSS-вектор, для корпсистемы лучше httpOnly cookie.
+10. E2E — 90% smoke-only
+README: «E2E smoke-only — Исправлено, добавлен user-flow.spec.ts». Фактически в e2e-tests.txt:
 
-Coverage 71% — цель 80%+, пороги равны текущему, не защищают от регресса.
+ts
+test('renders tickets list', async ({ page }) => {
+  await page.goto('/tickets')
+  await expect(page.locator('h1, h2, h3').first()).toBeVisible()
+})
+Проверяется только наличие любого заголовка. Тест пройдёт даже если страница показывает «Ошибка 500». Это не тест, а иллюзия теста. Единственный реальный тест — global-setup.ts (проверяет получение токена).
 
-🟢 P2 — после MVP
-AI auto-triage, Forms builder, Gamification, 2FA, Marketplace, Multi-tenancy, мобильное приложение, CMDB, ITIL, On-call, Voice/Video, Compliance, Status page, Visual regression, npm audit.
+11. test-e2e-api.js — тест на несуществующий контракт
+js
+const { status, data } = await api('GET', '/api/health')
+assert(data.success === true, 'Expected success: true')
+Но в CHANGELOG v1.0.0 сказано, что /api/health возвращает prometheus-формат (в контексте GET /api/metrics). Контракт {success: true} для health — не подтверждён нигде в коде сервера.
 
-Сравнение с оценками AI-анализаторов
-AI	Оценка	Ключевая претензия	Факт
-Kimi	6.5/10	«~300 stub-тестов в src/hooks/tests/»	Ошибся — src/hooks/ пустая, все тесты реальные.
-Qwen	8.5/10	«Двойной ORM — главная проблема»	Верно, лучшая оценка, корректный roadmap.
-DeepSeek	7/10	(файл аудита не сохранён)	Ссылочная оценка.
-Консенсус: архитектура и стек сильные (8–9/10), серверные тесты качественные, E2E требуют доработки, техдолг (ORM, валидация, покрытие) — в процессе решения.
+12. vitest.client.config.ts не покрывает новые модули
+include: ['src/test/**/*.test.{ts,tsx}'] — но useFeature.test.tsx в src/test/, ок. Однако CommandPalette.tsx, AdminRules.tsx, AdminIntegrations.tsx, SSO.tsx — новые фичи Этапа 34-35, ни одного теста для них в test-inventory.json не видно.
 
-Рекомендации по приоритетам
-text
-Сейчас (30 минут):
-  🔴 Исправить CI (cmd /c), Docker target, bundle-size, entrypoint, Playwright job.
+🟢 Что сделано хорошо
+Область	Оценка
+Архитектура	8/10 — слоистость, сервисный слой, Prisma + Zod, RBAC-иерархия
+Документация истории	7/10 — CHANGELOG подробный, но структурно сломан
+Серверные тесты	7/10 — 523 интеграционных через Supertest — реальная ценность
+i18n подход	8/10 — RU/EN, detector, ru-русификация, хотя дубли auth — классическая ошибка
+Стек	8/10 — React 19 + Vite 8 + Tailwind 4 + Prisma + Socket.IO — современно
+Фичи	9/10 — SSO/OIDC, Rules Engine, Webhooks, IMAP, CSAT, SLA pause — широкий охват
+📊 Сводка по осям (AGENTS.md)
+Ось	Оценка	Комментарий
+Безопасность	6/10	JWT в localStorage (XSS-вектор, P1 #6 — не исправлен), helmet/CORS/rate-limit ок, но нет npm audit в CI (заявлен, но не видно в ci.yml)
+Корректность	6/10	Много фиксов заявлено, часть не подтверждается; authFetch double-json fix — есть, но не проверяемо
+Архитектура	7/10	Два ORM (Prisma + Knex) — заявлено «deprecated», фактически оба в deps
+Производительность	7/10	Virtual scroll, outbox, cache с Lua — сильно; но dev-login в k6 искажает замеры
+Тесты	5/10	934 теста звучит внушительно, но: E2E smoke-only, thresholds занижены (72% ≈ текущее), новые фичи без тестов
+Инфра	4/10	CI сломан (cmd /c), Dockerfile сломан (нет server/package-lock.json), CHANGELOG структурно повреждён
+Топ-5 действий (в порядке приоритета)
+Починить check-bundle-size.js → import { gzipSync } from 'zlib'
 
-Неделя 1:
-  🟡 E2E: реальные user-flow (create → assign → resolve → close).
-  🟡 Вынести dev-login в k6 setup(), проверить guard для production.
+Убрать cmd /c из CI → run: cd server && npx vitest run
 
-Неделя 2:
-  🟡 Knex cleanup, prisma → devDeps, убрать express-validator (оставить zod).
-  🟡 Поднять coverage до 80% (пороги = 80).
+Убрать express-validator + prisma из server deps (перенести в devDeps)
 
-Неделя 3:
-  🟢 2FA, npm audit, горячие клавиши.
+Починить Dockerfile → COPY server/package*.json ./server/ && RUN cd server && npm ci
 
-После MVP:
-  🟢 AI triage, Forms, Marketplace, Multi-tenancy и т.д.
-Итог
-Проект заслуживает 7.5/10 — это крепкий, функциональный Service Desk с современным стеком и хорошим покрытием тестами. Однако критичные проблемы в CI/Docker и заметный технический долг (два ORM, двойная валидация, JWT в localStorage) снижают оценку. После исправления P0-проблем (30 минут работы) проект можно оценить на 8.5/10. Дальнейший рост — за счёт покрытия 80%, реальных E2E и закрытия техдолга.
+Починить CHANGELOG → один [1.9.0] в начале, [2.1.0] → [1.10.0], [2.0.0] → [1.9.1] (не прыгать мажор без причины)
+
+Главный вывод
+Проект сильнее, чем средний пет-проект (стек, архитектура, охват фич), но слабее, чем заявляет о себе в README и Что-доделать.txt. Ключевая проблема — документация-самоотчёт не соответствует коду. Это опаснее, чем просто баги: новый разработчик (или AI-аудитор) не может доверять файлам состояния.
+
+Рекомендация: перестать писать «✅ Исправлено» в Что-доделать.txt до того, как фикс виден в самом файле, а не только в отчёте. Ввести чек-лист: «фикс подтверждён grep'ом по файлу X, строка Y».
+
+Реальная оценка: 6.5/10. Потенциал — 8.5/10. Разрыв — в гигиене и честности документации.

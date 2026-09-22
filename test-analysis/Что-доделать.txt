@@ -1,9 +1,10 @@
-# Что доделать — актуальный статус (21.09.2026)
+# Что доделать — актуальный статус (22.09.2026)
 
-> Дата обновления: 21.09.2026 (21:00)
-> Источники: Kimi (7/10), DeepSeek (7.5/10), Qwen (8.5/10)
-> Фактическая проверка кодовой базы: 21.09.2026
+> Дата обновления: 22.09.2026
+> Источники: Kimi (7/10), DeepSeek (6.5/10), Qwen (8.2/10)
+> Фактическая проверка кодовой базы: 22.09.2026
 > Тесты: 52 файла / 411 клиентских + 35 файлов / 523 серверных = **934 теста, 0 failures**
+> E2E: 16 spec'ов / 51 тест (Playwright)
 
 ---
 
@@ -53,7 +54,7 @@
 | 3 | **zod + express-validator двойная валидация** | Kimi P1, DeepSeek P1 | express-validator нигде не импортируется | Удалён | ✅ Этап 40 |
 | 4 | **E2E в основном smoke-only** | Kimi P1, DeepSeek P1 | user-flow + crud-lifecycle | Расширить E2E | ✅ Этап 44 |
 | 5 | **k6: dev-login на каждую итерацию** | Kimi P1, Qwen P2 | TOKEN из env, не dev-login | Kimi ошибся | ✅ Этап 41 |
-| 6 | **JWT в localStorage** | DeepSeek P1 | XSS-вектор | httpOnly cookie ( deferred — Requires auth refactor) | ⏳ |
+| 6 | **JWT в localStorage** | DeepSeek P1 | XSS-вектор | Решение B: оставить. Refresh уже httpOnly, access 15min — acceptable для корп. интранета | ✅ Решено (вариант B) |
 | 7 | **Security scanning в CI** | Qwen P0 | npm audit --audit-level=high --omit=dev | Добавлен в CI | ✅ Этап 42 |
 | 8 | **Secrets только в env vars** | Qwen P0 | Secrets manager | Infrastructure-level (not code) | ⏳ |
 
@@ -84,18 +85,25 @@
 | "14 пар дублей Login/Login.expanded" | Не дубли: expanded — расширенные тесты. Оба нужны для coverage |
 | "user-flow.spec.ts отсутствует" | ЕСТЬ: `e2e/user-flow.spec.ts` |
 
-### DeepSeek (7.5/10)
+### DeepSeek (6.5/10 — по фактическому файлу Оценка дипсик.txt)
+
+**Главная проблема: анализировал ЗАСТАРЕВШИЕ копии** в `test-analysis/` (server-package.json, infra.txt),
+а не живые файлы репозитория. Все «P0» кроме E2E и новым модулям — ложные (проверено по живому коду):
+
+| Замечание (P0) | Вердикт | Доказательство |
+|-----------|-------|----------------|
+| "check-bundle-size: require в ESM" | ❌ Неверно | `scripts/check-bundle-size.js:3` — `import { gzipSync } from 'zlib'` |
+| "CI: cmd /c на Ubuntu" | ❌ Неверно | `ci.yml` — `working-directory: server` + `npx vitest run`, cmd /c нет |
+| "k6: dev-login в итерациях" | ❌ Неверно | `.k6.js` используют `__ENV.TOKEN`; dev-login только в README (разовая команда) |
+| "express-validator + prisma в deps" | ❌ Неверно | `server/package.json` — express-validator удалён, prisma в devDeps. Читал stale `test-analysis/server-package.json` |
+| "CHANGELOG сломан" | ✅ Уже исправлено | Этап 42: 1.8.0→1.2.0→1.0.0, без дублей |
+| "E2E 90% smoke-only" | ✅ ВАЛИДНО | Частично закрыто Этапом 44 (crud-lifecycle) |
+| "Новые модули без тестов" | ✅ ВАЛИДНО | collсision/recurrence/rules/webhooks/api-tokens + CommandPalette/AdminRules/AdminIntegrations/SSO/Portal/PublicKB — см. Этап 50 |
+
+### Qwen (8.2/10 — по фактическому файлу Оценка qwen .txt)
 
 | Замечание | Ответ |
 |-----------|-------|
-| "E2E smoke-only" | Частично верно: 14/15 — smoke, но user-flow.spec.ts есть |
-| "Knex не используется" | Верно:Knex нужен только для миграций, можно заменить на Prisma migrate |
-
-### Qwen (8.5/10)
-
-| Замечание | Ответ |
-|-----------|-------|
-| "436+ серверных, 397+ клиентских" | Неточность: 523 + 411 = 934 |
-| "MySQL replica" | Удалено в Этапе 17 (не нужно в текущей архитектуре) |
-| "Нет security scanning" | Верно — добавить npm audit |
-| "Prisma + Knex together" | Верно — prisma → devDeps, knex → Prisma migrate |
+| "require в check-bundle-size, cmd/c в CI" | ❌ stale — уже исправлено (как и в DeepSeek) |
+| "Redis нет в docker-compose" | ✅ ВАЛИДНО — ioredis в deps, Redis сервиса в compose нет (fallback in-memory) |
+| "E2E поверхностные" | ✅ ВАЛИДНО — Частично закрыто Этапом 44 |

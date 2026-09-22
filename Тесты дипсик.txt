@@ -1,0 +1,155 @@
+Что ещё тестировать — по результатам аудита
+🔴 Критично (P0) — новые фичи Этапов 32-35 без тестов
+Это самый большой пробел. В context.txt они помечены как новый, но в test-inventory.json нет ни одного файла для них.
+
+Фича	Файл(ы) без тестов	Что писать
+Command Palette	CommandPalette.tsx	открытие по Cmd+K/Ctrl+K, навигация ↑↓, Enter → router push, Esc → close, фильтрация по запросу, 11 страниц в списке
+Rules Engine (UI)	AdminRules.tsx	CRUD rules, добавление condition (field/operator/value), добавление action (5 типов), toggle is_active, валидация пустых conditions
+Rules Engine (backend)	rules.service.js	evaluateConditions: 9 операторов × and/or, executeActions (5 типов), evaluateRules on 4 events (created/updated/assigned/message), невалидный JSON → 400
+API Tokens (backend)	api-tokens.service.js	SHA-256 hash verify, prefix sd_, validate revoked → 401, list только свои, delete чужого → 403
+Webhooks (backend)	webhooks.service.js	HMAC SHA-256 подпись, retry 3x с backoff, 7 событий, таймаут → fail, retry exhausted → log
+API Tokens + Webhooks (UI)	AdminIntegrations.tsx	создание токена → показ один раз, копирование, удаление, создание webhook, маскирование секрета
+Collision Avoidance	collision.service.js	acquireLock TTL 30мин, повторный acquire → 409, force-unlock (admin), releaseLock владельцем, lock истёк → можно взять, getLockStatus
+Collision (UI)	в TicketDetail.tsx	бадж «заблокирован N», кнопка force-unlock для senior_agent+, disabled для agent
+Recurring Tickets	recurrence.service.js	cron-parser: валидный/невалидный cron, next_run расчёт, processRecurrences создаёт тикет, is_active=false → skip, префикс «[Плановое]»
+SSO OIDC	auth/oidc.js	discovery fetch, authorization URL build, callback exchange, auto-provisioning, ошибка discovery → 500, невалидный code → 400
+SSO (UI)	SSO.tsx	SSOLogin рендер кнопки, SSOCallback: missing params → error, exchange failed → error, no token → error, success → redirect
+Public Portal	public-portal.js	создание без auth, tracking token, GET по token, POST reply, auto-provisioning employee role=requester, невалидный token → 404
+Public Portal (UI)	Portal.tsx, PortalTrack.tsx	форма создания, валидация email, показ tracking URL после создания, просмотр тикета по token, reply форма
+Public KB 2.0	public-kb.js	GET articles с пагинацией, поиск, slug-based URL, POST vote (up/down), похожие статьи, невалидный slug → 404
+Public KB (UI)	PublicKB.tsx, PublicKBArticle.tsx	список + поиск, фильтр по категориям, рендер статьи, голосование, похожие статьи
+Markdown Preview	MarkdownEditor.tsx	toggle preview, рендер markdown (заголовки, код, ссылки), XSS-экранирование (<script> не выполняется)
+Итого: ~14 файлов, ~120-150 тестов на новые фичи.
+
+🟡 Важно (P1) — слабые места существующих тестов
+1. E2E — 90% smoke-only, нужны реальные user-flow
+Сейчас: await expect(page.locator('h1, h2, h3').first()).toBeVisible() — пройдёт даже на странице «Ошибка 500».
+
+Нужны реальные сценарии:
+
+Файл	Что добавить
+e2e/ticket-lifecycle.spec.ts	login → создать тикет → открыть → отправить сообщение → сменить статус → закрыть → проверить в списке
+e2e/rbac-real.spec.ts	login как agent → попытка удалить тикет → ожидать 403/скрытую кнопку; login как requester → попытка открыть /admin → redirect
+e2e/search-real.spec.ts	Ctrl+K → ввод «тикет» → проверить что в результатах есть title тикета из seed
+e2e/export-real.spec.ts	клик CSV → page.waitForEvent('download') → проверка что файл не пустой, содержит BOM
+e2e/file-upload-real.spec.ts	setInputFiles с реальным файлом → проверка что появился в списке → скачать → проверить содержимое
+e2e/sla-flow.spec.ts	создать тикет с critical → проверить что due_at ≈ now + X ч → перевести в in_progress → first_response_at установлен
+e2e/chat-realtime.spec.ts	два browserContext → отправить в одном → получить в другом через WS
+2. Server — RBAC-матрица
+Есть 5 ролей × ~50 endpoints = 250 комбинаций, покрыто фрагментарно.
+
+js
+// server/src/__tests__/rbac.matrix.test.js
+describe.each([
+  ['requester', 'GET', '/api/admin/users', 403],
+  ['requester', 'POST', '/api/tickets', 201],  // только свои
+  ['agent', 'DELETE', '/api/tickets/:id', 403],
+  ['senior_agent', 'DELETE', '/api/tickets/:id', 200],
+  ['admin', 'POST', '/api/auth/register', 201],
+  ['super_admin', 'PUT', '/api/admin/users/:id/role', 200],
+  // ...50+ строк
+])('%s %s %s → %d', (role, method, path, expected) => { ... })
+3. Server — безопасность
+Тест	Что проверяет
+auth.security.test.js	JWT истёк → 401; невалидная подпись → 401; refresh rotation; logout инвалидирует refresh
+api-token.auth.test.js	запрос с sd_... токеном проходит; revoked токен → 401; токен другого юзера → 403
+rate-limit.test.js	11-й запрос за 60с → 429; после окна — снова ok
+injection.test.js	SQL injection в query params → 400/escaped; XSS в title → сохранено как есть (экранирование на рендере)
+csrf.test.js	cookie-based endpoints требуют CSRF токен (если cookies используются)
+4. Server — race conditions / транзакции
+Тест	Что проверяет
+ticket-lock.race.test.js	два параллельных POST /:id/lock → один 200, один 409
+ticket-status.race.test.js	два параллельных PUT /status → консистентное состояние, нет двойного resolved_at
+time-timer.race.test.js	два параллельных POST /timer/start → только один таймер активен
+outbox.delivery.test.js	событие записано в outbox → воркер доставил → статус delivered; сбой → retry
+5. Server — фоновые задачи
+background.js (~50% coverage) — самое слабое место.
+
+Тест	Что проверяет
+background.sla.test.js	runSlaCheck: due_at истёк → escalation level +1; бизнес-часы учтены
+background.cleanup.test.js	уведомления > 90 дней удалены; свежие — нет
+background.dlq.test.js	задача падает 3x → попадает в DLQ; > 10 DLQ за час → email админам
+background.imap.test.js	startImapPolling идемпотентен; stopImapPolling не падает если не запущен
+background.recurrence.test.js	processRecurrences создаёт тикеты только для due записей
+6. Frontend — optimistic updates / rollback
+ticket-context.tsx (~35% coverage) — критичный файл.
+
+Тест	Что проверяет
+ticket-context.optimistic.test.tsx	createTicket: тикет появился сразу; API 500 → откат, тикет исчез
+ticket-context.rollback.test.tsx	updateStatus: status сменился оптимистично; API 403 → откат на старый
+ticket-context.invalidate.test.tsx	после мутации — invalidateQueries вызван для ['tickets']
+7. Frontend — virtual scroll (jsdom)
+TicketDetail / ChatDetail используют useVirtualizer, но в jsdom fallback. Нужно проверить что виртуализация не ломает логику.
+
+tsx
+test('renders only visible messages with 1000 items', () => {
+  // mock useVirtualizer → return все элементы
+  // проверить что DOM содержит < N элементов
+})
+8. Frontend — a11y
+Тест	Что проверяет
+a11y.keyboard.test.tsx	Tab-навигация по Sidebar; Enter открывает пункт; Esc закрывает Sheet
+a11y.aria.test.tsx	icon-only кнопки имеют aria-label; формы имеют htmlFor + id
+a11y.focus-trap.test.tsx	Radix Dialog / AlertDialog зацикливает Tab
+🟢 Желательно (P2)
+Область	Что добавить
+i18n	тест что все ключи из ru.json есть в en.json (и наоборот) — ловит дубли как было с auth
+Visual regression	Playwright toHaveScreenshot для 5-6 ключевых страниц
+Contract tests	OpenAPI spec → валидация что все endpoints отвечают по схеме (jest-openapi или dredd)
+Load tests	k6: исправить dev-login → TOKEN из env (см. аудит); добавить сценарии на lock/collision/recurrence
+Bundle budget	после починки check-bundle-size.js — добавить per-chunk лимиты (не только total)
+Migration tests	тест что все миграции идемпотентны (прогнать дважды)
+📋 Приоритетный план (спринтами)
+Спринт 1 (P0) — новые фичи
+api-tokens.service.test.js (~10 тестов)
+
+webhooks.service.test.js (~12 тестов)
+
+collision.service.test.js (~8 тестов)
+
+recurrence.service.test.js (~10 тестов)
+
+rules.service.test.js (~15 тестов)
+
+auth/oidc.test.js (~10 тестов)
+
+public-portal.test.js (~8 тестов)
+
+public-kb.test.js (~10 тестов)
+
+≈85 тестов, закроют 8 «новых» сервисов без покрытия.
+
+Спринт 2 (P0) — frontend новых фич
+CommandPalette.test.tsx (~8)
+
+AdminRules.test.tsx (~10)
+
+AdminIntegrations.test.tsx (~10)
+
+SSO.test.tsx (~6)
+
+Portal.test.tsx + PortalTrack.test.tsx (~12)
+
+PublicKB.test.tsx + PublicKBArticle.test.tsx (~10)
+
+MarkdownEditor.test.tsx (~6)
+
+TimeTrackingCard.test.tsx (~8)
+
+≈70 тестов.
+
+Спринт 3 (P1) — E2E user-flow
+7 сценариев × ~3 теста = ~21 реальный E2E вместо smoke.
+
+Спринт 4 (P1) — безопасность + RBAC-матрица
+rbac.matrix.test.js (~50), auth.security.test.js (~10), rate-limit.test.js (~5) = ~65.
+
+Итог
+Что	Сейчас	Нужно минимум
+Всего тестов	934	~1200 (+30%)
+Файлов	87	~120 (+38%)
+E2E реальных	~2/36	~20/50
+Серверных сервисов без покрытия	8	0
+Frontend новых фич без покрытия	8+	0
+Главное: не гнаться за числом тестов, а закрыть новые фичи Этапов 32-35 — они в проде, но без тестов. Если в webhooks.service.js баг с HMAC — вы узнаете об этом от клиента, а не от CI.
+

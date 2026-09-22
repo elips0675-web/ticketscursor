@@ -59,7 +59,7 @@ React 19 + TypeScript 5 + Vite 8 + Tailwind v4 + shadcn/ui | Express 5 + Prisma 
 | Проблема по аудиту | Kimi (6.5/10) | Qwen (8.5/10) | Факт |
 |-------------------|--------------|--------------|------|
 | ~200 stub-тестов | ✅ Основная претензия | Не упомянул | **Нет stub-тестов.** `src/hooks/` — пустая директория. `frontend-tests.txt` содержит несуществующие пути |
-| E2E smoke-only | ✅ Подтвердил | ✅ Подтвердил | **Исправлено** — добавлен `user-flow.spec.ts` (8 тестов) |
+| E2E smoke-only | ✅ Подтвердил | ✅ Подтвердил | **Исправлено** — добавлены `user-flow.spec.ts` (9 тестов) + `crud-lifecycle.spec.ts` (6 тестов) |
 | Два ORM (Prisma+Knex) | ✅ Подтвердил | ✅ Подтвердил | **Решено** — Prisma chosen, Knex → deprecated |
 | CI cmd/c | ✅ Подтвердил | Не упомянул | **Уже исправлено** до аудита |
 | Coverage 71% | Не упомянул | ✅ "Целевой 80%" | Верно — P2 задача |
@@ -71,7 +71,7 @@ React 19 + TypeScript 5 + Vite 8 + Tailwind v4 + shadcn/ui | Express 5 + Prisma 
 
 | Файл | Что содержит | Размер |
 |------|-------------|--------|
-| **e2e-tests.txt** | 16 Playwright-файлов — login, tickets, chats, admin, kanban, files, search, notifications, profile, calculator, ldap, sla, **user-flow** | 9 KB |
+| **e2e-tests.txt** | 16 Playwright-файлов — login, tickets, chats, admin, kanban, files, search, notifications, profile, calculator, ldap, sla, **user-flow**, **crud-lifecycle** | 11 KB |
 | **server-tests.txt** | 35 серверных тестов (523 теста) — api, assistant, cache, middleware, time, sla, mentions, search, socket, notify, background, wiki, files.route, push, email, csat, custom-fields, calendar, employees, news, polls, roleUtils, wiki, socket, metrics | 16 KB |
 | **frontend-tests.txt** | 52 фронтенд-тестов (411 тестов) — все реальные тесты с осмысленной логикой | 61 KB |
 | **test-inventory.json** | Машинно-читаемый инвентарь всех тестов (87 файлов, 934 теста) — для автоматической верификации | 12 KB |
@@ -95,8 +95,8 @@ React 19 + TypeScript 5 + Vite 8 + Tailwind v4 + shadcn/ui | Express 5 + Prisma 
 | AI | Оценка | Ключевая претензия | Факт |
 |----|--------|-------------------|------|
 | **Kimi** | 6.5/10 | "~300 stub-тестов в src/hooks/\_\_tests\_\_/" | **Ошибся.** `src/hooks/` — пустая директория. Все 411 тестов реальные |
-| **Qwen** | 8.5/10 | "Проеct крепкий, двойной ORM — главная проблема" | **Верно.** Лучшая оценка, корректный roadmap |
-| **DeepSeek** | 7/10 | (файл аудита не сохранён) | Оценка ссылочная |
+| **Qwen** | 8.2/10 | "Проект крепкий, двойной ORM — главная проблема" | **Частично верно.** Prisma+Knex: knex только для auto-migrate (документировано). Есть 1 реальное замечание — Redis нет в docker-compose |
+| **DeepSeek** | 6.5/10 | «Документация лжёт о фиксах» (check-bundle-size, cmd/c, k6) | **Анализировал stale-копии** `test-analysis/` (server-package.json, infra.txt). По живому коду все P0-утверждения ложные — проверено строками файлов |
 
 ### Консенсус
 - ✅ Архитектура и стек — сильные (8-9/10)

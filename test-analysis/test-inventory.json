@@ -24,6 +24,18 @@
     "tests": 934,
     "all_passing": true
   },
+  "e2e": {
+    "files": 16,
+    "tests": 51,
+    "all_passing": true,
+    "run_command": "npx playwright test",
+    "specs": [
+      "user-flow.spec.ts", "tickets.spec.ts", "sla-autoassign-export.spec.ts", "search.spec.ts",
+      "profile.spec.ts", "notifications.spec.ts", "login.spec.ts", "ldap-login.spec.ts",
+      "kanban.spec.ts", "files.spec.ts", "file-upload.spec.ts", "crud-lifecycle.spec.ts",
+      "chats.spec.ts", "calculator.spec.ts", "admin.spec.ts", "admin-audit.spec.ts"
+    ]
+  },
   "frontend_files": [
     {"file": "src/test/Files.expanded.test.tsx", "tests": 27},
     {"file": "src/test/Tickets.expanded.test.tsx", "tests": 25},
