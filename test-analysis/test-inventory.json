@@ -1,27 +1,27 @@
 {
-  "generated": "2026-09-21T15:00:00Z",
-  "tool": "node count-tests.js (regex /\\b(it|test)\\s*\\(/)",
+  "generated": "2026-09-22T06:05:36.436Z",
+  "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 52,
-    "suites": 71,
-    "tests": 411,
+    "files": 61,
+    "suites": 143,
+    "tests": 494,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 35,
-    "suites": 192,
-    "tests": 523,
+    "files": 42,
+    "suites": 273,
+    "tests": 653,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 87,
-    "suites": 263,
-    "tests": 934,
+    "files": 103,
+    "suites": 416,
+    "tests": 1147,
     "all_passing": true
   },
   "e2e": {
@@ -30,101 +30,438 @@
     "all_passing": true,
     "run_command": "npx playwright test",
     "specs": [
-      "user-flow.spec.ts", "tickets.spec.ts", "sla-autoassign-export.spec.ts", "search.spec.ts",
-      "profile.spec.ts", "notifications.spec.ts", "login.spec.ts", "ldap-login.spec.ts",
-      "kanban.spec.ts", "files.spec.ts", "file-upload.spec.ts", "crud-lifecycle.spec.ts",
-      "chats.spec.ts", "calculator.spec.ts", "admin.spec.ts", "admin-audit.spec.ts"
+      "user-flow.spec.ts",
+      "tickets.spec.ts",
+      "sla-autoassign-export.spec.ts",
+      "search.spec.ts",
+      "profile.spec.ts",
+      "notifications.spec.ts",
+      "login.spec.ts",
+      "ldap-login.spec.ts",
+      "kanban.spec.ts",
+      "files.spec.ts",
+      "file-upload.spec.ts",
+      "crud-lifecycle.spec.ts",
+      "chats.spec.ts",
+      "calculator.spec.ts",
+      "admin.spec.ts",
+      "admin-audit.spec.ts"
     ]
   },
   "frontend_files": [
-    {"file": "src/test/Files.expanded.test.tsx", "tests": 27},
-    {"file": "src/test/Tickets.expanded.test.tsx", "tests": 25},
-    {"file": "src/test/TicketDetail.test.tsx", "tests": 24},
-    {"file": "src/test/Admin.expanded.test.tsx", "tests": 22},
-    {"file": "src/test/Calendar.expanded.test.tsx", "tests": 18},
-    {"file": "src/test/Dashboard.expanded.test.tsx", "tests": 18},
-    {"file": "src/test/Kanban.test.tsx", "tests": 17},
-    {"file": "src/test/Polls.expanded.test.tsx", "tests": 14},
-    {"file": "src/test/Wiki.expanded.test.tsx", "tests": 14},
-    {"file": "src/test/AdminPush.expanded.test.tsx", "tests": 13},
-    {"file": "src/test/Employees.expanded.test.tsx", "tests": 13},
-    {"file": "src/test/ChatDetail.test.tsx", "tests": 11},
-    {"file": "src/test/Login.expanded.test.tsx", "tests": 11},
-    {"file": "src/test/News.expanded.test.tsx", "tests": 11},
-    {"file": "src/test/Search.expanded.test.tsx", "tests": 9},
-    {"file": "src/test/AppLayout.test.tsx", "tests": 8},
-    {"file": "src/test/Login.test.tsx", "tests": 8},
-    {"file": "src/test/ResetPassword.expanded.test.tsx", "tests": 8},
-    {"file": "src/test/SocketContext.test.tsx", "tests": 8},
-    {"file": "src/test/Calculator.test.tsx", "tests": 7},
-    {"file": "src/test/Register.test.tsx", "tests": 7},
-    {"file": "src/test/AdminAudit.test.tsx", "tests": 6},
-    {"file": "src/test/AdminLayout.test.tsx", "tests": 6},
-    {"file": "src/test/api.test.ts", "tests": 6},
-    {"file": "src/test/AuthContext.test.tsx", "tests": 6},
-    {"file": "src/test/ForgotPassword.expanded.test.tsx", "tests": 6},
-    {"file": "src/test/News.test.tsx", "tests": 6},
-    {"file": "src/test/NewTicket.test.tsx", "tests": 6},
-    {"file": "src/test/utils.test.ts", "tests": 6},
-    {"file": "src/test/Dashboard.test.tsx", "tests": 5},
-    {"file": "src/test/ProtectedRoute.test.tsx", "tests": 5},
-    {"file": "src/test/PwaInstallPrompt.test.tsx", "tests": 5},
-    {"file": "src/test/Calendar.test.tsx", "tests": 4},
-    {"file": "src/test/Employees.test.tsx", "tests": 4},
-    {"file": "src/test/Files.test.tsx", "tests": 4},
-    {"file": "src/test/NotificationsPage.test.tsx", "tests": 4},
-    {"file": "src/test/use-push.test.ts", "tests": 4},
-    {"file": "src/test/useFeature.test.tsx", "tests": 4},
-    {"file": "src/test/Wiki.test.tsx", "tests": 4},
-    {"file": "src/test/AdminSettings.test.tsx", "tests": 3},
-    {"file": "src/test/Chats.test.tsx", "tests": 3},
-    {"file": "src/test/ErrorBoundary.test.tsx", "tests": 3},
-    {"file": "src/test/Polls.test.tsx", "tests": 3},
-    {"file": "src/test/AdminDashboard.test.tsx", "tests": 2},
-    {"file": "src/test/AdminUsers.test.tsx", "tests": 2},
-    {"file": "src/test/ForgotPassword.test.tsx", "tests": 2},
-    {"file": "src/test/NotFound.test.tsx", "tests": 2},
-    {"file": "src/test/ResetPassword.test.tsx", "tests": 2},
-    {"file": "src/test/Search.test.tsx", "tests": 2},
-    {"file": "src/test/AdminPush.test.tsx", "tests": 1},
-    {"file": "src/test/Profile.test.tsx", "tests": 1},
-    {"file": "src/test/Tickets.test.tsx", "tests": 1}
+    {
+      "file": "src/test/Files.expanded.test.tsx",
+      "tests": 27
+    },
+    {
+      "file": "src/test/Tickets.expanded.test.tsx",
+      "tests": 25
+    },
+    {
+      "file": "src/test/TicketDetail.test.tsx",
+      "tests": 24
+    },
+    {
+      "file": "src/test/Admin.expanded.test.tsx",
+      "tests": 22
+    },
+    {
+      "file": "src/test/Calendar.expanded.test.tsx",
+      "tests": 18
+    },
+    {
+      "file": "src/test/Dashboard.expanded.test.tsx",
+      "tests": 18
+    },
+    {
+      "file": "src/test/Kanban.test.tsx",
+      "tests": 17
+    },
+    {
+      "file": "src/test/Polls.expanded.test.tsx",
+      "tests": 14
+    },
+    {
+      "file": "src/test/Wiki.expanded.test.tsx",
+      "tests": 14
+    },
+    {
+      "file": "src/test/AdminIntegrations.test.tsx",
+      "tests": 13
+    },
+    {
+      "file": "src/test/AdminPush.expanded.test.tsx",
+      "tests": 13
+    },
+    {
+      "file": "src/test/AdminRules.test.tsx",
+      "tests": 13
+    },
+    {
+      "file": "src/test/Employees.expanded.test.tsx",
+      "tests": 13
+    },
+    {
+      "file": "src/test/SSO.test.tsx",
+      "tests": 13
+    },
+    {
+      "file": "src/test/ChatDetail.test.tsx",
+      "tests": 11
+    },
+    {
+      "file": "src/test/Login.expanded.test.tsx",
+      "tests": 11
+    },
+    {
+      "file": "src/test/News.expanded.test.tsx",
+      "tests": 11
+    },
+    {
+      "file": "src/test/CommandPalette.test.tsx",
+      "tests": 10
+    },
+    {
+      "file": "src/test/Search.expanded.test.tsx",
+      "tests": 9
+    },
+    {
+      "file": "src/test/AppLayout.test.tsx",
+      "tests": 8
+    },
+    {
+      "file": "src/test/Login.test.tsx",
+      "tests": 8
+    },
+    {
+      "file": "src/test/MarkdownEditor.test.tsx",
+      "tests": 8
+    },
+    {
+      "file": "src/test/ResetPassword.expanded.test.tsx",
+      "tests": 8
+    },
+    {
+      "file": "src/test/SocketContext.test.tsx",
+      "tests": 8
+    },
+    {
+      "file": "src/test/Calculator.test.tsx",
+      "tests": 7
+    },
+    {
+      "file": "src/test/PortalTrack.test.tsx",
+      "tests": 7
+    },
+    {
+      "file": "src/test/PublicKB.test.tsx",
+      "tests": 7
+    },
+    {
+      "file": "src/test/Register.test.tsx",
+      "tests": 7
+    },
+    {
+      "file": "src/test/AdminAudit.test.tsx",
+      "tests": 6
+    },
+    {
+      "file": "src/test/AdminLayout.test.tsx",
+      "tests": 6
+    },
+    {
+      "file": "src/test/api.test.ts",
+      "tests": 6
+    },
+    {
+      "file": "src/test/AuthContext.test.tsx",
+      "tests": 6
+    },
+    {
+      "file": "src/test/ForgotPassword.expanded.test.tsx",
+      "tests": 6
+    },
+    {
+      "file": "src/test/News.test.tsx",
+      "tests": 6
+    },
+    {
+      "file": "src/test/NewTicket.test.tsx",
+      "tests": 6
+    },
+    {
+      "file": "src/test/Portal.test.tsx",
+      "tests": 6
+    },
+    {
+      "file": "src/test/PublicKBArticle.test.tsx",
+      "tests": 6
+    },
+    {
+      "file": "src/test/utils.test.ts",
+      "tests": 6
+    },
+    {
+      "file": "src/test/Dashboard.test.tsx",
+      "tests": 5
+    },
+    {
+      "file": "src/test/ProtectedRoute.test.tsx",
+      "tests": 5
+    },
+    {
+      "file": "src/test/PwaInstallPrompt.test.tsx",
+      "tests": 5
+    },
+    {
+      "file": "src/test/Calendar.test.tsx",
+      "tests": 4
+    },
+    {
+      "file": "src/test/Employees.test.tsx",
+      "tests": 4
+    },
+    {
+      "file": "src/test/Files.test.tsx",
+      "tests": 4
+    },
+    {
+      "file": "src/test/NotificationsPage.test.tsx",
+      "tests": 4
+    },
+    {
+      "file": "src/test/use-push.test.ts",
+      "tests": 4
+    },
+    {
+      "file": "src/test/useFeature.test.tsx",
+      "tests": 4
+    },
+    {
+      "file": "src/test/Wiki.test.tsx",
+      "tests": 4
+    },
+    {
+      "file": "src/test/AdminSettings.test.tsx",
+      "tests": 3
+    },
+    {
+      "file": "src/test/Chats.test.tsx",
+      "tests": 3
+    },
+    {
+      "file": "src/test/ErrorBoundary.test.tsx",
+      "tests": 3
+    },
+    {
+      "file": "src/test/Polls.test.tsx",
+      "tests": 3
+    },
+    {
+      "file": "src/test/AdminDashboard.test.tsx",
+      "tests": 2
+    },
+    {
+      "file": "src/test/AdminUsers.test.tsx",
+      "tests": 2
+    },
+    {
+      "file": "src/test/ForgotPassword.test.tsx",
+      "tests": 2
+    },
+    {
+      "file": "src/test/NotFound.test.tsx",
+      "tests": 2
+    },
+    {
+      "file": "src/test/ResetPassword.test.tsx",
+      "tests": 2
+    },
+    {
+      "file": "src/test/Search.test.tsx",
+      "tests": 2
+    },
+    {
+      "file": "src/test/AdminPush.test.tsx",
+      "tests": 1
+    },
+    {
+      "file": "src/test/Profile.test.tsx",
+      "tests": 1
+    },
+    {
+      "file": "src/test/Tickets.test.tsx",
+      "tests": 1
+    }
   ],
   "server_files": [
-    {"file": "server/src/api.test.js", "tests": 159},
-    {"file": "server/src/services/__tests__/tickets.service.sla.test.js", "tests": 40},
-    {"file": "server/src/__tests__/middleware.test.js", "tests": 19},
-    {"file": "server/src/services/__tests__/custom-fields.service.test.js", "tests": 17},
-    {"file": "server/src/services/__tests__/notify.test.js", "tests": 17},
-    {"file": "server/src/services/__tests__/assistant.service.test.js", "tests": 15},
-    {"file": "server/src/services/__tests__/csat.service.test.js", "tests": 15},
-    {"file": "server/src/services/__tests__/email-ingestion.service.test.js", "tests": 15},
-    {"file": "server/src/services/__tests__/time.service.test.js", "tests": 14},
-    {"file": "server/src/__tests__/search-sync.expanded.test.js", "tests": 14},
-    {"file": "server/src/services/__tests__/tickets.service.mentions.test.js", "tests": 13},
-    {"file": "server/src/services/__tests__/polls.service.test.js", "tests": 11},
-    {"file": "server/src/__tests__/sla.test.js", "tests": 11},
-    {"file": "server/src/__tests__/background.expanded.test.js", "tests": 10},
-    {"file": "server/src/__tests__/push.test.js", "tests": 10},
-    {"file": "server/src/services/__tests__/chats.service.test.js", "tests": 9},
-    {"file": "server/src/__tests__/storage.test.js", "tests": 9},
-    {"file": "server/src/__tests__/telegram.expanded.test.js", "tests": 9},
-    {"file": "server/src/__tests__/clamav.expanded.test.js", "tests": 8},
-    {"file": "server/src/services/__tests__/roleUtils.test.js", "tests": 7},
-    {"file": "server/src/services/__tests__/wiki.service.test.js", "tests": 7},
-    {"file": "server/src/__tests__/validateUpload.test.js", "tests": 7},
-    {"file": "server/src/services/__tests__/calendar.service.test.js", "tests": 6},
-    {"file": "server/src/services/__tests__/files.service.test.js", "tests": 6},
-    {"file": "server/src/__tests__/cache.test.js", "tests": 6},
-    {"file": "server/src/__tests__/csat.route.test.js", "tests": 6},
-    {"file": "server/src/__tests__/socket.test.js", "tests": 6},
-    {"file": "server/src/middleware/__tests__/metrics.test.js", "tests": 5},
-    {"file": "server/src/services/__tests__/employees.service.test.js", "tests": 5},
-    {"file": "server/src/services/__tests__/news.service.test.js", "tests": 5},
-    {"file": "server/src/__tests__/email.test.js", "tests": 5},
-    {"file": "server/src/__tests__/files.route.test.js", "tests": 5},
-    {"file": "server/src/__tests__/background.test.js", "tests": 4},
-    {"file": "server/src/__tests__/clamav.test.js", "tests": 4},
-    {"file": "server/src/__tests__/search.test.js", "tests": 4}
+    {
+      "file": "server/src/api.test.js",
+      "tests": 179
+    },
+    {
+      "file": "server/src/__tests__/rbac-matrix.test.js",
+      "tests": 41
+    },
+    {
+      "file": "server/src/services/__tests__/tickets.service.sla.test.js",
+      "tests": 40
+    },
+    {
+      "file": "server/src/services/__tests__/rules.service.test.js",
+      "tests": 20
+    },
+    {
+      "file": "server/src/__tests__/middleware.test.js",
+      "tests": 19
+    },
+    {
+      "file": "server/src/services/__tests__/custom-fields.service.test.js",
+      "tests": 17
+    },
+    {
+      "file": "server/src/services/__tests__/notify.test.js",
+      "tests": 17
+    },
+    {
+      "file": "server/src/services/__tests__/collision.service.test.js",
+      "tests": 16
+    },
+    {
+      "file": "server/src/services/__tests__/api-tokens.service.test.js",
+      "tests": 15
+    },
+    {
+      "file": "server/src/services/__tests__/assistant.service.test.js",
+      "tests": 15
+    },
+    {
+      "file": "server/src/services/__tests__/csat.service.test.js",
+      "tests": 15
+    },
+    {
+      "file": "server/src/services/__tests__/email-ingestion.service.test.js",
+      "tests": 15
+    },
+    {
+      "file": "server/src/__tests__/search-sync.expanded.test.js",
+      "tests": 14
+    },
+    {
+      "file": "server/src/services/__tests__/recurrence.service.test.js",
+      "tests": 14
+    },
+    {
+      "file": "server/src/services/__tests__/time.service.test.js",
+      "tests": 14
+    },
+    {
+      "file": "server/src/services/__tests__/webhooks.service.test.js",
+      "tests": 14
+    },
+    {
+      "file": "server/src/services/__tests__/tickets.service.mentions.test.js",
+      "tests": 13
+    },
+    {
+      "file": "server/src/__tests__/sla.test.js",
+      "tests": 11
+    },
+    {
+      "file": "server/src/services/__tests__/polls.service.test.js",
+      "tests": 11
+    },
+    {
+      "file": "server/src/__tests__/background.expanded.test.js",
+      "tests": 10
+    },
+    {
+      "file": "server/src/__tests__/limiters.test.js",
+      "tests": 10
+    },
+    {
+      "file": "server/src/__tests__/push.test.js",
+      "tests": 10
+    },
+    {
+      "file": "server/src/__tests__/storage.test.js",
+      "tests": 9
+    },
+    {
+      "file": "server/src/__tests__/telegram.expanded.test.js",
+      "tests": 9
+    },
+    {
+      "file": "server/src/services/__tests__/chats.service.test.js",
+      "tests": 9
+    },
+    {
+      "file": "server/src/__tests__/clamav.expanded.test.js",
+      "tests": 8
+    },
+    {
+      "file": "server/src/__tests__/validateUpload.test.js",
+      "tests": 7
+    },
+    {
+      "file": "server/src/services/__tests__/roleUtils.test.js",
+      "tests": 7
+    },
+    {
+      "file": "server/src/services/__tests__/wiki.service.test.js",
+      "tests": 7
+    },
+    {
+      "file": "server/src/__tests__/cache.test.js",
+      "tests": 6
+    },
+    {
+      "file": "server/src/__tests__/csat.route.test.js",
+      "tests": 6
+    },
+    {
+      "file": "server/src/__tests__/socket.test.js",
+      "tests": 6
+    },
+    {
+      "file": "server/src/services/__tests__/calendar.service.test.js",
+      "tests": 6
+    },
+    {
+      "file": "server/src/services/__tests__/files.service.test.js",
+      "tests": 6
+    },
+    {
+      "file": "server/src/__tests__/email.test.js",
+      "tests": 5
+    },
+    {
+      "file": "server/src/__tests__/files.route.test.js",
+      "tests": 5
+    },
+    {
+      "file": "server/src/middleware/__tests__/metrics.test.js",
+      "tests": 5
+    },
+    {
+      "file": "server/src/services/__tests__/employees.service.test.js",
+      "tests": 5
+    },
+    {
+      "file": "server/src/services/__tests__/news.service.test.js",
+      "tests": 5
+    },
+    {
+      "file": "server/src/__tests__/background.test.js",
+      "tests": 4
+    },
+    {
+      "file": "server/src/__tests__/clamav.test.js",
+      "tests": 4
+    },
+    {
+      "file": "server/src/__tests__/search.test.js",
+      "tests": 4
+    }
   ]
 }

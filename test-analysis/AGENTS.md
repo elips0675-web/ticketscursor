@@ -19,6 +19,7 @@
 7. Если что-то непонятно — спросить, не гадать
 8. После завершения этапа — убрать его из ПЛАН ДОРАБОТКИ ПО ЭТАПАМ в Что сделано.txt и обновить статусы в АУДИТ ПРОЕКТА
 9. **После каждого изменения кода** — запускать Playwright скрипт `check-console.mjs`, проверять `errors: []` и `hasRussianText: true`; при наличии ошибок — исправить до ответа пользователю
+10. **После добавления/изменения тестов** — перегенерировать `test-analysis/test-inventory.json` из фактического прогона vitest (`node scripts/regenerate-test-inventory.js <client-json> <server-json>`) и обновить `frontend-tests.txt`/`server-tests.txt`, чтобы AI-ревьюеры не читали устаревшие цифры
 
 ## Мета-правила для AI-ревью (из Промты.txt)
 
@@ -78,7 +79,7 @@
 | **При коммите** | Husky → lint-staged | `eslint --fix` + `prettier --write` на изменённых файлах |
 | **В CI (GitHub Actions)** | `tsc --noEmit` | TypeScript strict type-check |
 | | `eslint . --max-warnings 100` | Синтаксис, неисп. переменные, импорты |
-| | `vitest run` | Юнит-тесты (411 клиентских + 523 серверных) |
+| | `vitest run` | Юнит-тесты (494 клиентских + 653 серверных) |
 | | `vite build` | Сборка production |
 | **Тестовая БД** | `vitest.global-setup.js` | Создаёт `servicedesk_test`, мигрирует, сидит, фиксит колонки |
 | **Rate limiter** | `app.js` | Отключён при `NODE_ENV=test` через `skip` |
@@ -412,3 +413,7 @@ docker compose up -d --build
 - **QueueScheduler mock**: добавлен в bullMqMock для тестов
 - **Тесты**: сервер 346/346, клиент 366/366, Vite build ✅
 - **Документация**: CHANGELOG, AGENTS, context, PLAYBOOK, README обновлены
+
+### Этапы 32–49 — см. «Что сделано.txt» (актуальный инвентарь на 22.09.2026)
+- Клиент **61 файл / 494 теста**, сервер **42 файла / 653 теста** = **1147 тестов, 0 failures**, E2E 16 spec'ов / 51 тест
+- Машинно-читаемый инвентарь: `test-analysis/test-inventory.json` (регенерация: `node scripts/regenerate-test-inventory.js`)

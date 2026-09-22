@@ -34,6 +34,7 @@
 | 46 | Клиентские тесты модулей 32-35: +83 (CommandPalette, SSO, AdminRules, AdminIntegrations, Portal, PortalTrack, PublicKB, PublicKBArticle, MarkdownEditor) → 494 | ✅ |
 | 47 | RBAC-матрица (5×5) + security-тесты (rate-limit, dev-login 404 в prod) → 653 серверных | ✅ |
 | 49 | Redis-сервис в docker-compose (REDIS_URL для cache/BullMQ/Socket.io) | ✅ |
+| 50 | Инвентарь тестов перегенерирован из фактического vitest (61/494 + 42/653 = 1147), устаревшие копии test-analysis синхронизированы, добавлены scripts/regenerate-test-inventory.js + api-smoke.mjs (17/17 ок) | ✅ |
 
 ---
 

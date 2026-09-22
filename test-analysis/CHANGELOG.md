@@ -5,136 +5,18 @@
 
 ---
 
-## [1.9.0] — 2026-09-19
+## [1.8.0] — 2026-09-21
 
-## [2.1.0] — 2026-09-21
+### 🔧 AI-аудит + исправления
 
-### 🌐 i18n — исправление дублей и русификация (Этап 36)
+- **Этап 36** — i18n: исправлены дубли auth ключей в ru/en JSON, русификация ForgotPassword/ResetPassword/SSO
+- **Этап 37** — Фикс тестов: DB schema sync (locked_by, locked_at, field_id), Telegram welcome, Queue/Worker counts
+- **Этап 38** — AI-аудит: Kimi 7/10, DeepSeek 7.5/10, Qwen 8.5/10; все P0 исправлены
+- **Этап 39** — Coverage thresholds подняты (71/61/61/74 → 72/62/62/75 клиент, 64/55/62/63 → 65/56/63/64 сервер)
+- **Этап 40** — prisma → devDeps, удалён неиспользуемый express-validator
+- **Этап 42** — npm audit в CI, README обновлён (15 spec'ов), CHANGELOG приведён к порядку
 
-- **Корневая причина**: в `ru.json` и `en.json` были два ключа `"auth"` — второй перезаписывал первый, теряя все переводы авторизации (login, register, sso и т.д.)
-- **Исправлено**: объединены два блока `auth` в один, `ssoLogin` добавлен в первый блок
-- **ForgotPassword.tsx** — добавлен `useTranslation`, заменены все хардкодные английские строки на `t()` ключи (title, subtitle, email, submit, loading, backToLogin, validation)
-- **ResetPassword.tsx** — добавлен `useTranslation`, заменены все хардкодные строки (title, subtitle, password, confirmPassword, submit, loading, validation, success, backToLogin)
-- **SSO.tsx** — 7 хардкодных английских сообщений ошибок заменены на `t()` ключи (errorMissingParams, errorExchangeFailed, errorNoToken, errorTokenFailed, errorUserInfoFailed, errorUserNotFound, errorAccountDisabled)
-- **i18n ключи**: 25+ новых ключей в `ru.json` и `en.json` — `forgotPassword.*`, `resetPassword.*`, `sso.error*`, `common.reset`
-- **check-console**: 17/17 ALL OK после всех исправлений
-
-### Тесты и сборка
-
-- tsc: 0 ошибок ✅
-- vite build: OK ✅
-- ESLint: 0 ошибок ✅
-- check-console: 17/17 ALL OK ✅
-- Коммиты: `9e1395b` (i18n fix), `2efec56` (docs update)
-
----
-
-## [2.0.0] — 2026-09-21
-
-### 📧 Email Ingestion UI (доделка)
-
-- **Frontend** — `AdminSettings.tsx` ( ImapSection): IMAP настройки в админке — поля (host/port/user/pass), статус (настроен/не настроен, опрос активен/не активен), кнопка «Проверить соединение» (POST /api/admin/imap/test)
-- **i18n** — 15 ключей `admin.imap*` в ru.json/en.json
-
-### 🔗 Webhooks + API-токены (новая фича)
-
-- **Backend** — `api-tokens.service.js`: SHA-256 hash токенов, prefix `sd_`, валидация, list, delete с проверкой владельца
-- **Backend** — `webhooks.service.js`: 7 событий (ticket.created/updated/message/assigned/closed, employee.created/updated), HMAC SHA-256 подпись, retry 3 раза с exponential backoff
-- **Middleware** — `authenticateToken` в `middleware.js`: принимает JWT **или** API-токены (`sd_...`)
-- **Routes** — `api-tokens.js` (GET/POST/DELETE), `webhooks.js` (GET/POST/PUT/DELETE, admin-only)
-- **Триггеры** — `tickets.js`: webhook вызывается при ticket.created, ticket.updated (status/priority), ticket.assigned, ticket.message, ticket.closed
-- **Миграция** — `20260921_webhooks_api_tokens.sql`: таблицы `api_tokens` и `webhooks`
-- **Prisma** — модели `api_tokens` и `webhooks` в `schema.prisma`
-- **Frontend** — `AdminIntegrations.tsx`: компоненты `ApiTokensSection` и `WebhooksSection` с CRUD UI
-
-### ⌨️ Command Palette (Cmd+K)
-
-- **Frontend** — `CommandPalette.tsx`: диалог с поиском, навигация (11 страниц), быстрые действия (создать тикет, поиск), клавиши ↑↓ Enter Esc
-- **i18n** — 6 ключей `commandPalette.*` в ru.json/en.json
-- **App.tsx** — `CommandPalette` добавлен в корневой layout
-
-### 🧹 Обновления
-
-- **i18n** — добавлены `common.copy`, `common.disable`, `common.enable`
-- **App.tsx** — импорт и рендер `CommandPalette`
-- **AdminSettings.tsx** — импорт `ApiTokensSection`, `WebhooksSection`, `ImapSection`
-
-### Тесты и сборка
-
-- tsc: 0 ошибок ✅
-- vite build: OK ✅
-- ESLint: 0 ошибок (2 pre-existing warnings: react-hooks/set-state-in-effect)
-- Коммиты: `80dcff2` (IMAP UI), `d85011a` (webhooks+tokens), `c703618` (command palette), `2c0a77d` (cleanup)
-
-### 🔒 Collision Avoidance (новая фича)
-
-- **Backend** — `collision.service.js`: acquireLock (30мин TTL), releaseLock, forceRelease, getLockStatus
-- **Schema** — `locked_by` + `locked_at` на `tickets`, FK на `employees`, индекс `idx_tickets_locked_by`
-- **Middleware** — проверка блокировки при `PUT /:id/status`, `/priority`, `/assign` (senior_agent+ может обходить)
-- **API** — `POST /:id/lock`, `DELETE /:id/lock`, `POST /:id/force-unlock` (admin/senior_agent), `GET /:id/lock`
-- **WebSocket** — `ticket:locked`/`ticket:unlocked` эмиты через outbox
-- **Detail** — `getTicketById` возвращает `locked_by` и `locked_at`
-- **Миграция** — `20260921_ticket_locking.sql`
-- **i18n** — 9 ключей `admin.lock*` в ru.json/en.json
-
-### 🔄 Recurring Tickets / Planовое ТО (новая фича)
-
-- **Backend** — `recurrence.service.js`: CRUD + processRecurrences (cron-parser), auto-создание тикетов с префиксом «[Плановое]»
-- **Schema** — `ticket_recurrences` (title, description, priority, category, assigned_to, cron_expr, next_run, is_active, last_run)
-- **Routes** — `recurrences.js` (GET/POST/PUT/DELETE /api/recurrences, admin/senior_agent only), валидация cron-выражений
-- **Background** — `processRecurrences()` каждые 60мин через BullMQ/setInterval в `background.js`
-- **Миграция** — `20260921_ticket_recurrences.sql`
-
-### 🔐 SSO: OIDC Single Sign-On (новая фича)
-
-- **Backend** — `auth/oidc.js`: OIDC discovery (`openid-client`), authorization URL, callback handling, auto-provisioning
-- **Routes** — `GET /auth/sso/config`, `GET /auth/sso/login`, `POST /auth/sso/callback`
-- **Frontend** — `SSO.tsx`: SSOLogin (кнопка входа) + SSOCallback (обработка redirect)
-- **Admin UI** — `SSOSection` в `AdminSettings.tsx`: toggle вкл/выкл, issuer URL, client ID/secret, redirect URI, default role
-- **Settings** — 7 ключей `SSO_*` в `ALLOWED_SETTINGS`
-- **Login** — кнопка «SSO / Корпоративный вход» на странице логина
-- **i18n** — 17 ключей `sso.*` + `admin.sso*` в ru.json/en.json
-
-### ⚡ Rules Engine — JSON-правила автоматизации (новая фича)
-
-- **Backend** — `rules.service.js`: evaluateConditions (and/or logic, 9 operators), executeActions (5 типов), evaluateRules on events
-- **Schema** — `automation_rules` (name, trigger_event, conditions JSON, actions JSON, is_active, run_count)
-- **Routes** — `GET/POST/PUT/DELETE /api/rules` (admin-only), `GET /api/rules/triggers`, `GET /api/rules/actions`
-- **Integration** — `evaluateRules()` вызывается в tickets.js при ticket.created/updated/assigned/message
-- **Frontend** — `AdminRules.tsx`: CRUD с conditions builder (field/operator/value) + actions builder (5 типов)
-- **Миграция** — `20260921_automation_rules.sql`
-- **i18n** — 7 ключей `admin.rules*` в ru.json/en.json
-
-### 📱 Telegram Channel — двусторонняя интеграция (новая фича)
-
-- **Backend** — `telegram.js`: `/start`, `/link` (привязка аккаунта), `/new` (создать тикет), `/tickets` (список), `/reply <id>` (ответить)
-- **Auto-provisioning** — создаёт employee с email `<telegramId>@telegram.bot`
-- **Forwarding** — обычные сообщения автоматически попадают в последний активный тикет
-- **Экспорт** — `sendTelegramToUser()`, `isTelegramBotActive()`
-
-### 🌐 Public Portal — самообслуживание без регистрации (новая фича)
-
-- **Backend** — `public-portal.js`: POST /portal/tickets (создание тикета без авторизации, tracking token), GET /portal/track/:token (просмотр тикета), POST /portal/track/:token/reply (ответ)
-- **Frontend** — `Portal.tsx` (форма создания заявки), `PortalTrack.tsx` (отслеживание статуса + ответы)
-- **Auto-provisioning** — создаёт employee с ролью `requester` при первом обращении
-- **Email** — уведомление с tracking URL при создании тикета
-
-### 📚 Public KB 2.0 — публичная база знаний (новая фича)
-
-- **Backend** — `public-kb.js`: GET /kb/articles (поиск + категории + пагинация), GET /kb/articles/:slug (статья + похожие + голоса), POST /kb/articles/:id/vote (голосование), GET /kb/categories, GET /kb/search
-- **Frontend** — `PublicKB.tsx` (список статей + поиск + фильтр по категориям), `PublicKBArticle.tsx` (просмотр статьи + голосование «полезно/нет» + похожие статьи)
-- **SEO** — slug-based URL, excerpt для превью
-
-### ⚡ Quick Wins — UX-улучшения
-
-- **Markdown Preview** — `MarkdownEditor.tsx` + toggle в TicketDetail для предпросмотра Markdown в сообщениях
-- **Ticket Templates** — шаблоны тикетов в localStorage, автозаполнение полей при выборе шаблона
-- **Bulk Actions 2.0** — массовое изменение статуса (open/in_progress/resolved/closed) + приоритета (low/medium/high/critical)
-- **Keyboard Shortcuts Cheatsheet** — модалка с горячими клавишами, открывается по `?`
-
----
-
-## [1.9.0] — 2026-09-19
+## [1.7.0] — 2026-09-19
 
 ### 📧 Email Ingestion (IMAP) — этап 1
 
@@ -164,7 +46,7 @@
 
 - **Тесты** — сервер 436/436 (28 файлов), клиент 397/397 (52 файла); tsc чист, vite build OK, git diff не содержит ALTER TABLE
 
-## [1.8.0] — 2026-09-18
+## [1.6.0] — 2026-09-18
 
 ### ⏱️ Time tracking (Этап 5 роадмапа)
 
@@ -175,7 +57,7 @@
 - **i18n** — 18 ключей `tickets.time*` (ru/en)
 - **Тесты** — сервер 413/413 (+19), клиент 393/393 (+4); tsc чист, vite build OK, lint 0 новых ошибок
 
-## [1.4.0] — 2026-07-20
+## [1.5.0] — 2026-07-20
 
 ### 📧 Email Notification System
 
@@ -192,7 +74,7 @@
 - **notifyPriorityChanged** — не отправлял email и in-app уведомления (только Telegram)
 - **notifyTicketMessage** — не отправлял email уведомления (только in-app + Telegram)
 
-## [1.3.0] — 2026-07-20
+## [1.4.0] — 2026-07-20
 
 ### 🚀 Dead Letter Queue + Background Jobs Reliability
 
@@ -221,7 +103,7 @@
 - **Тесты**: +5 серверных (feature flags API), +5 клиентских (useFeature hook + AdminSettings toggles)
 - **Кими-аудит**: зафиксированы оставшиеся gaps (email-шаблоны, WebSocket комнаты, bulk actions) — внесены в context.txt
 
-## [1.2.0] — 2026-07-17
+## [1.3.0] — 2026-07-17
 
 ### 🚀 Admin Operations
 
@@ -236,7 +118,7 @@
 
 - i18n: добавлен `common.add` (ru/en)
 
-## [1.1.0] — 2026-07-17
+## [1.2.0] — 2026-07-17
 
 ### 🚀 Добавлено (merge from ticketscursordom)
 

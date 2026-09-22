@@ -1,45 +1,33 @@
-# Service Desk — технический долг (сентябрь 2026)
+# Service Desk — технический долг (июль 2026)
 
 ## Текущее состояние
 
-- **Фронт**: 52 файла / 71 suite / 411 тестов (все PASS)
-- **Сервер**: 35 файлов / 192 suite / 523 тестов (все PASS)
-- **Всего**: 87 файлов / 263 suite / 934 тестов, 0 failures
-- **E2E**: 17/17 страниц ALL OK (check-console.mjs) + 16 spec'ов (playwright)
-- **Prisma моделей**: 25 (включая event_outbox, custom_field_definitions, custom_field_values, api_tokens, webhooks, ticket_recurrences, automation_rules)
-- **API endpoints**: 90+ (Swagger + Health probes + k6 metrics + IMAP admin routes + API tokens + Webhooks + Lock + Recurrences + Rules + SSO)
-- **ESLint**: 0 errors, 2 warnings (react-hooks/set-state-in-effect)
+- **Фронт**: 411 тестов (52 suite)
+- **Сервер**: 451 тестов (30 suites)
+- **E2E**: 17/17 страниц ALL OK (check-console.mjs)
+- **Prisma моделей**: 18 (включая event_outbox)
+- **API endpoints**: 60+ (Swagger + Health probes + k6 metrics)
+- **ESLint**: 0 errors, 10 warnings (pre-existing)
 - **MySQL**: запущен (Laragon), БД servicedesk
 - **API**: порт 4000, Vite proxy 5173
 - **check-console**: пройден — 17 страниц без console.error, русский текст есть
-- **i18n**: исправлены дубли auth ключей, русификация ForgotPassword/ResetPassword/SSO (Этап 36)
-- **Известные баги**: нет (все 934 теста проходят)
 
 ## Ключевые файлы
 
 ### Сервер (server/src/)
 | Файл | Coverage | Статус |
 |------|----------|--------|
-| routes/tickets.js | ~75% | ✅ (+webhook триггеры) |
+| routes/tickets.js | ~75% | ✅ |
 | routes/auth.js | ~73% | ✅ |
 | routes/admin.js | ~79% | ✅ |
 | routes/notifications.js | ~73% | ✅ |
 | routes/push.js | ~66% | ✅ |
 | routes/search.js | 100% | ✅ |
 | routes/calendar.js | ~66% | ⚠️ |
-| routes/api-tokens.js | новый | ✅ CRUD API-токенов |
-| routes/webhooks.js | новый | ✅ CRUD webhooks (admin-only) |
 | services/tickets.service.js | ~91% | ✅ |
-| services/api-tokens.service.js | новый | ✅ SHA-256 hash, validate, list, delete |
-| services/webhooks.service.js | новый | ✅ 7 событий, HMAC, retry 3x |
-| services/collision.service.js | новый | ✅ Lock/unlock/force, 30мин TTL |
-| services/recurrence.service.js | новый | ✅ Cron-parser, processRecurrences |
-| services/rules.service.js | новый | ✅ Evaluate conditions, execute actions |
-| auth/oidc.js | новый | ✅ OIDC discovery, auto-provisioning |
-| middleware.js | - | ✅ JWT + API token auth |
 | socket.js | ~22% | ❌ (низкий приоритет — outbox паттерн снижает риски) |
 | background.js | ~50% | ✅ DLQ реализован (BullMQ + in-memory fallback) |
-| api.test.js | n/a | 179 интеграционных |
+| api.test.js | n/a | 145 интеграционных |
 
 ### Клиент (src/)
 | Файл | Coverage | Статус |
@@ -57,11 +45,6 @@
 | Kanban.tsx | 47% | ⚠️ |
 | ticket-context.tsx | 35% | ❌ |
 | Search.tsx | ~60% | ⚠️ |
-| AdminSettings.tsx | - | ✅ IMAP + Email Templates + Feature Flags |
-| AdminIntegrations.tsx | новый | ✅ API Tokens + Webhooks UI |
-| AdminRules.tsx | новый | ✅ Rules Engine CRUD UI |
-| SSO.tsx | новый | ✅ SSO Login + Callback pages |
-| CommandPalette.tsx | новый | ✅ Cmd+K навигация + поиск |
 
 ## Проблемы (решённые)
 
@@ -113,7 +96,7 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 Остаётся не реализовано:
 - ✅ API Versioning (через middleware в app.js: /api/v1/ → /api/ + заголовок X-API-Version: v1)
 - ❌ Visual regression testing
-- ✅ Read receipts для чатов — РЕАЛИЗОВАНО в Этапе 25: пер-юзерный курсор `chat_read_receipts`, WS `chat:read` + REST PUT /:id/read (lastReadMessageId), синие ✓ в ChatDetail.tsx для прочитанных
+- ❌ Read receipts для чатов — ✅ РЕАЛИЗОВАНО в Этапе 4: пер-юзерный курсор `chat_read_receipts`, WS `chat:read` + REST PUT /:id/read (lastReadMessageId), синие ✓ в ChatDetail.tsx для прочитанных
 - ✅ Bulk actions (массовое назначение/закрытие) — Этап 2: реализовано (POST /api/tickets/bulk: status/assign/priority, чекбоксы + панель в Tickets.tsx)
 - ✅ Шаблоны ответов (canned responses)
 - ✅ Time tracking
@@ -136,7 +119,6 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 - ✅ Этап 5 — Time tracking (см. раздел ниже)
 - ✅ Этап 6 — API versioning (middleware app.js /api/v1/ → /api/, cache bugfix, cache.test.js 6/6)
 - ✅ Этап 7 — ИИ-ответы из Wiki (assistant.service.js, POST /:id/assistant, TicketDetail UI, 4 теста)
-- ✅ Этап 36 — i18n: исправлены дубли auth ключей, русификация ForgotPassword/ResetPassword/SSO
 
 ## Admin Operations — `/admin/settings`
 
@@ -167,7 +149,7 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 **Тесты:**
 - Сервер: 5 тестов (GET defaults, PUT update, GET after update, non-admin rejection, invalid body)
 - Клиент: 3 теста (useFeature, useAllFeatures) + 2 теста (feature section rendering, toggle)
-- Фронт: 52 файла / 411 тестов, сервер: 35 файлов / 523 теста
+- Фронт: 52 файла / 372 теста, сервер: 25 файлов / 352 теста
 
 ## SLA Escalation — реализация (v1.5.0)
 
@@ -222,43 +204,4 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 - `TicketDetail.tsx` — карточка подключена после management-блока; `timeSpentMinutes` маппится в `mapTicketDetail`
 - MSW-хендлеры для всех time-эндпоинтов; тесты в `TicketDetail.test.tsx` (+4)
 
-**Тесты:** сервер 523/523, клиент 411/411 (52 файла); tsc чист, vite build OK, lint 0 ошибок
-- **Статус**: все 934 теста проходят, 0 failures
-
-## Email Ingestion (IMAP) — реализация (v1.9.0+, ~60%)
-
-**Что делает:** письма на support@ → автоматически создаются тикеты. Ответы на письма → комментарии к тикету (threading через In-Reply-To).
-
-**Backend:**
-- `server/src/services/email-ingestion.service.js` — IMAP polling (`imapflow`), парсинг писем (`mailparser`), `extractTicketReference` (ищет `[Ticket #N]` в теме), `stripTicketReference`, `getImapConfig`, `processEmailMessage` (создание тикета + employee по email), `testImapConnection`, `getEmailStats`
-- Миграция `024_email_ingestion.sql` — колонка `email_message_id VARCHAR(500)` на `tickets` для thread-связки
-- `server/src/routes/admin.js` — `GET /api/admin/imap/status` (статистика писем), `POST /api/admin/imap/test` (проверка IMAP-соединения)
-- `ALLOWED_SETTINGS` расширен: `IMAP_HOST`, `IMAP_PORT`, `IMAP_USER`, `IMAP_PASS`
-- `server/src/background.js` — `startImapPolling()` при старте сервера, `stopImapPolling()` при shutdown
-
-**Осталось (~40%):**
-- Reply threading (In-Reply-To → поиск тикета по `email_message_id`)
-- HTML/plain-text multipart парсинг
-- Admin UI для IMAP settings (в `AdminSettings.tsx`)
-- Attachment handling (вложения → files)
-- Тесты reply threading
-
-**Тесты:** 15 unit-тестов `email-ingestion.service.test.js` (extractTicketReference, stripTicketReference, getImapConfig)
-
-## SLA Pause / Business Hours — реализация (v1.9.0)
-
-**Что делает:** SLA-таймеры считаются только в рабочие часы (Mon-Fri 9:00-18:00). Статус «Ожидает ответа клиента» → SLA на паузе.
-
-**Backend:**
-- `server/src/services/sla.service.js` — `addBusinessHours()`, `isWithinBusinessHours()`, `getBusinessHoursSettings()`
-- `server/src/routes/tickets.js` — проверка `sla_paused_at` при обновлении статуса
-- `server/src/background.js` — SLA check учитывает бизнес-часы
-
-## CSAT — реализация (v1.9.0)
-
-**Что делает:** после закрытия тикета отправляется email-опрос «оцените решение» (1-5 звёзд). Метрика в дашборде.
-
-**Backend:**
-- `server/src/services/csat.service.js` — `createCsatSurvey()`, `getCsatResponses()`, `getCsatStats()`
-- `server/src/routes/tickets.js` — интеграция при статусе `resolved`
-- `server/src/email.js` — `sendCsatSurvey()`
+**Тесты:** сервер 413/413 (+19: 14 time.service + 5 API), клиент 393/393 (+4); tsc чист, vite build OK, lint 0 новых ошибок

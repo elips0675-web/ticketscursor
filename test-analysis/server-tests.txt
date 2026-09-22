@@ -1,9 +1,9 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 35 файла / 192 suite / 523 тестов (все PASS)
+Реальный результат: 42 файла / 273 suite / 653 теста (все PASS, vitest --reporter=json)
 
-===== ФАЙЛЫ (35 шт, все реальные, сгенерировано скриптом) =====
+===== ФАЙЛЫ (42 шт, все реальные, сгенерировано скриптом) =====
 
 # Файлы | Тестов | Описание
 server/src/api.test.js | 159 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk)
@@ -42,7 +42,16 @@ server/src/__tests__/background.test.js | 4 | Background: setup, stop, warnAdmin
 server/src/__tests__/clamav.test.js | 4 | ClamAV: basic scan, not installed fallback
 server/src/__tests__/search.test.js | 4 | Search: fulltext, LIKE fallback, empty query
 
+===== ФАЙЛЫ, ДОБАВЛЕННЫЕ ПОСЛЕ 21.09.2026 (инвентарь от 22.09.2026, +130 тестов) =====
+server/src/__tests__/rbac-matrix.test.js | 41 | RBAC: матрица 5×5, requireRole, hasRole, JWT/API-токены
+server/src/services/__tests__/rules.service.test.js | 20 | Rules: правила и цепочки, условия, действия
+server/src/services/__tests__/collision.service.test.js | 16 | Collision: конфликты событий календаря
+server/src/services/__tests__/api-tokens.service.test.js | 15 | API-токены: create, validate, revoke
+server/src/services/__tests__/recurrence.service.test.js | 14 | Recurrence: повторяющиеся события
+server/src/services/__tests__/webhooks.service.test.js | 14 | Webhooks: подписки, доставка, retry
+server/src/__tests__/limiters.test.js | 10 | Rate limiters: auth 10/мин, api 100/мин, admin 30/мин
+
 ===== ИСТОЧНИК ДАННЫХ =====
 Количество тестов подсчитано скриптом (regex /\b(it|test)\s*\(/ в *.test.js).
-Фактический запуск: 35 файлов / 523 тестов / 0 failures.
-Данные актуальны на: 21.09.2026
+Фактический запуск: 42 файла / 653 теста / 0 failures.
+Данные актуальны на: 22.09.2026

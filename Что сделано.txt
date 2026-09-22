@@ -610,3 +610,12 @@
 - Итог: cache.js (кэш), background.js (BullMQ+DLQ) и socket.js (Redis adapter) в compose-окружении реально используют Redis вместо fallback на in-memory
 - YAML провалидирован парсером (docker CLI недоступен в среде разработки)
 - Итого сервисов: 7 → 8 (mysql, meilisearch, redis, db_backup, api, frontend, prometheus, grafana)
+
+### Этап 50 — Инвентарь тестов из фактического прогона + синхронизация test-analysis + API smoke (22.09.2026)
+- **test-inventory.json**: перегенерирован из `vitest --reporter=json` (не regex-подсчёт): клиент **61 файл / 143 suite / 494 теста**, сервер **42 файла / 273 suite / 653 теста** = **1147 тестов, 0 failures**; e2e 16 spec'ов / 51 тест; добавлены 9 новых клиентских и 7 серверных файлов с реальными счётчиками
+- **scripts/regenerate-test-inventory.js**: скрипт регенерации инвентаря из JSON-отчётов vitest (остаётся в репо, пути относительные)
+- **frontend-tests.txt / server-tests.txt**: заголовки обновлены (61/494, 42/653), добавлен раздел «Файлы, добавленные после 21.09.2026» (+83 клиентских, +130 серверных), дата 22.09.2026
+- **Синхронизированы устаревшие копии в test-analysis/**: package.json, server-package.json, README.md, context.txt, CHANGELOG.md — DeepSeek анализировал именно их (отсюда ложные P0); tsconfig.json и vitest.client.config.ts и так совпадали
+- **AGENTS.md (корень + test-analysis)**: добавлено правило 10 — после изменения тестов перегенерировать инвентарь; таблица CI обновлена (411+523 → 494+653); добавлен указатель «Этапы 32–49»
+- **scripts/api-smoke.mjs**: live-проверка приложения — dev-login + 17 ключевых эндпоинтов (health, tickets, employees, sla/stats, news, wiki, polls, calendar, chats, notifications, files, search, admin/users, rules, features) → **17/17 ок** (приложение работает живьём)
+- Инвентарь подтверждён фактическими прогонами: клиент 494 ✅, сервер 653 ✅

@@ -1,9 +1,9 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 52 файла / 71 suite / 411 тестов (все PASS)
+Реальный результат: 61 файл / 143 suite / 494 теста (все PASS, vitest --reporter=json)
 
-===== ФАЙЛЫ (52 шт, все реальные, сгенерировано скриптом) =====
+===== ФАЙЛЫ (61 шт, все реальные, сгенерировано скриптом) =====
 
 # Файлы | Тестов | Описание
 src/test/Files.expanded.test.tsx | 27 | Files: empty, search, view, category, upload, drag-drop, keyboard, folder switch, list view, drag overlay
@@ -59,11 +59,22 @@ src/test/AdminPush.test.tsx | 1 | AdminPush: renders
 src/test/Profile.test.tsx | 1 | Profile: renders
 src/test/Tickets.test.tsx | 1 | Tickets: renders
 
+===== ФАЙЛЫ, ДОБАВЛЕННЫЕ ПОСЛЕ 21.09.2026 (инвентарь от 22.09.2026, +83 теста) =====
+src/test/SSO.test.tsx | 13 | SSO: вход через SSO, обмен кода, ошибки, i18n
+src/test/AdminRules.test.tsx | 13 | AdminRules: список правил, create/delete, RBAC
+src/test/AdminIntegrations.test.tsx | 13 | AdminIntegrations: список интеграций, toggle, save
+src/test/CommandPalette.test.tsx | 10 | CommandPalette: open/close, поиск, навигация, Enter
+src/test/MarkdownEditor.test.tsx | 8 | MarkdownEditor: редактирование, preview, toolbar
+src/test/PortalTrack.test.tsx | 7 | PortalTrack: поиск обращения, статус, события
+src/test/PublicKB.test.tsx | 7 | PublicKB: статьи, категории, поиск
+src/test/Portal.test.tsx | 6 | Portal: создание обращения без авторизации
+src/test/PublicKBArticle.test.tsx | 6 | PublicKBArticle: рендер статьи, markdown, назад
+
 Вспомогательные (не тесты):
 src/test/setup.ts — global test setup (msw server)
 src/test/test-utils.tsx — renderWithProviders, mockAuth
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Количество тестов подсчитано скриптом (regex /\b(it|test)\s*\(/ в *.test.{ts,tsx}).
-Фактический запуск: 52 файла / 411 тестов / 0 failures.
-Данные актуальны на: 21.09.2026
+Фактический запуск: 61 файл / 494 теста / 0 failures.
+Данные актуальны на: 22.09.2026
