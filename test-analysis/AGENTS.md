@@ -87,7 +87,7 @@
 | | `npm run type-check` | `tsc --noEmit` |
 | | `npm test` | Vitest (клиент) |
 | | `cd server && npm test` | Vitest (сервер) |
-| **После каждого изменения** | `node check-console.mjs` | Playwright проверяет 6 страниц (`/`, `/wiki`, `/chats`, `/tickets`, `/employees`, `/search`) на: `errors: []`, `hasRussianText: true` |
+| **После каждого изменения** | `node check-console.mjs` | Playwright проверяет 17 страниц (`/`, `/wiki`, `/chats`, `/tickets`, `/employees`, `/search`, `/calendar`, `/polls`, `/files`, `/notifications`, `/kanban`, `/profile`, `/news`, `/calculator`, `/admin`, `/admin/users`, `/admin/push`) на: `errors: []`, `hasRussianText: true` |
 | **Pre-commit hook** | `.husky/pre-commit` | `npx lint-staged` — автофикс и форматирование |
 
 ## Сделано

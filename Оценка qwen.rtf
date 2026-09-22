@@ -1,0 +1,147 @@
+{\rtf1\fbidis\ansi\deff0\nouicompat{\fonttbl{\f0\fnil\fcharset204 Calibri;}{\f1\fnil\fcharset1 Segoe UI Symbol;}{\f2\fnil Calibri;}{\f3\fnil\fcharset1 Segoe UI Symbol;}{\f4\fnil\fcharset1 Segoe UI Emoji;}{\f5\fnil\fcharset0 Calibri;}{\f6\fnil\fcharset1 Segoe UI Emoji;}{\f7\fnil\fcharset1 Cambria Math;}}
+{\*\generator Riched20 10.0.19041}{\*\mmathPr\mmathFont7\mwrapIndent1440 }\viewkind4\uc1 
+\pard\sa200\sl276\slmult1\f0\fs22\lang1049\'ce\'f6\'e5\'ed\'ea\'e0 \'f1\'ee\'f1\'f2\'ee\'ff\'ed\'e8\'ff \'ef\'f0\'ee\'e5\'ea\'f2\'e0 Service Desk (\'ed\'e0 22.09.2026)\par
+\f1\u-10180?\u-8273?\f2\lang1033  \f0\lang1049\'ce\'e1\'f9\'e0\'ff \'ee\'f6\'e5\'ed\'ea\'e0: B+ (7.8/10) \f2\emdash  \f0\'e7\'f0\'e5\'eb\'fb\'e9 production-ready \'ef\'f0\'ee\'e4\'f3\'ea\'f2 \'f1 \'f2\'ee\'f7\'e5\'f7\'ed\'fb\'ec\'e8 \'e4\'ee\'eb\'e3\'e0\'ec\'e8\par
+\'cf\'f0\'ee\'e5\'ea\'f2 \'ef\'e5\'f0\'e5\'f8\'b8\'eb \'e8\'e7 \'f1\'f2\'e0\'e4\'e8\'e8 MVP \'e2 \'f1\'f2\'e0\'e4\'e8\'fe production-grade helpdesk \'f1 \'e1\'ee\'e3\'e0\'f2\'fb\'ec \'f4\'f3\'ed\'ea\'f6\'e8\'ee\'ed\'e0\'eb\'ee\'ec. \'c2\'e8\'e4\'ed\'e0 \'f1\'e8\'f1\'f2\'e5\'ec\'ed\'e0\'ff \'f0\'e0\'e1\'ee\'f2\'e0: \'ef\'e0\'f2\'f2\'e5\'f0\'ed\'fb (Outbox, DLQ, soft-delete), observability (health probes, k6, Grafana), CI/CD, feature flags. \'cd\'ee \'e5\'f1\'f2\'fc \'ea\'f0\'e8\'f2\'e8\'f7\'e5\'f1\'ea\'e8\'e5 \'ef\'f0\'ee\'e1\'e5\'eb\'fb \'e2 coverage \'ff\'e4\'f0\'e0 \'e8 infra-\'e7\'f0\'e5\'eb\'ee\'f1\'f2\'e8.\par
+\f3\u9989?\f2\lang1033  \f0\lang1049\'d1\'e8\'eb\'fc\'ed\'fb\'e5 \'f1\'f2\'ee\'f0\'ee\'ed\'fb (\'f7\'f2\'ee \'f1\'e4\'e5\'eb\'e0\'ed\'ee \'ed\'e0 \'ee\'f2\'eb\'e8\'f7\'ed\'ee)\par
+1. \'d2\'e5\'f1\'f2\'ee\'e2\'e0\'ff \'ef\'e8\'f0\'e0\'ec\'e8\'e4\'e0 \f2\emdash  A-\par
+\f0\'d1\'eb\'ee\'e9\par
+\'cc\'e5\'f2\'f0\'e8\'ea\'e0\par
+\'ce\'f6\'e5\'ed\'ea\'e0\par
+Unit/Integration\par
+1264 \'f2\'e5\'f1\'f2\'e0, 0 failures\par
+\f4\u-10179?\u-8222?\f2\lang1033  \f0\lang1049\'ce\'f2\'eb\'e8\'f7\'ed\'ee\par
+E2E (Playwright)\par
+16 specs / 51 \'f2\'e5\'f1\'f2\par
+\f4\u-10179?\u-8222?\f2\lang1033  \f0\lang1049\'d5\'ee\'f0\'ee\'f8\'ee\par
+E2E (console check)\par
+17/17 \'f1\'f2\'f0\'e0\'ed\'e8\'f6 \'e1\'e5\'e7 \'ee\'f8\'e8\'e1\'ee\'ea\par
+\f4\u-10179?\u-8222?\f2\lang1033  \f0\lang1049\'ce\'f2\'eb\'e8\'f7\'ed\'ee\par
+Load (k6)\par
+5 \'f1\'f6\'e5\'ed\'e0\'f0\'e8\'e5\'e2 \'f1 \'ef\'ee\'f0\'ee\'e3\'e0\'ec\'e8 (p95, error rate)\par
+\f4\u-10179?\u-8222?\f2\lang1033  \f5 Production-ready\par
+CI gates\par
+tsc + eslint + vitest + build + bundle-size\par
+\f4\u-10179?\u-8222?\f2  \f0\lang1049\'c6\'b8\'f1\'f2\'ea\'e8\'e5\par
+2. \'c0\'f0\'f5\'e8\'f2\'e5\'ea\'f2\'f3\'f0\'ed\'fb\'e5 \'ef\'e0\'f2\'f2\'e5\'f0\'ed\'fb \f2\emdash  A\par
+\f3\u9989?\f2\lang1033  \f5 Outbox pattern + Worker \f2\emdash  \f0\lang1049\'f0\'e5\'f8\'e0\'e5\'f2 \'ef\'f0\'ee\'e1\'eb\'e5\'ec\'f3 \'f1\'ee\'e3\'eb\'e0\'f1\'ee\'e2\'e0\'ed\'ed\'ee\'f1\'f2\'e8 \'ef\'f0\'e8 \'f1\'e1\'ee\'ff\'f5\par
+\f3\u9989?\f2\lang1033  \f5 BullMQ + DLQ + in-memory fallback \f2\emdash  graceful degradation\par
+\f3\u9989?\f2  \f5 Soft deletes + deleted_at \f2\emdash  \f0\lang1049\'e1\'e5\'e7\'ee\'ef\'e0\'f1\'ed\'ee\'e5 \'f3\'e4\'e0\'eb\'e5\'ed\'e8\'e5\par
+\f3\u9989?\f2\lang1033  \f5 Graceful shutdown (SIGTERM/SIGINT)\par
+\f3\u9989?\f2  \f5 Idempotency-Key \f0\lang1049\'e2 load-\'f2\'e5\'f1\'f2\'e0\'f5 \'e8 API \f2\emdash  \f0\'e7\'e0\'f9\'e8\'f2\'e0 \'ee\'f2 \'e4\'f3\'e1\'eb\'e5\'e9\par
+\f3\u9989?\f2\lang1033  \f5 Feature flags \f0\lang1049\'f1 \'ea\'fd\'f8\'e8\'f0\'ee\'e2\'e0\'ed\'e8\'e5\'ec 30\'f1 \f2\emdash  \f0\'e1\'e5\'e7\'ee\'ef\'e0\'f1\'ed\'fb\'e9 rollout\par
+3. \'d4\'f3\'ed\'ea\'f6\'e8\'ee\'ed\'e0\'eb\'fc\'ed\'e0\'ff \'e7\'f0\'e5\'eb\'ee\'f1\'f2\'fc \f2\emdash  A\par
+\f0\'d0\'e5\'e0\'eb\'e8\'e7\'ee\'e2\'e0\'ed\'ee \'f2\'ee, \'f7\'e5\'e3\'ee \'ed\'e5\'f2 \'e4\'e0\'e6\'e5 \'e2 \'ef\'eb\'e0\'f2\'ed\'fb\'f5 \'e0\'ed\'e0\'eb\'ee\'e3\'e0\'f5 (Zendesk, Zammad):\par
+WS-\'f7\'e0\'f2\'fb \'e2\'ed\'f3\'f2\'f0\'e8 \'f2\'e8\'ea\'e5\'f2\'ee\'e2 + read receipts + offline queue (localStorage outbox)\par
+SLA escalation \'f1 \'e0\'e2\'f2\'ee\'ec\'e0\'f2\'e8\'f7\'e5\'f1\'ea\'e8\'ec \'ef\'ee\'e2\'fb\'f8\'e5\'ed\'e8\'e5\'ec \'ef\'f0\'e8\'ee\'f0\'e8\'f2\'e5\'f2\'e0\par
+\'c8\'c8-\'ee\'f2\'e2\'e5\'f2\'fb \'e8\'e7 Wiki (RAG-\'ef\'ee\'e4\'ee\'e1\'ed\'fb\'e9 \'ef\'ee\'e4\'f5\'ee\'e4)\par
+Time tracking \'f1 \'f2\'e0\'e9\'ec\'e5\'f0\'ee\'ec \'e8 \'ef\'e5\'f0\'e5\'f1\'f7\'b8\'f2\'ee\'ec \'e8\'ed\'e2\'e0\'f0\'e8\'e0\'ed\'f2\'e0\par
+Bulk actions, mentions, canned responses, tags\par
+Email templates (8 \'f8\'f2.) + SMTP \'e8\'e7 \'c1\'c4\par
+4. Observability \f2\emdash  B+\par
+Health + Readiness probes (/api/health, /api/ready)\par
+k6 \f0\'f1\'f6\'e5\'ed\'e0\'f0\'e8\'e8 \'f1 \'f0\'e5\'e0\'eb\'e8\'f1\'f2\'e8\'f7\'ed\'fb\'ec\'e8 \'ef\'ee\'f0\'ee\'e3\'e0\'ec\'e8 (p95 < 500-1000ms)\par
+Grafana dashboard (API/WS/Redis)\par
+Audit log + event_outbox\par
+\f6\u9888?\u-497?\f2\lang1033  \f0\lang1049\'d2\'e5\'f5\'ed\'e8\'f7\'e5\'f1\'ea\'e8\'e5 \'e4\'ee\'eb\'e3\'e8 \'e8 \'f0\'e8\'f1\'ea\'e8\par
+\f1\u-10179?\u-8908?\f2\lang1033  \f0\lang1049\'ca\'f0\'e8\'f2\'e8\'f7\'ed\'ee (\'e1\'eb\'ee\'ea\'e5\'f0\'fb production)\par
+\'cf\'f0\'ee\'e1\'eb\'e5\'ec\'e0\par
+\'d4\'e0\'e9\'eb\par
+Coverage\par
+\'d0\'e8\'f1\'ea\par
+Socket.js \'ef\'ee\'f7\'f2\'e8 \'ed\'e5 \'ef\'ee\'ea\'f0\'fb\'f2\par
+server/src/socket.js\par
+22%\par
+WS \f2\emdash  \f0\'ff\'e4\'f0\'ee real-time; \'e1\'e0\'e3 = \'ef\'ee\'f2\'e5\'f0\'ff\'ed\'ed\'fb\'e5 \'f1\'ee\'ee\'e1\'f9\'e5\'ed\'e8\'ff \'f7\'e0\'f2\'ee\'e2/\'f2\'e8\'ea\'e5\'f2\'ee\'e2\par
+Ticket context \f2\emdash  \f0\'ff\'e4\'f0\'ee \'ea\'eb\'e8\'e5\'ed\'f2\'e0\par
+src/contexts/ticket-context.tsx\par
+35%\par
+\'d1\'ee\'f1\'f2\'ee\'ff\'ed\'e8\'e5 \'f2\'e8\'ea\'e5\'f2\'ee\'e2, \'ea\'fd\'f8\'e8, \'ee\'ef\'f2\'e8\'ec\'e8\'f1\'f2\'e8\'f7\'ed\'fb\'e5 \'e0\'ef\'e4\'e5\'e9\'f2\'fb\par
+\'cd\'e5\'f2 Visual regression testing\par
+\f2\emdash\par
+0%\par
+UI-\f0\'f0\'e5\'e3\'f0\'e5\'f1\'f1\'e8\'e8 \'ef\'f0\'ee\'e9\'e4\'f3\'f2 \'ed\'e5\'e7\'e0\'ec\'e5\'f7\'e5\'ed\'ed\'fb\'ec\'e8\par
+\'cd\'e5\'f2 rate limiting / DDoS protection\par
+\f2\emdash\par
+\emdash\par
+k6-\f0\'f2\'e5\'f1\'f2\'fb \'ef\'ee\'ea\'e0\'e7\'fb\'e2\'e0\'fe\'f2 \'f3\'ff\'e7\'e2\'e8\'ec\'ee\'f1\'f2\'fc \'ea spike-\'ed\'e0\'e3\'f0\'f3\'e7\'ea\'e5\par
+\f4\u-10179?\u-8223?\f2\lang1033  \f0\lang1049\'d1\'f0\'e5\'e4\'ed\'e8\'e9 \'ef\'f0\'e8\'ee\'f0\'e8\'f2\'e5\'f2\par
+\'cf\'f0\'ee\'e1\'eb\'e5\'ec\'e0\par
+\'ca\'ee\'ec\'ec\'e5\'ed\'f2\'e0\'f0\'e8\'e9\par
+Kanban.tsx 47%, ChatDetail.tsx 51%, TicketDetail.tsx 51%\par
+\'ca\'eb\'fe\'f7\'e5\'e2\'fb\'e5 UI-\'ea\'ee\'ec\'ef\'ee\'ed\'e5\'ed\'f2\'fb \'f1 \'e1\'ee\'e3\'e0\'f2\'ee\'e9 \'eb\'ee\'e3\'e8\'ea\'ee\'e9\par
+Employees.tsx 56%, Search.tsx ~60%\par
+\'cf\'ee\'eb\'fc\'e7\'ee\'e2\'e0\'f2\'e5\'eb\'fc\'f1\'ea\'e8\'e5 \'f1\'f6\'e5\'ed\'e0\'f0\'e8\'e8\par
+Coverage-\'ef\'ee\'f0\'ee\'e3\'e8 \'ea\'eb\'e8\'e5\'ed\'f2\'e0 \'ed\'e8\'e7\'ea\'e8\'e5 (stmts 66, branch 58)\par
+\'cf\'ee\'e7\'e2\'ee\'eb\'ff\'fe\'f2 \'e4\'e5\'e3\'f0\'e0\'e4\'e0\'f6\'e8\'fe \'e1\'e5\'e7 \'e0\'eb\'e0\'f0\'ec\'e0\par
+\'d3\'e4\'e0\'eb\'e5\'ed\'fb \'f1\'ea\'f0\'e8\'ef\'f2\'fb deploy.ps1, seed-dev.js, fix-prisma.js\par
+\'cf\'ee\'f2\'e5\'f0\'ff\'ed\'e0 dev-\'fd\'f0\'e3\'ee\'ed\'ee\'ec\'e8\'ea\'e0 (\'e8\'eb\'e8 \'ef\'e5\'f0\'e5\'ed\'e5\'f1\'e5\'ed\'e0 \'e2 Makefile? \'ed\'e5 \'ff\'f1\'ed\'ee)\par
+MySQL \'ed\'e0 Laragon (\'eb\'ee\'ea\'e0\'eb\'fc\'ed\'ee)\par
+\'cd\'e5\'ef\'ee\'ed\'ff\'f2\'ed\'ee, \'ea\'e0\'ea \'f0\'e0\'e7\'e2\'ee\'f0\'e0\'f7\'e8\'e2\'e0\'e5\'f2\'f1\'ff \'e2 prod \f2\emdash  \f0\'f2\'ee\'eb\'fc\'ea\'ee \'f7\'e5\'f0\'e5\'e7 docker-compose?\par
+\'cd\'e5\'f2 staging-\'ee\'ea\'f0\'f3\'e6\'e5\'ed\'e8\'ff\par
+CI \f7\u8594?\f2  \f5 prod \f0\lang1049\'e1\'e5\'e7 \'ef\'f0\'ee\'ec\'e5\'e6\'f3\'f2\'ee\'f7\'ed\'ee\'e9 \'e2\'e0\'eb\'e8\'e4\'e0\'f6\'e8\'e8\par
+\f4\u-10179?\u-8222?\f2\lang1033  \f0\lang1049\'cd\'e8\'e7\'ea\'e8\'e9 \'ef\'f0\'e8\'ee\'f0\'e8\'f2\'e5\'f2 (\'ed\'ee \'f1\'f2\'ee\'e8\'f2 \'e8\'ec\'e5\'f2\'fc \'e2 \'e2\'e8\'e4\'f3)\par
+ESLint warnings: 56 (\'eb\'e8\'ec\'e8\'f2 100) \f2\emdash  \f0\'ee\'ea, \'ed\'ee \'f1\'f2\'ee\'e8\'f2 \'f7\'e8\'f1\'f2\'e8\'f2\'fc\par
+calendar.js 66% \f2\emdash  \f0\'f1\'e5\'e7\'ee\'ed\'ed\'e0\'ff \'f4\'e8\'f7\'e0, \'ed\'e5 \'ea\'f0\'e8\'f2\'e8\'f7\'ed\'ee\par
+\'cd\'e5\'f2 mention \'ee backup strategy \'e2 production (\'e5\'f1\'f2\'fc \'f2\'ee\'eb\'fc\'ea\'ee backup-mysql.ps1 \'e4\'eb\'ff \'eb\'ee\'ea\'e0\'eb\'ea\'e8)\par
+\'cd\'e5\'f2 disaster recovery \'ef\'eb\'e0\'ed\'e0\par
+\f1\u-10179?\u-9014?\f2\lang1033  \f0\lang1049\'d1\'f0\'e0\'e2\'ed\'e5\'ed\'e8\'e5 \'f1 \'f0\'fb\'ed\'ea\'ee\'ec (\'ef\'ee context.txt)\par
+\'ca\'f0\'e8\'f2\'e5\'f0\'e8\'e9\par
+Service Desk\par
+Zammad\par
+Zendesk\par
+GLPI\par
+\'d1\'f2\'e5\'ea\par
+Node + Prisma + MySQL + Socket.IO + Redis\par
+Ruby + ES\par
+SaaS\par
+PHP + MySQL\par
+WS-\'f7\'e0\'f2\'fb \'e2 \'f2\'e8\'ea\'e5\'f2\'e0\'f5\par
+\f3\u9989?\f5\lang1033\par
+\f3\u10060?\f5\par
+\f3\u10060?\f5\par
+\f3\u10060?\f5\par
+Offline queue + read receipts\par
+\f3\u9989?\f5\par
+\f3\u10060?\f5\par
+\f3\u9989?\f2  \f5 (\f0\lang1049\'ef\'eb\'e0\'f2\'ed\'ee)\par
+\f3\u10060?\f5\lang1033\par
+SLA auto-escalation\par
+\f3\u9989?\f5\par
+\f3\u9989?\f5\par
+\f3\u9989?\f5\par
+\f6\u9888?\u-497?\f5\par
+\f0\lang1049\'c8\'c8-\'ee\'f2\'e2\'e5\'f2\'fb \'e8\'e7 Wiki\par
+\f3\u9989?\f5\lang1033\par
+\f3\u10060?\f5\par
+\f3\u9989?\f2  \f5 (AI \f0\lang1049\'ef\'eb\'e0\'f2\'ed\'ee)\par
+\f3\u10060?\f5\lang1033\par
+Self-hosted + K8s-ready\par
+\f3\u9989?\f5\par
+\f3\u9989?\f5\par
+\f3\u10060?\f5\par
+\f3\u9989?\f5\par
+\f0\lang1049\'c2\'fb\'e2\'ee\'e4 \'e8\'e7 \'f1\'f0\'e0\'e2\'ed\'e5\'ed\'e8\'ff: \'ef\'f0\'ee\'e5\'ea\'f2 \'f3\'ed\'e8\'ea\'e0\'eb\'e5\'ed \'ea\'ee\'ec\'e1\'e8\'ed\'e0\'f6\'e8\'e5\'e9 \'ec\'ee\'e4\'f3\'eb\'e5\'e9. \'d0\'e0\'e7\'e2\'e8\'e2\'e0\'f2\'fc \'ef\'ee \'f1\'ee\'e1\'f1\'f2\'e2\'e5\'ed\'ed\'ee\'ec\'f3 \'f0\'ee\'e0\'e4\'ec\'e0\'ef\'f3, \'ed\'e5 \'ea\'ee\'ef\'e8\'f0\'f3\'ff \'e0\'ed\'e0\'eb\'ee\'e3\'e8 (\'e2\'e8\'e4\'e5\'ee/SIP/E2E \f2\emdash  overkill \f0\'e4\'eb\'ff \'e2\'e0\'f8\'e5\'e9 \'ed\'e8\'f8\'e8).\par
+\f1\u-10180?\u-8273?\f2\lang1033  \f0\lang1049\'d0\'e5\'ea\'ee\'ec\'e5\'ed\'e4\'e0\'f6\'e8\'e8 \'ef\'ee \'ef\'f0\'e8\'ee\'f0\'e8\'f2\'e5\'f2\'e0\'ec (\'f7\'f2\'ee \'e4\'e5\'eb\'e0\'f2\'fc \'e4\'e0\'eb\'fc\'f8\'e5)\par
+\f1\u-10179?\u-8923?\f2\lang1033  \f5 Sprint 1 (1-2 \f0\lang1049\'ed\'e5\'e4\'e5\'eb\'e8) \f2\emdash  \f0\'e7\'e0\'ea\'f0\'fb\'f2\'fc \'ea\'f0\'e8\'f2\'e8\'f7\'ed\'fb\'e5 \'e4\'fb\'f0\'fb\par
+\'cf\'ee\'e4\'ed\'ff\'f2\'fc coverage socket.js \'e4\'ee 70%+ \f2\emdash  \f0\'f2\'e5\'f1\'f2\'fb \'ed\'e0 reconnect, ack, broadcast, rooms\par
+\'cf\'ee\'ea\'f0\'fb\'f2\'fc ticket-context.tsx \f2\emdash  \f0\'ee\'ef\'f2\'e8\'ec\'e8\'f1\'f2\'e8\'f7\'ed\'fb\'e5 \'e0\'ef\'e4\'e5\'e9\'f2\'fb, \'ea\'fd\'f8-\'e8\'ed\'e2\'e0\'eb\'e8\'e4\'e0\'f6\'e8\'ff, offline\par
+\'c4\'ee\'e1\'e0\'e2\'e8\'f2\'fc rate limiting (express-rate-limit + Redis) \f2\emdash  \f0\'e7\'e0\'f9\'e8\'f2\'e0 \'ee\'f2 abuse\par
+Visual regression (Playwright + Percy/Chromatic \'e8\'eb\'e8 \'f5\'ee\'f2\'ff \'e1\'fb \'f1\'ea\'f0\'e8\'ed\'f8\'ee\'f2-\'f1\'f0\'e0\'e2\'ed\'e5\'ed\'e8\'e5)\par
+\f4\u-10179?\u-8223?\f2\lang1033  \f5 Sprint 2 (\f0\lang1049\'ec\'e5\'f1\'ff\'f6) \f2\emdash  infra-\f0\'e7\'f0\'e5\'eb\'ee\'f1\'f2\'fc\par
+Staging-\'ee\'ea\'f0\'f3\'e6\'e5\'ed\'e8\'e5 (docker-compose + test DB seed)\par
+Backup strategy \'e2 prod (S3 + retention + restore test)\par
+\'cf\'ee\'e4\'ed\'ff\'f2\'fc coverage-\'ef\'ee\'f0\'ee\'e3\'e8 \'ea\'eb\'e8\'e5\'ed\'f2\'e0: stmts 66\f7\u8594?\f5 75, branch 58\f7\u8594?\f5 70\par
+Playwright E2E \f0\lang1049\'e4\'eb\'ff \'ea\'f0\'e8\'f2\'e8\'f7\'ed\'fb\'f5 flows: \'f1\'ee\'e7\'e4\'e0\'ed\'e8\'e5 \'f2\'e8\'ea\'e5\'f2\'e0 \f7\u8594?\f2  \f0\lang1049\'ed\'e0\'e7\'ed\'e0\'f7\'e5\'ed\'e8\'e5 \f7\u8594?\f2  \f5 SLA breach \f7\u8594?\f2  \f0\lang1049\'fd\'f1\'ea\'e0\'eb\'e0\'f6\'e8\'ff\par
+\f4\u-10179?\u-8222?\f2\lang1033  \f5 Sprint 3 (\f0\lang1049\'ea\'e2\'e0\'f0\'f2\'e0\'eb) \f2\emdash  production excellence\par
+Feature flags + canary release (\f0\'ed\'e5 \'f2\'ee\'eb\'fc\'ea\'ee toggle, \'ed\'ee \'e8 \'ef\'f0\'ee\'f6\'e5\'ed\'f2 \'ef\'ee\'eb\'fc\'e7\'ee\'e2\'e0\'f2\'e5\'eb\'e5\'e9)\par
+Distributed tracing (OpenTelemetry) \f2\emdash  \f0\'e4\'eb\'ff \'e4\'e8\'e0\'e3\'ed\'ee\'f1\'f2\'e8\'ea\'e8 \'ec\'e5\'e4\'eb\'e5\'ed\'ed\'fb\'f5 \'e7\'e0\'ef\'f0\'ee\'f1\'ee\'e2\par
+Chaos engineering (lite): \'ee\'f2\'ea\'eb\'fe\'f7\'e5\'ed\'e8\'e5 Redis/MySQL \'e8 \'ef\'f0\'ee\'e2\'e5\'f0\'ea\'e0 graceful degradation\par
+Performance budget \'e2 CI: LCP < 2.5s, CLS < 0.1 (\'f1\'e5\'e9\'f7\'e0\'f1 \'f2\'ee\'eb\'fc\'ea\'ee bundle-size)\par
+\f1\u-10180?\u-8250?\f2\lang1033  \f0\lang1049\'c8\'f2\'ee\'e3\'ee\'e2\'fb\'e9 \'e2\'e5\'f0\'e4\'e8\'ea\'f2\par
+\'cf\'f0\'ee\'e5\'ea\'f2 \f2\emdash  \f0\'ea\'f0\'e5\'ef\'ea\'e8\'e9 B+. \'dd\'f2\'ee \'f3\'e6\'e5 \'ed\'e5 MVP \'e8 \'ed\'e5 pet-project, \'e0 \'ea\'ee\'ed\'ea\'f3\'f0\'e5\'ed\'f2\'ee\'f1\'ef\'ee\'f1\'ee\'e1\'ed\'fb\'e9 self-hosted helpdesk \'f1 \'f3\'ed\'e8\'ea\'e0\'eb\'fc\'ed\'fb\'ec\'e8 \'f4\'e8\'f7\'e0\'ec\'e8 (WS-\'f7\'e0\'f2\'fb \'e2 \'f2\'e8\'ea\'e5\'f2\'e0\'f5, offline queue, RAG \'e8\'e7 Wiki). \'c0\'f0\'f5\'e8\'f2\'e5\'ea\'f2\'f3\'f0\'ed\'fb\'e5 \'f0\'e5\'f8\'e5\'ed\'e8\'ff (Outbox, DLQ, idempotency) \'e3\'ee\'e2\'ee\'f0\'ff\'f2 \'ee \'e7\'f0\'e5\'eb\'ee\'ec \'e8\'ed\'e6\'e5\'ed\'e5\'f0\'ed\'ee\'ec \'ef\'ee\'e4\'f5\'ee\'e4\'e5.\par
+\'c3\'eb\'e0\'e2\'ed\'fb\'e9 \'f0\'e8\'f1\'ea: \'ed\'e8\'e7\'ea\'e8\'e9 coverage \'ff\'e4\'f0\'e0 (socket.js, ticket-context) + \'ee\'f2\'f1\'f3\'f2\'f1\'f2\'e2\'e8\'e5 rate limiting. \'dd\'f2\'ee \'e5\'e4\'e8\'ed\'f1\'f2\'e2\'e5\'ed\'ed\'ee\'e5, \'f7\'f2\'ee \'ee\'f2\'e4\'e5\'eb\'ff\'e5\'f2 \'ef\'f0\'ee\'e5\'ea\'f2 \'ee\'f2 production-\'e8\'ed\'f6\'e8\'e4\'e5\'ed\'f2\'ee\'e2 \'ef\'ee\'e4 \'ed\'e0\'e3\'f0\'f3\'e7\'ea\'ee\'e9.\par
+\'c3\'eb\'e0\'e2\'ed\'e0\'ff \'f1\'e8\'eb\'e0: \'f1\'ea\'ee\'f0\'ee\'f1\'f2\'fc \'e8\'f2\'e5\'f0\'e0\'f6\'e8\'e9 (1264 \'f2\'e5\'f1\'f2\'e0, CI gates, feature flags) + \'f3\'ed\'e8\'ea\'e0\'eb\'fc\'ed\'fb\'e9 \'f4\'f3\'ed\'ea\'f6\'e8\'ee\'ed\'e0\'eb, \'ea\'ee\'f2\'ee\'f0\'ee\'e3\'ee \'ed\'e5\'f2 \'f3 \'e0\'ed\'e0\'eb\'ee\'e3\'ee\'e2.\par
+\'c5\'f1\'eb\'e8 \'e7\'e0\'ea\'f0\'fb\'f2\'fc Sprint 1 \f2\emdash  \f0\'ef\'f0\'ee\'e5\'ea\'f2 \'f3\'e2\'e5\'f0\'e5\'ed\'ed\'ee \'ef\'e5\'f0\'e5\'f5\'ee\'e4\'e8\'f2 \'e2 A- (8.5/10) \'e8 \'e3\'ee\'f2\'ee\'e2 \'ea \'ed\'e0\'e3\'f0\'f3\'e7\'ea\'e0\'ec \'f0\'e5\'e0\'eb\'fc\'ed\'fb\'f5 \'ef\'ee\'eb\'fc\'e7\'ee\'e2\'e0\'f2\'e5\'eb\'e5\'e9.\f5\lang9\par
+}
+ 
