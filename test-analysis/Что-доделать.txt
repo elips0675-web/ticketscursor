@@ -273,3 +273,36 @@
 - «Оцени проект целиком» — AI усредняет
 - Промты > 1500 токенов — модель теряет конец
 - «Выглядит хорошо» в ответах — только факты с цитатами
+
+---
+
+## ПЛАН ДОРАБОТКИ ПО ЭТАПАМ (54–60)
+
+> Самодостаточный план: каждый этап = конкретный файл/промт из разборов выше.
+> Детальные таблицы — в разделах «Kimi 7.5/10» и «Доделать.rtf».
+
+| Этап | Задача | Промт | Где детали |
+|------|--------|-------|------------|
+| **54** | **socket.js coverage 22% → 60%+** — реальный сервер (порт 0), без моков socket.io: JWT-handshake (invalid/expired → disconnect), rate-limit (6-е сообщение отклонено, NAT не режется), join/leave комнат, typing:start/stop, chat:read → персист, disconnect → user:offline, reconnect → flush offline queue | Промт 1 | Раздел «Тесты» #1, Киmi #6 |
+| **55** | **E2E: smoke → lifecycle** — `tickets-lifecycle.spec.ts` (create через API → в списке → детали → комментарий → in_progress → resolved → reopen, API-проверки на каждом шаге); затем sla-escalation, rbac-matrix, websocket-chat (2 браузера) | Промт 2 | Раздел «Тесты» #7-10 |
+| **56** | **IDOR-аудит** — все эндпоинты с `:id`: requester → только свои, agent → свои + неназначенные; 5 тестов в `idor.test.js` на критические находки | Промт 3 | Раздел «Тесты» #15 |
+| **57** | **N+1 и индексы** — запросы в циклах, findMany без include/select, list без limit/take; проверить FULLTEXT/индексы, каскады FK (onDelete), soft-delete тесты «нельзя вернуть удалённого» | Промт 5 | БД #3,4,7,8 |
+| **58** | **Админка (11 фич)** — RBAC-матрица UI, Backup/restore UI, audit log фильтры+CSV, health dashboard (БД/Redis/Meili/SMTP/IMAP/очередь), feature flags расписание, Queue monitor (Bull-Board), сессии «разлогинить везде», rate-limit override, email-template preview, reindex Meilisearch, migrations status | — (новые промты) | Раздел «Админка» |
+| **59** | **Resilience** — Secrets rotation (2-ключевой JWT: sign=new, verify=[old,new]), idempotency keys вне Redis (TTL 24ч без защиты при падении), транзакции для multi-step (bulk/assign/escalation) | — | БД #2,10,9 |
+| **60** | **Процесс** — правило порогов coverage в AGENTS.md (буфер vs обязательные тесты), финальный re-аудит свежей папкой test-analysis (Kimi/DeepSeek/Qwen) | Промт 6 (обновить) | Кimi #3 |
+
+### Низкий приоритет (не блокирует)
+
+- MySQL read replica — вернуть только при реальной нагрузке (удалена осознанно, Этап 13)
+- Mutation testing (Stryker), visual regression (Chromatic/Loki) — желательно, не критично
+- Contract tests (zod-схема ответов API), границы (XSS в title, SQL в search, 10k тикетов, файл 51MB, JWT expired)
+- ANALYZE TABLE daily для FULLTEXT — мелочь
+
+### Уже закрыто (22.09.2026, из этих же чеклистов)
+
+- Backup verification `scripts/verify-backup.mjs` + CI job daily (Промт 4) ✅
+- Dockerfile fix: `npm ci && npx prisma generate && npm prune --omit=dev` (прод-риск) ✅
+- Мёртвые deps passport/passport-ldapauth удалены ✅
+- Doc-pass: Что сделано/PLAYBOOK/TECHNICAL/README/context/AGENTS/Service Desk + test-analysis ✅
+- CI node-version 22, `--max-warnings 100`, regex login.spec, CHANGELOG [1.9.0] ✅
+- tailwindcss/vite-plugin-pwa → devDependencies ✅
