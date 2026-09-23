@@ -710,6 +710,9 @@
 - ~~Этап 55 — E2E ticket-lifecycle вместо smoke (Промт 2: create→assign→status→resolved→reopen + API-проверки)~~ ✅ **закрыт 23.09** — см. Этап 55 выше
 - ~~Этап 56 — IDOR-аудит всех `:id` эндпоинтов + 5 тестов (Промт 3)~~ ✅ **закрыт 23.09** — см. Этап 56 выше
 - ~~Этап 57 — N+1 audit: prisma log query, топ-10 эндпоинтов (Промт 5); FULLTEXT/индексы, каскады FK, soft-delete тесты~~ ✅ **закрыт 23.09** — см. Этап 57 выше
+
+### Мелкие правки (23.09.2026)
+- **bcrypt cost 10 → 12** (спека AI_AGENT_SPEC.md, п. 10 «Безопасность»): `routes/auth.js` (register + reset), `auth/oidc.js`, `routes/admin.js` (default-пароль), `routes/public-portal.js` (токен портала). Старые хеши продолжают работать (cost зашит в хеш). Сервер vitest 53/808 ✅, check-console 17/17 ✅
 - Этап 58 — Админка: RBAC-матрица UI, backup/restore, audit log фильтры, health dashboard
 - Этап 59 — Secrets rotation (2-ключевой JWT), idempotency TTL, транзакции multi-step
 - Этап 60 — Правило порогов coverage зафиксировать в AGENTS.md (буфер vs обязательные тесты); финальный re-аудит свежей папкой test-analysis

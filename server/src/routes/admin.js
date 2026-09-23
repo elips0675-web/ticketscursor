@@ -396,7 +396,7 @@ router.post('/employees/import', async (req, res) => {
     }
     const existing = await prisma.employees.findMany({ select: { email: true } })
     const existingEmails = new Set(existing.map(e => e.email))
-    const hash = await bcrypt.hash(defaultPassword, 10)
+    const hash = await bcrypt.hash(defaultPassword, 12)
     const created = []
     const skipped = []
     const emailCounters = {}

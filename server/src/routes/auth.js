@@ -58,7 +58,7 @@ router.post('/register', authenticateToken, requireRole('super_admin', 'admin'),
     if (existing) {
       return res.status(409).json({ message: 'Пользователь с таким email уже существует' })
     }
-    const hash = await bcrypt.hash(password, 10)
+    const hash = await bcrypt.hash(password, 12)
     const employee = await prisma.employees.create({
       data: { name, email, password_hash: hash, role: 'agent', department: department || '', title: title || 'Сотрудник', is_active: true },
     })
@@ -163,7 +163,7 @@ router.post('/reset-password', changePasswordValidation, async (req, res) => {
     })
     if (!reset) return res.status(400).json({ message: 'Invalid or expired token' })
 
-    const hash = await bcrypt.hash(password, 10)
+    const hash = await bcrypt.hash(password, 12)
     await prisma.employees.update({ where: { email: reset.email }, data: { password_hash: hash } })
     await prisma.password_resets.delete({ where: { id: reset.id } })
     res.json({ message: 'Password reset successfully' })

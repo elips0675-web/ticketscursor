@@ -96,7 +96,7 @@ export async function handleSSOCallback(code, state, nonce) {
   if (!employee) {
     const config = ssoConfig || await getSSOConfig()
     const defaultRole = config.SSO_DEFAULT_ROLE || 'agent'
-    const randomPassword = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10)
+    const randomPassword = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 12)
 
     employee = await prisma.employees.create({
       data: {

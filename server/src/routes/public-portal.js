@@ -15,7 +15,7 @@ router.post('/tickets', async (req, res) => {
     if (!subject?.trim()) return res.status(400).json({ success: false, message: 'Subject is required' })
 
     const token = crypto.randomBytes(32).toString('hex')
-    const hash = await bcrypt.hash(token, 10)
+    const hash = await bcrypt.hash(token, 12)
 
     let employee = await prisma.employees.findFirst({
       where: { email },
