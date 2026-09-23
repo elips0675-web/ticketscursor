@@ -1,3 +1,24 @@
+⚠️ СТАТУС ФАЙЛА (обновлено 23.09.2026)
+Этот документ написан против состояния «934 теста / 87 файлов / 36 E2E (~2 реальных)».
+Факт на 23.09.2026: **1298 тестов / 109 файлов / 19 E2E-спеков (57 тестов)**.
+
+Из списка ниже УЖЕ ЗАКРЫТО (заново не писать):
+- Спринты 1-2 (новые фичи 32-35): api-tokens/webhooks/collision/recurrence/rules/public-portal/public-kb/SSO-UI — Этапы 46/47 (+134 теста)
+- Спринт 3 (E2E user-flow): tickets-lifecycle, rbac-matrix, sla-escalation, websocket-chat — Этап 55
+- RBAC-матрица: rbac-matrix.test.js 41 тест — Этап 47
+- rate-limit: limiters.test.js 10 — Этап 47
+- socket.js без моков: Этап 54 (реальный сервер порт 0 + БД, 27 тестов, 22%→83%)
+- IDOR: Этап 56 (idor.test.js 11 тестов)
+- auth.security/jwt: закрыто Этапами 47/52 (dev-login 404 в prod, rate-limit, refresh rotation в api.test.js)
+
+РЕАЛЬНЫЙ ОСТАТОК (пережил все волны) — в корневом «Что-доделать.txt», раздел «Финальные оценки 23.09»:
+P1: race-тесты (lock/status/timer/outbox), auth/oidc.test.js, ticket-context.optimistic,
+    E2E-real (export/upload/search), i18n parity, XSS/injection
+P2: a11y, background sub-тесты, virtual scroll jsdom, contract (zod) + migration idempotency
+
+Само содержимое ниже — исторический список рекомендаций от 22.09; сверяйтесь со сводным остатком.
+---
+
 Что ещё тестировать — по результатам аудита
 🔴 Критично (P0) — новые фичи Этапов 32-35 без тестов
 Это самый большой пробел. В context.txt они помечены как новый, но в test-inventory.json нет ни одного файла для них.

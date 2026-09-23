@@ -338,3 +338,74 @@ DB Designer
 ❌ "Сделай мне компонент"
 ✅ "React-компонент списка тикетов с пагинацией, фильтрами по статусу и поиском. Использовать TanStack Query, Tailwind, data-testid для тестов. Максимум 200 строк."
 Хотите, я покажу, как использовать эти промпты на конкретной задаче из вашего Service Desk? Например, спроектировать SLA-уведомления или написать тесты на tickets.spec.ts?
+
+---
+
+## Промты из финальных оценок 23.09 (Kimi 8/10, DeepSeek 8.5/10, Qwen 8.5/10)
+
+> Источник: «Оценка kimi/дипсик/qwen.rtf». Сверено с инвентарём 1298 тестов — почти всё из их списков уже закрыто Этапами 46–56,
+> поэтому промты ниже — только на РЕАЛЬНЫЙ остаток (он же — Этапы 57–61 в корневом «Что-доделать.txt»).
+> Формат: один промт → одно изменение → `npm test` + `check-console.mjs` → коммит. Каждый промт < 1500 токенов.
+
+### A. Race-тесты (Дипсик P1, Qwen P1) — Этап 57
+plain
+Напиши тесты на гонки для тикетов в server/src/__tests__/:
+1. ticket-lock.race.test.js — два параллельных POST /:id/lock против реального API: один → 200, второй → 409;
+   суперстарые данные подготовь в БД (vitest.global-setup.js создаёт servicedesk_test).
+2. ticket-status.race.test.js — два параллельных PUT /:id/status (open→resolved): resolved_at записан один раз.
+3. outbox.delivery.test.js — event_outbox → воркер доставил → delivered; сбой доставки → retry/DLQ.
+Используй супертест/реальную БД как в socket.test.js (порт 0). Перед гонками — сброс таблиц.
+
+### B. auth/oidc.test.js (Дипсик P1) — Этап 59
+plain
+Напиши backend-тесты на server/src/auth/oidc.js (единственный сервис Этапа 34 без тестов):
+discovery fetch, построение authorization URL, callback exchange (обмен code → token),
+auto-provisioning нового employee (role=requester), discovery 500 → 502/500, невалидный code → 400.
+Мокай fetch (discovery/token/userinfo). Не трогай SSO.test.tsx (клиентский, уже есть).
+
+### C. ticket-context.optimistic.test.tsx (Дипсик/Kimi/Qwen P1) — Этап 61
+plain
+Подними coverage src/context/ticket-context.tsx (сейчас 35%):
+1. createTicket — optimistic insert: тикет появился сразу; API 500 → rollback, тикет исчез, toast.
+2. updateStatus — optimistic смена статуса; API 403 → rollback на старый.
+3. после любой мутации — invalidateQueries(['tickets']) вызван.
+Mock api.ts, React Query через QueryClient (как в Tickets.expanded.test.tsx).
+
+### D. E2E-реализм (Дипсик P1) — Этап 61
+plain
+Допиши 3 спека в e2e/ (ассерты на данные, не на наличие элемента):
+1. export-real.spec.ts — клик «Экспорт CSV» → page.waitForEvent('download') → файл непустой, содержит BOM (\uFEFF).
+2. file-upload-real.spec.ts — setInputFiles({ name: 'test.txt', mimeType: 'text/plain', buffer }) → файл в списке →
+   клик → скачать → содержимое совпадает.
+3. search-real.spec.ts — Ctrl+K → ввод «тикет» → в результатах есть title тикета из seed (не просто «инпут виден»).
+
+### E. i18n parity + XSS/injection (Kimi/Дипсик P1) — Этап 60
+plain
+1. src/i18n/parity.test.ts — читает ru.json и en.json: набор ключей идентичен в обе стороны (рел. путь к файлам через import.meta.url).
+2. server/src/__tests__/injection.test.js — XSS '<script>alert(1)</script>' в title тикета: сохранён как строка (экранирование на рендере, API не хранит HTML-исполнение); SQL-инъекция в query параметры search → 400/экранировано, не 500 и не падение БД.
+
+### F. a11y (Дипсик P2, Qwen) — Этап 58/61
+plain
+Добавь a11y-тесты (jest-axe или ручные проверки) на ключевые страницы:
+AdminSettings/AdminLayout (Этап 58) + Sidebar/Dialog:
+icon-only кнопки имеют aria-label, формы — htmlFor+id, Tab-навигация по Sidebar, Esc закрывает Sheet, focus-trap в Radix Dialog.
+
+### G. Background sub-тесты (Дипсик P2) — Этап 59
+plain
+Раздели background.expanded.test.js (10 тестов) на sub-кейсы:
+runSlaCheck с эскалацией по интервалам, cleanup уведомлений >90 дней (свежие не тронуты),
+DLQ >10 за час → email админам, stopImapPolling без запуска не падает (идемпотентность).
+
+### H. Contract + миграции (Дипсик P2) — Этап 60
+plain
+1. contract.test.js — для топ-5 эндпоинтов (GET /api/tickets, GET /:id, POST, PUT /status, POST /:id/messages):
+   ответ проходит Zod-схему из server/src/schemas.js (переиспользуй схемы, не дублируй).
+2. migration.idempotent.test.js — прогони knex migrate:latest дважды против servicedesk_test: вторая итерация не падает и ничего не меняет.
+   (knex-migrate уже идемпотентен по истории, но тест зафиксирует регресс.)
+
+### Список файлов для Этапа 60 (re-аудит) — из Промты.txt + Киmi
+plain
+Собери свежую папку test-analysis/ для финального re-аудита, добавив к инвентарям КОД:
+prisma/schema.prisma, server/src/app.js, server/src/routes/tickets.js, server/src/services/tickets.service.js,
+src/lib/api.ts, src/context/ticket-context.tsx, vite.config.ts.
+Мета-промт «0» из шапки этого файла — оставить как есть (он правильный).

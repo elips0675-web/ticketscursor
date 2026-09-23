@@ -5,7 +5,7 @@
 - **Фронт**: 507 тестов (61 файл)
 - **Сервер**: 791 тестов (48 файлов)
 - **Итого**: 1298 теста, 0 failures
-- **E2E**: 16 spec'ов / 51 тест (Playwright) + 17/17 страниц ALL OK (check-console.mjs)
+- **E2E**: 19 spec'ов / 57 тест (Playwright) + 17/17 страниц ALL OK (check-console.mjs)
 - **Prisma моделей**: 32 (включая event_outbox)
 - **API endpoints**: 60+ (Swagger + Health probes + k6 metrics)
 - **ESLint**: 0 errors, 56 warnings (порог лимита 100 в CI)

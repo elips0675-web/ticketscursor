@@ -20,7 +20,8 @@
 8. После завершения этапа — убрать его из ПЛАН ДОРАБОТКИ ПО ЭТАПАМ в Что сделано.txt и обновить статусы в АУДИТ ПРОЕКТА
 9. **После каждого изменения кода** — запускать Playwright скрипт `check-console.mjs`, проверять `errors: []` и `hasRussianText: true`; при наличии ошибок — исправить до ответа пользователю
 10. **После добавления/изменения тестов** — перегенерировать `test-analysis/test-inventory.json` из фактического прогона vitest (`node scripts/regenerate-test-inventory.js <client-json> <server-json>`) и обновить `frontend-tests.txt`/`server-tests.txt`, чтобы AI-ревьюеры не читали устаревшие цифры
-11. **В начале каждой задачи** — читать корневой `Что-доделать.txt` (синхронизирован с `test-analysis/Что-доделать.txt`): брать следующий незакрытый этап из «ПЛАН ДОРАБОТКИ ПО ЭТАПАМ (54–60)», статус отмечать в этом же файле. После завершения этапа — обновить «Что сделано.txt» и синхронизировать копию `test-analysis/Что-доделать.txt` (если правил корневую) или наоборот
+11. **В начале каждой задачи** — читать корневой `Что-доделать.txt` (синхронизирован с `test-analysis/Что-доделать.txt`): брать следующий незакрытый этап из «ПЛАН ДОРАБОТКИ ПО ЭТАПАМ (54–61)», статус отмечать в этом же файле. После завершения этапа — обновить «Что сделано.txt» и синхронизировать копию `test-analysis/Что-доделать.txt` (если правил корневую) или наоборот
+12. **Новый публичный модуль = feature flag** (правило «фича = флаг», аудит Kimi 23.09): новый модуль/экран без флага (`useFeature()`) не мержится — дефолт **off**, включение только через админку
 
 ## Контроль качества кода
 
@@ -41,7 +42,7 @@
 | **При коммите** | Husky → lint-staged | `eslint --fix` + `prettier --write` на изменённых файлах |
 | **В CI (GitHub Actions)** | `tsc --noEmit` | TypeScript strict type-check |
 | | `eslint . --max-warnings 100` | Синтаксис, неисп. переменные, импорты |
-| | `vitest run` | Юнит-тесты (507 клиентских + 757 серверных) |
+| | `vitest run` | Юнит-тесты (507 клиентских + 791 серверных) |
 | | `vite build` | Сборка production |
 | **Тестовая БД** | `vitest.global-setup.js` | Создаёт `servicedesk_test`, мигрирует, сидит, фиксит колонки |
 | **Rate limiter** | `app.js` | Отключён при `NODE_ENV=test` через `skip` |
@@ -49,7 +50,7 @@
 | | `npm run type-check` | `tsc --noEmit` |
 | | `npm test` | Vitest (клиент) |
 | | `cd server && npm test` | Vitest (сервер) |
-| **После каждого изменения** | `node check-console.mjs` | Playwright проверяет 6 страниц (`/`, `/wiki`, `/chats`, `/tickets`, `/employees`, `/search`) на: `errors: []`, `hasRussianText: true` |
+| **После каждого изменения** | `node check-console.mjs` | Playwright проверяет 17 страниц (`/`, `/wiki`, `/chats`, `/tickets`, `/employees`, `/search` и др.) на: `errors: []`, `hasRussianText: true` |
 | **Pre-commit hook** | `.husky/pre-commit` | `npx lint-staged` — автофикс и форматирование |
 
 ## Сделано
