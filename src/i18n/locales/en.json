@@ -107,6 +107,7 @@
     "inProgress": "In Progress",
     "resolved": "Resolved",
     "closed": "Closed",
+    "reopened": "reopened",
     "low": "Low",
     "medium": "Medium",
     "high": "High",

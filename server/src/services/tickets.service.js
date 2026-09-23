@@ -15,7 +15,8 @@ function getSlaHours(priority, category, settings) {
   const base = Number.isFinite(raw) && raw > 0 ? raw : 4
   const categoryMult = { incident: 0.5, bug: 0.75, support: 1, feature: 2, other: 1 }[category] || 1
   const priorityMult = { critical: 0.5, high: 1, medium: 2, low: 4 }[priority] || 2
-  return Math.max(1, Math.round(base * categoryMult * priorityMult))
+  // Дробные часы (до 0.0001) разрешены — нужны для коротких SLA в тестах
+  return Math.max(0.0001, Math.round(base * categoryMult * priorityMult * 10000) / 10000)
 }
 
 const VALID_TRANSITIONS = {
@@ -53,13 +54,13 @@ export async function getLeastLoadedAssignee() {
     include: {
       _count: {
         select: {
-          assigned_tickets: {
+          tickets_assigned_to: {
             where: { status: { in: ['open', 'in_progress'] }, deleted_at: null },
           },
         },
       },
     },
-    orderBy: { assigned_tickets: { _count: 'asc' } },
+    orderBy: { tickets_assigned_to: { _count: 'asc' } },
     take: 1,
   })
   return rows?.[0]?.id || null
@@ -138,8 +139,8 @@ export async function getSlaStats() {
 
 export async function getTicketById(id, messagePage = 1, messageLimit = 50) {
   const [ticket, timeAgg, customFields] = await Promise.all([
-    prisma.tickets.findUnique({
-      where: { id },
+    prisma.tickets.findFirst({
+      where: { id, deleted_at: null },
       include: {
         assigned_to_employee: {
           select: { name: true, email: true, avatar: true },
@@ -380,6 +381,20 @@ export async function updateTicketAssignee(id, employeeId) {
   if (!old) return null
   await prisma.tickets.update({ where: { id }, data: { assigned_to: employeeId || null, updated_at: new Date() } })
   return { oldAssignee: old.assigned_to, newAssignee: employeeId || null, employeeName: emp?.name || null }
+}
+
+export async function deleteTicket(id) {
+  const existing = await prisma.tickets.findUnique({
+    where: { id },
+    select: { id: true, title: true, deleted_at: true },
+  })
+  if (!existing) return null
+  if (existing.deleted_at) return { id, alreadyDeleted: true }
+  await prisma.tickets.update({
+    where: { id },
+    data: { deleted_at: new Date(), updated_at: new Date() },
+  })
+  return { id, title: existing.title, alreadyDeleted: false }
 }
 
 export function generateTicketFilename(originalName) {

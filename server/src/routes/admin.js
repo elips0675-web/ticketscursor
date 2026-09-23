@@ -292,6 +292,17 @@ const toFeaturePayload = (f) => ({
   rollout_percent: toRolloutPercent(f.rollout_percent),
 })
 
+router.post('/sla/run-check', async (req, res) => {
+  try {
+    const { runSlaCheck } = await import('../background.js')
+    await runSlaCheck(prisma)
+    res.json({ success: true, data: { ran: true } })
+  } catch (err) {
+    logger.error('SLA run-check error:', err)
+    res.status(500).json({ success: false, message: 'Failed to run SLA check' })
+  }
+})
+
 router.get('/features', cacheMiddleware(30), async (req, res) => {
   try {
     const rows = await prisma.feature_flags.findMany({ orderBy: { key: 'asc' } })

@@ -3,15 +3,16 @@ import { test, expect } from '@playwright/test'
 const API = 'http://localhost:4000'
 
 async function devLogin(page: import('@playwright/test').Page, email = 'alexey@example.com') {
-  const token = await page.evaluate(async (e) => {
-    const r = await fetch(`${API}/api/auth/dev-login`, {
+  const token = await page.evaluate(async (args) => {
+    const r = await fetch(`${args.api}/api/auth/dev-login`, {
       method: 'POST',
-      headers: { 'X-Email': e },
+      headers: { 'X-Email': args.email },
     })
     const d = await r.json()
     return d?.data?.token || d?.token
-  }, email)
+  }, { api: API, email })
   await page.evaluate((t) => localStorage.setItem('token', t), token)
+  await page.evaluate((e) => localStorage.setItem('user', JSON.stringify(e)), { id: 1, name: 'Алексей Петров', email: 'alexey@example.com', role: 'super_admin' })
   return token
 }
 
@@ -23,7 +24,7 @@ async function createTicketViaApi(
 ) {
   const res = await page.evaluate(
     async (args) => {
-      const r = await fetch(`${API}/api/tickets`, {
+      const r = await fetch(`${args.api}/api/tickets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -38,7 +39,7 @@ async function createTicketViaApi(
       })
       return r.json()
     },
-    { token, title, description }
+    { api: API, token, title, description }
   )
   return res?.data
 }

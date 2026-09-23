@@ -5,9 +5,11 @@ import { createLimiters } from '../limits.js'
 import { app } from '../app.js'
 
 const ORIGINAL_NODE_ENV = process.env.NODE_ENV
+const RATE_LIMIT_ENV_KEYS = ['RATE_LIMIT_AUTH_MAX', 'RATE_LIMIT_API_MAX', 'RATE_LIMIT_ADMIN_MAX']
 
 afterEach(() => {
   process.env.NODE_ENV = ORIGINAL_NODE_ENV
+  for (const key of RATE_LIMIT_ENV_KEYS) delete process.env[key]
 })
 
 function stubApp(limiter) {
@@ -68,6 +70,20 @@ describe('rate limiters (createLimiters)', () => {
   it('default skip is enabled in test env (no blocking)', async () => {
     const { authLimiter } = createLimiters()
     const last = await hit(stubApp(authLimiter), 15)
+    expect(last.status).toBe(200)
+  })
+
+  it('RATE_LIMIT_AUTH_MAX override raises the auth limit (no 429 within new max)', async () => {
+    process.env.RATE_LIMIT_AUTH_MAX = '25'
+    const { authLimiter } = createLimiters(() => false)
+    const last = await hit(stubApp(authLimiter), 25)
+    expect(last.status).toBe(200)
+  })
+
+  it('RATE_LIMIT_API_MAX override raises the api limit (no 429 within new max)', async () => {
+    process.env.RATE_LIMIT_API_MAX = '250'
+    const { apiLimiter } = createLimiters(() => false)
+    const last = await hit(stubApp(apiLimiter), 250)
     expect(last.status).toBe(200)
   })
 })

@@ -34,6 +34,7 @@ import {
   bulkUpdateTickets,
   generateTicketFilename,
   resolveMentionedEmployees,
+  deleteTicket,
 } from '../services/tickets.service.js'
 import {
   listTimeEntries,
@@ -176,7 +177,7 @@ router.post('/', idempotent, createTicketValidation, async (req, res) => {
     }
     triggerWebhooks('ticket.created', { ticket }).catch(() => {})
     evaluateRules('ticket.created', { ...ticket, userId: req.user.userId }).catch(() => {})
-    invalidateCache('cache:/api/tickets*')
+    invalidateCache('cache:*:/api/tickets*')
     res.status(201).json({ success: true, data: ticket })
   } catch (err) {
     logger.error('Create ticket error:', err)
@@ -226,7 +227,7 @@ router.put('/:id/status', requireRole('admin', 'senior_agent'), updateStatusVali
     if (status === 'closed') {
       triggerWebhooks('ticket.closed', { id: ticketId }).catch(() => {})
     }
-    invalidateCache('cache:/api/tickets*')
+    invalidateCache('cache:*:/api/tickets*')
     res.json({ success: true, data: { id: ticketId, status } })
   } catch (err) {
     if (err.statusCode) {
@@ -256,7 +257,7 @@ router.put('/:id/priority', requireRole('admin', 'senior_agent'), updatePriority
     }
     triggerWebhooks('ticket.updated', { id: ticketId, priority, oldPriority: result.oldPriority }).catch(() => {})
     evaluateRules('ticket.updated', { id: ticketId, priority, oldPriority: result.oldPriority, userId: req.user.userId }).catch(() => {})
-    invalidateCache('cache:/api/tickets*')
+    invalidateCache('cache:*:/api/tickets*')
     res.json({ success: true, data: { id: ticketId, priority } })
   } catch (err) {
     logger.error('Update priority error:', err)
@@ -283,7 +284,7 @@ router.put('/:id/assign', requireRole('admin', 'senior_agent'), assignTicketVali
     }
     triggerWebhooks('ticket.assigned', { id: ticketId, assignedTo: employeeId, assignedName: result.employeeName }).catch(() => {})
     evaluateRules('ticket.assigned', { id: ticketId, assignedTo: employeeId, assignedName: result.employeeName, userId: req.user.userId }).catch(() => {})
-    invalidateCache('cache:/api/tickets*')
+    invalidateCache('cache:*:/api/tickets*')
     res.json({ success: true, data: { id: ticketId, assignedTo: employeeId || null } })
   } catch (err) {
     logger.error('Assign ticket error:', err)
@@ -299,7 +300,7 @@ router.put('/:id/tags', requireRole('admin', 'senior_agent', 'agent'), updateTag
     if (!result) return res.status(404).json({ success: false, message: 'Ticket not found' })
     enqueueEvent('ticket:updated', null, { id: ticketId, tags, updatedBy: req.user.userId })
     logAudit({ userId: req.user.userId, userName: req.user.name, action: 'tags_updated', entityType: 'ticket', entityId: ticketId, details: { tags } })
-    invalidateCache('cache:/api/tickets*')
+    invalidateCache('cache:*:/api/tickets*')
     res.json({ success: true, data: result })
   } catch (err) {
     logger.error('Update ticket tags error:', err)
@@ -315,7 +316,7 @@ router.put('/:id/custom-fields', requireRole('admin', 'senior_agent', 'agent'), 
     if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' })
     await setTicketCustomFields(ticketId, fields)
     logAudit({ userId: req.user.userId, userName: req.user.name, action: 'custom_fields_updated', entityType: 'ticket', entityId: ticketId, details: { fieldCount: fields?.length || 0 } })
-    invalidateCache('cache:/api/tickets*')
+    invalidateCache('cache:*:/api/tickets*')
     const updatedFields = await getTicketCustomFields(ticketId)
     res.json({ success: true, data: updatedFields })
   } catch (err) {
@@ -344,7 +345,7 @@ router.post('/bulk', requireRole('admin', 'senior_agent', 'agent'), bulkTicketVa
       enqueueEvent('ticket:updated', null, { ids, action, priority, updatedBy: req.user.userId })
       logAudit({ userId: req.user.userId, userName: req.user.name, action: 'bulk_priority_changed', entityType: 'ticket', entityId: null, details: { ids, priority } })
     }
-    invalidateCache('cache:/api/tickets*')
+    invalidateCache('cache:*:/api/tickets*')
     res.json({ success: true, data: result })
   } catch (err) {
     if (err.statusCode) {
@@ -483,7 +484,7 @@ router.post('/:id/time', requireRole('admin', 'senior_agent', 'agent'), addTimeV
     if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' })
     const entry = await addTimeEntry({ ticketId, userId: req.user.userId, minutes, description })
     const totals = await getTimeTotals(ticketId)
-    invalidateCache('cache:/api/tickets*')
+    invalidateCache('cache:*:/api/tickets*')
     logAudit({ userId: req.user.userId, userName: req.user.name, action: 'time_added', entityType: 'ticket', entityId: ticketId, details: { minutes, entryId: entry.id } })
     res.status(201).json({ success: true, data: entry, totals })
   } catch (err) {
@@ -502,7 +503,7 @@ router.delete('/:id/time/:entryId', requireRole('admin', 'senior_agent', 'agent'
     const isOwner = entry.user_id === req.user.userId
     if (!isAdmin && !isOwner) return res.status(403).json({ success: false, message: 'Forbidden' })
     await deleteTimeEntry(entryId)
-    invalidateCache('cache:/api/tickets*')
+    invalidateCache('cache:*:/api/tickets*')
     logAudit({ userId: req.user.userId, userName: req.user.name, action: 'time_removed', entityType: 'ticket', entityId: ticketId, details: { entryId } })
     res.json({ success: true, data: { entryId } })
   } catch (err) {
@@ -540,7 +541,7 @@ router.post('/:id/time/timer/stop', requireRole('admin', 'senior_agent', 'agent'
     const result = await stopTimer(ticketId, req.user.userId)
     if (!result) return res.status(404).json({ success: false, message: 'No active timer' })
     const totals = await getTimeTotals(ticketId)
-    invalidateCache('cache:/api/tickets*')
+    invalidateCache('cache:*:/api/tickets*')
     logAudit({ userId: req.user.userId, userName: req.user.name, action: 'time_timer_stopped', entityType: 'ticket', entityId: ticketId, details: { minutes: result.minutes, entryId: result.entry.id } })
     res.json({ success: true, data: result, totals })
   } catch (err) {
@@ -600,6 +601,22 @@ router.get('/:id/lock', async (req, res) => {
   } catch (err) {
     logger.error('Get lock status error:', err)
     res.status(500).json({ success: false, message: 'Failed to get lock status' })
+  }
+})
+
+router.delete('/:id', requireRole('admin', 'senior_agent'), async (req, res) => {
+  const ticketId = Number(req.params.id)
+  try {
+    const result = await deleteTicket(ticketId)
+    if (!result) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    if (result.alreadyDeleted) return res.status(200).json({ success: true, data: result, message: 'Ticket already deleted' })
+    await invalidateCache('cache:*:/api/tickets')
+    enqueueEvent('ticket:deleted', null, { ticketId, deletedBy: req.user.userId, ticketTitle: result.title })
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'deleted', entity: 'ticket', entityId: ticketId, details: { title: result.title } })
+    res.json({ success: true, data: result })
+  } catch (err) {
+    logger.error('Delete ticket error:', err)
+    res.status(500).json({ success: false, message: 'Failed to delete ticket' })
   }
 })
 

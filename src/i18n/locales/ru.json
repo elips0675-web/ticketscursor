@@ -108,6 +108,7 @@
     "inProgress": "В работе",
     "resolved": "Решённые",
     "closed": "Закрытые",
+    "reopened": "reopened",
     "low": "Низкий",
     "medium": "Средний",
     "high": "Высокий",

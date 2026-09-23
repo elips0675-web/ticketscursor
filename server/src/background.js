@@ -198,7 +198,7 @@ async function runCleanup(prisma) {
 
 const PRIORITY_ORDER = ['low', 'medium', 'high', 'critical']
 
-async function runSlaCheck(prisma) {
+export async function runSlaCheck(prisma) {
   const overdue = await prisma.tickets.findMany({
     where: {
       status: { in: ['open', 'in_progress'] },

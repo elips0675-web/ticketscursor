@@ -20,3 +20,9 @@ server/uploads/files/
 
 # MySQL dumps (backup-mysql.ps1 → backups/)
 backups/
+
+# Temporary vitest coverage JSON / diagnostics
+vitest-client.json
+server/vitest-server.json
+test-analysis/client-report.json
+diag-db.mjs

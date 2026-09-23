@@ -32,7 +32,7 @@ import {
   AlertTriangle,
   Sparkles,
 } from 'lucide-react'
-import type { TicketStatus, TicketPriority, AssistantSuggestion } from '@/types'
+import type { TicketMessage, TicketStatus, TicketPriority, AssistantSuggestion } from '@/types'
 import { API_URL } from '@/lib/api'
 
 function parseMentions(value: unknown): number[] {
@@ -49,6 +49,21 @@ function parseMentions(value: unknown): number[] {
   return []
 }
 
+function mapMessageRow(m: Record<string, unknown>): TicketMessage {
+  return {
+    id: m.id,
+    ticketId: m.ticket_id,
+    senderId: m.sender_id,
+    senderName: m.sender_name,
+    senderAvatar: m.sender_avatar || '',
+    text: m.text,
+    attachments: m.attachments ? (typeof m.attachments === 'string' ? JSON.parse(m.attachments) : m.attachments) : [],
+    mentions: parseMentions(m.mentions),
+    createdAt: m.created_at,
+    isInternal: !!m.is_internal,
+  }
+}
+
 function mapTicketDetail(raw: Record<string, unknown>): Ticket {
   return {
     id: raw.id,
@@ -56,6 +71,7 @@ function mapTicketDetail(raw: Record<string, unknown>): Ticket {
     description: raw.description,
     status: raw.status,
     priority: raw.priority,
+    escalationLevel: raw.escalation_level,
     category: raw.category,
     tags: Array.isArray(raw.tags) ? (raw.tags as string[]) : [],
     computerName: raw.computer_name,
@@ -69,24 +85,7 @@ function mapTicketDetail(raw: Record<string, unknown>): Ticket {
           avatar: raw.assigned_avatar || '',
         }
       : undefined,
-    messages: Array.isArray(raw.messages)
-      ? (raw.messages as Record<string, unknown>[]).map((m: Record<string, unknown>) => ({
-          id: m.id,
-          ticketId: m.ticket_id,
-          senderId: m.sender_id,
-          senderName: m.sender_name,
-          senderAvatar: m.sender_avatar || '',
-          text: m.text,
-          attachments: m.attachments
-            ? typeof m.attachments === 'string'
-              ? JSON.parse(m.attachments)
-              : m.attachments
-            : [],
-          mentions: parseMentions(m.mentions),
-          createdAt: m.created_at,
-          isInternal: !!m.is_internal,
-        }))
-      : [],
+    messages: Array.isArray(raw.messages) ? (raw.messages as Record<string, unknown>[]).map(mapMessageRow) : [],
     messages_count: raw.messages_count || (Array.isArray(raw.messages) ? raw.messages.length : 0),
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
@@ -197,7 +196,19 @@ export default function TicketDetail() {
 
   const handleSend = () => {
     if (!messageText.trim() && attachments.length === 0) return
-    addMessage(ticket.id, messageText, isInternal, attachments.length > 0 ? attachments : undefined)
+    const text = messageText
+    const atts = attachments.length > 0 ? attachments : undefined
+    addMessage(ticket.id, text, isInternal, atts)
+      .then((res) => {
+        const msg = res?.msg as Record<string, unknown> | undefined
+        if (!msg || !detailTicket || detailTicket.id !== ticket.id) return
+        setDetailTicket((prev) =>
+          prev && prev.id === ticket.id ? { ...prev, messages: [...prev.messages, mapMessageRow(msg)] } : prev,
+        )
+      })
+      .catch(() => {
+        // onError в мутации уже откатывает оптимистичный кэш
+      })
     setMessageText('')
     setIsInternal(false)
     setAttachments([])
@@ -352,6 +363,7 @@ export default function TicketDetail() {
     in_progress: t('tickets.inProgress'),
     resolved: t('tickets.resolved'),
     closed: t('tickets.closed'),
+    reopened: t('tickets.reopened'),
   }
 
   const priorityLabel: Record<string, string> = {

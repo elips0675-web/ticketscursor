@@ -38,6 +38,7 @@ export default function Tickets() {
     in_progress: t('tickets.inProgress'),
     resolved: t('tickets.resolved'),
     closed: t('tickets.closed'),
+    reopened: t('tickets.reopened'),
   }
   const priorityLabels: Record<string, string> = {
     low: t('tickets.low'),
