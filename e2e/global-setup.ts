@@ -10,6 +10,13 @@ async function globalSetup(_config: FullConfig) {
     return d?.data?.token || d?.token
   })
   await page.evaluate((t) => localStorage.setItem('token', t), token)
+  // user в storage-состоянии нужен ProtectedRoute/RBAC (иначе /admin/* сбрасывает на '/')
+  await page.evaluate(() =>
+    localStorage.setItem(
+      'user',
+      JSON.stringify({ id: 1, name: 'Алексей Петров', email: 'alexey@example.com', role: 'super_admin' }),
+    ),
+  )
   await page.context().storageState({ path: 'auth.json' })
   await browser.close()
 }

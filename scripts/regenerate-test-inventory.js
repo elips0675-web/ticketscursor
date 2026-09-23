@@ -12,12 +12,14 @@ import { relative, resolve } from 'node:path'
 
 const DEST = resolve(import.meta.dirname, '..', 'test-analysis', 'test-inventory.json')
 const E2E_SPECS = [
-  'user-flow.spec.ts', 'tickets.spec.ts', 'sla-autoassign-export.spec.ts', 'search.spec.ts',
-  'profile.spec.ts', 'notifications.spec.ts', 'login.spec.ts', 'ldap-login.spec.ts',
-  'kanban.spec.ts', 'files.spec.ts', 'file-upload.spec.ts', 'crud-lifecycle.spec.ts',
-  'chats.spec.ts', 'calculator.spec.ts', 'admin.spec.ts', 'admin-audit.spec.ts',
+  'admin.spec.ts', 'admin-audit.spec.ts', 'calculator.spec.ts', 'chats.spec.ts',
+  'crud-lifecycle.spec.ts', 'file-upload.spec.ts', 'files.spec.ts', 'kanban.spec.ts',
+  'ldap-login.spec.ts', 'login.spec.ts', 'notifications.spec.ts', 'profile.spec.ts',
+  'rbac-matrix.spec.ts', 'search.spec.ts', 'sla-autoassign-export.spec.ts',
+  'sla-escalation.spec.ts', 'tickets-lifecycle.spec.ts', 'user-flow.spec.ts',
+  'websocket-chat.spec.ts',
 ]
-const E2E_TESTS = 51 // фиксируется прогоном `npx playwright test` (16 файлов)
+const E2E_TESTS = 57 // фиксируется прогоном `npx playwright test` (19 файлов)
 
 function load(file) {
   return JSON.parse(readFileSync(file, 'utf8'))

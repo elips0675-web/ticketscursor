@@ -1,8 +1,9 @@
-===== E2E ТЕСТЫ (Playwright, 16 файлов, 51 тест) =====
+===== E2E ТЕСТЫ (Playwright, 19 файлов, 57 тестов) =====
 Стек: Playwright + TypeScript, базовый URL http://localhost:5173
-Запуск: npx playwright test
-Файлы: login, tickets, chats, admin, admin-audit, search, kanban, files, file-upload, notifications,
-        profile, calculator, ldap-login, sla-autoassign-export, user-flow, crud-lifecycle
+Запуск: npx playwright test (зелёный прогон 23.09.2026)
+Файлы: admin, admin-audit, calculator, chats, crud-lifecycle, file-upload, files, kanban,
+        ldap-login, login, notifications, profile, rbac-matrix, search, sla-autoassign-export,
+        sla-escalation, tickets-lifecycle, user-flow, websocket-chat
 
 ===== FILE: e2e/global-setup.ts =====
 import { chromium, type FullConfig } from '@playwright/test'

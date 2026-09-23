@@ -392,6 +392,7 @@ router.post('/:id/messages', idempotent, addMessageValidation, async (req, res) 
       },
     })
     await prisma.tickets.update({ where: { id: ticketId }, data: { updated_at: new Date() } })
+    await invalidateCache('cache:*:/api/tickets*')
     enqueueEvent('ticket:message', null, { ticketId, message: msg })
     try {
       await notifyTicketMessage(ticketId, req.user.userId, req.user.name, text)
@@ -610,7 +611,7 @@ router.delete('/:id', requireRole('admin', 'senior_agent'), async (req, res) => 
     const result = await deleteTicket(ticketId)
     if (!result) return res.status(404).json({ success: false, message: 'Ticket not found' })
     if (result.alreadyDeleted) return res.status(200).json({ success: true, data: result, message: 'Ticket already deleted' })
-    await invalidateCache('cache:*:/api/tickets')
+    await invalidateCache('cache:*:/api/tickets*')
     enqueueEvent('ticket:deleted', null, { ticketId, deletedBy: req.user.userId, ticketTitle: result.title })
     logAudit({ userId: req.user.userId, userName: req.user.name, action: 'deleted', entity: 'ticket', entityId: ticketId, details: { title: result.title } })
     res.json({ success: true, data: result })

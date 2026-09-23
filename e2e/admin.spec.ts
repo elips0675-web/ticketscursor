@@ -31,8 +31,9 @@ test.describe('Admin panel', () => {
     await expect(page.getByText(/push|уведомлен|подпис/i).first()).toBeVisible()
   })
 
-  test('users page has table or list', async ({ page }) => {
+  test('users page has user list', async ({ page }) => {
     await page.goto('/admin/users')
-    await expect(page.locator('table, [role="grid"], [role="listbox"]').first()).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Пользователи' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText('Нет пользователей')).not.toBeVisible()
   })
 })

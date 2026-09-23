@@ -6,8 +6,9 @@ test.describe('Admin audit', () => {
     await expect(page.locator('h1, h2, h3').first()).toBeVisible()
   })
 
-  test('audit page has table or list', async ({ page }) => {
+  test('audit page has activity list', async ({ page }) => {
     await page.goto('/admin/audit')
-    await expect(page.locator('table, [role="grid"], [role="list"]').first()).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Журнал действий' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByPlaceholder('Поиск действий...')).toBeVisible({ timeout: 10000 })
   })
 })

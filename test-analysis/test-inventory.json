@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-22T10:50:56.924Z",
+  "generated": "2026-09-23T10:13:15.134Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
@@ -13,7 +13,7 @@
   "server": {
     "files": 47,
     "suites": 311,
-    "tests": 778,
+    "tests": 780,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
@@ -21,31 +21,34 @@
   "total": {
     "files": 108,
     "suites": 456,
-    "tests": 1285,
+    "tests": 1287,
     "all_passing": true
   },
   "e2e": {
-    "files": 16,
-    "tests": 51,
+    "files": 19,
+    "tests": 57,
     "all_passing": true,
     "run_command": "npx playwright test",
     "specs": [
-      "user-flow.spec.ts",
-      "tickets.spec.ts",
-      "sla-autoassign-export.spec.ts",
-      "search.spec.ts",
-      "profile.spec.ts",
-      "notifications.spec.ts",
-      "login.spec.ts",
-      "ldap-login.spec.ts",
-      "kanban.spec.ts",
-      "files.spec.ts",
-      "file-upload.spec.ts",
-      "crud-lifecycle.spec.ts",
-      "chats.spec.ts",
-      "calculator.spec.ts",
       "admin.spec.ts",
-      "admin-audit.spec.ts"
+      "admin-audit.spec.ts",
+      "calculator.spec.ts",
+      "chats.spec.ts",
+      "crud-lifecycle.spec.ts",
+      "file-upload.spec.ts",
+      "files.spec.ts",
+      "kanban.spec.ts",
+      "ldap-login.spec.ts",
+      "login.spec.ts",
+      "notifications.spec.ts",
+      "profile.spec.ts",
+      "rbac-matrix.spec.ts",
+      "search.spec.ts",
+      "sla-autoassign-export.spec.ts",
+      "sla-escalation.spec.ts",
+      "tickets-lifecycle.spec.ts",
+      "user-flow.spec.ts",
+      "websocket-chat.spec.ts"
     ]
   },
   "frontend_files": [
@@ -388,6 +391,10 @@
       "tests": 13
     },
     {
+      "file": "server/src/__tests__/limiters.test.js",
+      "tests": 12
+    },
+    {
       "file": "server/src/__tests__/sla.test.js",
       "tests": 11
     },
@@ -397,10 +404,6 @@
     },
     {
       "file": "server/src/__tests__/background.expanded.test.js",
-      "tests": 10
-    },
-    {
-      "file": "server/src/__tests__/limiters.test.js",
       "tests": 10
     },
     {

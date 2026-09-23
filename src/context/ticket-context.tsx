@@ -155,12 +155,12 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       const raw = body.data || body
       return raw.map(mapEmployee)
     },
-    enabled: !!token,
+    enabled: !!token && user?.role !== 'requester',
   })
 
   const tickets = ticketsQuery.data ?? []
   const employees = employeesQuery.data ?? []
-  const loading = ticketsQuery.isLoading || employeesQuery.isLoading
+  const loading = ticketsQuery.isLoading || (user?.role !== 'requester' && employeesQuery.isLoading)
 
   const { socket } = useSocket()
   useEffect(() => {

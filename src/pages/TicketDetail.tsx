@@ -256,6 +256,28 @@ export default function TicketDetail() {
     setTagsDraft('')
   }
 
+  const handleStatusChange = (value: string) => {
+    const status = value as TicketStatus
+    setDetailTicket((prev) => (prev && prev.id === ticket.id ? { ...prev, status } : prev))
+    updateTicketStatus(ticket.id, status)
+  }
+
+  const handlePriorityChange = (value: string) => {
+    const priority = value as TicketPriority
+    setDetailTicket((prev) => (prev && prev.id === ticket.id ? { ...prev, priority } : prev))
+    updateTicketPriority(ticket.id, priority)
+  }
+
+  const handleAssignChange = (value: string) => {
+    const emp = employees.find((e) => e.id === Number(value))
+    setDetailTicket((prev) =>
+      prev && prev.id === ticket.id
+        ? { ...prev, assignedTo: emp ? { id: emp.id, name: emp.name, avatar: emp.avatar || '' } : null }
+        : prev,
+    )
+    assignTicket(ticket.id, Number(value))
+  }
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -659,7 +681,7 @@ export default function TicketDetail() {
                   <label htmlFor="ticket-status" className="text-xs font-bold text-muted-foreground">
                     {t('tickets.status')}
                   </label>
-                  <Select value={ticket.status} onValueChange={(v) => updateTicketStatus(ticket.id, v as TicketStatus)}>
+                  <Select value={ticket.status} onValueChange={handleStatusChange}>
                     <SelectTrigger id="ticket-status">
                       <SelectValue />
                     </SelectTrigger>
@@ -676,10 +698,7 @@ export default function TicketDetail() {
                   <label htmlFor="ticket-priority" className="text-xs font-bold text-muted-foreground">
                     {t('tickets.priority')}
                   </label>
-                  <Select
-                    value={ticket.priority}
-                    onValueChange={(v) => updateTicketPriority(ticket.id, v as TicketPriority)}
-                  >
+                  <Select value={ticket.priority} onValueChange={handlePriorityChange}>
                     <SelectTrigger id="ticket-priority">
                       <SelectValue />
                     </SelectTrigger>
@@ -698,7 +717,7 @@ export default function TicketDetail() {
                   </label>
                   <Select
                     value={ticket.assignedTo ? String(ticket.assignedTo.id) : ''}
-                    onValueChange={(v) => assignTicket(ticket.id, Number(v))}
+                    onValueChange={handleAssignChange}
                   >
                     <SelectTrigger id="ticket-assign">
                       <SelectValue placeholder={t('tickets.selectEmployee')} />

@@ -100,11 +100,11 @@
 
 ────────────────────────────────────────────────────────────────────────────
 
-ТЕСТЫ (1264 теста, 0 failures)
+ТЕСТЫ (1287 тестов, 0 failures)
 
    • Клиентские: 507/507 (61 файл, vitest + jsdom + RTL)
-   • Серверные: 757/757 (47 файлов, vitest + supertest)
-   • E2E: 16 spec'ов / 51 тест (Playwright) + 17/17 страниц (check-console.mjs)
+   • Серверные: 780/780 (47 файлов, vitest + supertest)
+   • E2E: 19 spec'ов / 57 тестов (Playwright, зелёный прогон 23.09) + 17/17 страниц (check-console.mjs)
    • Coverage: клиент 66.69% stmts, сервер 67.74% stmts (замер 22.09.2026)
    • ESLint: 0 errors, 56 warnings
    • Type-check + build: успешно
@@ -660,10 +660,22 @@
 - **Инвентарь (правило 10)**: `test-inventory.json` перегенерирован из фактического прогона (**108 файлов / 1285 тестов**: клиент 61/507, сервер 47/778, 0 failures); `server-tests.txt` 757→**778** (+21 тест socket); E2E 16 spec / 51
 - **Проверки**: server vitest 47/778 ✅, клиент vitest 61/507 ✅, build/lint/type-check/check-console — см. ниже
 
+### Этап 55 — E2E: smoke → lifecycle, 4 спека до зелёного + полный e2e-прогон 57/57 (23.09.2026)
+- **tickets-lifecycle.spec.ts** (4 теста): create через API → тикет в списке → детали → комментарий (виден в UI + messages API) → смена статуса в UI (`in_progress` → `resolved` через `#ticket-status`, API-проверка на каждом шаге) → reopen. Попутно в TicketDetail добавлены `handleStatusChange`/`handlePriorityChange`/`handleAssignChange` — синхронизируют `detailTicket`, чтобы Select/бейдж не «залипали» на старом статусе
+- **rbac-matrix.spec.ts** (2 теста): requester видит только свои тикеты (agent — свои+неназначенные, senior_agent — все); requester в UI не видит блок управления статусом. **Корень 403-редиректа**: TimeTrackingCard безусловно дёргал `GET /tickets/:id/time` (requireRole admin/senior_agent/agent) → добавлен гейт `canTrack` по роли + `return null`
+- **sla-escalation.spec.ts** (2 теста): `due_at` следует из `SLA_RESPONSE_HOURS`; просроченный тикет получает эскалацию + бейдж «Эскалация ур. N». **Фикс i18n**: `{{{var}}}` → `{{- var}}` (неэкранируемая интерполяция) в ru/en.json (4 ключа)
+- **websocket-chat.spec.ts** (2 браузера): сообщение из первого окна появляется во втором без перезагрузки (страница `/chats` при живом WS)
+- **Фиксы кода под e2e**:
+  - Кэш тикетов: `DELETE /tickets/:id` и `POST /:id/messages` теперь инвалидируют `cache:*:/api/tickets*` (были stale-ответы после мутаций)
+  - Rate limiter (`limits.js`): в dev-режиме (`NODE_ENV` не prod/test) лимиты подняты до 1000 — auth 10/мин (dev-login × 9 тестов) ломал весь e2e-прогон 429-ми; в production значения прежние (10/100/30)
+- **Починены 9 pre-existing падений e2e** (тестовый слой, приложение не менялось): `global-setup.ts` кладёт `user` (super_admin) в storageState — без него `ProtectedRoute adminOnly` сбрасывал `/admin/*` на `/`; regex палитры `/поиск|search/` → `/поищите|поиск|search/` (плейсхолдер «Введите команду или поищите...»); user-flow проверяет роль «Super Admin» (имя в UI не рендерится — только роль); files → `getByRole('heading')` (strict mode); админ-тесты «table or list» → реальные заголовки/списки (в UI Card-списки, не `<table>`); login — под фактическое поведение `/`
+- **Инвентарь (правило 10)**: `test-inventory.json` перегенерирован из фактического прогона (**108 файлов / 1287 тестов**: клиент 61/507, сервер 47/780, 0 failures); `frontend-tests.txt`/`server-tests.txt`/`e2e-tests.txt` (19 файлов / 57 тестов) обновлены; `regenerate-test-inventory.js` — список e2e-спеков приведён к фактическим 19
+- **Проверки**: полный `npx playwright test` **57/57** (19 файлов); `node check-console.mjs` 17/17 ALL OK; клиент vitest 61/507 ✅, сервер vitest 47/780 ✅, `npm run lint` / `npm run type-check` / `npm run build` — зелёные
+
 ## ПЛАН ДОРАБОТКИ ПО ЭТАПАМ
 
 - ~~Этап 54 — socket.js coverage 22%→60% (Промт 1 «Доделать.rtf»: JWT/disconnect, rate-limit, комнаты, typing, read, reconnect — реальный сервер порт 0)~~ ✅ **закрыт 22.09** — см. Этап 54 выше
-- Этап 55 — E2E ticket-lifecycle вместо smoke (Промт 2: create→assign→status→resolved→reopen + API-проверки)
+- ~~Этап 55 — E2E ticket-lifecycle вместо smoke (Промт 2: create→assign→status→resolved→reopen + API-проверки)~~ ✅ **закрыт 23.09** — см. Этап 55 выше
 - Этап 56 — IDOR-аудит всех `:id` эндпоинтов + 5 тестов (Промт 3)
 - Этап 57 — N+1 audit: prisma log query, топ-10 эндпоинтов (Промт 5); FULLTEXT/индексы, каскады FK, soft-delete тесты
 - Этап 58 — Админка: RBAC-матрица UI, backup/restore, audit log фильтры, health dashboard

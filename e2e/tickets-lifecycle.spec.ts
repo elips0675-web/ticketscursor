@@ -143,13 +143,13 @@ test.describe('E2E: Жизненный цикл тикета через данн
 
     await page.locator('#ticket-status').click()
     await page.getByText('В работе', { exact: true }).click()
-    await expect(page.getByText('В работе').first()).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('#ticket-status')).toContainText('В работе', { timeout: 10000 })
     let detail = await apiGetTicket(page, token, ticket.id)
     expect(detail.body.data.status).toBe('in_progress')
 
     await page.locator('#ticket-status').click()
     await page.getByText('Решённые', { exact: true }).click()
-    await expect(page.getByText('Решённые').first()).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('#ticket-status')).toContainText('Решённые', { timeout: 10000 })
     detail = await apiGetTicket(page, token, ticket.id)
     expect(detail.body.data.status).toBe('resolved')
 

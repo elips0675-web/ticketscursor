@@ -52,6 +52,7 @@ function mapEntry(raw: TimeEntryRaw): TimeEntry {
 export default function TimeTrackingCard({ ticketId }: { ticketId: number }) {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const canTrack = user ? TRACK_ROLES.includes(user.role) : false
   const [data, setData] = useState<TimeDataRaw | null>(null)
   const [minutes, setMinutes] = useState('')
   const [description, setDescription] = useState('')
@@ -60,13 +61,14 @@ export default function TimeTrackingCard({ ticketId }: { ticketId: number }) {
   const [now, setNow] = useState(() => Date.now())
 
   const load = useCallback(async () => {
+    if (!canTrack) return
     try {
       const body = await api.get<TimeDataRaw>(`/tickets/${ticketId}/time`)
       setData(body)
     } catch {
       // api helper already surfaces the error toast
     }
-  }, [ticketId])
+  }, [ticketId, canTrack])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -81,7 +83,7 @@ export default function TimeTrackingCard({ ticketId }: { ticketId: number }) {
     return () => clearInterval(interval)
   }, [data?.activeTimer])
 
-  if (!user || !TRACK_ROLES.includes(user.role)) return null
+  if (!user || !canTrack) return null
 
   const total = data?.totalMinutes ?? 0
   const totalHours = Math.floor(total / 60)
@@ -97,9 +99,7 @@ export default function TimeTrackingCard({ ticketId }: { ticketId: number }) {
     const h = Math.floor(elapsed / 3600)
     const m = Math.floor((elapsed % 3600) / 60)
     const s = elapsed % 60
-    return h > 0
-      ? t('tickets.timeTimerFormat', { h, m, s })
-      : t('tickets.timeTimerMinutes', { m, s })
+    return h > 0 ? t('tickets.timeTimerFormat', { h, m, s }) : t('tickets.timeTimerMinutes', { m, s })
   })()
 
   const canDelete = (entryUserId: number) =>
@@ -171,7 +171,13 @@ export default function TimeTrackingCard({ ticketId }: { ticketId: number }) {
             {t('tickets.timeTotal', { time: totalText })}
           </p>
           {data?.activeTimer ? (
-            <Button size="sm" variant="secondary" data-testid="time-stop-timer" onClick={handleStop} disabled={busy === 'timer'}>
+            <Button
+              size="sm"
+              variant="secondary"
+              data-testid="time-stop-timer"
+              onClick={handleStop}
+              disabled={busy === 'timer'}
+            >
               <Square className="w-3.5 h-3.5" />
               {t('tickets.timeStop')}
             </Button>
@@ -203,7 +209,12 @@ export default function TimeTrackingCard({ ticketId }: { ticketId: number }) {
               placeholder={t('tickets.timeMinutes')}
               className="w-24"
             />
-            <Button size="sm" data-testid="time-add-button" onClick={handleAdd} disabled={busy === 'add' || !minutes.trim()}>
+            <Button
+              size="sm"
+              data-testid="time-add-button"
+              onClick={handleAdd}
+              disabled={busy === 'add' || !minutes.trim()}
+            >
               <Plus className="w-3.5 h-3.5" />
               {t('tickets.timeAddButton')}
             </Button>

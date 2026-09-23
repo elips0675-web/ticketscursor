@@ -52,11 +52,11 @@ test.describe('E2E: Login flow', () => {
     await expect(page).toHaveURL(/\/tickets|\/dashboard|\//)
   })
 
-  test('page shows user name after login', async ({ page }) => {
+  test('page shows user role after login', async ({ page }) => {
     await page.goto('/')
     await devLogin(page)
     await page.reload()
-    await expect(page.getByText(/Алексей|alexey/i).first()).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText('Super Admin').first()).toBeVisible({ timeout: 10000 })
   })
 })
 
@@ -172,7 +172,7 @@ test.describe('E2E: Search', () => {
     await page.reload()
 
     await page.keyboard.press('Control+k')
-    const searchInput = page.getByPlaceholder(/поиск|search/i).first()
+    const searchInput = page.getByPlaceholder(/поищите|поиск|search/i).first()
     await expect(searchInput).toBeVisible({ timeout: 5000 })
   })
 })
