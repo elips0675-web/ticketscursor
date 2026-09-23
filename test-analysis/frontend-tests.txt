@@ -1,7 +1,7 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 61 файл / 145 suite / 507 тестов (все PASS, vitest --reporter=json от 23.09.2026)
+Реальный результат: 62 файла / 147 suite / 520 тестов (все PASS, vitest --reporter=json от 23.09.2026)
 
 ===== ФАЙЛЫ (61 шт, все реальные, сгенерировано скриптом) =====
 

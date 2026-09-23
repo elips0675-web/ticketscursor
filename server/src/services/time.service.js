@@ -56,9 +56,16 @@ export async function getActiveTimer(ticketId, userId) {
 export async function startTimer(ticketId, userId) {
   const existing = await getActiveTimer(ticketId, userId)
   if (existing) return existing
-  return prisma.ticket_timers.create({
-    data: { ticket_id: ticketId, user_id: userId, started_at: new Date() },
-  })
+  try {
+    return await prisma.ticket_timers.create({
+      data: { ticket_id: ticketId, user_id: userId, started_at: new Date() },
+    })
+  } catch (err) {
+    // Гонка: параллельный запрос уже создал таймер (unique ticket_id_user_id) — возвращаем его
+    const created = await getActiveTimer(ticketId, userId)
+    if (created) return created
+    throw err
+  }
 }
 
 export async function stopTimer(ticketId, userId) {

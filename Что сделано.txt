@@ -687,12 +687,29 @@
 - **Инвентарь (правило 10)**: `test-inventory.json` перегенерирован из фактического прогона (**109 файлов / 1298 тестов**: клиент 61/507, сервер 48/791, 0 failures); `server-tests.txt` 780→**791** (+11 IDOR); `frontend-tests.txt` — без изменений (клиент не трогали)
 - **Проверки**: сервер vitest **48/791** ✅ (coverage stmts 70.09 / branches 63.73 / funcs 69.26 / lines 71.19 — пороги 67/61/65/68 пройдены), клиент vitest 61/507 ✅, полный `npx playwright test` **57/57** ✅, `node check-console.mjs` **17/17 ALL OK**, `npm run lint` (0 errors / 56 warnings) ✅, `npm run type-check` ✅, `npm run build` ✅
 
+### Этап 57 — N+1 и индексы: запросы в циклах, Race-тесты, soft-delete (23.09.2026)
+- **N+1 устранён в циклах (Промт 5, БД #3,4,7,8 + Дипсик P1)**:
+  - `files.service.js getFolders` → `_count`-include вместо цикла count
+  - `setTicketCustomFields` → один `findMany` по `id in [...]` + Map + цикл upsert (было N одиночных findUnique)
+  - `notifySlaBreached` → один `notifications.findMany` по `user_id in [...targets]` + Set (было findUnique на каждую цель)
+  - `bulkUpdateTickets` → status/priority через `Promise.all` (батч апдейтов), assign через один `tickets.updateMany`; попутно почищен `no-useless-assignment` (lint)
+  - `chats.js POST /:id/messages` и `socket.js message:send` → `Promise.all` по участникам (было последовательные await)
+  - socket offline-delivery → batch `chat_read_receipts.findMany` по `chat_id in [...]` (без findFirst на сообщение)
+  - `processRecurrences` → `take: 100` (list без limit)
+- **Индексы**: `schema.prisma` — `@@index` на tickets (status, priority, assigned_to, created_by, updated_at, created_at) по seed.sql; FULLTEXT в seed не добавлялся (создаётся knex-миграциями `20260710_*`); каскады FK (onDelete) — сверены, только отчёт
+- **Race-фиксы**: `collision.service.js acquireLock` атомарно через `updateMany` с предусловиями (TOCTOU); `time.service.js startTimer` — try/catch unique-violation (P2002) с re-read; `outbox-worker.js` — guard `if (!Array.isArray(rows)) return`
+- **Soft-delete тесты** `soft-delete.test.js` (7): «нельзя вернуть удалённого» (deleted → повторный delete → alreadyDeleted), 404 на GET /:id и /:id/messages, список без удалённых
+- **Race-тесты (4 файла, 14 тестов)**: `ticket-lock.race.test.js` (6 — параллельный acquireLock, только один победитель), `ticket-status.race.test.js` (2 — параллельный `resolved`/`closed`), `time-timer.race.test.js` (2 — параллельный startTimer, одна строка), `outbox.delivery.test.js` (4 — консьюмер + идемпотентность). Токены — user 1 super_admin (проходит все requireRole); `updateStatusSchema` не содержит `reopened`, поэтому повторный race переписан на валидный `closed`
+- **Клиент**: `Csatisfaction.tsx` 0%→**выше порога** (+13 тестов) — закрыл разрыв coverage lines 68.92→**70.23** (пороги не менялись)
+- **Инвентарь (правило 10)**: `test-inventory.json` перегенерирован из фактического прогона (**115 файлов / 1328 тестов**: клиент 62/520, сервер 53/808, 0 failures); `frontend-tests.txt` 61/145/507→**62/147/520**, `server-tests.txt` 48/315/791→**53/325/808**
+- **Проверки**: сервер vitest **53/808** ✅ (coverage stmts 71.55 / branches 64.66 / funcs 70.97 / lines 72.61 — пороги 67/61/65/68), клиент vitest **62/520** ✅ (coverage 67.62/59.65/58.39/70.23 — пороги 66/58/57/69), полный `npx playwright test` **57/57** ✅ (1-й прогон — флак tickets-lifecycle, повтор — зелёный), `node check-console.mjs` **17/17 ALL OK**, `npm run lint` (0 errors / 56 warnings) ✅, `npm run type-check` ✅, `npm run build` ✅
+
 ## ПЛАН ДОРАБОТКИ ПО ЭТАПАМ
 
 - ~~Этап 54 — socket.js coverage 22%→60% (Промт 1 «Доделать.rtf»: JWT/disconnect, rate-limit, комнаты, typing, read, reconnect — реальный сервер порт 0)~~ ✅ **закрыт 22.09** — см. Этап 54 выше
 - ~~Этап 55 — E2E ticket-lifecycle вместо smoke (Промт 2: create→assign→status→resolved→reopen + API-проверки)~~ ✅ **закрыт 23.09** — см. Этап 55 выше
 - ~~Этап 56 — IDOR-аудит всех `:id` эндпоинтов + 5 тестов (Промт 3)~~ ✅ **закрыт 23.09** — см. Этап 56 выше
-- Этап 57 — N+1 audit: prisma log query, топ-10 эндпоинтов (Промт 5); FULLTEXT/индексы, каскады FK, soft-delete тесты
+- ~~Этап 57 — N+1 audit: prisma log query, топ-10 эндпоинтов (Промт 5); FULLTEXT/индексы, каскады FK, soft-delete тесты~~ ✅ **закрыт 23.09** — см. Этап 57 выше
 - Этап 58 — Админка: RBAC-матрица UI, backup/restore, audit log фильтры, health dashboard
 - Этап 59 — Secrets rotation (2-ключевой JWT), idempotency TTL, транзакции multi-step
 - Этап 60 — Правило порогов coverage зафиксировать в AGENTS.md (буфер vs обязательные тесты); финальный re-аудит свежей папкой test-analysis

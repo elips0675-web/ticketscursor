@@ -1,3 +1,7 @@
+изучи в D:\Tickets Cursor nout AI_AGENT_SPEC.md , нужно что-то добавить в файлы проекта D:\Tickets Cursor nout\repo ? 
+
+
+
 Изучить Оценка qwen  и дипсик
 Изучить тесты qwen  и дипсик
 

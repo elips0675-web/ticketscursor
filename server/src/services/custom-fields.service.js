@@ -88,9 +88,15 @@ export async function getTicketCustomFields(ticketId) {
 
 export async function setTicketCustomFields(ticketId, fields) {
   if (!Array.isArray(fields)) return []
+  const fieldIds = [...new Set(fields.map(f => f.fieldId).filter(Boolean))]
+  if (fieldIds.length === 0) return []
+  const defs = await prisma.custom_field_definitions.findMany({
+    where: { id: { in: fieldIds } },
+  })
+  const defById = new Map(defs.map(d => [d.id, d]))
   const results = []
   for (const { fieldId, value } of fields) {
-    const def = await prisma.custom_field_definitions.findUnique({ where: { id: fieldId } })
+    const def = defById.get(fieldId)
     if (!def || !def.enabled) continue
     if (def.required && (!value || value.trim() === '')) {
       const err = new Error(`Field "${def.name}" is required`)

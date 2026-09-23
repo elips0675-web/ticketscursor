@@ -20,6 +20,7 @@ export function startOutboxWorker(getIO) {
         orderBy: { created_at: 'asc' },
         take: BATCH_SIZE,
       })
+      if (!Array.isArray(rows)) return
 
       for (const row of rows) {
         try {

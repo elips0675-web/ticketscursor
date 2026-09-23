@@ -21,12 +21,15 @@ export async function getFolders(userId, page, limit) {
         where: { deleted_at: null },
         orderBy: { created_at: 'desc' }, take: limit, skip: offset,
       },
+      _count: {
+        select: { files: { where: { deleted_at: null } } },
+      },
     },
     orderBy: { name: 'asc' },
   })
   for (const f of folders) {
     f.files = f.files.map(mapFile)
-    f.totalFiles = await prisma.files.count({ where: { folder_id: f.id, deleted_at: null } })
+    f.totalFiles = f._count.files
   }
   return folders
 }

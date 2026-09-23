@@ -81,6 +81,12 @@ model tickets {
   csat_surveys         csat_surveys[]
   custom_field_values  custom_field_values[]
 
+  @@index([status])
+  @@index([priority])
+  @@index([assigned_to])
+  @@index([created_by])
+  @@index([updated_at])
+  @@index([created_at])
   @@index([locked_by])
 }
 

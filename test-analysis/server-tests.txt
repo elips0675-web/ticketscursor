@@ -1,7 +1,7 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 48 файлов / 315 suite / 791 тестов (все PASS, vitest --reporter=json от 23.09.2026)
+Реальный результат: 53 файлов / 325 suite / 808 тестов (все PASS, vitest --reporter=json от 23.09.2026)
 
 ===== ФАЙЛЫ (48 шт, все реальные, сгенерировано скриптом) =====
 

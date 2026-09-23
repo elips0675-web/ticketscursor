@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('../../prisma.js', () => ({
   default: {
     file_folders: { findMany: vi.fn(), create: vi.fn() },
-    files: { create: vi.fn(), update: vi.fn(), count: vi.fn() },
+    files: { create: vi.fn(), update: vi.fn() },
   },
 }))
 
@@ -15,14 +15,16 @@ beforeEach(() => { vi.clearAllMocks() })
 describe('getFolders', () => {
   it('returns folders with mapped files', async () => {
     prisma.file_folders.findMany.mockResolvedValue([
-      { id: 1, name: 'Docs', user_id: 1, is_shared: false, files: [{ id: 1, name: 'readme.txt', size: 100, type: 'text', folder_id: 1, path: '/docs/readme.txt', created_at: new Date() }] },
+      { id: 1, name: 'Docs', user_id: 1, is_shared: false, files: [{ id: 1, name: 'readme.txt', size: 100, type: 'text', folder_id: 1, path: '/docs/readme.txt', created_at: new Date() }], _count: { files: 1 } },
     ])
-    prisma.files.count.mockResolvedValue(1)
     const result = await getFolders(1, 1, 10)
     expect(result).toHaveLength(1)
     expect(result[0].files[0]).toHaveProperty('folderId')
     expect(result[0].files[0]).not.toHaveProperty('folder_id')
     expect(result[0].totalFiles).toBe(1)
+    expect(prisma.file_folders.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ include: expect.objectContaining({ _count: { select: { files: { where: { deleted_at: null } } } } }) })
+    )
   })
 
   it('returns empty array when no folders', async () => {

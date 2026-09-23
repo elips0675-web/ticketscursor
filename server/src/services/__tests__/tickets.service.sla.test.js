@@ -8,6 +8,7 @@ vi.mock('../../prisma.js', () => ({
       count: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     ticket_messages: { findMany: vi.fn(), count: vi.fn() },
     employees: { findUnique: vi.fn(), findMany: vi.fn(), count: vi.fn() },
@@ -341,11 +342,14 @@ describe('bulkUpdateTickets', () => {
       { id: 1, status: 'open', priority: 'medium', category: 'support', resolved_at: null, first_response_at: null },
     ])
     prisma.employees.findUnique.mockResolvedValue({ id: 7 })
-    prisma.tickets.update.mockResolvedValue({})
+    prisma.tickets.updateMany.mockResolvedValue({ count: 1 })
     const result = await bulkUpdateTickets({ ids: [1], action: 'assign', employeeId: 7 })
     expect(result.updated).toBe(1)
-    const updateData = prisma.tickets.update.mock.calls[0][0].data
-    expect(updateData.assigned_to).toBe(7)
+    expect(prisma.tickets.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: [1] }, deleted_at: null },
+      data: expect.objectContaining({ assigned_to: 7 }),
+    })
+    expect(prisma.tickets.update).not.toHaveBeenCalled()
   })
 
   it('throws 404 when assigning to missing employee', async () => {

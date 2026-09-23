@@ -239,15 +239,14 @@ export async function bulkUpdateTickets({ ids, action, status, employeeId, prior
   })
   if (rows.length === 0) return { updated: 0, skipped: ids.length, results: [] }
 
-  let results = []
   if (action === 'status') {
     const now = new Date()
     const settings = await getSettings().catch(() => ({}))
-    for (const row of rows) {
+    const validRows = rows.filter(row => {
       const transitions = VALID_TRANSITIONS[row.status]
-      if (!transitions || !transitions.includes(status)) {
-        continue
-      }
+      return transitions && transitions.includes(status)
+    })
+    await Promise.all(validRows.map(row => {
       const updateData = {
         status,
         updated_at: now,
@@ -256,24 +255,24 @@ export async function bulkUpdateTickets({ ids, action, status, employeeId, prior
       if (status === 'in_progress' && !row.first_response_at) {
         updateData.first_response_at = now
       }
-      await prisma.tickets.update({ where: { id: row.id }, data: updateData })
-      results.push({ id: row.id, status })
-    }
+      return prisma.tickets.update({ where: { id: row.id }, data: updateData })
+    }))
+    const results = validRows.map(row => ({ id: row.id, status }))
     return { updated: results.length, skipped: ids.length - results.length, results }
   }
 
   if (action === 'priority') {
     const settings = await getSettings().catch(() => ({}))
     const now = new Date()
-    for (const row of rows) {
+    await Promise.all(rows.map(row => {
       const slaHours = getSlaHours(priority, row.category, settings)
       const dueAt = new Date(now.getTime() + slaHours * 60 * 60 * 1000)
-      await prisma.tickets.update({
+      return prisma.tickets.update({
         where: { id: row.id },
         data: { priority, due_at: dueAt, updated_at: now },
       })
-      results.push({ id: row.id, priority })
-    }
+    }))
+    const results = rows.map(row => ({ id: row.id, priority }))
     return { updated: results.length, skipped: ids.length - results.length, results }
   }
 
@@ -287,10 +286,11 @@ export async function bulkUpdateTickets({ ids, action, status, employeeId, prior
       }
     }
     const now = new Date()
-    for (const row of rows) {
-      await prisma.tickets.update({ where: { id: row.id }, data: { assigned_to: employeeId || null, updated_at: now } })
-      results.push({ id: row.id, assigned_to: employeeId || null })
-    }
+    await prisma.tickets.updateMany({
+      where: { id: { in: ids }, deleted_at: null },
+      data: { assigned_to: employeeId || null, updated_at: now },
+    })
+    const results = rows.map(row => ({ id: row.id, assigned_to: employeeId || null }))
     return { updated: results.length, skipped: ids.length - results.length, results }
   }
 

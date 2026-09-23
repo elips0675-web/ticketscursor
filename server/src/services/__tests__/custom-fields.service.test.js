@@ -104,21 +104,24 @@ describe('custom-fields.service', () => {
 
   describe('setTicketCustomFields', () => {
     it('upserts field values', async () => {
-      prismaMock.custom_field_definitions.findUnique.mockResolvedValue({
-        id: 1, name: 'Asset', type: 'text', enabled: true, required: false, options: null,
-      })
+      prismaMock.custom_field_definitions.findMany.mockResolvedValue([
+        { id: 1, name: 'Asset', type: 'text', enabled: true, required: false, options: null },
+      ])
       prismaMock.custom_field_values.upsert.mockResolvedValue({ id: 1, field_id: 1, ticket_id: 10, value: 'ABC-123' })
 
       const { setTicketCustomFields } = await import('../custom-fields.service.js')
       const results = await setTicketCustomFields(10, [{ fieldId: 1, value: 'ABC-123' }])
       expect(results).toHaveLength(1)
       expect(prismaMock.custom_field_values.upsert).toHaveBeenCalled()
+      expect(prismaMock.custom_field_definitions.findMany).toHaveBeenCalledWith({
+        where: { id: { in: [1] } },
+      })
     })
 
     it('skips disabled fields', async () => {
-      prismaMock.custom_field_definitions.findUnique.mockResolvedValue({
-        id: 1, name: 'Disabled', type: 'text', enabled: false,
-      })
+      prismaMock.custom_field_definitions.findMany.mockResolvedValue([
+        { id: 1, name: 'Disabled', type: 'text', enabled: false },
+      ])
 
       const { setTicketCustomFields } = await import('../custom-fields.service.js')
       const results = await setTicketCustomFields(10, [{ fieldId: 1, value: 'X' }])
@@ -126,9 +129,9 @@ describe('custom-fields.service', () => {
     })
 
     it('rejects required field with empty value', async () => {
-      prismaMock.custom_field_definitions.findUnique.mockResolvedValue({
-        id: 1, name: 'Required', type: 'text', enabled: true, required: true, options: null,
-      })
+      prismaMock.custom_field_definitions.findMany.mockResolvedValue([
+        { id: 1, name: 'Required', type: 'text', enabled: true, required: true, options: null },
+      ])
 
       const { setTicketCustomFields } = await import('../custom-fields.service.js')
       await expect(setTicketCustomFields(10, [{ fieldId: 1, value: '' }]))
@@ -136,9 +139,9 @@ describe('custom-fields.service', () => {
     })
 
     it('rejects non-numeric value for number field', async () => {
-      prismaMock.custom_field_definitions.findUnique.mockResolvedValue({
-        id: 1, name: 'Count', type: 'number', enabled: true, required: false, options: null,
-      })
+      prismaMock.custom_field_definitions.findMany.mockResolvedValue([
+        { id: 1, name: 'Count', type: 'number', enabled: true, required: false, options: null },
+      ])
 
       const { setTicketCustomFields } = await import('../custom-fields.service.js')
       await expect(setTicketCustomFields(10, [{ fieldId: 1, value: 'abc' }]))
@@ -146,9 +149,9 @@ describe('custom-fields.service', () => {
     })
 
     it('rejects invalid select option', async () => {
-      prismaMock.custom_field_definitions.findUnique.mockResolvedValue({
-        id: 1, name: 'Category', type: 'select', enabled: true, required: false, options: ['A', 'B'],
-      })
+      prismaMock.custom_field_definitions.findMany.mockResolvedValue([
+        { id: 1, name: 'Category', type: 'select', enabled: true, required: false, options: ['A', 'B'] },
+      ])
 
       const { setTicketCustomFields } = await import('../custom-fields.service.js')
       await expect(setTicketCustomFields(10, [{ fieldId: 1, value: 'C' }]))
@@ -159,6 +162,7 @@ describe('custom-fields.service', () => {
       const { setTicketCustomFields } = await import('../custom-fields.service.js')
       const results = await setTicketCustomFields(10, [])
       expect(results).toEqual([])
+      expect(prismaMock.custom_field_definitions.findMany).not.toHaveBeenCalled()
     })
   })
 

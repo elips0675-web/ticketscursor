@@ -85,6 +85,7 @@ export async function processRecurrences() {
       deleted_at: null,
       next_run: { lte: now },
     },
+    take: 100,
   })
 
   let created = 0

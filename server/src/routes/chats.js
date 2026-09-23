@@ -47,15 +47,13 @@ router.post('/:id/messages', idempotent, async (req, res) => {
     })
     const participants = await getChatParticipants(Number(req.params.id), req.user.userId)
     const { createNotification } = await import('./notifications.js')
-    for (const p of participants) {
-      await createNotification({
-        userId: p.sender_id,
-        type: 'chat_message',
-        title: req.user.name || 'User',
-        body: text,
-        link: `/chats/${req.params.id}`,
-      })
-    }
+    await Promise.all(participants.map(p => createNotification({
+      userId: p.sender_id,
+      type: 'chat_message',
+      title: req.user.name || 'User',
+      body: text,
+      link: `/chats/${req.params.id}`,
+    })))
     enqueueEvent('message:new', `chat:${req.params.id}`, msg)
     res.status(201).json({ success: true, data: msg })
   } catch (err) {

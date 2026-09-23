@@ -111,14 +111,17 @@ export async function setupSocket(server) {
         by: ['chat_id'],
         where: { sender_id: socket.userId },
       })
-      for (const { chat_id } of participations) {
-        const receipt = await prisma.chat_read_receipts.findUnique({
-          where: { chat_id_user_id: { chat_id, user_id: socket.userId } },
-        })
+      const chatIds = participations.map(p => p.chat_id)
+      const receipts = chatIds.length > 0
+        ? await prisma.chat_read_receipts.findMany({ where: { chat_id: { in: chatIds } } })
+        : []
+      const receiptByChat = new Map(receipts.map(r => [r.chat_id, r]))
+      await Promise.all(participations.map(async ({ chat_id }) => {
+        const receipt = receiptByChat.get(chat_id)
         const after = receipt?.last_read_message_id
           ? { id: { gt: receipt.last_read_message_id } }
           : (since ? { created_at: { gt: since } } : null)
-        if (!after) continue
+        if (!after) return
         const missed = await prisma.chat_messages.findMany({
           where: { chat_id, sender_id: { not: socket.userId }, deleted_at: null, ...after },
           orderBy: { created_at: 'asc' },
@@ -127,7 +130,7 @@ export async function setupSocket(server) {
         for (const msg of missed) {
           socket.emit('message:new', msg)
         }
-      }
+      }))
     }).catch((err) => logger.warn('Missed chat delivery error:', err))
 
     socket.on('join:chat', (chatId) => {
@@ -161,15 +164,13 @@ export async function setupSocket(server) {
           distinct: ['sender_id'],
           select: { sender_id: true },
         })
-        for (const p of participants) {
-          await createNotification({
-            userId: p.sender_id,
-            type: 'chat_message',
-            title: senderName,
-            body: text,
-            link: `/chats/${chatId}`,
-          })
-        }
+        await Promise.all(participants.map(p => createNotification({
+          userId: p.sender_id,
+          type: 'chat_message',
+          title: senderName,
+          body: text,
+          link: `/chats/${chatId}`,
+        })))
       } catch (err) {
         logger.error('WS message error:', err)
       }

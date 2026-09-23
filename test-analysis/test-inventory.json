@@ -1,27 +1,27 @@
 {
-  "generated": "2026-09-23T11:21:55.442Z",
+  "generated": "2026-09-23T13:47:23.339Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 61,
-    "suites": 145,
-    "tests": 507,
+    "files": 62,
+    "suites": 147,
+    "tests": 520,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 48,
-    "suites": 315,
-    "tests": 791,
+    "files": 53,
+    "suites": 325,
+    "tests": 808,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 109,
-    "suites": 460,
-    "tests": 1298,
+    "files": 115,
+    "suites": 472,
+    "tests": 1328,
     "all_passing": true
   },
   "e2e": {
@@ -102,6 +102,10 @@
     },
     {
       "file": "src/test/AdminRules.test.tsx",
+      "tests": 13
+    },
+    {
+      "file": "src/test/Csatisfaction.test.tsx",
       "tests": 13
     },
     {
@@ -431,6 +435,10 @@
       "tests": 8
     },
     {
+      "file": "server/src/__tests__/soft-delete.test.js",
+      "tests": 7
+    },
+    {
       "file": "server/src/__tests__/validateUpload.test.js",
       "tests": 7
     },
@@ -487,8 +495,24 @@
       "tests": 4
     },
     {
+      "file": "server/src/__tests__/outbox.delivery.test.js",
+      "tests": 4
+    },
+    {
       "file": "server/src/__tests__/search.test.js",
       "tests": 4
+    },
+    {
+      "file": "server/src/__tests__/ticket-lock.race.test.js",
+      "tests": 2
+    },
+    {
+      "file": "server/src/__tests__/ticket-status.race.test.js",
+      "tests": 2
+    },
+    {
+      "file": "server/src/__tests__/time-timer.race.test.js",
+      "tests": 2
     }
   ]
 }

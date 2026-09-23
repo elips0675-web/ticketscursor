@@ -239,6 +239,7 @@ describe('recurrence.service', () => {
           deleted_at: null,
           next_run: { lte: expect.any(Date) },
         },
+        take: 100,
       })
     })
 

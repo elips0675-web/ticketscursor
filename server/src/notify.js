@@ -300,17 +300,21 @@ export async function notifySlaBreached(ticketId) {
   for (const a of admins) targets.add(a.id)
 
   const recentCutoff = new Date(now - 24 * 60 * 60 * 1000)
-  for (const userId of targets) {
-    const alreadyNotified = await prisma.notifications.findFirst({
+  let alreadyNotifiedIds = new Set()
+  if (targets.size > 0) {
+    const rows = await prisma.notifications.findMany({
       where: {
-        user_id: userId,
+        user_id: { in: [...targets] },
         type: 'ticket_sla_overdue',
         link: `/tickets/${ticketId}`,
         created_at: { gte: recentCutoff },
       },
-      select: { id: true },
+      select: { user_id: true },
     })
-    if (alreadyNotified) continue
+    alreadyNotifiedIds = new Set(rows.map(r => r.user_id))
+  }
+  for (const userId of targets) {
+    if (alreadyNotifiedIds.has(userId)) continue
     await createNotification({
       userId,
       type: 'ticket_sla_overdue',

@@ -13,6 +13,7 @@ vi.mock('../../prisma.js', () => ({
     },
     notifications: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
   },
 }))
@@ -55,7 +56,7 @@ beforeEach(() => {
   prisma.employees.findMany.mockResolvedValue([
     { id: 99, email: 'admin@test.com', name: 'Admin' },
   ])
-  prisma.notifications.findFirst.mockResolvedValue(null)
+  prisma.notifications.findMany.mockResolvedValue([])
 })
 
 describe('notifyTicketCreated', () => {
@@ -161,9 +162,18 @@ describe('notifySlaBreached', () => {
   })
 
   it('skips users already notified in last 24h', async () => {
-    prisma.notifications.findFirst.mockResolvedValue({ id: 1 })
+    prisma.notifications.findMany.mockResolvedValue([{ user_id: 10 }, { user_id: 20 }, { user_id: 99 }])
     await notifySlaBreached(1)
     expect(createNotification).not.toHaveBeenCalled()
+    expect(prisma.notifications.findMany).toHaveBeenCalledWith({
+      where: {
+        user_id: { in: expect.arrayContaining([10, 20, 99]) },
+        type: 'ticket_sla_overdue',
+        link: '/tickets/1',
+        created_at: { gte: expect.any(Date) },
+      },
+      select: { user_id: true },
+    })
   })
 
   it('sends email to admins', async () => {

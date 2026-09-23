@@ -5,6 +5,7 @@ vi.mock('../../prisma.js', () => ({
     tickets: {
       findUnique: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     employees: {
       findUnique: vi.fn(),
@@ -23,24 +24,30 @@ describe('collision.service', () => {
   })
 
   describe('acquireLock', () => {
-    it('acquires lock when ticket has no lock', async () => {
-      prisma.tickets.findUnique.mockResolvedValue({ id: 1, locked_by: null, locked_at: null, deleted_at: null })
-      prisma.tickets.update.mockResolvedValue({ id: 1, locked_by: 5, locked_at: new Date() })
+    it('acquires lock when ticket has no lock (atomically via updateMany)', async () => {
+      prisma.tickets.updateMany.mockResolvedValue({ count: 1 })
 
       const { acquireLock } = await import('../../services/collision.service.js')
       const result = await acquireLock(1, 5)
 
       expect(result.success).toBe(true)
-      expect(prisma.tickets.update).toHaveBeenCalledWith({
-        where: { id: 1 },
+      expect(prisma.tickets.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: 1,
+          deleted_at: null,
+          OR: [
+            { locked_by: null },
+            { locked_by: 5 },
+            { locked_at: { lt: expect.any(Date) } },
+          ],
+        },
         data: { locked_by: 5, locked_at: expect.any(Date) },
       })
+      expect(prisma.tickets.findUnique).not.toHaveBeenCalled()
     })
 
     it('allows re-acquire by same user (re-entrant)', async () => {
-      const lockedAt = new Date()
-      prisma.tickets.findUnique.mockResolvedValue({ id: 1, locked_by: 5, locked_at: lockedAt, deleted_at: null })
-      prisma.tickets.update.mockResolvedValue({ id: 1, locked_by: 5, locked_at: new Date() })
+      prisma.tickets.updateMany.mockResolvedValue({ count: 1 })
 
       const { acquireLock } = await import('../../services/collision.service.js')
       const result = await acquireLock(1, 5)
@@ -51,6 +58,7 @@ describe('collision.service', () => {
 
     it('returns locked error with locker name for other user', async () => {
       const lockedAt = new Date(Date.now() - 1000)
+      prisma.tickets.updateMany.mockResolvedValue({ count: 0 })
       prisma.tickets.findUnique.mockResolvedValue({ id: 1, locked_by: 9, locked_at: lockedAt, deleted_at: null })
       prisma.employees.findUnique.mockResolvedValue({ id: 9, name: 'Иван Петров' })
 
@@ -59,11 +67,11 @@ describe('collision.service', () => {
 
       expect(result.error).toBe('locked')
       expect(result.lockedBy).toBe('Иван Петров')
-      expect(prisma.tickets.update).not.toHaveBeenCalled()
     })
 
     it('returns unknown locker when employee not found', async () => {
       const lockedAt = new Date(Date.now() - 1000)
+      prisma.tickets.updateMany.mockResolvedValue({ count: 0 })
       prisma.tickets.findUnique.mockResolvedValue({ id: 1, locked_by: 9, locked_at: lockedAt, deleted_at: null })
       prisma.employees.findUnique.mockResolvedValue(null)
 
@@ -75,32 +83,27 @@ describe('collision.service', () => {
     })
 
     it('overrides expired lock (>30 min) and takes ownership', async () => {
-      const oldLock = new Date(Date.now() - 31 * 60 * 1000)
-      prisma.tickets.findUnique.mockResolvedValue({ id: 1, locked_by: 9, locked_at: oldLock, deleted_at: null })
-      prisma.tickets.update.mockResolvedValue({ id: 1, locked_by: 5, locked_at: new Date() })
+      prisma.tickets.updateMany.mockResolvedValue({ count: 1 })
 
       const { acquireLock } = await import('../../services/collision.service.js')
       const result = await acquireLock(1, 5)
 
       expect(result.success).toBe(true)
       expect(prisma.employees.findUnique).not.toHaveBeenCalled()
-      expect(prisma.tickets.update).toHaveBeenCalledWith({
-        where: { id: 1 },
-        data: { locked_by: 5, locked_at: expect.any(Date) },
-      })
     })
 
     it('returns not_found for missing ticket', async () => {
+      prisma.tickets.updateMany.mockResolvedValue({ count: 0 })
       prisma.tickets.findUnique.mockResolvedValue(null)
 
       const { acquireLock } = await import('../../services/collision.service.js')
       const result = await acquireLock(999, 5)
 
       expect(result.error).toBe('not_found')
-      expect(prisma.tickets.update).not.toHaveBeenCalled()
     })
 
     it('returns not_found for soft-deleted ticket', async () => {
+      prisma.tickets.updateMany.mockResolvedValue({ count: 0 })
       prisma.tickets.findUnique.mockResolvedValue({ id: 1, locked_by: null, locked_at: null, deleted_at: new Date() })
 
       const { acquireLock } = await import('../../services/collision.service.js')
