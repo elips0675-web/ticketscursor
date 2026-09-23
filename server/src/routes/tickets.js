@@ -119,16 +119,19 @@ router.get('/custom-fields', async (req, res) => {
   }
 })
 
+const canAccessTicket = (ticket, user) =>
+  hasRole(user.role, 'senior_agent') ||
+  ticket.created_by === user.userId ||
+  ticket.assigned_to === user.userId ||
+  (ticket.assigned_to === null && hasRole(user.role, 'agent'))
+
 router.get('/:id', async (req, res) => {
   try {
     const ticketId = Number(req.params.id)
     if (!Number.isFinite(ticketId)) return res.status(400).json({ success: false, message: 'Invalid ticket ID' })
     const mapped = await getTicketById(ticketId)
     if (!mapped) return res.status(404).json({ success: false, message: 'Ticket not found' })
-    const canView = hasRole(req.user.role, 'senior_agent') ||
-      mapped.created_by === req.user.userId ||
-      mapped.assigned_to === req.user.userId
-    if (!canView) return res.status(403).json({ success: false, message: 'Forbidden' })
+    if (!canAccessTicket(mapped, req.user)) return res.status(403).json({ success: false, message: 'Forbidden' })
     res.json({
       success: true,
       data: mapped,
@@ -375,10 +378,7 @@ router.post('/:id/messages', idempotent, addMessageValidation, async (req, res) 
       select: { id: true, created_by: true, assigned_to: true },
     })
     if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' })
-    const canWrite = hasRole(req.user.role, 'senior_agent') ||
-      ticket.created_by === req.user.userId ||
-      ticket.assigned_to === req.user.userId
-    if (!canWrite) return res.status(403).json({ success: false, message: 'Forbidden' })
+    if (!canAccessTicket(ticket, req.user)) return res.status(403).json({ success: false, message: 'Forbidden' })
     const mentionedUserIds = await resolveMentionedEmployees(text, req.user.userId)
     const msg = await prisma.ticket_messages.create({
       data: {
@@ -416,6 +416,12 @@ router.get('/:id/messages', async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page) || 1)
   const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 50))
   try {
+    const ticket = await prisma.tickets.findUnique({
+      where: { id: ticketId },
+      select: { id: true, created_by: true, assigned_to: true, deleted_at: true },
+    })
+    if (!ticket || ticket.deleted_at) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    if (!canAccessTicket(ticket, req.user)) return res.status(403).json({ success: false, message: 'Forbidden' })
     const result = await getTicketMessages(ticketId, page, limit)
     res.json({ success: true, ...result })
   } catch (err) {
@@ -554,6 +560,12 @@ router.post('/:id/time/timer/stop', requireRole('admin', 'senior_agent', 'agent'
 router.post('/:id/lock', async (req, res) => {
   const ticketId = Number(req.params.id)
   try {
+    const ticket = await prisma.tickets.findUnique({
+      where: { id: ticketId },
+      select: { id: true, created_by: true, assigned_to: true, deleted_at: true },
+    })
+    if (!ticket || ticket.deleted_at) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    if (!canAccessTicket(ticket, req.user)) return res.status(403).json({ success: false, message: 'Forbidden' })
     const result = await acquireLock(ticketId, req.user.userId)
     if (result.error === 'not_found') return res.status(404).json({ success: false, message: 'Ticket not found' })
     if (result.error === 'locked') {
@@ -596,6 +608,12 @@ router.post('/:id/force-unlock', requireRole('admin', 'senior_agent'), async (re
 router.get('/:id/lock', async (req, res) => {
   const ticketId = Number(req.params.id)
   try {
+    const ticket = await prisma.tickets.findUnique({
+      where: { id: ticketId },
+      select: { id: true, created_by: true, assigned_to: true, deleted_at: true },
+    })
+    if (!ticket || ticket.deleted_at) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    if (!canAccessTicket(ticket, req.user)) return res.status(403).json({ success: false, message: 'Forbidden' })
     const status = await getLockStatus(ticketId)
     if (!status) return res.status(404).json({ success: false, message: 'Ticket not found' })
     res.json({ success: true, data: status })

@@ -3,7 +3,7 @@
 > Дата обновления: 23.09.2026
 > Источники: Kimi (7.5/10 — обновлённая оценка), DeepSeek (6.5/10), Qwen (8.2/10), Доделать.rtf (промты 1-6)
 > Фактическая проверка кодовой базы: 23.09.2026
-> Тесты: 61 файл / 507 клиентских + 47 файлов / 780 серверных = **1287 тестов, 0 failures**
+> Тесты: 61 файл / 507 клиентских + 48 файлов / 791 серверных = **1298 тестов, 0 failures**
 > E2E: 19 spec'ов / 57 тестов (Playwright, зелёный прогон 23.09)
 
 ---
@@ -285,7 +285,7 @@
 |------|--------|-------|------------|
 | ~~**54**~~ | ~~**socket.js coverage 22% → 60%+** — реальный сервер (порт 0), без моков socket.io: JWT-handshake (invalid/expired → disconnect), rate-limit (6-е сообщение отклонено, NAT не режется), join/leave комнат, typing:start/stop, chat:read → персист, disconnect → user:offline, reconnect → flush offline queue~~ | Промт 1 | ✅ **закрыт 22.09** — см. «Что сделано.txt» Этап 54 |
 | ~~**55**~~ | ~~**E2E: smoke → lifecycle** — `tickets-lifecycle.spec.ts` (create через API → в списке → детали → комментарий → in_progress → resolved → reopen, API-проверки на каждом шаге); затем sla-escalation, rbac-matrix, websocket-chat (2 браузера)~~ | Промт 2 | ✅ **закрыт 23.09** — см. «Что сделано.txt» Этап 55 |
-| **56** | **IDOR-аудит** — все эндпоинты с `:id`: requester → только свои, agent → свои + неназначенные; 5 тестов в `idor.test.js` на критические находки | Промт 3 | Раздел «Тесты» #15 |
+| ~~**56**~~ | ~~**IDOR-аудит** — все эндпоинты с `:id`: requester → только свои, agent → свои + неназначенные; 5 тестов в `idor.test.js` на критические находки~~ | Промт 3 | ✅ **закрыт 23.09** — см. «Что сделано.txt» Этап 56 |
 | **57** | **N+1 и индексы** — запросы в циклах, findMany без include/select, list без limit/take; проверить FULLTEXT/индексы, каскады FK (onDelete), soft-delete тесты «нельзя вернуть удалённого» | Промт 5 | БД #3,4,7,8 |
 | **58** | **Админка (11 фич)** — RBAC-матрица UI, Backup/restore UI, audit log фильтры+CSV, health dashboard (БД/Redis/Meili/SMTP/IMAP/очередь), feature flags расписание, Queue monitor (Bull-Board), сессии «разлогинить везде», rate-limit override, email-template preview, reindex Meilisearch, migrations status | — (новые промты) | Раздел «Админка» |
 | **59** | **Resilience** — Secrets rotation (2-ключевой JWT: sign=new, verify=[old,new]), idempotency keys вне Redis (TTL 24ч без защиты при падении), транзакции для multi-step (bulk/assign/escalation) | — | БД #2,10,9 |

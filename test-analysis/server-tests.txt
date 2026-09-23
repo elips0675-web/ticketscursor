@@ -1,9 +1,9 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 47 файлов / 311 suite / 780 тестов (все PASS, vitest --reporter=json от 23.09.2026)
+Реальный результат: 48 файлов / 315 suite / 791 тестов (все PASS, vitest --reporter=json от 23.09.2026)
 
-===== ФАЙЛЫ (47 шт, все реальные, сгенерировано скриптом) =====
+===== ФАЙЛЫ (48 шт, все реальные, сгенерировано скриптом) =====
 
 # Файлы | Тестов | Описание
 server/src/api.test.js | 183 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk, feature rollout)
@@ -29,6 +29,7 @@ server/src/services/__tests__/recurrence.service.test.js | 14 | Recurrence: со
 server/src/services/__tests__/time.service.test.js | 14 | Time tracking: start, stop, manual entry, total calculation
 server/src/services/__tests__/webhooks.service.test.js | 14 | Webhooks: подписки, доставка, retry
 server/src/services/__tests__/tickets.service.mentions.test.js | 13 | Mentions: @name parsing, notification creation, dedup
+server/src/__tests__/idor.test.js | 11 | IDOR: requester только свои тикеты (GET, messages, lock), agent свои+неназначенные, senior_agent полный доступ
 server/src/__tests__/sla.test.js | 11 | SLA: timer logic, escalation levels, breach alerts
 server/src/services/__tests__/polls.service.test.js | 11 | Polls: CRUD, vote, close, expire
 server/src/__tests__/background.expanded.test.js | 10 | Background: BullMQ setup, queues, workers, schedulers, DLQ
@@ -56,6 +57,6 @@ server/src/__tests__/search.test.js | 4 | Search: fulltext, LIKE fallback, empty
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона `npx vitest run --reporter=json` (server-report.json).
-Фактический запуск: 47 файлов / 778 тестов / 0 failures.
-Coverage (22.09.2026): stmts 67.74 / branches 61.54 / functions 65.98 / lines 68.73 (пороги обновлены).
+Фактический запуск: 48 файлов / 791 тестов / 0 failures.
+Coverage (23.09.2026, Этап 56): stmts 70.09 / branches 63.73 / functions 69.26 / lines 71.19 (пороги: stmts 67 / branches 61 / functions 65 / lines 68, не менялись).
 Данные актуальны на: 22.09.2026

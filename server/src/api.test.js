@@ -1223,12 +1223,12 @@ describe('GET /api/tickets/:id/messages', () => {
     expect(Array.isArray(res.body.data)).toBe(true)
   })
 
-  it('returns 200 for non-existent ticket (empty messages)', async () => {
+  it('returns 404 for non-existent ticket', async () => {
     const res = await request(app)
       .get('/api/tickets/99999/messages')
       .set('Authorization', `Bearer ${devToken}`)
-    expect(res.status).toBe(200)
-    expect(res.body.success).toBe(true)
+    expect(res.status).toBe(404)
+    expect(res.body.success).toBe(false)
   })
 })
 

@@ -544,4 +544,4 @@ node -e "console.log(process.version)"  # v20.11.0
 
 ---
 
-*Актуально на 22.09.2026. Coverage: frontend 66.69% stmts, backend 67.74% stmts (507/757 = 1264 теста, 0 failures; E2E 16 spec / 51). Сервер: Prisma (32 модели) + Knex (migrations).*
+*Актуально на 23.09.2026. Coverage: frontend 66.69% stmts, backend 70.09% stmts (507/791 = 1298 теста, 0 failures; E2E 19 spec / 57). Сервер: Prisma (32 модели) + Knex (migrations).*

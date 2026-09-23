@@ -100,12 +100,12 @@
 
 ────────────────────────────────────────────────────────────────────────────
 
-ТЕСТЫ (1287 тестов, 0 failures)
+ТЕСТЫ (1298 тестов, 0 failures)
 
    • Клиентские: 507/507 (61 файл, vitest + jsdom + RTL)
-   • Серверные: 780/780 (47 файлов, vitest + supertest)
+   • Серверные: 791/791 (48 файлов, vitest + supertest)
    • E2E: 19 spec'ов / 57 тестов (Playwright, зелёный прогон 23.09) + 17/17 страниц (check-console.mjs)
-   • Coverage: клиент 66.69% stmts, сервер 67.74% stmts (замер 22.09.2026)
+   • Coverage: клиент 66.69% stmts, сервер 70.09% stmts (замер 23.09.2026)
    • ESLint: 0 errors, 56 warnings
    • Type-check + build: успешно
    • test-analysis/: test-inventory.json (пишется из фактического прогона vitest)
@@ -132,6 +132,7 @@
         ✅ Экспорт CSV/PDF — через фронтенд (jsPDF + html2canvas)
         ✅ WebSocket — эмиты ticket:created/updated/message/message-removed
         ✅ POST /:id/messages — ДОБАВЛЕНА проверка прав (creator/assignee/senior_agent+)
+        ✅ IDOR-аудит `:id` (Этап 56) — canAccessTicket: GET /:id, /:id/messages (GET+POST), /:id/lock (GET+POST); requester только свои, agent свои+неназначенные; 11 тестов в idor.test.js
 
       Раздел 3 — Чаты:
         ✅ Пагинация сообщений — ДОБАВЛЕНА (page/limit, total, totalPages)
@@ -672,11 +673,25 @@
 - **Инвентарь (правило 10)**: `test-inventory.json` перегенерирован из фактического прогона (**108 файлов / 1287 тестов**: клиент 61/507, сервер 47/780, 0 failures); `frontend-tests.txt`/`server-tests.txt`/`e2e-tests.txt` (19 файлов / 57 тестов) обновлены; `regenerate-test-inventory.js` — список e2e-спеков приведён к фактическим 19
 - **Проверки**: полный `npx playwright test` **57/57** (19 файлов); `node check-console.mjs` 17/17 ALL OK; клиент vitest 61/507 ✅, сервер vitest 47/780 ✅, `npm run lint` / `npm run type-check` / `npm run build` — зелёные
 
+### Этап 56 — IDOR-аудит всех `:id` эндпоинтов + тесты (23.09.2026)
+- **Аудит всех `:id`-роутов** (tickets, chats, wiki, polls, calendar, files, admin, rules, webhooks, recurrences, api-tokens, notifications): дыры найдены только в `server/src/routes/tickets.js` — чаты/вики/опросы/календарь/files/admin уже защищены (requireRole или owner-скоуп), не тронуты
+- **Хелпер `canAccessTicket(ticket, user)`** в tickets.js: `hasRole(senior_agent+) || created_by === user || assigned_to === user || (assigned_to === null && hasRole(agent))` — единое правило доступа вместо разрозненных инлайн-проверок
+- **Закрытые дыры**:
+  - `GET /:id/messages` — **критично**: не было проверки доступа вообще, любой аутентифицированный юзер мог читать переписку любого тикета → теперь 403
+  - `POST /:id/lock` и `GET /:id/lock` — не было проверки доступа, requester мог лочить/смотреть lock чужого тикета → теперь 403
+  - `GET /:id` — унифицирован на `canAccessTicket` (requester только свои; agent свои + неназначенные, как в списке)
+  - `POST /:id/messages` — старая `canWrite` заменена на `canAccessTicket` (агент теперь пишет и в неназначенные тикеты — согласовано с правилом)
+- **Семантика 404**: `GET /:id/messages` несуществующего тикета → 404 (было 200 с пустым списком); тест в api.test.js обновлён
+- **idor.test.js — 11 тестов** (требовалось 5): requester B → 403 на `GET /:id`, `messages`, `lock`, `lock-status` чужого тикета; requester A видит своё; agent видит неназначенное и не видит чужое назначенное; senior_agent полный доступ + release lock
+- **Остальные `:id`** (tags/custom-fields/assistant/time) — защищены ролью (requireRole с max-семантикой уровень admin+), requester/agent туда не проходят — не трогали, чтобы не ломать существующее поведение и e2e rbac-matrix
+- **Инвентарь (правило 10)**: `test-inventory.json` перегенерирован из фактического прогона (**109 файлов / 1298 тестов**: клиент 61/507, сервер 48/791, 0 failures); `server-tests.txt` 780→**791** (+11 IDOR); `frontend-tests.txt` — без изменений (клиент не трогали)
+- **Проверки**: сервер vitest **48/791** ✅ (coverage stmts 70.09 / branches 63.73 / funcs 69.26 / lines 71.19 — пороги 67/61/65/68 пройдены), клиент vitest 61/507 ✅, полный `npx playwright test` **57/57** ✅, `node check-console.mjs` **17/17 ALL OK**, `npm run lint` (0 errors / 56 warnings) ✅, `npm run type-check` ✅, `npm run build` ✅
+
 ## ПЛАН ДОРАБОТКИ ПО ЭТАПАМ
 
 - ~~Этап 54 — socket.js coverage 22%→60% (Промт 1 «Доделать.rtf»: JWT/disconnect, rate-limit, комнаты, typing, read, reconnect — реальный сервер порт 0)~~ ✅ **закрыт 22.09** — см. Этап 54 выше
 - ~~Этап 55 — E2E ticket-lifecycle вместо smoke (Промт 2: create→assign→status→resolved→reopen + API-проверки)~~ ✅ **закрыт 23.09** — см. Этап 55 выше
-- Этап 56 — IDOR-аудит всех `:id` эндпоинтов + 5 тестов (Промт 3)
+- ~~Этап 56 — IDOR-аудит всех `:id` эндпоинтов + 5 тестов (Промт 3)~~ ✅ **закрыт 23.09** — см. Этап 56 выше
 - Этап 57 — N+1 audit: prisma log query, топ-10 эндпоинтов (Промт 5); FULLTEXT/индексы, каскады FK, soft-delete тесты
 - Этап 58 — Админка: RBAC-матрица UI, backup/restore, audit log фильтры, health dashboard
 - Этап 59 — Secrets rotation (2-ключевой JWT), idempotency TTL, транзакции multi-step
