@@ -167,11 +167,11 @@ async function shutdown(signal) {
 
 ### 42. Testing Pyramid
 ```
-Unit (business logic):    507 frontend + 757 backend = 1264 tests (0 failures)
+Unit (business logic):    520 frontend + 808 backend = 1328 tests (0 failures)
 Integration (API routes): покрыто в api.test.js (163 it / 71 describe)
-E2E (critical flows):     16 Playwright spec'ов / 51 тест
+E2E (critical flows):     19 Playwright spec'ов / 57 тестов
 ```
-✅ Пороги coverage: frontend 66.69% stmts, backend 67.74% stmts (замер 22.09.2026)
+✅ Пороги coverage: frontend 67.62% stmts, backend 71.55% stmts (замер 23.09.2026)
 
 ### 43. Visual Regression
 ❌ Не реализовано (Chromatic/Loki)
@@ -544,4 +544,4 @@ node -e "console.log(process.version)"  # v20.11.0
 
 ---
 
-*Актуально на 23.09.2026. Coverage: frontend 66.69% stmts, backend 70.09% stmts (507/791 = 1298 теста, 0 failures; E2E 19 spec / 57). Сервер: Prisma (32 модели) + Knex (migrations).*
+*Актуально на 24.09.2026. Coverage: frontend 67.62% stmts, backend 71.55% stmts (520/808 = 1328 теста, 0 failures; Этап 58 в рабочем дереве: 1405; E2E 19 spec / 57). Сервер: Prisma (32 модели) + Knex (migrations).*

@@ -751,12 +751,12 @@ server/__tests__/
 
 ```json
 {
-  "client": { "statements": 66.69, "branches": 58.83, "functions": 57.76, "lines": 69.19 },
-  "server": { "statements": 67.74, "branches": 61.54, "functions": 65.98, "lines": 68.73 }
+  "client": { "statements": 67.62, "branches": 59.65, "functions": 58.39, "lines": 70.23 },
+  "server": { "statements": 71.55, "branches": 64.66, "functions": 70.97, "lines": 72.61 }
 }
 ```
 
-> **Примечание**: 507 клиентских / 757 серверных / 51 E2E тестов (=1264, 0 failures). Пороги заданы в `vitest.client.config.ts` и `server/vitest.config.ts`.
+> **Примечание**: 520 клиентских / 808 серверных / 57 E2E тестов (=1328, 0 failures; замер coverage 23.09.2026). Пороги заданы в `vitest.client.config.ts` и `server/vitest.config.ts`.
 
 ---
 
@@ -1045,7 +1045,7 @@ spec:
 | F | Роль requester (видит только свои тикеты) | Medium | ✅ Выполнено |
 | G | TanStack Query + optimistic updates | Medium | ✅ Выполнено |
 | H | Skeleton loaders для всех списков | Low | ✅ Выполнено |
-| I | Покрытие тестов 70%+ | High | ⚠️ Пересмотрено: честные пороги по замеру 22.09.2026 (клиент 66.69%, сервер 67.74%); на 23.09.2026 сервер 70.09% (507/791 = 1298 теста) |
+| I | Покрытие тестов 70%+ | High | ⚠️ Пересмотрено: честные пороги по замеру 22.09.2026 (клиент 66.69%, сервер 67.74%); на 23.09.2026 клиент 67.62% / сервер 71.55% (520/808 = 1328 теста, 0 failures) |
 | I | E2E: эскалация SLA, автоназначение, экспорт | Medium | ✅ (покрыто unit-тестами) |
 | J | Volume для MySQL-бэкапов в docker-compose | Low | ✅ Выполнено |
 | J | Healthcheck всех сервисов | Low | ✅ Выполнено |

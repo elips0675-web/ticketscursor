@@ -1,8 +1,8 @@
 # Service Desk — корпоративная система тикетов
 
 [![CI](https://github.com/elips0675-web/ticketscursor/actions/workflows/ci.yml/badge.svg)](https://github.com/elips0675-web/ticketscursor/actions)
-[![Coverage client](https://img.shields.io/badge/coverage_client-66.69%25-green)](https://github.com/elips0675-web/ticketscursor)
-[![Coverage server](https://img.shields.io/badge/coverage_server-67.74%25-green)](https://github.com/elips0675-web/ticketscursor)
+[![Coverage client](https://img.shields.io/badge/coverage_client-67.62%25-green)](https://github.com/elips0675-web/ticketscursor)
+[![Coverage server](https://img.shields.io/badge/coverage_server-71.55%25-green)](https://github.com/elips0675-web/ticketscursor)
 [![k6](https://img.shields.io/badge/k6-load%20tested-blue)](https://github.com/elips0675-web/ticketscursor)
 [![Grafana](https://img.shields.io/badge/Grafana-dashboard-orange)](https://github.com/elips0675-web/ticketscursor)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)]()
@@ -138,8 +138,8 @@ npm run test:e2e
 
 | Зона риска | Было (на момент аудита) | Стало (после доработок) |
 |---|---|---|
-| Покрытие тестами | 47 client / 93 server / 13 E2E | 507 client / 757 server / 51 E2E (1264, 0 failures) |
-| Процент покрытия | 20-25% | 66.69% client / 67.74% server (замер 22.09.2026) |
+| Покрытие тестами | 47 client / 93 server / 13 E2E | 520 client / 808 server / 57 E2E (1328, 0 failures) |
+| Процент покрытия | 20-25% | 67.62% client / 71.55% server (замер 23.09.2026) |
 | TanStack Query | Только Context API | ✅ Внедрён QueryClientProvider |
 | Meilisearch | MySQL FULLTEXT | ✅ Meilisearch + fallback цепочка |
 | Skeleton loaders | Нет | ✅ Все списки |
@@ -158,14 +158,14 @@ npm run test:e2e
 
 | Показатель | Значение | Статус |
 |---|---|---|
-| Клиентские тесты | 507 тестов, 61 файл | ✅ Пройдены |
-| Серверные тесты | 791 тестов, 48 файлов | ✅ Пройдены |
-| E2E тесты (Playwright) | 16 spec'ов, 51 тест; check-console 17 страниц | ✅ Пройдены |
-| Покрытие кода (клиент) | 66.69% stmts (порог: 66/58/57/69) | ✅ Честно (по факту 22.09.2026) |
-| Покрытие кода (сервер) | 67.74% stmts (порог: 67/61/65/68) | ✅ Честно (по факту 22.09.2026) |
-| ESLint | 0 errors, 0 warnings | ✅ Чисто |
+| Клиентские тесты | 520 тестов, 62 файла | ✅ Пройдены |
+| Серверные тесты | 808 тестов, 53 файла | ✅ Пройдены |
+| E2E тесты (Playwright) | 19 spec'ов, 57 тестов; check-console 17 страниц | ✅ Пройдены |
+| Покрытие кода (клиент) | 67.62% stmts (порог: 66/58/57/69) | ✅ Честно (замер 23.09.2026) |
+| Покрытие кода (сервер) | 71.55% stmts (порог: 67/61/65/68) | ✅ Честно (замер 23.09.2026) |
+| ESLint | 0 errors, 56 warnings | ✅ Чисто |
 | check-console (E2E) | 17/17 страниц без ошибок, русский текст | ✅ Пройден |
-| Prisma моделей | 25 (включая event_outbox, custom_fields, api_tokens, webhooks, automation_rules, feature_flags) | ✅ |
+| Prisma моделей | 32 | ✅ |
 | API endpoints | 60+ (Swagger + k6 metrics + Health probes) | ✅ |
 | React Query | useQuery/useMutation, optimistic updates, staleTime 5min | ✅ |
 | Request timing metrics | Prometheus-формат, гистограммы (50–5000ms) | ✅ |
