@@ -330,9 +330,9 @@
 | ~~**56**~~ | ~~**IDOR-аудит** — все эндпоинты с `:id`: requester → только свои, agent → свои + неназначенные; 5 тестов в `idor.test.js` на критические находки~~ | Промт 3 | ✅ **закрыт 23.09** — см. «Что сделано.txt» Этап 56 |
 | ~~**57**~~ | ~~**N+1 и индексы** — запросы в циклах, findMany без include/select, list без limit/take; проверить FULLTEXT/индексы, каскады FK (onDelete), soft-delete тесты «нельзя вернуть удалённого»; **+ Race-тесты (lock/status/timer/outbox)**~~ | Промт 5 | ✅ **закрыт 23.09** — см. «Что сделано.txt» Этап 57 |
 | **58** | **Админка (11 фич)** — RBAC-матрица UI, Backup/restore UI, audit log фильтры+CSV, health dashboard (БД/Redis/Meili/SMTP/IMAP/очередь), feature flags расписание, Queue monitor (Bull-Board), сессии «разлогинить везде», rate-limit override, email-template preview, reindex Meilisearch, migrations status; **+ a11y-тесты AdminSettings/AdminLayout** | — (новые промты) | ✅ **реализован 24.09** (фронт: Health/Queues/Rbac + настройки schedule/preview/security; бэк: admin.js; тесты: +53 клиентских, +24 серверных — инвентарь перегенерируется после прогона) |
-| **59** | **Resilience** — Secrets rotation (2-ключевой JWT: sign=new, verify=[old,new]), idempotency keys вне Redis (TTL 24ч без защиты при падении), транзакции для multi-step (bulk/assign/escalation); **+ auth/oidc.test.js, background sub-тесты** (по Kimi — раньше 58) | — | БД #2,10,9 + Дипсик P1/P2 |
+| **59** | **Resilience** — Secrets rotation (2-ключевой JWT: sign=new, verify=[old,new]), idempotency keys вне Redis (TTL 24ч без защиты при падении), транзакции для multi-step (bulk/assign/escalation); **+ auth/oidc.test.js, background sub-тесты**; **+ 🐞 SLA/TZ-баг** (TIMEZONE из настроек не в addBusinessHours — дедлайн в чужом TZ и DST-переход ±1ч, нужно фикс+тест), **+ refresh-token family** (база reuse-detection есть, auth.js:81; нужен отзыв всех сессий юзера), **+ trust proxy/XFF спуфинг-тест** (по коду, дипсик P1/P2, «Оценка ии» 24.09) | — | БД #2,10,9 + Дипсик P1/P2 + «Оценка ии.rtf» |
 | **60** | **Процесс** — правило порогов coverage в AGENTS.md (буфер vs обязательные тесты), финальный re-аудит свежей папкой test-analysis (Kimi/DeepSeek/Qwen); **+ i18n parity, contract tests (zod), migration idempotency** | Промт 6 (обновить) | Кimi #3 + Дипсик P2 |
-| **61** | **Покрытие ядра + E2E-реализм** — ticket-context.optimistic (35%→60%+), TicketDetail/ChatDetail/Kanban, virtual scroll jsdom, E2E export/upload/search-real; правило «фича = флаг» в AGENTS.md; CI-check синхронности доков | Промт 5 (расширенный) | Дипсик «новый 61», Kimi, Qwen |
+| **61** | **Покрытие ядра + E2E-реализм + Security-hardening** — ticket-context.optimistic (35%→60%+), TicketDetail/ChatDetail/Kanban, virtual scroll jsdom, E2E export/upload/search-real; **+ XSS-инвариант на client-рендер** (экранирование &<> есть, но regression-тест: `<img onerror>`/`javascript:` не исполняется; при расширении markdown — DOMPurify), **+ notify регресс-тест** (email/webhook упал → тикет создан 201), **+ тест-предохранители**: клампинг limit, soft-delete в списках, N+1 (spy на prisma); правило «фича = флаг» в AGENTS.md; CI-check синхронности доков | Промт 5 (расширенный) | Дипсик «новый 61», Kimi, Qwen + «Оценка ии.rtf» |
 
 ### Низкий приоритет (не блокирует)
 
@@ -420,3 +420,33 @@ vite.config.ts, playwright.config.ts, eslint.config.js, server/vitest.config.js,
 ### Итоговый ориентир (qwen)
 
 Сейчас 1328 → после Этапов 62–65 ~1780 тестов; client branches 59.65 → 65+, server branches 64.66 → 70+; E2E 57 → ~80. Coverage-пуш не самоцель — сначала закрыть P0-фичи (2FA, watchers, relations, notification prefs).
+
+---
+
+## «Оценка ии.rtf» (24.09) — верификация аудита разработчика внешним ИИ
+
+> Внешний ИИ оценил мой разбор («ты бы что-то добавил?») в **8.5/10** и **10/12** находок, но потребовал проверить каждый пункт по коду (его вердикт об «дырявом regex-экранировании XSS» и «отсутствии reuse-detection» по коду НЕ подтвердился). Проверено вручную по коду 24.09. Полные вердикты — раздел 11 «Тесты и функционал общее.rtf».
+
+| # | Пункт | Вердикт по коду 24.09 | Приоритет | Куда |
+|---|-------|----------------------|-----------|------|
+| 1 | XSS client-рендер (MarkdownEditor:54, TicketDetail:570) | Экранирование `&<>` первым → raw-теги не исполняются; риск ниже заявленного; нужен regression-тест + DOMPurify при расширении markdown | P1 | Этап 61 |
+| 2 | Refresh reuse-detection | База ЕСТЬ (auth.js:81 — delete при /refresh); нет token_family_id и отзыва всех сессий юзера | P1 | Этап 59 |
+| 3 | trust proxy: 1 / X-Forwarded-For | Проверить топологию (compose 1 nginx vs k8s ingress+svc); тест на спуфинг + WS-handshake | P1 | Этап 59 |
+| 4 | SLA / biz-hours TZ + DST | 🐞 **БАГ ПРОДУКТА подтверждён**: TIMEZONE из настроек не в addBusinessHours | P0 | Этап 59 |
+| 5 | orderBy/limit инъекция | Уже защищено (захардкожен orderBy + клампинг 100–500) → тест-предохранитель | P2 | Этап 61 |
+| 6 | Notify регресс-тест | safeNotify есть (Этап 17), интеграционного теста нет | P1 | Этап 61 |
+| 7 | CSP / idempotency 409 / 413 body / soft-delete lists / N+1 spy | Свести к P2-тестам: CSP-inline, идемпотентность, 413, lists, N+1 | P2 | Этапы 60–61 |
+| 8 | Timeline изменений в TicketDetail | **Дыра подтверждена** (grep = 0) + PDF с историей | P1 | Новый Этап 62 |
+| 9 | Email reply → сообщение в тикете | **ФИЧА ЕСТЬ** (email-ingestion.service.js:100-111, 28 тестов) — недостаёт E2E-теста и доки, не фичи | P2 | Тест + дока |
+| 10 | CSV-импорт сотрудников | **Эндпоинт ЕСТЬ** (admin.js:446 /employees/import) — проверить UI + тест | P2 | Этап 62 |
+| 11 | Retention / автоочистка | Уведомления >90д чистятся; audit/files/chat — нет; сначала политика | P2 | Инфра |
+| 12 | DoD в AGENTS (флаг+тест+i18n+check-console+инвентарь), coverage history, «AI-пункт без цитаты кода не в план», «сначала фикс, потом тест» | В AGENTS.md | P1-P2 | Этап 60 |
+
+### Новый Этап 62 (из №8 выше) — Timeline + импорт
+
+| # | Задача | Оценка |
+|---|--------|--------|
+| 1 | GET /tickets/:id/history (из audit_log) + вкладка «История» в TicketDetail (кто/когда менял статус/приоритет/исполнителя) | 1 страница + 1 endpoint + 3-4 теста |
+| 2 | PDF-экспорт с историей (jsPDF подхватит timeline автоматически) | слить с №1 |
+| 3 | CSV-импорт сотрудников: UI-кнопка + превью + валидация + тест роута | проверить admin.js:446 |
+| 4 | Retention-политика (audit/files/chat) — после утверждения политики хранения | инфра
