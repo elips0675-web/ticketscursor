@@ -709,7 +709,7 @@
 - **Backend**: `routes/admin.js` (новые роуты), `rbac.js` (матрица прав), `services/admin-ops.js` (операции), `limits.js` (runtime-override rate-limit из админки), попутные правки `app.js`, `notify.js`, `search-sync.js`
 - **Флаги/совместимость**: новые модули под `useFeature()` (правило «фича = флаг»), MSW-хендлеры, i18n ru/en
 - **Тесты (факт, из прогона vitest --reporter=json 24.09)**: `AdminHealth.test.tsx` (Health 100% stmts), `AdminQueues.test.tsx` (Queues 100% stmts), `AdminRbac.test.tsx` (Rbac 92.85% stmts), расширены AdminAudit/AdminLayout/AdminSettings/AdminUsers/useFeature, серверный `admin-stage58.test.js` → клиент **65 файлов / 573**, сервер **54 файла / 832** = **1405 тестов, 0 failures**; инвентарь перегенерирован из фактического прогона (119 файлов / 1405 тестов)
-- **Проверки (24.09)**: сервер vitest **54/832** ✅ (coverage 71.29/64.64/71.56/72.29 — пороги 67/61/65/68), клиент vitest **65/573** ✅ (coverage 69.13/61.21/60.12/71.69 — пороги 66/58/57/69), `npx playwright test` **57/57** ✅, `node check-console.mjs` **17/17 ALL OK**, `npm run lint` (0 errors / 56 warnings) ✅, `npm run type-check` ✅, `npm run build` ✅; коммит запушен 24.09
+- **Проверки (24.09)**: сервер vitest **54/832** ✅ (coverage 71.29/64.64/71.56/72.29 — пороги 67/61/65/68), клиент vitest **65/573** ✅ (coverage 69.13/61.21/60.12/71.69 — пороги 66/58/57/69), `npx playwright test` **57/57** ✅, `node check-console.mjs` **17/17 ALL OK**, `npm run lint` (0 errors / 56 warnings) ✅, `npm run type-check` ✅, `npm run build` ✅; коммит `32e3122` запушен 24.09
 
 ## ПЛАН ДОРАБОТКИ ПО ЭТАПАМ
 
