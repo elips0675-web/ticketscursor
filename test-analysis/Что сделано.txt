@@ -90,9 +90,9 @@
   ✅ Prometheus + Grafana — метрики, provisioning
   ✅ Бэкапы — mysqldump ежедневно, хранение 7 дней
   ✅ Vercel — SPA routing (vercel.json)
-  ✅ Tauri — конфиг + Rust
+  ❌ Tauri — удалён (CHANGELOG Этап 17)
 
-  ✅ Prisma ORM — 17 моделей, directUrl для миграций
+  ✅ Prisma ORM — 32 модели, directUrl для миграций
   ✅ Redis — кэш (tickets 120s, employees 300s), Socket.IO adapter, BullMQ
   ✅ Логирование — Winston (console + файлы, ротация 10MB), requestId
   ✅ Аудит — audit_log + middleware на ключевых роутах
@@ -100,12 +100,12 @@
 
 ────────────────────────────────────────────────────────────────────────────
 
-ТЕСТЫ (1298 тестов, 0 failures)
+ТЕСТЫ (1328 тестов, 0 failures — закоммичено; Этап 58 в рабочем дереве: 1405)
 
-   • Клиентские: 507/507 (61 файл, vitest + jsdom + RTL)
-   • Серверные: 791/791 (48 файлов, vitest + supertest)
+   • Клиентские: 520/520 (62 файла, vitest + jsdom + RTL) — в дереве Этапа 58: 65 файлов / 573 теста
+   • Серверные: 808/808 (53 файла, vitest + supertest) — в дереве Этапа 58: 54 файла / 832 теста
    • E2E: 19 spec'ов / 57 тестов (Playwright, зелёный прогон 23.09) + 17/17 страниц (check-console.mjs)
-   • Coverage: клиент 66.69% stmts, сервер 70.09% stmts (замер 23.09.2026)
+   • Coverage (замер 23.09, Этап 57): клиент 67.62/59.65/58.39/70.23 (stmts/br/fn/ln), сервер 71.55/64.66/70.97/72.61 — пороги 66/58/57/69 и 67/61/65/68 пройдены ✅
    • ESLint: 0 errors, 56 warnings
    • Type-check + build: успешно
    • test-analysis/: test-inventory.json (пишется из фактического прогона vitest)
@@ -181,7 +181,7 @@
 
       Раздел 10 — PWA/Desktop/i18n/a11y:
         ✅ VitePWA (injectManifest), beforeinstallprompt
-        ✅ Tauri — конфиг + Rust
+        ❌ Tauri — удалён (CHANGELOG Этап 17)
         ✅ i18n (ru/en), LanguageDetector
         ✅ Тёмная тема — удалена (CSS + i18n keys + ThemeContext очищены)
         ✅ ErrorBoundary на всех страницах
@@ -704,15 +704,25 @@
 - **Инвентарь (правило 10)**: `test-inventory.json` перегенерирован из фактического прогона (**115 файлов / 1328 тестов**: клиент 62/520, сервер 53/808, 0 failures); `frontend-tests.txt` 61/145/507→**62/147/520**, `server-tests.txt` 48/315/791→**53/325/808**
 - **Проверки**: сервер vitest **53/808** ✅ (coverage stmts 71.55 / branches 64.66 / funcs 70.97 / lines 72.61 — пороги 67/61/65/68), клиент vitest **62/520** ✅ (coverage 67.62/59.65/58.39/70.23 — пороги 66/58/57/69), полный `npx playwright test` **57/57** ✅ (1-й прогон — флак tickets-lifecycle, повтор — зелёный), `node check-console.mjs` **17/17 ALL OK**, `npm run lint` (0 errors / 56 warnings) ✅, `npm run type-check` ✅, `npm run build` ✅
 
+### Этап 58 — Админка (11 фич): Health-дашборд, Queue-монитор, RBAC-матрица UI, rate-limit override (24.09.2026, код готов — гейты/коммит в процессе)
+- **Frontend**: `AdminHealth.tsx` (health: БД/Redis/Meili/SMTP/IMAP/очередь), `AdminQueues.tsx` (монитор очередей), `AdminRbac.tsx` (RBAC-матрица «роль × действие»), в `AdminSettings.tsx` — расписание rollout флагов, email-template preview, security-настройки; доработки AdminAudit/AdminUsers; роуты/меню — `App.tsx`, `admin-layout.tsx`
+- **Backend**: `routes/admin.js` (новые роуты), `rbac.js` (матрица прав), `services/admin-ops.js` (операции), `limits.js` (runtime-override rate-limit из админки), попутные правки `app.js`, `notify.js`, `search-sync.js`
+- **Флаги/совместимость**: новые модули под `useFeature()` (правило «фича = флаг»), MSW-хендлеры, i18n ru/en
+- **Тесты (в дереве)**: `AdminHealth.test.tsx`, `AdminQueues.test.tsx`, `AdminRbac.test.tsx`, расширены AdminAudit/AdminLayout/AdminSettings/AdminUsers/useFeature, серверный `admin-stage58.test.js` → клиент **65 файлов / 573**, сервер **54 файла / 832** (итого 1405); инвентарь перегенерируется из фактического прогона при закрытии
+- **Статус**: код реализован 24.09; осталось — vitest (клиент/сервер + coverage), lint, type-check, build, playwright, check-console 17/17, регенерация инвентаря, коммит+push
+
 ## ПЛАН ДОРАБОТКИ ПО ЭТАПАМ
 
 - ~~Этап 54 — socket.js coverage 22%→60% (Промт 1 «Доделать.rtf»: JWT/disconnect, rate-limit, комнаты, typing, read, reconnect — реальный сервер порт 0)~~ ✅ **закрыт 22.09** — см. Этап 54 выше
 - ~~Этап 55 — E2E ticket-lifecycle вместо smoke (Промт 2: create→assign→status→resolved→reopen + API-проверки)~~ ✅ **закрыт 23.09** — см. Этап 55 выше
 - ~~Этап 56 — IDOR-аудит всех `:id` эндпоинтов + 5 тестов (Промт 3)~~ ✅ **закрыт 23.09** — см. Этап 56 выше
 - ~~Этап 57 — N+1 audit: prisma log query, топ-10 эндпоинтов (Промт 5); FULLTEXT/индексы, каскады FK, soft-delete тесты~~ ✅ **закрыт 23.09** — см. Этап 57 выше
+- ~~Этап 58 — Админка (11 фич)~~ 🟡 **код готов 24.09** — гейты (vitest+coverage, lint, type-check, build, playwright, check-console) + регенерация инвентаря + коммит в процессе (см. Этап 58 выше)
 
 ### Мелкие правки (23.09.2026)
 - **bcrypt cost 10 → 12** (спека AI_AGENT_SPEC.md, п. 10 «Безопасность»): `routes/auth.js` (register + reset), `auth/oidc.js`, `routes/admin.js` (default-пароль), `routes/public-portal.js` (токен портала). Старые хеши продолжают работать (cost зашит в хеш). Сервер vitest 53/808 ✅, check-console 17/17 ✅
-- Этап 58 — Админка: RBAC-матрица UI, backup/restore, audit log фильтры, health dashboard
-- Этап 59 — Secrets rotation (2-ключевой JWT), idempotency TTL, транзакции multi-step
-- Этап 60 — Правило порогов coverage зафиксировать в AGENTS.md (буфер vs обязательные тесты); финальный re-аудит свежей папкой test-analysis
+### План 59–62 (детали — в «Что-доделать.txt»)
+- Этап 59 — Resilience: 🐞 SLA/TZ-баг (P0), refresh-token family, trust-proxy/XFF спуфинг, idempotency вне Redis, транзакции multi-step, auth/oidc.test.js, background sub-тесты
+- Этап 60 — Процесс: пороги coverage в AGENTS.md, DoD на фичу, i18n parity, contract tests, migration idempotency, финальный re-аудит свежей папкой test-analysis
+- Этап 61 — Покрытие ядра + Security-hardening: ticket-context.optimistic, TicketDetail/ChatDetail/Kanban, XSS-инвариант на client-рендер, notify регресс-тест, E2E-реализм (export/upload/search)
+- Этап 62 — Timeline тикета (GET /tickets/:id/history + вкладка «История» + PDF), CSV-импорт сотрудников (UI), retention-политика (audit/files/chat)
