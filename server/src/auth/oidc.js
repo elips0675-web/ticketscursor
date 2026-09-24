@@ -1,6 +1,7 @@
 import { Issuer, generators } from 'openid-client'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 import prisma from '../prisma.js'
 import { JWT_SECRET } from '../middleware.js'
 import logger from '../logger.js'
@@ -119,8 +120,9 @@ export async function handleSSOCallback(code, state, nonce) {
     JWT_SECRET,
     { expiresIn: '15m' },
   )
+  const familyId = crypto.randomUUID()
   const refreshToken = jwt.sign(
-    { userId: employee.id, tokenId: crypto.randomUUID() },
+    { userId: employee.id, familyId, tokenId: crypto.randomUUID() },
     REFRESH_SECRET,
     { expiresIn: '7d' },
   )
@@ -129,6 +131,7 @@ export async function handleSSOCallback(code, state, nonce) {
     data: {
       user_id: employee.id,
       token: refreshToken,
+      family_id: familyId,
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     },
   })

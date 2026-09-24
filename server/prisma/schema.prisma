@@ -314,10 +314,13 @@ model refresh_tokens {
   id         Int       @id @default(autoincrement())
   user_id    Int
   token      String    @db.VarChar(500)
+  family_id  String?   @db.VarChar(36)
   created_at DateTime? @default(now())
   expires_at DateTime
 
   user employees? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([family_id])
 }
 
 model notifications {

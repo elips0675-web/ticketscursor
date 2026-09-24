@@ -13,10 +13,11 @@ import logger from '../logger.js'
 const router = Router()
 const REFRESH_SECRET = process.env.REFRESH_SECRET || process.env.JWT_SECRET + '-refresh'
 
-function generateTokens(user) {
+function generateTokens(user, familyId) {
+  const family = familyId || crypto.randomUUID()
   const accessToken = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '15m' })
-  const refreshToken = jwt.sign({ userId: user.id, tokenId: crypto.randomUUID() }, REFRESH_SECRET, { expiresIn: '7d' })
-  return { accessToken, refreshToken }
+  const refreshToken = jwt.sign({ userId: user.id, familyId: family, tokenId: crypto.randomUUID() }, REFRESH_SECRET, { expiresIn: '7d' })
+  return { accessToken, refreshToken, familyId: family }
 }
 
 router.post('/login', loginValidation, async (req, res) => {
@@ -33,9 +34,9 @@ router.post('/login', loginValidation, async (req, res) => {
     if (!valid) {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
-    const { accessToken, refreshToken } = generateTokens(employee)
+    const { accessToken, refreshToken, familyId } = generateTokens(employee)
     await prisma.refresh_tokens.create({
-      data: { user_id: employee.id, token: refreshToken, expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
+      data: { user_id: employee.id, token: refreshToken, family_id: familyId, expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
     })
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -77,16 +78,22 @@ router.post('/refresh', async (req, res) => {
     const stored = await prisma.refresh_tokens.findFirst({
       where: { token, user_id: decoded.userId, expires_at: { gt: new Date() } },
     })
-    if (!stored) return res.status(403).json({ message: 'Invalid refresh token' })
+    if (!stored) {
+      // Reuse украденного refresh-токена → отзываем всю семью сессий
+      if (decoded.familyId) {
+        await prisma.refresh_tokens.deleteMany({ where: { family_id: decoded.familyId } }).catch(() => {})
+      }
+      return res.status(403).json({ message: 'Invalid refresh token' })
+    }
     await prisma.refresh_tokens.delete({ where: { id: stored.id } })
     const user = await prisma.employees.findFirst({
       where: { id: decoded.userId, is_active: true },
       select: { id: true, name: true, email: true, role: true },
     })
     if (!user) return res.status(403).json({ message: 'User not found' })
-    const { accessToken, refreshToken } = generateTokens(user)
+    const { accessToken, refreshToken, familyId } = generateTokens(user, stored.family_id)
     await prisma.refresh_tokens.create({
-      data: { user_id: user.id, token: refreshToken, expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
+      data: { user_id: user.id, token: refreshToken, family_id: familyId, expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
     })
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -111,6 +118,17 @@ router.post('/logout', authenticateToken, async (req, res) => {
     res.json({ success: true, message: 'Logged out' })
   } catch (err) {
     logger.error('Logout error:', err)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+})
+
+router.post('/revoke-all', authenticateToken, async (req, res) => {
+  try {
+    const { count } = await prisma.refresh_tokens.deleteMany({ where: { user_id: req.user.userId } })
+    res.clearCookie('refreshToken', { path: '/api/auth' })
+    res.json({ success: true, data: { revoked: count } })
+  } catch (err) {
+    logger.error('Revoke all error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 })
