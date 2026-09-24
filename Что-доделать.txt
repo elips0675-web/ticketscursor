@@ -272,12 +272,18 @@
 | 5 | N+1 audit (запросы в циклах, findMany без include, без limit) | ⏳ |
 | 6 | Синхронизация документации (1264/66.69/1.9.0/32/51) | ✅ Сделано 22.09 (doc-pass выше) |
 
-### Антипаттерны (что НЕ делать — из «Доделать.rtf»)
+### Антипаттерны (что НЕ делать — из «Доделать.rtf» + свод «Тесты и функционал общее» §10)
 
 - 12 отдельных «ролей» AI — нужен конкретный файл + конкретная ось
 - «Оцени проект целиком» — AI усредняет
 - Промты > 1500 токенов — модель теряет конец
 - «Выглядит хорошо» в ответах — только факты с цитатами
+- Snapshot-тесты (хрупкие), visual regression (Chromatic/Loki), mutation testing (Stryker)
+- Тесты на shadcn/ui примитивы (Button, Input) и покрытие констант/типов/интерфейсов — покрытие чужого/декларативного кода
+- MySQL read replica — возвращать только при реальной нагрузке (удалена осознанно, Этап 13)
+- Tauri / mobile app (React Native/WebRTC) — вне скоупа корп. интранета (Tauri удалён, Этап 17)
+- Coverage до 90% — закон убывающей доходности (ориентир: client branches 65+, server 70+, E2E ~80)
+- Промты «оцени проект целиком» пачкой; похвала без причины и «стоит рассмотреть» — только конкретные «сделай так» с цитатами кода
 
 ---
 
@@ -333,7 +339,7 @@
 | ~~**56**~~ | ~~**IDOR-аудит** — все эндпоинты с `:id`: requester → только свои, agent → свои + неназначенные; 5 тестов в `idor.test.js` на критические находки~~ | Промт 3 | ✅ **закрыт 23.09** — см. «Что сделано.txt» Этап 56 |
 | ~~**57**~~ | ~~**N+1 и индексы** — запросы в циклах, findMany без include/select, list без limit/take; проверить FULLTEXT/индексы, каскады FK (onDelete), soft-delete тесты «нельзя вернуть удалённого»; **+ Race-тесты (lock/status/timer/outbox)**~~ | Промт 5 | ✅ **закрыт 23.09** — см. «Что сделано.txt» Этап 57 |
 | **58** | **Админка (11 фич)** — RBAC-матрица UI, Backup/restore UI, audit log фильтры+CSV, health dashboard (БД/Redis/Meili/SMTP/IMAP/очередь), feature flags расписание, Queue monitor (Bull-Board), сессии «разлогинить везде», rate-limit override, email-template preview, reindex Meilisearch, migrations status; **+ a11y-тесты AdminSettings/AdminLayout** | — (новые промты) | 🟡 **реализован 24.09 (код) — остались гейты + коммит** (фронт: Health/Queues/Rbac + настройки schedule/preview/security; бэк: admin.js + rbac.js + admin-ops.js; тесты в дереве: +53 клиентских (65 файлов/573), +24 серверных (54 файла/832) = 1405; инвентарь перегенерируется из фактического прогона) |
-| **59** | **Resilience** — Secrets rotation (2-ключевой JWT: sign=new, verify=[old,new]), idempotency keys вне Redis (TTL 24ч без защиты при падении), транзакции для multi-step (bulk/assign/escalation); **+ auth/oidc.test.js, background sub-тесты**; **+ 🐞 SLA/TZ-баг** (TIMEZONE из настроек не в addBusinessHours — дедлайн в чужом TZ и DST-переход ±1ч, нужно фикс+тест), **+ refresh-token family** (база reuse-detection есть, auth.js:81; нужен отзыв всех сессий юзера), **+ trust proxy/XFF спуфинг-тест** (по коду, дипсик P1/P2, «Оценка ии» 24.09) | — | БД #2,10,9 + Дипсик P1/P2 + «Оценка ии.rtf» |
+| **59** | **Resilience** — Secrets rotation (2-ключевой JWT: sign=new, verify=[old,new]), idempotency keys вне Redis (TTL 24ч без защиты при падении), транзакции для multi-step (bulk/assign/escalation), **каскады FK (onDelete) — проверить фактически в schema.prisma** (Этап 57 был «только отчёт»); **+ auth/oidc.test.js, background sub-тесты**; **+ 🐞 SLA/TZ-баг** (TIMEZONE из настроек не в addBusinessHours — дедлайн в чужом TZ и DST-переход ±1ч, нужно фикс+тест), **+ refresh-token family** (база reuse-detection есть, auth.js:81; нужен отзыв всех сессий юзера), **+ trust proxy/XFF спуфинг-тест** (по коду, дипсик P1/P2, «Оценка ии» 24.09) | — | БД #2,10,9 + Дипсик P1/P2 + «Оценка ии.rtf» |
 | **60** | **Процесс** — правило порогов coverage в AGENTS.md (буфер vs обязательные тесты), финальный re-аудит свежей папкой test-analysis (Kimi/DeepSeek/Qwen); **+ i18n parity, contract tests (zod), migration idempotency** | Промт 6 (обновить) | Кimi #3 + Дипсик P2 |
 | **61** | **Покрытие ядра + E2E-реализм + Security-hardening** — ticket-context.optimistic (35%→60%+), TicketDetail/ChatDetail/Kanban, virtual scroll jsdom, E2E export/upload/search-real; **+ XSS-инвариант на client-рендер** (экранирование &<> есть, но regression-тест: `<img onerror>`/`javascript:` не исполняется; при расширении markdown — DOMPurify), **+ notify регресс-тест** (email/webhook упал → тикет создан 201), **+ тест-предохранители**: клампинг limit, soft-delete в списках, N+1 (spy на prisma); правило «фича = флаг» в AGENTS.md; CI-check синхронности доков | Промт 5 (расширенный) | Дипсик «новый 61», Kimi, Qwen + «Оценка ии.rtf» |
 
@@ -363,18 +369,18 @@
 > Полный дедуплицированный свод трёх аудитов — в **«Тесты и функционал общее.rtf»** (источники: «Тесты и функционал qwen.rtf», «Тесты и функционал дипсик.rtf», «Тесты и функционал kimi.docx», все 23.09).
 > Здесь — только то, чего ещё НЕТ в плане 54–61 выше.
 
-### Новые фичи — qwen P0 (предложение Этапов 62–63)
+### Новые фичи — qwen P0 (предложение Этапов 63–64; Этап 62 занят Timeline из «Оценка ии.rtf»)
 
 | # | Фича | Стоимость | Статус |
 |---|------|-----------|--------|
-| 1 | 2FA / TOTP для admin/super_admin (otplib + QR в Profile, require2FA) | 2–3 дня | ⏳ Этап 62 |
-| 2 | Активные сессии пользователя (view/revoke) — таблица sessions + UI в Profile (в админке revoke уже есть, Этап 58) | 1–2 дня | ⏳ Этап 62 |
-| 3 | Notification preferences per user (email/push/in-app × события) | 1–2 дня | ⏳ Этап 62 |
-| 4 | Watchers / Subscribers тикета (ticket_watchers + UI) | 1 день | ⏳ Этап 63 |
-| 5 | Ticket relations (parent/child, blocked-by, duplicates) + UI в деталях | 2 дня | ⏳ Этап 63 |
-| 6 | Merge / Duplicate tickets («Объединить с…», перенос сообщений/вложений) | 1 день | ⏳ Этап 63 |
+| 1 | 2FA / TOTP для admin/super_admin (otplib + QR в Profile, require2FA) | 2–3 дня | ⏳ Этап 63 |
+| 2 | Активные сессии пользователя (view/revoke) — таблица sessions + UI в Profile (в админке revoke уже есть, Этап 58) | 1–2 дня | ⏳ Этап 63 |
+| 3 | Notification preferences per user (email/push/in-app × события) | 1–2 дня | ⏳ Этап 63 |
+| 4 | Watchers / Subscribers тикета (ticket_watchers + UI) | 1 день | ⏳ Этап 64 |
+| 5 | Ticket relations (parent/child, blocked-by, duplicates) + UI в деталях | 2 дня | ⏳ Этап 64 |
+| 6 | Merge / Duplicate tickets («Объединить с…», перенос сообщений/вложений) | 1 день | ⏳ Этап 64 |
 
-### Новые фичи — qwen P1 (предложение Этапов 64–65)
+### Новые фичи — qwen P1 (предложение Этапов 65–66)
 
 | # | Фича | Комментарий |
 |---|------|-------------|
@@ -387,6 +393,19 @@
 | 7 | Ticket forms / dynamic forms (JSON-схема в ticket_categories) | разные формы для категорий |
 | 8 | Scheduled reports (еженедельная сводка на email) | cron + шаблон |
 | 9 | GDPR data export (скачать все данные пользователя) | кнопка в Profile |
+
+### Новые фичи — qwen P2 (nice-to-have, низкий приоритет / бэклог)
+
+| # | Фича | Статус |
+|---|------|--------|
+| 1 | Pinned messages (закрепить сообщение в чате) | ⏳ бэклог |
+| 2 | Forward messages (переслать сообщение в другой чат) | ⏳ бэклог |
+| 3 | File versioning (версии файлов) | ⏳ бэклог |
+| 4 | Shared links с TTL (расшарить файл по ссылке на время) | ⏳ бэклог |
+| 5 | Saved searches / facets (сохранённые фильтры-поиски) | ⏳ бэклог |
+| 6 | Slack / Discord / Jira интеграции | ⏳ бэклог |
+| 7 | CalDAV sync (синхронизация календаря) | ⏳ бэклог |
+| 8 | Voice/video (WebRTC) и mobile app (React Native) — вне скоупа корп. интранета | ❌ вне скоупа |
 
 ### E2E-глубина — новые спеки (kimi admin-chains + qwen)
 
@@ -422,7 +441,7 @@ vite.config.ts, playwright.config.ts, eslint.config.js, server/vitest.config.js,
 
 ### Итоговый ориентир (qwen)
 
-Сейчас 1328 → после Этапов 62–65 ~1780 тестов; client branches 59.65 → 65+, server branches 64.66 → 70+; E2E 57 → ~80. Coverage-пуш не самоцель — сначала закрыть P0-фичи (2FA, watchers, relations, notification prefs).
+Сейчас 1328 → после Этапов 62–66 ~1780 тестов; client branches 59.65 → 65+, server branches 64.66 → 70+; E2E 57 → ~80. Coverage-пуш — финальный этап после 66 (не самоцель): сначала закрыть P0-фичи (2FA, watchers, relations, notification prefs).
 
 ---
 
@@ -444,6 +463,7 @@ vite.config.ts, playwright.config.ts, eslint.config.js, server/vitest.config.js,
 | 10 | CSV-импорт сотрудников | **Эндпоинт ЕСТЬ** (admin.js:446 /employees/import) — проверить UI + тест | P2 | Этап 62 |
 | 11 | Retention / автоочистка | Уведомления >90д чистятся; audit/files/chat — нет; сначала политика | P2 | Инфра |
 | 12 | DoD в AGENTS (флаг+тест+i18n+check-console+инвентарь), coverage history, «AI-пункт без цитаты кода не в план», «сначала фикс, потом тест» | В AGENTS.md | P1-P2 | Этап 60 |
+| 13 | KB-статья из тикета — ассистент ищет Wiki, кнопки «привязать KB-статью» в TicketDetail нет → проверить необходимость | ФИЧИ НЕТ, решение по продукту («Оценка ии» №6) | P2 | проверить |
 
 ### Новый Этап 62 (из №8 выше) — Timeline + импорт
 
