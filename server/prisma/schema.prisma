@@ -72,8 +72,8 @@ model tickets {
   updated_at  DateTime? @default(now())
   deleted_at  DateTime?
 
-  created_by_employee  employees?      @relation("tickets_created_by", fields: [created_by], references: [id])
-  assigned_to_employee employees?      @relation("tickets_assigned_to", fields: [assigned_to], references: [id])
+  created_by_employee  employees?      @relation("tickets_created_by", fields: [created_by], references: [id], onDelete: Restrict)
+  assigned_to_employee employees?      @relation("tickets_assigned_to", fields: [assigned_to], references: [id], onDelete: SetNull)
   locked_by_employee   employees?      @relation("tickets_locked_by", fields: [locked_by], references: [id], onDelete: SetNull)
   ticket_messages      ticket_messages[]
   time_entries         time_entries[]

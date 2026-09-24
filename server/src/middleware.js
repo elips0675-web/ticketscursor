@@ -1,9 +1,28 @@
 import jwt from 'jsonwebtoken'
 import { validateToken } from './services/api-tokens.service.js'
 
-const JWT_SECRET = process.env.JWT_SECRET
-if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+// Secrets rotation: JWT_SECRET="new,old" — подписываем новым, проверяем всеми.
+const JWT_SECRETS = (process.env.JWT_SECRET || '').split(',').map(s => s.trim()).filter(Boolean)
+const JWT_SECRET = JWT_SECRETS[0] || ''
+if (!JWT_SECRETS.length && process.env.NODE_ENV === 'production') {
   throw new Error('JWT_SECRET must be set in production')
+}
+
+export function verifyJwtSecret(token, options) {
+  if (!JWT_SECRETS.length) {
+    // Секрет не настроен (dev/тесты без dotenv) — старое поведение:
+    // в проде старт не пройдёт (index.js FATAL-проверка), здесь verify сам упадёт на ''.
+    return jwt.verify(token, JWT_SECRET, options)
+  }
+  let lastErr
+  for (const secret of JWT_SECRETS) {
+    try {
+      return jwt.verify(token, secret, options)
+    } catch (e) {
+      lastErr = e
+    }
+  }
+  throw lastErr || new Error('No JWT secrets configured')
 }
 
 export function authenticateToken(req, res, next) {
@@ -29,7 +48,7 @@ export function authenticateToken(req, res, next) {
   }
 
   try {
-    const decoded = jwt.verify(raw, JWT_SECRET)
+    const decoded = verifyJwtSecret(raw)
     req.user = decoded
     next()
   } catch {

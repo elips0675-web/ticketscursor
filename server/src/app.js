@@ -60,12 +60,13 @@ import swaggerSpec from './swagger.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import jwt from 'jsonwebtoken'
-import { JWT_SECRET, authenticateToken } from './middleware.js'
+import { verifyJwtSecret, authenticateToken } from './middleware.js'
+import { getTrustProxySetting } from './trust-proxy.js'
 import { cacheMiddleware } from './cache.js'
 import { createLimiters, loadRateLimitOverrides } from './limits.js'
 
 const app = express()
-app.set('trust proxy', 1)
+app.set('trust proxy', getTrustProxySetting())
 const server = createServer(app)
 
 await loadRateLimitOverrides()
@@ -114,7 +115,7 @@ app.use('/uploads', (req, res, next) => {
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : req.query.token
   if (!token) return res.status(401).json({ message: 'Unauthorized' })
   try {
-    jwt.verify(token, JWT_SECRET)
+    verifyJwtSecret(token)
     if (req.query.token) delete req.query.token
     express.static(uploadsDir)(req, res, next)
   } catch {

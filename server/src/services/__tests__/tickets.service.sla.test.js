@@ -1,20 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.mock('../../prisma.js', () => ({
-  default: {
-    tickets: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      count: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      updateMany: vi.fn(),
-    },
-    ticket_messages: { findMany: vi.fn(), count: vi.fn() },
-    employees: { findUnique: vi.fn(), findMany: vi.fn(), count: vi.fn() },
-    audit_log: { create: vi.fn() },
+const prismaMock = vi.hoisted(() => ({
+  tickets: {
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    count: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    updateMany: vi.fn(),
   },
+  ticket_messages: { findMany: vi.fn(), count: vi.fn() },
+  employees: { findUnique: vi.fn(), findMany: vi.fn(), count: vi.fn() },
+  audit_log: { create: vi.fn() },
 }))
+
+// $transaction-шим: interactive → прогон с тем же мок-объектом, batch → Promise.all
+prismaMock.$transaction = vi.fn((arg) => (typeof arg === 'function' ? arg(prismaMock) : Promise.all(arg)))
+
+vi.mock('../../prisma.js', () => ({ default: prismaMock }))
 
 vi.mock('../../settings.js', () => ({ getSettings: vi.fn().mockResolvedValue({}) }))
 

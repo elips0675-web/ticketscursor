@@ -223,20 +223,27 @@ export async function runSlaCheck(prisma) {
 
     if (hoursOverdue >= escalationHours * nextLevel) {
       const idx = PRIORITY_ORDER.indexOf(t.priority || 'medium')
+      const updatedAt = new Date()
       if (idx < PRIORITY_ORDER.length - 1) {
         const newPriority = PRIORITY_ORDER[idx + 1]
-        await prisma.tickets.update({
-          where: { id: t.id },
-          data: { priority: newPriority, escalation_level: nextLevel, escalated_at: new Date(), updated_at: new Date() },
+        // updateMany с условием на escalation_level: при конкуренции двух проверок
+        // эскалацию применит только одна (level не «проскочит»).
+        const res = await prisma.tickets.updateMany({
+          where: { id: t.id, escalation_level: currentLevel },
+          data: { priority: newPriority, escalation_level: nextLevel, escalated_at: updatedAt, updated_at: updatedAt },
         })
-        await notifySlaEscalated(t.id, t.priority || 'medium', newPriority, nextLevel)
-        logger.info(`SLA escalation #${t.id}: ${t.priority} → ${newPriority} (level ${nextLevel})`)
+        if (res.count > 0) {
+          await notifySlaEscalated(t.id, t.priority || 'medium', newPriority, nextLevel)
+          logger.info(`SLA escalation #${t.id}: ${t.priority} → ${newPriority} (level ${nextLevel})`)
+        }
       } else {
-        await prisma.tickets.update({
-          where: { id: t.id },
-          data: { escalation_level: nextLevel, escalated_at: new Date(), updated_at: new Date() },
+        const res = await prisma.tickets.updateMany({
+          where: { id: t.id, escalation_level: currentLevel },
+          data: { escalation_level: nextLevel, escalated_at: updatedAt, updated_at: updatedAt },
         })
-        logger.info(`SLA escalation #${t.id}: at critical, escalation level ${nextLevel}`)
+        if (res.count > 0) {
+          logger.info(`SLA escalation #${t.id}: at critical, escalation level ${nextLevel}`)
+        }
       }
     }
   }

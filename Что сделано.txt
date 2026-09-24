@@ -713,6 +713,19 @@
 - **Тесты (факт, из прогона vitest --reporter=json 24.09)**: `AdminHealth.test.tsx` (Health 100% stmts), `AdminQueues.test.tsx` (Queues 100% stmts), `AdminRbac.test.tsx` (Rbac 92.85% stmts), расширены AdminAudit/AdminLayout/AdminSettings/AdminUsers/useFeature, серверный `admin-stage58.test.js` → клиент **65 файлов / 573**, сервер **54 файла / 832** = **1405 тестов, 0 failures**; инвентарь перегенерирован из фактического прогона (119 файлов / 1405 тестов)
 - **Проверки (24.09)**: сервер vitest **54/832** ✅ (coverage 71.29/64.64/71.56/72.29 — пороги 67/61/65/68), клиент vitest **65/573** ✅ (coverage 69.13/61.21/60.12/71.69 — пороги 66/58/57/69), `npx playwright test` **57/57** ✅, `node check-console.mjs` **17/17 ALL OK**, `npm run lint` (0 errors / 56 warnings) ✅, `npm run type-check` ✅, `npm run build` ✅; коммит `32e3122` запушен 24.09
 
+### Этап 59 — Resilience: SLA/TZ, refresh-token family, trust proxy/XFF, idempotency вне Redis, транзакции, каскады FK, secrets rotation, oidc/background-тесты (24.09.2026, закрыт)
+- **SLA/TZ (коммит `af06219`)**: TIMEZONE из admin_settings подключён в `sla.js` (`addBusinessHours`/`getRemainingBusinessMs`/`isWithinBusinessHours` через Intl.DateTimeFormat — дедлайны в верном TZ, DST-переходы корректны, невалидный TZ — fallback на локальное время); +7 тестов `sla.timezone.test.js` (Vladivostok/London/NY DST)
+- **Refresh-token family (коммит `1811fee`)**: `family_id` в refresh_tokens (миграция + prisma), reuse-detection — повторное использование украденного токена отзывает всю семью; `POST /auth/revoke-all` (отзыв всех сессий юзера); oidc.js — family_id + недостающий import crypto; +5 тестов `refresh-family.test.js`
+- **Каскады FK (Блок F)**: `server/prisma/schema.prisma` — явные onDelete на 25 новых + 7 существующих FK (32 всего): `created_by` → Restrict, `assigned_to`/`creator_id` → SetNull, остальные → Cascade; идемпотентная миграция `20260924_fk_cascades.js` (чистка orphans перед созданием) — применена к dev и test БД; seed починен под FK (добавлены requester'ы 10–13 и 500/501, на которых ссылались тикеты/сообщения/тесты)
+- **Secrets rotation (Блок G)**: `middleware.js` — `JWT_SECRET="new,old"` → `JWT_SECRETS` (подпись первым, проверка всеми через `verifyJwtSecret`), graceful fallback при пустом списке (нет dotenv в тестах); применяется в `app.js` (/uploads) и `socket.js`; +4 теста `secrets-rotation.test.js`
+- **Trust proxy / XFF (Блок D)**: новый `trust-proxy.js` — `getTrustProxySetting()` (`TRUST_PROXY=1|true` → 1, иначе false, off по умолчанию — XFF нельзя подделать при прямом доступе); `app.set('trust proxy', ...)`; +4 теста (спуфинг XFF при off/on)
+- **Idempotency вне Redis (Блок C)**: `middleware/idempotency.js` — dual-store: Redis + in-memory Map (TTL 24ч, timeout 500мс, fallback на память при падении Redis); +5 тестов
+- **Транзакции multi-step (Блок E)**: `tickets.service.js` — bulk status/priority через батч `$transaction([...])`, assign/updateTicketStatus/updateTicketPriority/updateTicketAssignee — interactive `$transaction`; `background.js` — race-guard эскалации `updateMany({ where: { id, escalation_level: currentLevel } })` (защита от двойной эскалации);+8 тестов `background.sub.test.js` (эскалация по интервалам, cleanup >90 дней, DLQ >10 → email, stopImapPolling без запуска)
+- **OIDC-тесты**: `oidc.test.js` 13 тестов (discovery, authorization URL со state/nonce, callback + auto-provisioning, disabled, no email; initOIDCClient null/error); слой моков: класс-мок `issuer.Client` (via.fn нельзя через `new` — Vitest 4), default-моки CJS (bcryptjs/jsonwebtoken)
+- **Фиксы под новые FK (real-DB тесты)**: idor/soft-delete/3 race создавали тикеты с `created_by: 500/501` (несуществующие сотрудники) — теперь они в seed; `rbac-matrix` — fallback `verifyJwtSecret` при пустом JWT_SECRETS
+- **Инвентарь (правило 10)**: `test-inventory.json` перегенерирован из фактического прогона (`vitest --reporter=json` 24.09) — клиент **65 файлов / 155 suite / 573**, сервер **61 файл / 354 suite / 878** = **126 файлов / 1451 тест, 0 failures**; `frontend-tests.txt` 65/573, `server-tests.txt` 61/878 (было 54/832, +46); E2E 19 spec / 57 тестов
+- **Проверки (24.09)**: сервер vitest **61/878** ✅ (пороги 67/61/65/68), клиент vitest **65/573** ✅ (пороги 66/58/57/69), `npm run lint` (0 errors / 57 warnings) ✅, `npm run type-check` ✅, `npm run build` ✅, `node check-console.mjs` **17/17 ALL OK** ✅
+
 ### Мелкие правки (23.09.2026)
 - **bcrypt cost 10 → 12** (спека AI_AGENT_SPEC.md, п. 10 «Безопасность»): `routes/auth.js` (register + reset), `auth/oidc.js`, `routes/admin.js` (default-пароль), `routes/public-portal.js` (токен портала). Старые хеши продолжают работать (cost зашит в хеш). Сервер vitest 53/808 ✅, check-console 17/17 ✅
 
@@ -723,9 +736,9 @@
 - ~~Этап 56 — IDOR-аудит всех `:id` эндпоинтов + 5 тестов (Промт 3)~~ ✅ **закрыт 23.09** — см. Этап 56 выше
 - ~~Этап 57 — N+1 audit: prisma log query, топ-10 эндпоинтов (Промт 5); FULLTEXT/индексы, каскады FK, soft-delete тесты~~ ✅ **закрыт 23.09** — см. Этап 57 выше
 - ~~Этап 58 — Админка (11 фич)~~ ✅ **закрыт 24.09** — см. Этап 58 выше (1405 тестов, все гейты зелёные, коммит запушен)
+- ~~Этап 59 — Resilience~~ ✅ **закрыт 24.09** — см. Этап 59 выше (1451 тест, все гейты зелёные, коммит запушен)
 
-### План 59–66 (детали — в «Что-доделать.txt»)
-- Этап 59 — Resilience: 🐞 SLA/TZ-баг (P0), refresh-token family, trust-proxy/XFF спуфинг, idempotency вне Redis, транзакции multi-step, auth/oidc.test.js, background sub-тесты
+### План 60–66 (детали — в «Что-доделать.txt»)
 - Этап 60 — Процесс: пороги coverage в AGENTS.md, DoD на фичу, i18n parity, contract tests, migration idempotency, финальный re-аудит свежей папкой test-analysis
 - Этап 61 — Покрытие ядра + Security-hardening: ticket-context.optimistic, TicketDetail/ChatDetail/Kanban, XSS-инвариант на client-рендер, notify регресс-тест, E2E-реализм (export/upload/search)
 - Этап 62 — Timeline тикета (GET /tickets/:id/history + вкладка «История» + PDF), CSV-импорт сотрудников (UI), retention-политика (audit/files/chat)

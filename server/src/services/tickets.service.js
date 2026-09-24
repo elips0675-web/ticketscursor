@@ -246,7 +246,8 @@ export async function bulkUpdateTickets({ ids, action, status, employeeId, prior
       const transitions = VALID_TRANSITIONS[row.status]
       return transitions && transitions.includes(status)
     })
-    await Promise.all(validRows.map(row => {
+    // Все обновления — в одной транзакции: либо все применились, либо ни одно.
+    await prisma.$transaction(validRows.map(row => {
       const updateData = {
         status,
         updated_at: now,
@@ -264,7 +265,7 @@ export async function bulkUpdateTickets({ ids, action, status, employeeId, prior
   if (action === 'priority') {
     const settings = await getSettings().catch(() => ({}))
     const now = new Date()
-    await Promise.all(rows.map(row => {
+    await prisma.$transaction(rows.map(row => {
       const slaHours = getSlaHours(priority, row.category, settings)
       const dueAt = new Date(now.getTime() + slaHours * 60 * 60 * 1000)
       return prisma.tickets.update({
@@ -277,18 +278,20 @@ export async function bulkUpdateTickets({ ids, action, status, employeeId, prior
   }
 
   if (action === 'assign') {
-    if (employeeId) {
-      const emp = await prisma.employees.findUnique({ where: { id: employeeId }, select: { id: true } })
-      if (!emp) {
-        const err = new Error('Employee not found')
-        err.statusCode = 404
-        throw err
+    await prisma.$transaction(async (tx) => {
+      if (employeeId) {
+        const emp = await tx.employees.findUnique({ where: { id: employeeId }, select: { id: true } })
+        if (!emp) {
+          const err = new Error('Employee not found')
+          err.statusCode = 404
+          throw err
+        }
       }
-    }
-    const now = new Date()
-    await prisma.tickets.updateMany({
-      where: { id: { in: ids }, deleted_at: null },
-      data: { assigned_to: employeeId || null, updated_at: now },
+      const now = new Date()
+      await tx.tickets.updateMany({
+        where: { id: { in: ids }, deleted_at: null },
+        data: { assigned_to: employeeId || null, updated_at: now },
+      })
     })
     const results = rows.map(row => ({ id: row.id, assigned_to: employeeId || null }))
     return { updated: results.length, skipped: ids.length - results.length, results }
@@ -298,89 +301,100 @@ export async function bulkUpdateTickets({ ids, action, status, employeeId, prior
 }
 
 export async function updateTicketStatus(id, status) {
-  const old = await prisma.tickets.findUnique({
-    where: { id },
-    select: { status: true, first_response_at: true, resolved_at: true, sla_paused_at: true, sla_accumulated_ms: true, due_at: true, created_at: true, priority: true, category: true },
+  // Read → validate → write в одной транзакции: исключает race-обновления статуса.
+  const result = await prisma.$transaction(async (tx) => {
+    const old = await tx.tickets.findUnique({
+      where: { id },
+      select: { status: true, first_response_at: true, resolved_at: true, sla_paused_at: true, sla_accumulated_ms: true, due_at: true, created_at: true, priority: true, category: true },
+    })
+    if (!old) return null
+    const allowed = VALID_TRANSITIONS[old.status]
+    if (!allowed || !allowed.includes(status)) {
+      const err = new Error(`Invalid status transition: ${old.status} → ${status}`)
+      err.statusCode = 400
+      throw err
+    }
+    const settings = await getSettings().catch(() => ({}))
+    const now = new Date()
+    const updateData = {
+      status,
+      updated_at: now,
+      resolved_at: getResolvedAt(status, old.resolved_at),
+    }
+
+    if (status === 'in_progress' && !old.first_response_at) {
+      updateData.first_response_at = now
+    }
+
+    if (status === 'waiting_for_customer' && !old.sla_paused_at) {
+      updateData.sla_paused_at = now
+    }
+
+    if (old.status === 'waiting_for_customer' && old.sla_paused_at && status !== 'waiting_for_customer') {
+      const pausedDuration = now.getTime() - old.sla_paused_at.getTime()
+      updateData.sla_accumulated_ms = old.sla_accumulated_ms + pausedDuration
+      updateData.sla_paused_at = null
+
+      const elapsedMs = now.getTime() - old.created_at.getTime()
+      const totalAccumulated = updateData.sla_accumulated_ms
+      const activeMs = elapsedMs - totalAccumulated
+      const slaHours = getSlaHours(old.priority, old.category, settings)
+      const slaMs = slaHours * 60 * 60 * 1000
+      const remainingMs = Math.max(0, slaMs - activeMs)
+      updateData.due_at = addBusinessHours(now, remainingMs / (60 * 60 * 1000), settings)
+    }
+
+    await tx.tickets.update({ where: { id }, data: updateData })
+    return old
   })
-  if (!old) return null
-  const allowed = VALID_TRANSITIONS[old.status]
-  if (!allowed || !allowed.includes(status)) {
-    const err = new Error(`Invalid status transition: ${old.status} → ${status}`)
-    err.statusCode = 400
-    throw err
-  }
-  const settings = await getSettings().catch(() => ({}))
-  const now = new Date()
-  const updateData = {
-    status,
-    updated_at: now,
-    resolved_at: getResolvedAt(status, old.resolved_at),
-  }
-
-  if (status === 'in_progress' && !old.first_response_at) {
-    updateData.first_response_at = now
-  }
-
-  if (status === 'waiting_for_customer' && !old.sla_paused_at) {
-    updateData.sla_paused_at = now
-  }
-
-  if (old.status === 'waiting_for_customer' && old.sla_paused_at && status !== 'waiting_for_customer') {
-    const pausedDuration = now.getTime() - old.sla_paused_at.getTime()
-    updateData.sla_accumulated_ms = old.sla_accumulated_ms + pausedDuration
-    updateData.sla_paused_at = null
-
-    const elapsedMs = now.getTime() - old.created_at.getTime()
-    const totalAccumulated = updateData.sla_accumulated_ms
-    const activeMs = elapsedMs - totalAccumulated
-    const slaHours = getSlaHours(old.priority, old.category, settings)
-    const slaMs = slaHours * 60 * 60 * 1000
-    const remainingMs = Math.max(0, slaMs - activeMs)
-    updateData.due_at = addBusinessHours(now, remainingMs / (60 * 60 * 1000), settings)
-  }
-
-  await prisma.tickets.update({ where: { id }, data: updateData })
-  return old
+  return result
 }
 
 export async function updateTicketPriority(id, priority) {
-  const old = await prisma.tickets.findUnique({
-    where: { id },
-    select: { priority: true, category: true, sla_paused_at: true, sla_accumulated_ms: true, created_at: true },
-  })
-  if (!old) return null
-  const settings = await getSettings().catch(() => ({}))
-  const now = new Date()
-  const slaHours = getSlaHours(priority, old.category, settings)
+  // Read → пересчёт SLA → write атомарно.
+  const result = await prisma.$transaction(async (tx) => {
+    const old = await tx.tickets.findUnique({
+      where: { id },
+      select: { priority: true, category: true, sla_paused_at: true, sla_accumulated_ms: true, created_at: true },
+    })
+    if (!old) return null
+    const settings = await getSettings().catch(() => ({}))
+    const now = new Date()
+    const slaHours = getSlaHours(priority, old.category, settings)
 
-  if (old.sla_paused_at) {
-    const pausedDuration = now.getTime() - old.sla_paused_at.getTime()
-    const totalAccumulated = old.sla_accumulated_ms + pausedDuration
-    const elapsedMs = now.getTime() - old.created_at.getTime()
-    const activeMs = elapsedMs - totalAccumulated
-    const remainingMs = Math.max(0, slaHours * 60 * 60 * 1000 - activeMs)
-    const dueAt = addBusinessHours(now, remainingMs / (60 * 60 * 1000), settings)
-    await prisma.tickets.update({ where: { id }, data: { priority, due_at: dueAt, sla_accumulated_ms: totalAccumulated, sla_paused_at: now, updated_at: now } })
-  } else {
-    const dueAt = addBusinessHours(now, slaHours, settings)
-    await prisma.tickets.update({ where: { id }, data: { priority, due_at: dueAt, updated_at: now } })
-  }
-  return { oldPriority: old.priority, newPriority: priority }
+    if (old.sla_paused_at) {
+      const pausedDuration = now.getTime() - old.sla_paused_at.getTime()
+      const totalAccumulated = old.sla_accumulated_ms + pausedDuration
+      const elapsedMs = now.getTime() - old.created_at.getTime()
+      const activeMs = elapsedMs - totalAccumulated
+      const remainingMs = Math.max(0, slaHours * 60 * 60 * 1000 - activeMs)
+      const dueAt = addBusinessHours(now, remainingMs / (60 * 60 * 1000), settings)
+      await tx.tickets.update({ where: { id }, data: { priority, due_at: dueAt, sla_accumulated_ms: totalAccumulated, sla_paused_at: now, updated_at: now } })
+    } else {
+      const dueAt = addBusinessHours(now, slaHours, settings)
+      await tx.tickets.update({ where: { id }, data: { priority, due_at: dueAt, updated_at: now } })
+    }
+    return { oldPriority: old.priority, newPriority: priority }
+  })
+  return result
 }
 
 export async function updateTicketAssignee(id, employeeId) {
-  let emp = null
-  if (employeeId) {
-    emp = await prisma.employees.findUnique({ where: { id: employeeId }, select: { name: true } })
-    if (!emp) return null
-  }
-  const old = await prisma.tickets.findUnique({
-    where: { id },
-    select: { assigned_to: true },
+  // Проверка сотрудника + смена исполнителя атомарно.
+  return prisma.$transaction(async (tx) => {
+    let emp = null
+    if (employeeId) {
+      emp = await tx.employees.findUnique({ where: { id: employeeId }, select: { name: true } })
+      if (!emp) return null
+    }
+    const old = await tx.tickets.findUnique({
+      where: { id },
+      select: { assigned_to: true },
+    })
+    if (!old) return null
+    await tx.tickets.update({ where: { id }, data: { assigned_to: employeeId || null, updated_at: new Date() } })
+    return { oldAssignee: old.assigned_to, newAssignee: employeeId || null, employeeName: emp?.name || null }
   })
-  if (!old) return null
-  await prisma.tickets.update({ where: { id }, data: { assigned_to: employeeId || null, updated_at: new Date() } })
-  return { oldAssignee: old.assigned_to, newAssignee: employeeId || null, employeeName: emp?.name || null }
 }
 
 export async function deleteTicket(id) {

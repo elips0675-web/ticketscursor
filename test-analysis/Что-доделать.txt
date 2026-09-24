@@ -4,7 +4,7 @@
 > Источники: Kimi (7.5/10 → **8/10**), DeepSeek (6.5/10 → **8.5/10**), Qwen (8.2/10 → **8.5/10**) — финальные вердикты в «Оценка kimi/дипсик/qwen.rtf» (23.09), Доделать.rtf (промты 1-6)
 > Доп. аудиты 24.09: «Тесты и функционал qwen.rtf», «Тесты и функционал дипсик.rtf», «Тесты и функционал kimi.docx» → сведены в «Тесты и функционал общее.rtf» (раздел «Дополнения из аудитов 24.09» ниже)
 > Фактическая проверка кодовой базы: 24.09.2026
-> Тесты (закоммичено 24.09, инвентарь из vitest-прогона): **65 файлов / 573 клиентских + 54 файла / 832 серверных = 1405 тестов, 0 failures** — клиент coverage 69.13/61.21/60.12/71.69, сервер 71.29/64.64/71.56/72.29 (пороги 66/58/57/69 и 67/61/65/68 пройдены)
+> Тесты (закоммичено 24.09, инвентарь из vitest-прогона): **65 файлов / 573 клиентских + 61 файл / 878 серверных = 1451 тест, 0 failures** — клиент coverage 69.13/61.21/60.12/71.69, сервер 71.29/64.64/71.56/72.29 (пороги 66/58/57/69 и 67/61/65/68 пройдены)
 > E2E: 19 spec'ов / 57 тестов (Playwright, зелёный прогон 24.09) + check-console 17/17
 
 ---
@@ -41,6 +41,7 @@
 | 53-56 | Backup verify (verify-backup.mjs + CI daily), socket.js 22%→**83%** реальный сервер+БД (Этап 54), E2E lifecycle 19 spec / 57 тестов (Этап 55), IDOR-аудит idor.test.js 11 тестов + canAccessTicket (Этап 56) → **61/507 + 48/791 = 1298 тестов, 0 failures** | ✅ |
 | 57 | N+1 и индексы: race-фиксы (collision TOCTOU, startTimer P2002, outbox-guard), soft-delete + Race-тесты (4 файла / 14 тестов), клиент Csatisfaction 0%→**70.23%** lines → **62/520 + 53/808 = 1328 тестов, 0 failures** | ✅ 23.09 |
 | 58 | Админка (11 фич): Health-дашборд, Queue-монитор, RBAC-матрица UI, rate-limit override, schedule rollout, email-template preview, доработки AdminAudit/AdminSettings/AdminUsers → клиент 65/573 + сервер 54/832 = **1405** | ✅ **закрыт 24.09** — гейты пройдены (vitest 1405 + coverage, lint 0/56, type-check, build, playwright 57/57, check-console 17/17), коммит `32e3122` запушен |
+| 59 | Resilience — SLA/TZ-фикс (P0), refresh-token family (reuse-detection + revoke-all), secrets rotation (JWT new,old), idempotency вне Redis (dual-store), транзакции multi-step (bulk/assign/escalation), каскады FK (32, явные onDelete), trust proxy/XFF, oidc/background/trust-proxy/secrets/idempotency-тесты → клиент 65/573 + сервер 61/878 = **1451** | ✅ **закрыт 24.09** — гейты пройдены (vitest 1451, lint 0/57, type-check, build, check-console 17/17), коммит запушен |
 
 ---
 
@@ -211,15 +212,15 @@
 | # | Задача | Статус |
 |---|--------|--------|
 | 1 | **Backup verification** — автопроверка, что mysqldump разворачивается | ✅ Сделано 22.09: `scripts/verify-backup.mjs` + CI job `backup-verify` (schedule 03:17 UTC daily) + локальный тест (tickets=13, employees=15) |
-| 2 | Secrets rotation: 2-ключевой JWT (sign=new, verify=[old,new]) | ⏳ Планируется |
+| 2 | Secrets rotation: 2-ключевой JWT (sign=new, verify=[old,new]) | ✅ Этап 59: `middleware.js` — JWT_SECRETS, verifyJwtSecret (подпись первым, проверка всеми), применяется в app.js /uploads и socket.js |
 | 3 | N+1 audit: prisma log query на staging, топ-10 эндпоинтов | ⏳ Планируется (Промт 5) |
 | 4 | FULLTEXT/индексы проверить фактически | ⏳ Планируется |
 | 5 | MySQL read replica вернуть | ⏳ Низкий приоритет (удалена осознанно, Этап 13) |
 | 6 | knex migrate:latest в CI перед тестами | ⏳ Часть: CI делает `mysql < seed.sql`; vitest.global-setup мигрирует test-БД |
-| 7 | Каскады FK (onDelete) — проверить все relation | ⏳ Планируется |
+| 7 | Каскады FK (onDelete) — проверить все relation | ✅ Этап 59: schema.prisma — 32 FK с явными onDelete (Restrict/SetNull/Cascade), идемпотентная миграция `20260924_fk_cascades.js` |
 | 8 | Soft-delete целостность — тесты «нельзя вернуть удалённого» | ⏳ Планируется |
-| 9 | Транзакции для многошаговых операций (bulk, assign, escalation) | ⏳ Планируется |
-| 10 | Idempotency keys TTL 24ч → при падении Redis нет защиты | ⏳ Планируется |
+| 9 | Транзакции для многошаговых операций (bulk, assign, escalation) | ✅ Этап 59: `tickets.service.js` — batch `$transaction([...])` для bulk, interactive `$transaction` для assign/status/priority/assignee; race-guard эскалации |
+| 10 | Idempotency keys TTL 24ч → при падении Redis нет защиты | ✅ Этап 59: `middleware/idempotency.js` — dual-store Redis + in-memory Map (TTL 24ч, timeout 500мс, fallback в catch) |
 | 11 | ANALYZE TABLE раз в сутки для FULLTEXT | ⏳ Планируется |
 
 ### 2. Админка
@@ -320,7 +321,7 @@
 | 1 | **«фича = флаг»** — новый публичный модуль без feature flag не мержится → зафиксировать в AGENTS.md | ⏳ (добавить правило) |
 | 2 | CI-check на синхронность «Что-доделать ↔ инвентарь» | ⏳ |
 | 3 | Покрытие ядра (TicketDetail/ChatDetail 51% → 75%+, Kanban 47% → 70%+) — важнее новых админ-фич | ⏳ |
-| 4 | Этап 59 (Resilience) — по Kimi раньше 58: транзакции, idempotency вне Redis, JWT rotation — прод-риски | по плану ↓ |
+| 4 | Этап 59 (Resilience) — по Kimi раньше 58: транзакции, idempotency вне Redis, JWT rotation — прод-риски | ✅ **закрыт 24.09** — см. «Что сделано.txt» Этап 59 (1451 тест) |
 | 5 | ESLint 56 warnings → <20 (постепенно, no-explicit-any как error) | ⏳ Qwen P2 |
 | 6 | Dockerize dev (docker-compose.dev.yml с MySQL+Redis) — воспроизводимость окружения | ⏳ Qwen P2 |
 
@@ -338,7 +339,7 @@
 | ~~**56**~~ | ~~**IDOR-аудит** — все эндпоинты с `:id`: requester → только свои, agent → свои + неназначенные; 5 тестов в `idor.test.js` на критические находки~~ | Промт 3 | ✅ **закрыт 23.09** — см. «Что сделано.txt» Этап 56 |
 | ~~**57**~~ | ~~**N+1 и индексы** — запросы в циклах, findMany без include/select, list без limit/take; проверить FULLTEXT/индексы, каскады FK (onDelete), soft-delete тесты «нельзя вернуть удалённого»; **+ Race-тесты (lock/status/timer/outbox)**~~ | Промт 5 | ✅ **закрыт 23.09** — см. «Что сделано.txt» Этап 57 |
 | ~~**58**~~ | ~~**Админка (11 фич)** — RBAC-матрица UI, Backup/restore UI, audit log фильтры+CSV, health dashboard (БД/Redis/Meili/SMTP/IMAP/очередь), feature flags расписание, Queue monitor (Bull-Board), сессии «разлогинить везде», rate-limit override, email-template preview, reindex Meilisearch, migrations status; **+ a11y-тесты AdminSettings/AdminLayout**~~ | — (новые промты) | ✅ **закрыт 24.09** — клиент 65/573 + сервер 54/832 = 1405 тестов, coverage 69.13/61.21/60.12/71.69 и 71.29/64.64/71.56/72.29 (пороги пройдены), E2E 57/57, check-console 17/17; см. «Что сделано.txt» Этап 58 |
-| **59** | **Resilience** — Secrets rotation (2-ключевой JWT: sign=new, verify=[old,new]), idempotency keys вне Redis (TTL 24ч без защиты при падении), транзакции для multi-step (bulk/assign/escalation), **каскады FK (onDelete) — проверить фактически в schema.prisma** (Этап 57 был «только отчёт»); **+ auth/oidc.test.js, background sub-тесты**; **+ 🐞 SLA/TZ-баг** (TIMEZONE из настроек не в addBusinessHours — дедлайн в чужом TZ и DST-переход ±1ч, нужно фикс+тест), **+ refresh-token family** (база reuse-detection есть, auth.js:81; нужен отзыв всех сессий юзера), **+ trust proxy/XFF спуфинг-тест** (по коду, дипсик P1/P2, «Оценка ии» 24.09) | — | БД #2,10,9 + Дипсик P1/P2 + «Оценка ии.rtf» |
+| ~~**59**~~ | ~~**Resilience** — Secrets rotation (2-ключевой JWT: sign=new, verify=[old,new]), idempotency keys вне Redis (TTL 24ч без защиты при падении), транзакции для multi-step (bulk/assign/escalation), **каскады FK (onDelete) — проверить фактически в schema.prisma** (Этап 57 был «только отчёт»); **+ auth/oidc.test.js, background sub-тесты**; **+ 🐞 SLA/TZ-баг** (TIMEZONE из настроек не в addBusinessHours — дедлайн в чужом TZ и DST-переход ±1ч, нужно фикс+тест), **+ refresh-token family** (база reuse-detection есть, auth.js:81; нужен отзыв всех сессий юзера), **+ trust proxy/XFF спуфинг-тест** (по коду, дипсик P1/P2, «Оценка ии» 24.09)~~ | — | ✅ **закрыт 24.09** — клиент 65/573 + сервер 61/878 = **1451 тест, 0 failures**, lint 0/57, type-check/build ✅, check-console 17/17; см. «Что сделано.txt» Этап 59 |
 | **60** | **Процесс** — правило порогов coverage в AGENTS.md (буфер vs обязательные тесты), финальный re-аудит свежей папкой test-analysis (Kimi/DeepSeek/Qwen); **+ i18n parity, contract tests (zod), migration idempotency** | Промт 6 (обновить) | Кimi #3 + Дипсик P2 |
 | **61** | **Покрытие ядра + E2E-реализм + Security-hardening** — ticket-context.optimistic (35%→60%+), TicketDetail/ChatDetail/Kanban, virtual scroll jsdom, E2E export/upload/search-real; **+ XSS-инвариант на client-рендер** (экранирование &<> есть, но regression-тест: `<img onerror>`/`javascript:` не исполняется; при расширении markdown — DOMPurify), **+ notify регресс-тест** (email/webhook упал → тикет создан 201), **+ тест-предохранители**: клампинг limit, soft-delete в списках, N+1 (spy на prisma); правило «фича = флаг» в AGENTS.md; CI-check синхронности доков | Промт 5 (расширенный) | Дипсик «новый 61», Kimi, Qwen + «Оценка ии.rtf» |
 | **62** | **Timeline + импорт** — `GET /tickets/:id/history` (из audit_log) + вкладка «История» в TicketDetail (кто/когда менял статус/приоритет/исполнителя) → PDF с историей (jsPDF подхватит); CSV-импорт сотрудников: UI-кнопка + превью + валидация + тест роута (admin.js:446); retention-политика (audit/files/chat) — после утверждения политики хранения | — | «Оценка ии.rtf» №8–11 + «Новый Этап 62» |
@@ -456,9 +457,9 @@ vite.config.ts, playwright.config.ts, eslint.config.js, server/vitest.config.js,
 | # | Пункт | Вердикт по коду 24.09 | Приоритет | Куда |
 |---|-------|----------------------|-----------|------|
 | 1 | XSS client-рендер (MarkdownEditor:54, TicketDetail:570) | Экранирование `&<>` первым → raw-теги не исполняются; риск ниже заявленного; нужен regression-тест + DOMPurify при расширении markdown | P1 | Этап 61 |
-| 2 | Refresh reuse-detection | База ЕСТЬ (auth.js:81 — delete при /refresh); нет token_family_id и отзыва всех сессий юзера | P1 | Этап 59 |
-| 3 | trust proxy: 1 / X-Forwarded-For | Проверить топологию (compose 1 nginx vs k8s ingress+svc); тест на спуфинг + WS-handshake | P1 | Этап 59 |
-| 4 | SLA / biz-hours TZ + DST | 🐞 **БАГ ПРОДУКТА подтверждён**: TIMEZONE из настроек не в addBusinessHours | P0 | Этап 59 |
+| 2 | Refresh reuse-detection | База ЕСТЬ (auth.js:81 — delete при /refresh); нет token_family_id и отзыва всех сессий юзера | P1 | ✅ Этап 59 (`1811fee`): family_id + reuse-detection отзывает всю семью, POST /auth/revoke-all |
+| 3 | trust proxy: 1 / X-Forwarded-For | Проверить топологию (compose 1 nginx vs k8s ingress+svc); тест на спуфинг + WS-handshake | P1 | ✅ Этап 59: `trust-proxy.js` (TRUST_PROXY=1|true → 1, off по умолчанию), спуфинг-тесты |
+| 4 | SLA / biz-hours TZ + DST | 🐞 **БАГ ПРОДУКТА подтверждён**: TIMEZONE из настроек не в addBusinessHours | P0 | ✅ Этап 59 (`af06219`): TIMEZONE в addBusinessHours/getRemainingBusinessMs/isWithinBusinessHours (Intl.DateTimeFormat, DST) |
 | 5 | orderBy/limit инъекция | Уже защищено (захардкожен orderBy + клампинг 100–500) → тест-предохранитель | P2 | Этап 61 |
 | 6 | Notify регресс-тест | safeNotify есть (Этап 17), интеграционного теста нет | P1 | Этап 61 |
 | 7 | CSP / idempotency 409 / 413 body / soft-delete lists / N+1 spy | Свести к P2-тестам: CSP-inline, идемпотентность, 413, lists, N+1 | P2 | Этапы 60–61 |

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-24T09:08:23.849Z",
+  "generated": "2026-09-24T10:39:32.508Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
@@ -11,17 +11,17 @@
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 54,
-    "suites": 337,
-    "tests": 832,
+    "files": 61,
+    "suites": 354,
+    "tests": 878,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 119,
-    "suites": 492,
-    "tests": 1405,
+    "files": 126,
+    "suites": 509,
+    "tests": 1451,
     "all_passing": true
   },
   "e2e": {
@@ -407,6 +407,10 @@
       "tests": 14
     },
     {
+      "file": "server/src/__tests__/oidc.test.js",
+      "tests": 13
+    },
+    {
       "file": "server/src/services/__tests__/tickets.service.mentions.test.js",
       "tests": 13
     },
@@ -447,8 +451,16 @@
       "tests": 9
     },
     {
+      "file": "server/src/__tests__/background.sub.test.js",
+      "tests": 8
+    },
+    {
       "file": "server/src/__tests__/clamav.expanded.test.js",
       "tests": 8
+    },
+    {
+      "file": "server/src/__tests__/sla.timezone.test.js",
+      "tests": 7
     },
     {
       "file": "server/src/__tests__/soft-delete.test.js",
@@ -491,6 +503,14 @@
       "tests": 5
     },
     {
+      "file": "server/src/__tests__/idempotency.test.js",
+      "tests": 5
+    },
+    {
+      "file": "server/src/__tests__/refresh-family.test.js",
+      "tests": 5
+    },
+    {
       "file": "server/src/middleware/__tests__/metrics.test.js",
       "tests": 5
     },
@@ -516,6 +536,14 @@
     },
     {
       "file": "server/src/__tests__/search.test.js",
+      "tests": 4
+    },
+    {
+      "file": "server/src/__tests__/secrets-rotation.test.js",
+      "tests": 4
+    },
+    {
+      "file": "server/src/__tests__/trust-proxy.test.js",
       "tests": 4
     },
     {

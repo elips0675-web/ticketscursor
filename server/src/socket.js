@@ -1,8 +1,7 @@
 import { Server } from 'socket.io'
 import { createAdapter } from '@socket.io/redis-adapter'
-import jwt from 'jsonwebtoken'
 import prisma from './prisma.js'
-import { JWT_SECRET } from './middleware.js'
+import { verifyJwtSecret } from './middleware.js'
 import { hasRole } from './utils/roleUtils.js'
 import { createNotification } from './routes/notifications.js'
 import { markRead } from './services/chats.service.js'
@@ -82,7 +81,7 @@ export async function setupSocket(server) {
     const token = socket.handshake.auth?.token
     if (!token) return next(new Error('No token'))
     try {
-      const decoded = jwt.verify(token, JWT_SECRET)
+      const decoded = verifyJwtSecret(token)
       socket.userId = decoded.userId
       socket.userRole = decoded.role
       next()

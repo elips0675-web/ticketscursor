@@ -22,6 +22,14 @@ export async function seed(knex) {
     { id: 3, name: 'Дмитрий Сидоров', email: 'dmitry@example.com', password_hash: PASSWORD_HASH, role: 'agent', department: 'Поддержка', online: false, active_tickets: 4, resolved_today: 3 },
     { id: 4, name: 'Елена Козлова', email: 'elena@example.com', password_hash: PASSWORD_HASH, role: 'agent', department: 'Разработка', online: true, active_tickets: 1, resolved_today: 2 },
     { id: 5, name: 'Сергей Новиков', email: 'sergey@example.com', password_hash: PASSWORD_HASH, role: 'agent', department: 'Поддержка', online: false, active_tickets: 0, resolved_today: 6 },
+    // Заявители (requesters): тикеты и сообщения в демо-данных ссылаются на них
+    { id: 10, name: 'Иван Клиент', email: 'ivan@example.com', password_hash: PASSWORD_HASH, role: 'requester', department: 'Клиенты', online: false, active_tickets: 2, resolved_today: 1 },
+    { id: 11, name: 'Ольга Менеджер', email: 'olga@example.com', password_hash: PASSWORD_HASH, role: 'requester', department: 'Клиенты', online: false, active_tickets: 1, resolved_today: 0 },
+    { id: 12, name: 'Павел Техдир', email: 'pavel@example.com', password_hash: PASSWORD_HASH, role: 'requester', department: 'Клиенты', online: false, active_tickets: 1, resolved_today: 0 },
+    { id: 13, name: 'Анна Разработчик', email: 'anna@example.com', password_hash: PASSWORD_HASH, role: 'requester', department: 'Клиенты', online: false, active_tickets: 1, resolved_today: 0 },
+    // Сотрудники для real-DB тестов (idor/soft-delete/race): тикеты в тестах ссылаются на created_by 500/501
+    { id: 500, name: 'Requester A', email: 'requester-a@example.com', password_hash: PASSWORD_HASH, role: 'requester', department: 'Тесты', online: false, active_tickets: 0, resolved_today: 0 },
+    { id: 501, name: 'Requester B', email: 'requester-b@example.com', password_hash: PASSWORD_HASH, role: 'requester', department: 'Тесты', online: false, active_tickets: 0, resolved_today: 0 },
   ])
 
   await knex('tickets').insert([
