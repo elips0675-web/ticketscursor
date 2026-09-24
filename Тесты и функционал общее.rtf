@@ -1,0 +1,839 @@
+{\rtf1\ansi\deff0{\fonttbl{\f0\fnil\fcharset204 Calibri;}{\f1\fnil Calibri;}}
+\f0\fs22 
+\sectd \pard\plain \f0\fs22 
+\pard\sa120\sb200\b\fs32 \u1058?\u1077?\u1089?\u1090?\u1099? \u1080? \u1092?\u1091?\u1085?\u1082?\u1094?\u1080?\u1086?\u1085?\u1072?\u1083? \u1086?\u1073?\u1097?\u1077?\u1077? \u8212? \u1089?\u1074?\u1086?\u1076? \u1072?\u1091?\u1076?\u1080?\u1090?\u1086?\u1074? qwen, \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?, kimi\b0\fs22\par
+\pard\sa60\ql > \u1044?\u1072?\u1090?\u1072?: 24.09.2026\par
+\pard\sa60\ql > \u1048?\u1089?\u1090?\u1086?\u1095?\u1085?\u1080?\u1082?\u1080?: \u171?\u1058?\u1077?\u1089?\u1090?\u1099? \u1080? \u1092?\u1091?\u1085?\u1082?\u1094?\u1080?\u1086?\u1085?\u1072?\u1083? qwen.rtf\u187?, \u171?\u1058?\u1077?\u1089?\u1090?\u1099? \u1080? \u1092?\u1091?\u1085?\u1082?\u1094?\u1080?\u1086?\u1085?\u1072?\u1083? \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?.rtf\u187?, \u171?\u1058?\u1077?\u1089?\u1090?\u1099? \u1080? \u1092?\u1091?\u1085?\u1082?\u1094?\u1080?\u1086?\u1085?\u1072?\u1083? kimi.docx\u187? (\u1074?\u1089?\u1077? 23.09.2026)\par
+\pard\sa60\ql > \u1041?\u1072?\u1079?\u1072?, \u1087?\u1088?\u1086?\u1090?\u1080?\u1074? \u1082?\u1086?\u1090?\u1086?\u1088?\u1086?\u1081? \u1087?\u1080?\u1089?\u1072?\u1083?\u1080?\u1089?\u1100? \u1072?\u1091?\u1076?\u1080?\u1090?\u1099?: 1328 \u1090?\u1077?\u1089?\u1090?\u1086?\u1074? (520 \u1082?\u1083?\u1080?\u1077?\u1085?\u1090? / 808 \u1089?\u1077?\u1088?\u1074?\u1077?\u1088?), 57 E2E (19 \u1089?\u1087?\u1077?\u1082?\u1086?\u1074?), 0 failures. \u1055?\u1086?\u1082?\u1088?\u1099?\u1090?\u1080?\u1077?: \u1082?\u1083?\u1080?\u1077?\u1085?\u1090? 67.6/59.7/58.4/70.2, \u1089?\u1077?\u1088?\u1074?\u1077?\u1088? 71.6/64.7/71.0/72.6.\par
+\pard\sa60\ql > \u1055?\u1088?\u1072?\u1074?\u1080?\u1083?\u1086?: \u1082?\u1072?\u1078?\u1076?\u1099?\u1081? \u1087?\u1091?\u1085?\u1082?\u1090? \u1089?\u1074?\u1077?\u1076?\u1105?\u1085? \u1086?\u1076?\u1080?\u1085? \u1088?\u1072?\u1079?; \u1074? \u1089?\u1082?\u1086?\u1073?\u1082?\u1072?\u1093? \u8212? \u1080?\u1089?\u1090?\u1086?\u1095?\u1085?\u1080?\u1082? (qwen / \u1076?\u1080?\u1087?\u1089?\u1080?\u1082? / kimi).\par
+\pard\sa120\sb200\b\fs26 1. \u1057?\u1086?\u1089?\u1090?\u1086?\u1103?\u1085?\u1080?\u1077? \u1087?\u1088?\u1086?\u1077?\u1082?\u1090?\u1072? \u8212? \u1095?\u1090?\u1086? \u1091?\u1078?\u1077? \u1079?\u1072?\u1082?\u1088?\u1099?\u1090?\u1086?\b0\fs22\par
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+\u1063?\u1090?\u1086?\cell 
+\u1057?\u1090?\u1072?\u1090?\u1091?\u1089?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+All P0/P1 \u1080?\u1079? \u171?\u1060?\u1080?\u1085?\u1072?\u1083?\u1100?\u1085?\u1099?\u1077? \u1086?\u1094?\u1077?\u1085?\u1082?\u1080? 23.09\u187? (race, oidc, optimistic, E2E-real, i18n parity, XSS/injection \u8212? P1; a11y, background, virtual scroll, contract, migration idempotency \u8212? P2)\cell 
+\u9203? \u1047?\u1072?\u1087?\u1083?\u1072?\u1085?\u1080?\u1088?\u1086?\u1074?\u1072?\u1085?\u1099? \u1074? \u1069?\u1090?\u1072?\u1087?\u1072?\u1093? 57/59/61 (\u1076?\u1080?\u1087?\u1089?\u1080?\u1082?, kimi, qwen)\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+Race-\u1090?\u1077?\u1089?\u1090?\u1099? (lock/status/timer/outbox)\cell 
+\u9989? \u1069?\u1090?\u1072?\u1087? 57 \u8212? \u1079?\u1072?\u1087?\u1083?\u1072?\u1085?\u1080?\u1088?\u1086?\u1074?\u1072?\u1085?\u1086? 4 \u1092?\u1072?\u1081?\u1083?\u1072? / ~14 \u1090?\u1077?\u1089?\u1090?\u1086?\u1074? (kimi, \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?, qwen)\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+\u1069?\u1090?\u1072?\u1087? 58 \u171?\u1040?\u1076?\u1084?\u1080?\u1085?\u1082?\u1072? (11 \u1092?\u1080?\u1095?)\u187? \u8212? health, backup/restore, RBAC-\u1084?\u1072?\u1090?\u1088?\u1080?\u1094?\u1072?, audit \u1092?\u1080?\u1083?\u1100?\u1090?\u1088?\u1099?+CSV, queue monitor, sessions revoke, email-preview, reindex, migrations status, feature-flags schedule, rate-limit override\cell 
+\u9989? \u1056?\u1077?\u1072?\u1083?\u1080?\u1079?\u1086?\u1074?\u1072?\u1085?\u1086? 24.09 (\u1092?\u1088?\u1086?\u1085?\u1090?: 3 \u1085?\u1086?\u1074?\u1099?\u1077? \u1089?\u1090?\u1088?\u1072?\u1085?\u1080?\u1094?\u1099? + \u1085?\u1072?\u1089?\u1090?\u1088?\u1086?\u1081?\u1082?\u1080?; \u1073?\u1101?\u1082?: admin.js; \u1090?\u1077?\u1089?\u1090?\u1099?: +53 \u1082?\u1083?\u1080?\u1077?\u1085?\u1090?\u1089?\u1082?\u1080?\u1093?, +24 \u1089?\u1077?\u1088?\u1074?\u1077?\u1088?\u1085?\u1099?\u1093? \u8212? \u1074? \u1087?\u1088?\u1086?\u1075?\u1086?\u1085?\u1077?)\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+\u1056?\u1072?\u1089?\u1093?\u1086?\u1078?\u1076?\u1077?\u1085?\u1080?\u1103? \u1074? \u1094?\u1080?\u1092?\u1088?\u1072?\u1093? \u1096?\u1072?\u1087?\u1082?\u1080?/\u1087?\u1086?\u1076?\u1074?\u1072?\u1083?\u1072? frontend-tests.txt, server-tests.txt (\u1076?\u1080?\u1087?\u1089?\u1080?\u1082? \u167?1)\cell 
+\u9989? \u1059?\u1089?\u1090?\u1088?\u1072?\u1085?\u1077?\u1085?\u1086?: \u1080?\u1085?\u1074?\u1077?\u1085?\u1090?\u1072?\u1088?\u1100? \u1087?\u1077?\u1088?\u1077?\u1075?\u1077?\u1085?\u1077?\u1088?\u1080?\u1088?\u1091?\u1077?\u1090?\u1089?\u1103? \u1080?\u1079? \u1092?\u1072?\u1082?\u1090?\u1080?\u1095?\u1077?\u1089?\u1082?\u1086?\u1075?\u1086? vitest (\u1087?\u1088?\u1072?\u1074?\u1080?\u1083?\u1086? 10), \u1087?\u1086?\u1076?\u1074?\u1072?\u1083?\u1099? \u1089?\u1080?\u1085?\u1093?\u1088?\u1086?\u1085?\u1080?\u1079?\u1080?\u1088?\u1086?\u1074?\u1072?\u1085?\u1099?\cell 
+\row\pard\lang1049 
+\sa80\par
+\pard\sa120\sb200\b\fs26 2. \u1058?\u1077?\u1089?\u1090?\u1099? \u8212? \u1086?\u1089?\u1090?\u1072?\u1090?\u1086?\u1082? (\u1089?\u1074?\u1086?\u1076? P1/P2)\b0\fs22\par
+\pard\sa120\sb200\b\fs23 P1 \u8212? \u1090?\u1077?\u1089?\u1090?\u1099? (\u1079?\u1072?\u1082?\u1088?\u1099?\u1090?\u1100? \u1087?\u1077?\u1088?\u1074?\u1099?\u1084?\u1080?; \u1091?\u1078?\u1077? \u1074? \u1069?\u1090?\u1072?\u1087?\u1072?\u1093? 57/59/61)\b0\fs22\par
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+#\cell 
+\u1047?\u1072?\u1076?\u1072?\u1095?\u1072?\cell 
+\u1060?\u1072?\u1081?\u1083?\cell 
+\u1054?\u1094?\u1077?\u1085?\u1082?\u1072?\cell 
+\u1048?\u1089?\u1090?\u1086?\u1095?\u1085?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+1\cell 
+Race-\u1090?\u1077?\u1089?\u1090?\u1099?: \u1087?\u1072?\u1088?\u1072?\u1083?\u1083?\u1077?\u1083?\u1100?\u1085?\u1099?\u1077? lock/status/timer/outbox\cell 
+ticket-lock.race, ticket-status.race, time-timer.race, outbox.delivery\cell 
+4 \u1092?\u1072?\u1081?\u1083?\u1072? / ~14 \u1090?\u1077?\u1089?\u1090?\u1086?\u1074?\cell 
+kimi, \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?, qwen\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+2\cell 
+auth/oidc.test.js \u8212? \u1077?\u1076?\u1080?\u1085?\u1089?\u1090?\u1074?\u1077?\u1085?\u1085?\u1099?\u1081? \u1089?\u1077?\u1088?\u1074?\u1080?\u1089? \u1069?\u1090?\u1072?\u1087?\u1072? 34 \u1073?\u1077?\u1079? backend-\u1090?\u1077?\u1089?\u1090?\u1072? (discovery, callback, auto-provisioning, 500/400)\cell 
+server/src/auth/oidc.test.js\cell 
+~10 \u1090?\u1077?\u1089?\u1090?\u1086?\u1074?, \u1084?\u1086?\u1082? fetch\cell 
+kimi, \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+3\cell 
+ticket-context.optimistic \u8212? 35% \u1082?\u1088?\u1080?\u1090?\u1080?\u1095?\u1085?\u1086?\u1075?\u1086? \u1082?\u1086?\u1085?\u1090?\u1077?\u1082?\u1089?\u1090?\u1072? (optimistic insert + rollback \u1087?\u1088?\u1080? 500/403, invalidateQueries)\cell 
+src/test/ticket-context.optimistic.test.tsx\cell 
+~8-10 \u1090?\u1077?\u1089?\u1090?\u1086?\u1074?\cell 
+kimi, \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?, qwen\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+4\cell 
+E2E-\u1088?\u1077?\u1072?\u1083?\u1080?\u1079?\u1084?: \u1072?\u1089?\u1089?\u1077?\u1088?\u1090?\u1099? \u1085?\u1072? \u1076?\u1072?\u1085?\u1085?\u1099?\u1077?, \u1085?\u1077? \u1085?\u1072? h1 visible \u8212? export (waitForEvent('download')+BOM), file-upload (setInputFiles \u8594? \u1089?\u1082?\u1072?\u1095?\u1072?\u1090?\u1100? \u8594? \u1089?\u1074?\u1077?\u1088?\u1080?\u1090?\u1100?), search (\u1088?\u1077?\u1079?\u1091?\u1083?\u1100?\u1090?\u1072?\u1090? \u1080?\u1079? seed)\cell 
+e2e/export-real, file-upload-real, search-real\cell 
+3 \u1089?\u1087?\u1077?\u1082?\u1072? / ~8 \u1090?\u1077?\u1089?\u1090?\u1086?\u1074?\cell 
+kimi, \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+5\cell 
+i18n parity \u8212? \u1082?\u1083?\u1102?\u1095?\u1080? ru.json \u8596? en.json \u1080?\u1076?\u1077?\u1085?\u1090?\u1080?\u1095?\u1085?\u1099? (\u1079?\u1072?\u1097?\u1080?\u1090?\u1072? \u1086?\u1090? \u1088?\u1077?\u1075?\u1088?\u1077?\u1089?\u1089?\u1072? \u1076?\u1091?\u1073?\u1083?\u1077?\u1081? auth, \u1069?\u1090?\u1072?\u1087? 36)\cell 
+src/test/i18n.parity.test.ts\cell 
+1 \u1090?\u1077?\u1089?\u1090?\cell 
+kimi, \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+6\cell 
+XSS/injection \u8212? <script> \u1074? title (\u1093?\u1088?\u1072?\u1085?\u1080?\u1090?\u1089?\u1103? \u1089?\u1090?\u1088?\u1086?\u1082?\u1086?\u1081?), SQL \u1074? search \u8594? 400, \u1085?\u1077? 500, \u1041?\u1044? \u1085?\u1077? \u1087?\u1072?\u1076?\u1072?\u1077?\u1090?\cell 
+server/src/__tests__/injection.test.js\cell 
+~6 \u1090?\u1077?\u1089?\u1090?\u1086?\u1074?\cell 
+kimi, \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\sa80\par
+\pard\sa120\sb200\b\fs23 P2 \u8212? \u1090?\u1077?\u1089?\u1090?\u1099? (\u1078?\u1077?\u1083?\u1072?\u1090?\u1077?\u1083?\u1100?\u1085?\u1086?)\b0\fs22\par
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+#\cell 
+\u1047?\u1072?\u1076?\u1072?\u1095?\u1072?\cell 
+\u1048?\u1089?\u1090?\u1086?\u1095?\u1085?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+1\cell 
+a11y: aria-label \u1085?\u1072? icon-only \u1082?\u1085?\u1086?\u1087?\u1082?\u1072?\u1093?, htmlFor+id, Tab \u1087?\u1086? Sidebar, Esc\u8594?Sheet, focus-trap \u1074? Radix Dialog (AdminSettings, AdminLayout)\cell 
+kimi, \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?, qwen\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+2\cell 
+Background sub-\u1090?\u1077?\u1089?\u1090?\u1099?: SLA-\u1101?\u1089?\u1082?\u1072?\u1083?\u1072?\u1094?\u1080?\u1103? \u1087?\u1086? \u1080?\u1085?\u1090?\u1077?\u1088?\u1074?\u1072?\u1083?\u1072?\u1084?, cleanup >90\u1076? (\u1089?\u1074?\u1077?\u1078?\u1080?\u1077? \u1085?\u1077? \u1090?\u1088?\u1086?\u1085?\u1091?\u1090?\u1099?), DLQ >10/\u1095?\u1072?\u1089? \u8594? email, stopImapPolling \u1080?\u1076?\u1077?\u1084?\u1087?\u1086?\u1090?\u1077?\u1085?\u1090?\u1077?\u1085?\cell 
+kimi, \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+3\cell 
+Virtual scroll \u1074? jsdom: 1000 \u1089?\u1086?\u1086?\u1073?\u1097?\u1077?\u1085?\u1080?\u1081? \u8594? DOM < N \u1101?\u1083?\u1077?\u1084?\u1077?\u1085?\u1090?\u1086?\u1074?\cell 
+kimi, \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+4\cell 
+Contract (zod-\u1089?\u1093?\u1077?\u1084?\u1099? \u1086?\u1090?\u1074?\u1077?\u1090?\u1086?\u1074?) \u1090?\u1086?\u1087?-5 \u1101?\u1085?\u1076?\u1087?\u1086?\u1080?\u1085?\u1090?\u1086?\u1074? + migration idempotency (migrate \u1076?\u1074?\u1072?\u1078?\u1076?\u1099?)\cell 
+kimi, \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\sa80\par
+\pard\sa120\sb200\b\fs23 Coverage-\u1087?\u1072?\u1090?\u1090?\u1077?\u1088?\u1085?\u1099? (\u1074?\u1090?\u1086?\u1088?\u1086?\u1081? \u1074?\u1086?\u1083?\u1085?\u1099? qwen)\b0\fs22\par
+\pard\sa60\ql \u1050?\u1083?\u1080?\u1077?\u1085?\u1090? \u8212? \u1090?\u1080?\u1087?\u1080?\u1095?\u1085?\u1099?\u1077? \u1085?\u1077? \u1087?\u1086?\u1082?\u1088?\u1099?\u1090?\u1099?\u1077? \u1074?\u1077?\u1090?\u1082?\u1080?: error boundaries (App.tsx, AdminLayout), offline / network error (api.ts, \u1089?\u1090?\u1088?\u1072?\u1085?\u1080?\u1094?\u1099? \u1089? fetch), \u1076?\u1074?\u1086?\u1081?\u1085?\u1086?\u1081? submit (Login, TicketCreate, AdminSettings), keyboard navigation (CommandPalette, TicketDetail, DataTable), toast lifecycle (sonner), WebSocket reconnect UI (SocketContext, Tickets, ChatDetail), large data / virtualization (TicketDetail, ChatDetail), form validation edge cases (\u1087?\u1088?\u1086?\u1073?\u1077?\u1083?\u1099?, max-length, \u1089?\u1087?\u1077?\u1094?\u1089?\u1080?\u1084?\u1074?\u1086?\u1083?\u1099?, XSS-\u1087?\u1086?\u1087?\u1099?\u1090?\u1082?\u1072?), i18n fallback (\u1085?\u1077?\u1080?\u1079?\u1074?\u1077?\u1089?\u1090?\u1085?\u1099?\u1081? \u1082?\u1083?\u1102?\u1095? \u8594? key), lazy loading / Suspense fallback. (qwen)\par
+\pard\sa60\ql \u1057?\u1077?\u1088?\u1074?\u1077?\u1088?: catch-\u1074?\u1077?\u1090?\u1082?\u1080? \u1074? \u1089?\u1077?\u1088?\u1074?\u1080?\u1089?\u1072?\u1093? (\u1084?\u1086?\u1082? prisma.$executeRaw \u8594? throw), env-\u1091?\u1089?\u1083?\u1086?\u1074?\u1080?\u1103? (NODE_ENV, REDIS_URL \u1077?\u1089?\u1090?\u1100?/\u1085?\u1077?\u1090?), migration idempotency, seed validation (FK \u1074?\u1072?\u1083?\u1080?\u1076?\u1085?\u1099?, \u1085?\u1077?\u1090? orphan), full integration flow (supertest: create\u8594?assign\u8594?message\u8594?status\u8594?close + audit_log + notifications + WS emits), outbox reliability (\u1091?\u1087?\u1072?\u1083? \u1087?\u1086?\u1089?\u1083?\u1077? insert \u8594? \u1074?\u1086?\u1088?\u1082?\u1077?\u1088? \u1076?\u1086?\u1089?\u1090?\u1072?\u1074?\u1080?\u1090? \u1087?\u1086?\u1089?\u1083?\u1077? \u1088?\u1077?\u1089?\u1090?\u1072?\u1088?\u1090?\u1072?), Redis cache invalidation (PUT /tickets/:id \u8594? cache:*:/api/tickets* \u1086?\u1095?\u1080?\u1097?\u1077?\u1085?), BullMQ DLQ (3 \u1092?\u1077?\u1081?\u1083?\u1072? \u8594? DLQ), rate-limiter edge cases (10-\u1081? \u1087?\u1088?\u1086?\u1093?\u1086?\u1076?\u1080?\u1090?, 11-\u1081? \u8594? 429, \u1095?\u1077?\u1088?\u1077?\u1079? \u1084?\u1080?\u1085?\u1091?\u1090?\u1091? \u1089?\u1085?\u1086?\u1074?\u1072? \u1087?\u1088?\u1086?\u1093?\u1086?\u1076?\u1080?\u1090?). (qwen)\par
+\pard\sa120\sb200\b\fs26 3. \u1060?\u1091?\u1085?\u1082?\u1094?\u1080?\u1086?\u1085?\u1072?\u1083? \u8212? \u1086?\u1089?\u1090?\u1072?\u1090?\u1086?\u1082?\b0\fs22\par
+\pard\sa120\sb200\b\fs23 3.1 \u1040?\u1076?\u1084?\u1080?\u1085?\u1082?\u1072? (\u1069?\u1090?\u1072?\u1087? 58) \u8212? \u1088?\u1077?\u1072?\u1083?\u1080?\u1079?\u1086?\u1074?\u1072?\u1085?\u1072? (\u1089?\u1084?. \u167?1)\b0\fs22\par
+\pard\sa120\sb200\b\fs23 3.2 Resilience (\u1069?\u1090?\u1072?\u1087? 59) \u8212? \u1087?\u1088?\u1086?\u1076?-\u1088?\u1080?\u1089?\u1082?\u1080?\b0\fs22\par
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx9600
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx14800
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+#\cell 
+\u1047?\u1072?\u1076?\u1072?\u1095?\u1072?\cell 
+\u1055?\u1086?\u1095?\u1077?\u1084?\u1091?\cell 
+\u1048?\u1089?\u1090?\u1086?\u1095?\u1085?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx9600
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx14800
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+1\cell 
+JWT rotation: sign=new, verify=[old,new]\cell 
+\u1080?\u1085?\u1072?\u1095?\u1077? \u1088?\u1086?\u1090?\u1072?\u1094?\u1080?\u1103? \u1089?\u1077?\u1082?\u1088?\u1077?\u1090?\u1072? \u1088?\u1072?\u1079?\u1083?\u1086?\u1075?\u1080?\u1085?\u1080?\u1090? \u1074?\u1089?\u1077?\u1093?\cell 
+kimi, \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx9600
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx14800
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+2\cell 
+Idempotency \u1074?\u1085?\u1077? Redis\cell 
+\u1087?\u1088?\u1080? \u1087?\u1072?\u1076?\u1077?\u1085?\u1080?\u1080? Redis \u1085?\u1077?\u1090? \u1079?\u1072?\u1097?\u1080?\u1090?\u1099? \u1076?\u1091?\u1073?\u1083?\u1077?\u1081? (TTL 24\u1095? \u1078?\u1080?\u1074?\u1105?\u1090? \u1074? \u1087?\u1072?\u1084?\u1103?\u1090?\u1080? Redis)\cell 
+kimi, \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx9600
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx14800
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+3\cell 
+\u1058?\u1088?\u1072?\u1085?\u1079?\u1072?\u1082?\u1094?\u1080?\u1080? \u1076?\u1083?\u1103? multi-step (bulk / assign / escalation)\cell 
+\u1089?\u1077?\u1081?\u1095?\u1072?\u1089? \u1095?\u1072?\u1089?\u1090?\u1080?\u1095?\u1085?\u1099?\u1077? \u1089?\u1086?\u1089?\u1090?\u1086?\u1103?\u1085?\u1080?\u1103?\cell 
+kimi, \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx9600
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx14800
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+4\cell 
+\u1050?\u1072?\u1089?\u1082?\u1072?\u1076?\u1099? FK (onDelete) \u8212? \u1087?\u1088?\u1086?\u1074?\u1077?\u1088?\u1080?\u1090?\u1100? \u1092?\u1072?\u1082?\u1090?\u1080?\u1095?\u1077?\u1089?\u1082?\u1080? \u1074? schema.prisma\cell 
+\u1069?\u1090?\u1072?\u1087? 57 \u1073?\u1099?\u1083? \u171?\u1090?\u1086?\u1083?\u1100?\u1082?\u1086? \u1086?\u1090?\u1095?\u1105?\u1090?\u187?\cell 
+\u1076?\u1080?\u1087?\u1089?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\sa80\par
+\pard\sa120\sb200\b\fs23 3.3 \u1053?\u1086?\u1074?\u1099?\u1077? \u1092?\u1080?\u1095?\u1080? (qwen P0) \u8212? \u1086?\u1090?\u1083?\u1080?\u1095?\u1072?\u1102?\u1090? \u1082?\u1086?\u1088?\u1087?. Service Desk \u1086?\u1090? \u171?\u1076?\u1077?\u1084?\u1086?\u187?\b0\fs22\par
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx9600
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx14800
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+#\cell 
+\u1060?\u1080?\u1095?\u1072?\cell 
+\u1047?\u1072?\u1095?\u1077?\u1084?\cell 
+\u1057?\u1090?\u1086?\u1080?\u1084?\u1086?\u1089?\u1090?\u1100?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx9600
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx14800
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+1\cell 
+2FA / TOTP \u1076?\u1083?\u1103? admin/super_admin\cell 
+\u1073?\u1077?\u1079? \u1101?\u1090?\u1086?\u1075?\u1086? \u1085?\u1077? \u1087?\u1088?\u1086?\u1081?\u1076?\u1105?\u1090? \u1072?\u1091?\u1076?\u1080?\u1090? \u1073?\u1077?\u1079?\u1086?\u1087?\u1072?\u1089?\u1085?\u1086?\u1089?\u1090?\u1080?; otplib + QR-\u1082?\u1086?\u1076? \u1074? Profile\cell 
+2\u8211?3 \u1076?\u1085?\u1103?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx9600
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx14800
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+2\cell 
+\u1040?\u1082?\u1090?\u1080?\u1074?\u1085?\u1099?\u1077? \u1089?\u1077?\u1089?\u1089?\u1080?\u1080? \u1087?\u1086?\u1083?\u1100?\u1079?\u1086?\u1074?\u1072?\u1090?\u1077?\u1083?\u1103? (view/revoke \u1074? Profile)\cell 
+refresh-\u1090?\u1086?\u1082?\u1077?\u1085? \u1078?\u1080?\u1074?\u1105?\u1090? 7 \u1076?\u1085?\u1077?\u1081?, \u1086?\u1090?\u1086?\u1079?\u1074?\u1072?\u1090?\u1100? \u1085?\u1077?\u1083?\u1100?\u1079?\u1103?; \u1090?\u1072?\u1073?\u1083?\u1080?\u1094?\u1072? sessions\cell 
+1\u8211?2 \u1076?\u1085?\u1103?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx9600
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx14800
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+3\cell 
+Watchers / Subscribers \u1090?\u1080?\u1082?\u1077?\u1090?\u1072?\cell 
+\u1085?\u1072?\u1073?\u1083?\u1102?\u1076?\u1077?\u1085?\u1080?\u1077? \u1073?\u1077?\u1079? \u1087?\u1088?\u1072?\u1074?\u1072? \u1088?\u1077?\u1076?\u1072?\u1082?\u1090?\u1080?\u1088?\u1086?\u1074?\u1072?\u1090?\u1100?; ticket_watchers + UI\cell 
+1 \u1076?\u1077?\u1085?\u1100?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx9600
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx14800
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+4\cell 
+Ticket relations (parent/child, blocked-by, duplicates)\cell 
+\u1101?\u1087?\u1080?\u1082?-\u1090?\u1080?\u1082?\u1077?\u1090?\u1099? \u1080? \u1089?\u1074?\u1103?\u1079?\u1100? \u1076?\u1091?\u1073?\u1083?\u1077?\u1081?; ticket_relations + UI \u1074? \u1076?\u1077?\u1090?\u1072?\u1083?\u1103?\u1093?\cell 
+2 \u1076?\u1085?\u1103?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx9600
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx14800
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+5\cell 
+Notification preferences per user\cell 
+\u1089?\u1077?\u1081?\u1095?\u1072?\u1089? \u1074?\u1089?\u1077? \u1087?\u1086?\u1083?\u1091?\u1095?\u1072?\u1102?\u1090? \u1074?\u1089?\u1105?; \u1089?\u1090?\u1088?\u1072?\u1085?\u1080?\u1094?\u1072? \u171?\u1052?\u1086?\u1080? \u1091?\u1074?\u1077?\u1076?\u1086?\u1084?\u1083?\u1077?\u1085?\u1080?\u1103?\u187? (email/push/in-app \u215? \u1089?\u1086?\u1073?\u1099?\u1090?\u1080?\u1103?)\cell 
+1\u8211?2 \u1076?\u1085?\u1103?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx9600
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx14800
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+6\cell 
+Merge / Duplicate tickets\cell 
+\u1082?\u1083?\u1072?\u1089?\u1089?\u1080?\u1082?\u1072? Service Desk; \u171?\u1054?\u1073?\u1098?\u1077?\u1076?\u1080?\u1085?\u1080?\u1090?\u1100? \u1089?\u8230?\u187? \u1074? TicketDetail, \u1087?\u1077?\u1088?\u1077?\u1085?\u1086?\u1089? \u1089?\u1086?\u1086?\u1073?\u1097?\u1077?\u1085?\u1080?\u1081?/\u1074?\u1083?\u1086?\u1078?\u1077?\u1085?\u1080?\u1081?\cell 
+1 \u1076?\u1077?\u1085?\u1100?\cell 
+\row\pard\lang1049 
+\sa80\par
+\pard\sa120\sb200\b\fs23 3.4 qwen P1 \u8212? \u1089?\u1080?\u1083?\u1100?\u1085?\u1086? \u1087?\u1086?\u1074?\u1099?\u1096?\u1072?\u1077?\u1090? \u1094?\u1077?\u1085?\u1085?\u1086?\u1089?\u1090?\u1100?\b0\fs22\par
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+#\cell 
+\u1060?\u1080?\u1095?\u1072?\cell 
+\u1050?\u1086?\u1084?\u1084?\u1077?\u1085?\u1090?\u1072?\u1088?\u1080?\u1081?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+1\cell 
+\u1042?\u1077?\u1088?\u1089?\u1080?\u1086?\u1085?\u1080?\u1088?\u1086?\u1074?\u1072?\u1085?\u1080?\u1077? Wiki (wiki_revisions: body, author, created_at) + diff + rollback\cell 
+\u1089?\u1077?\u1081?\u1095?\u1072?\u1089? \u1089?\u1090?\u1072?\u1090?\u1100?\u1103? \u1087?\u1077?\u1088?\u1077?\u1079?\u1072?\u1087?\u1080?\u1089?\u1099?\u1074?\u1072?\u1077?\u1090?\u1089?\u1103? \u1073?\u1077?\u1079?\u1074?\u1086?\u1079?\u1074?\u1088?\u1072?\u1090?\u1085?\u1086?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+2\cell 
+\u1056?\u1077?\u1076?\u1072?\u1082?\u1090?\u1080?\u1088?\u1086?\u1074?\u1072?\u1085?\u1080?\u1077? \u1089?\u1086?\u1086?\u1073?\u1097?\u1077?\u1085?\u1080?\u1081? \u1074? \u1095?\u1072?\u1090?\u1077? (delete \u9989?, edit \u10060?)\cell 
+edited_at \u1074? chat_messages, WS message:edited\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+3\cell 
+Reply-to / threads \u1074? \u1095?\u1072?\u1090?\u1077?\cell 
+\u1094?\u1080?\u1090?\u1080?\u1088?\u1086?\u1074?\u1072?\u1085?\u1080?\u1077?, reply_to_message_id\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+4\cell 
+SLA business hours UI \u1074? \u1072?\u1076?\u1084?\u1080?\u1085?\u1082?\u1077?\cell 
+\u1089?\u1077?\u1081?\u1095?\u1072?\u1089? \u1079?\u1072?\u1093?\u1072?\u1088?\u1076?\u1082?\u1086?\u1078?\u1077?\u1085?\u1086? Mon\u8211?Fri 9\u8211?18 \u1074? sla.service.js; \u1085?\u1091?\u1078?\u1085?\u1072? \u1092?\u1086?\u1088?\u1084?\u1072? + \u1090?\u1072?\u1081?\u1084?\u1079?\u1086?\u1085?\u1099?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+5\cell 
+Custom roles (\u1085?\u1077? 5 \u1079?\u1072?\u1093?\u1072?\u1088?\u1076?\u1082?\u1086?\u1078?\u1077?\u1085?\u1085?\u1099?\u1093?)\cell 
+\u1090?\u1072?\u1073?\u1083?\u1080?\u1094?\u1099? roles + permissions, UI \u1082?\u1086?\u1085?\u1089?\u1090?\u1088?\u1091?\u1082?\u1090?\u1086?\u1088? \u1088?\u1086?\u1083?\u1077?\u1081?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+6\cell 
+Org chart / \u1080?\u1077?\u1088?\u1072?\u1088?\u1093?\u1080?\u1103? \u1089?\u1086?\u1090?\u1088?\u1091?\u1076?\u1085?\u1080?\u1082?\u1086?\u1074?\cell 
+manager_id \u1074? employees, \u1075?\u1088?\u1072?\u1092? \u1074? \u171?\u1050?\u1086?\u1084?\u1072?\u1085?\u1076?\u1077?\u187?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+7\cell 
+Ticket forms / dynamic forms\cell 
+JSON-\u1089?\u1093?\u1077?\u1084?\u1072? \u1074? ticket_categories (\u1048?\u1085?\u1094?\u1080?\u1076?\u1077?\u1085?\u1090?/\u1047?\u1072?\u1087?\u1088?\u1086?\u1089?/\u1055?\u1088?\u1086?\u1073?\u1083?\u1077?\u1084?\u1072?)\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+8\cell 
+Scheduled reports (\u1077?\u1078?\u1077?\u1085?\u1077?\u1076?\u1077?\u1083?\u1100?\u1085?\u1072?\u1103? \u1089?\u1074?\u1086?\u1076?\u1082?\u1072? \u1085?\u1072? email)\cell 
+cron + \u1096?\u1072?\u1073?\u1083?\u1086?\u1085? \u1087?\u1080?\u1089?\u1100?\u1084?\u1072?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+9\cell 
+GDPR data export (JSON/ZIP \u1074?\u1089?\u1077?\u1093? \u1076?\u1072?\u1085?\u1085?\u1099?\u1093? \u1087?\u1086?\u1083?\u1100?\u1079?\u1086?\u1074?\u1072?\u1090?\u1077?\u1083?\u1103?)\cell 
+\u1082?\u1085?\u1086?\u1087?\u1082?\u1072? \u171?\u1057?\u1082?\u1072?\u1095?\u1072?\u1090?\u1100? \u1084?\u1086?\u1080? \u1076?\u1072?\u1085?\u1085?\u1099?\u1077?\u187? \u1074? Profile\cell 
+\row\pard\lang1049 
+\sa80\par
+\pard\sa120\sb200\b\fs23 3.5 qwen P2 \u8212? nice-to-have\b0\fs22\par
+\pard\sa60\ql Pinned messages, forward messages, file versioning, shared links (TTL), saved searches/facets, Slack/Discord/Jira \u1080?\u1085?\u1090?\u1077?\u1075?\u1088?\u1072?\u1094?\u1080?\u1080?, CalDAV sync; voice/video (WebRTC) \u1080? mobile app (React Native) \u8212? \u1074?\u1085?\u1077? \u1089?\u1082?\u1086?\u1091?\u1087?\u1072?. (qwen)\par
+\pard\sa120\sb200\b\fs26 4. E2E \u8212? \u1076?\u1099?\u1088?\u1099? (\u1089?\u1083?\u1086?\u1090?\u1072? \u1087?\u1086? \u1094?\u1077?\u1087?\u1086?\u1095?\u1082?\u1072?\u1084?)\b0\fs22\par
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+#\cell 
+\u1057?\u1087?\u1077?\u1082?\u1072?\cell 
+\u1063?\u1090?\u1086? \u1087?\u1088?\u1086?\u1074?\u1077?\u1088?\u1103?\u1077?\u1090?\cell 
+\u1055?\u1088?\u1080?\u1086?\u1088?\u1080?\u1090?\u1077?\u1090?\cell 
+\u1048?\u1089?\u1090?\u1086?\u1095?\u1085?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+1\cell 
+admin-chains.spec.ts\cell 
+\u1087?\u1088?\u1086?\u1093?\u1086?\u1076? \u1087?\u1086? \u1074?\u1089?\u1077?\u1084? \u1088?\u1072?\u1079?\u1076?\u1077?\u1083?\u1072?\u1084? \u1072?\u1076?\u1084?\u1080?\u1085?\u1082?\u1080?, \u1082?\u1083?\u1080?\u1082? \u1087?\u1086? \u1082?\u1072?\u1078?\u1076?\u1086?\u1081? Primary-\u1082?\u1085?\u1086?\u1087?\u1082?\u1077? \u8594? assert \u1085?\u1072? \u1079?\u1072?\u1087?\u1088?\u1086?\u1089? (page.waitForRequest)\cell 
+P1\cell 
+kimi\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+2\cell 
+admin-users.spec.ts\cell 
+\u1089?\u1086?\u1079?\u1076?\u1072?\u1085?\u1080?\u1077? \u1087?\u1086?\u1083?\u1100?\u1079?\u1086?\u1074?\u1072?\u1090?\u1077?\u1083?\u1103? + \u1088?\u1086?\u1083?\u1100? + \u1073?\u1083?\u1086?\u1082?\u1080?\u1088?\u1086?\u1074?\u1082?\u1072?\cell 
+P0\cell 
+qwen\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+3\cell 
+admin-rules.spec.ts\cell 
+\u1089?\u1086?\u1079?\u1076?\u1072?\u1085?\u1080?\u1077? \u1087?\u1088?\u1072?\u1074?\u1080?\u1083?\u1072? \u1072?\u1074?\u1090?\u1086?\u1084?\u1072?\u1090?\u1080?\u1079?\u1072?\u1094?\u1080?\u1080? + \u1089?\u1088?\u1072?\u1073?\u1072?\u1090?\u1099?\u1074?\u1072?\u1085?\u1080?\u1077?\cell 
+P0\cell 
+qwen\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+4\cell 
+ticket-attachments.spec.ts\cell 
+lifecycle \u1090?\u1080?\u1082?\u1077?\u1090?\u1072? \u1089? \u1074?\u1083?\u1086?\u1078?\u1077?\u1085?\u1080?\u1103?\u1084?\u1080?\cell 
+P0\cell 
+qwen\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+5\cell 
+chat-read-receipts.spec.ts\cell 
+2 \u1087?\u1086?\u1083?\u1100?\u1079?\u1086?\u1074?\u1072?\u1090?\u1077?\u1083?\u1103?, \u1089?\u1086?\u1086?\u1073?\u1097?\u1077?\u1085?\u1080?\u1103? + read receipts\cell 
+P1\cell 
+qwen\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+6\cell 
+wiki-lifecycle.spec.ts\cell 
+\u1089?\u1086?\u1079?\u1076?\u1072?\u1085?\u1080?\u1077? \u1089?\u1090?\u1072?\u1090?\u1100?\u1080? + \u1087?\u1086?\u1080?\u1089?\u1082?\cell 
+P1\cell 
+qwen\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+7\cell 
+calendar-lifecycle.spec.ts\cell 
+\u1089?\u1086?\u1079?\u1076?\u1072?\u1085?\u1080?\u1077? \u1089?\u1086?\u1073?\u1099?\u1090?\u1080?\u1103? + \u1087?\u1088?\u1086?\u1074?\u1077?\u1088?\u1082?\u1072? \u1085?\u1072? \u1076?\u1072?\u1096?\u1073?\u1086?\u1088?\u1076?\u1077?\cell 
+P1\cell 
+qwen\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+8\cell 
+mobile-navigation.spec.ts\cell 
+viewport 375px\cell 
+P1\cell 
+qwen\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+9\cell 
+offline-queue.spec.ts\cell 
+\u1089?\u1086?\u1086?\u1073?\u1097?\u1077?\u1085?\u1080?\u1077? \u1087?\u1086?\u1089?\u1083?\u1077? \u1088?\u1077?\u1082?\u1086?\u1085?\u1085?\u1077?\u1082?\u1090?\u1072?\cell 
+P1\cell 
+qwen\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+10\cell 
+error-boundary.spec.ts\cell 
+\u1089?\u1083?\u1086?\u1084?\u1072?\u1085?\u1085?\u1099?\u1081? \u1082?\u1086?\u1084?\u1087?\u1086?\u1085?\u1077?\u1085?\u1090? \u8594? fallback\cell 
+P2\cell 
+qwen\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+11\cell 
+a11y-ticket.spec.ts\cell 
+tab \u1095?\u1077?\u1088?\u1077?\u1079? \u1074?\u1089?\u1102? \u1092?\u1086?\u1088?\u1084?\u1091? \u1090?\u1080?\u1082?\u1077?\u1090?\u1072?\cell 
+P2\cell 
+qwen\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx8300
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx16100
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+12\cell 
+export-real / file-upload-real / search-real\cell 
+\u1072?\u1089?\u1089?\u1077?\u1088?\u1090?\u1099? \u1085?\u1072? \u1076?\u1072?\u1085?\u1085?\u1099?\u1077? (\u1089?\u1084?. \u167?2 P1)\cell 
+P1\cell 
+kimi, \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\sa80\par
+\pard\sa60\ql \u1055?\u1086?\u1089?\u1083?\u1077? \u1101?\u1090?\u1086?\u1075?\u1086? E2E \u1089?\u1090?\u1072?\u1085?\u1077?\u1090? 25+ \u1088?\u1077?\u1072?\u1083?\u1100?\u1085?\u1099?\u1093? \u1089?\u1094?\u1077?\u1085?\u1072?\u1088?\u1080?\u1077?\u1074? \u1074?\u1084?\u1077?\u1089?\u1090?\u1086? smoke. (kimi)\par
+\pard\sa120\sb200\b\fs26 5. \u1056?\u1086?\u1091?\u1090?\u1099? / \u1094?\u1077?\u1087?\u1086?\u1095?\u1082?\u1080? / \u1084?\u1077?\u1085?\u1102? / \u1082?\u1085?\u1086?\u1087?\u1082?\u1080? (\u1076?\u1080?\u1087?\u1089?\u1080?\u1082? \u167?4)\b0\fs22\par
+\pard\sa60\ql \u1055?\u1086?\u1083?\u1085?\u1086?\u1075?\u1086? \u1080?\u1085?\u1074?\u1077?\u1085?\u1090?\u1072?\u1088?\u1103? \u1088?\u1086?\u1091?\u1090?\u1086?\u1074?, \u1084?\u1077?\u1085?\u1102? \u1080? \u1082?\u1085?\u1086?\u1087?\u1086?\u1082? \u1074? \u1088?\u1077?\u1087?\u1086?\u1079?\u1080?\u1090?\u1086?\u1088?\u1080?\u1080? \u1085?\u1077?\u1090? \u8212? \u1076?\u1083?\u1103? \u1072?\u1091?\u1076?\u1080?\u1090?\u1072? \u171?\u1087?\u1088?\u1080?\u1083?\u1086?\u1078?\u1077?\u1085?\u1080?\u1077? \u8594? \u1072?\u1076?\u1084?\u1080?\u1085?\u1082?\u1072? \u8594? \u1041?\u1044? \u8594? \u1088?\u1086?\u1091?\u1090?\u1099? \u8594? \u1094?\u1077?\u1087?\u1086?\u1095?\u1082?\u1080? \u8594? \u1084?\u1077?\u1085?\u1102? \u8594? \u1082?\u1085?\u1086?\u1087?\u1082?\u1080?\u187? \u1085?\u1077? \u1093?\u1074?\u1072?\u1090?\u1072?\u1077?\u1090?:\par
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+\u1063?\u1090?\u1086?\cell 
+\u1060?\u1072?\u1081?\u1083?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+\u1048?\u1085?\u1074?\u1077?\u1085?\u1090?\u1072?\u1088?\u1100? \u1088?\u1086?\u1091?\u1090?\u1086?\u1074? (\u1089?\u1074?\u1077?\u1088?\u1080?\u1090?\u1100? router.METHOD \u1089? Swagger \u1080? api.test.js)\cell 
+\u9888?\u-497? \u1085?\u1077?\u1090? \u1074? \u1088?\u1077?\u1087?\u1086?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+\u1052?\u1077?\u1085?\u1102? \u1087?\u1086? \u1088?\u1086?\u1083?\u1103?\u1084? (\u1089?\u1074?\u1077?\u1088?\u1080?\u1090?\u1100? \u1089? requireRole \u1085?\u1072? \u1073?\u1101?\u1082?\u1077?)\cell 
+src/components/Sidebar.tsx, src/layouts/AppLayout.tsx, src/layouts/AdminLayout.tsx\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+\u1050?\u1085?\u1086?\u1087?\u1082?\u1080? (UI-\u1080?\u1085?\u1074?\u1077?\u1085?\u1090?\u1072?\u1088?\u1100?: data-testid, \u1088?\u1086?\u1091?\u1090?\u1099?, disabled \u1087?\u1086? \u1088?\u1086?\u1083?\u1080?)\cell 
+src/pages/**/*.tsx\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+\u1062?\u1077?\u1087?\u1086?\u1095?\u1082?\u1080? workflow\cell 
+tickets.js VALID_TRANSITIONS\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+\u1062?\u1077?\u1087?\u1086?\u1095?\u1082?\u1080? rules engine (9 \u1086?\u1087?\u1077?\u1088?\u1072?\u1090?\u1086?\u1088?\u1086?\u1074? \u215? and/or, 5 \u1090?\u1080?\u1087?\u1086?\u1074? \u1076?\u1077?\u1081?\u1089?\u1090?\u1074?\u1080?\u1081?)\cell 
+rules.service.js evaluateRules + executeActions\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+\u1062?\u1077?\u1087?\u1086?\u1095?\u1082?\u1080? recurrence\cell 
+recurrence.service.js processRecurrences (cron-parser v5 \u8212? \u1073?\u1099?\u1083? \u1073?\u1072?\u1075?, \u1069?\u1090?\u1072?\u1087? 52)\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+\u1062?\u1077?\u1087?\u1086?\u1095?\u1082?\u1080? SLA-\u1101?\u1089?\u1082?\u1072?\u1083?\u1072?\u1094?\u1080?\u1080? (\u1080?\u1085?\u1090?\u1077?\u1088?\u1074?\u1072?\u1083?\u1099?, \u1076?\u1077?\u1076?\u1091?\u1087?)\cell 
+background.js runSlaCheck\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+\u1062?\u1077?\u1087?\u1086?\u1095?\u1082?\u1080? outbox (delivered/retry/DLQ)\cell 
+event_outbox + outbox-worker.js\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+\u1052?\u1077?\u1085?\u1102? \u1072?\u1076?\u1084?\u1080?\u1085?\u1082?\u1080? (\u1082?\u1091?\u1076?\u1072? \u1074?\u1089?\u1090?\u1088?\u1086?\u1077?\u1085?\u1099? 11 \u1092?\u1080?\u1095? \u1069?\u1090?\u1072?\u1087?\u1072? 58)\cell 
+AdminLayout.tsx\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+\u1052?\u1077?\u1085?\u1102? \u1084?\u1086?\u1073?\u1080?\u1083?\u1100?\u1085?\u1086?\u1077? (\u1089?\u1080?\u1085?\u1093?\u1088?\u1086?\u1085?\u1080?\u1079?\u1072?\u1094?\u1080?\u1103? \u1089? desktop)\cell 
+MobileNav\cell 
+\row\pard\lang1049 
+\sa80\par
+\pard\sa60\ql \u1056?\u1077?\u1082?\u1086?\u1084?\u1077?\u1085?\u1076?\u1072?\u1094?\u1080?\u1103?: \u1086?\u1076?\u1080?\u1085? \u1087?\u1091?\u1085?\u1082?\u1090? \u1084?\u1077?\u1085?\u1102?/\u1086?\u1076?\u1085?\u1072? \u1094?\u1077?\u1087?\u1086?\u1095?\u1082?\u1072? \u8594? check-console.mjs + E2E-\u1089?\u1087?\u1077?\u1082?\u1072? \u1085?\u1072? \u1085?\u1077?\u1105? \u8594? \u1079?\u1072?\u1092?\u1080?\u1082?\u1089?\u1080?\u1088?\u1086?\u1074?\u1072?\u1090?\u1100?. (\u1076?\u1080?\u1087?\u1089?\u1080?\u1082?)\par
+\pard\sa120\sb200\b\fs26 6. \u1041?\u1044? \u8212? \u1095?\u1090?\u1086? \u1087?\u1088?\u1086?\u1074?\u1077?\u1088?\u1080?\u1090?\u1100? \u1092?\u1072?\u1082?\u1090?\u1080?\u1095?\u1077?\u1089?\u1082?\u1080? (\u1076?\u1080?\u1087?\u1089?\u1080?\u1082? \u167?5)\b0\fs22\par
+\pard\sa60\ql 32 \u1084?\u1086?\u1076?\u1077?\u1083?\u1080? \u1080? \u1080?\u1085?\u1076?\u1077?\u1082?\u1089?\u1099? (\u1089?\u1074?\u1077?\u1088?\u1080?\u1090?\u1100? schema.prisma \u1089? seed.sql), \u1082?\u1072?\u1089?\u1082?\u1072?\u1076?\u1099? FK (onDelete), FULLTEXT-\u1080?\u1085?\u1076?\u1077?\u1082?\u1089?\u1099? (server/migrations/20260710_*), ANALYZE TABLE daily \u1076?\u1083?\u1103? FULLTEXT, soft-delete \u1094?\u1077?\u1083?\u1086?\u1089?\u1090?\u1085?\u1086?\u1089?\u1090?\u1100? \u9989?, \u1090?\u1088?\u1072?\u1085?\u1079?\u1072?\u1082?\u1094?\u1080?\u1080? multi-step, idempotency keys (\u1085?\u1072? Redis \u8212? \u1087?\u1088?\u1080? \u1087?\u1072?\u1076?\u1077?\u1085?\u1080?\u1080? \u1085?\u1077?\u1090? \u1079?\u1072?\u1097?\u1080?\u1090?\u1099?), backup verification \u9989? (\u1069?\u1090?\u1072?\u1087? 53), migration idempotency (\u1085?\u1077?\u1090? \u1090?\u1077?\u1089?\u1090?\u1072?), knex migrate:latest \u1074? CI (\u1089?\u1077?\u1081?\u1095?\u1072?\u1089? \u1090?\u1086?\u1083?\u1100?\u1082?\u1086? mysql < seed.sql).\par
+\pard\sa120\sb200\b\fs26 7. \u1048?\u1085?\u1092?\u1088?\u1072?\u1089?\u1090?\u1088?\u1091?\u1082?\u1090?\u1091?\u1088?\u1072? \u8212? \u1074?\u1082?\u1083?\u1102?\u1095?\u1080?\u1090?\u1100? \u1074? re-audit (\u1076?\u1080?\u1087?\u1089?\u1080?\u1082? \u167?6)\b0\fs22\par
+\pard\sa60\ql vite.config.ts, playwright.config.ts, eslint.config.js, server/vitest.config.js (\u1087?\u1088?\u1080?\u1095?\u1080?\u1085?\u1072? \u1087?\u1088?\u1086?\u1096?\u1083?\u1099?\u1093? \u1087?\u1072?\u1076?\u1077?\u1085?\u1080?\u1081? 86 \u1090?\u1077?\u1089?\u1090?\u1086?\u1074?), .env.example (\u1086?\u1073?\u1103?\u1079?\u1072?\u1090?\u1077?\u1083?\u1100?\u1085?\u1099?\u1077?/\u1086?\u1087?\u1094?\u1080?\u1086?\u1085?\u1072?\u1083?\u1100?\u1085?\u1099?\u1077?), nginx/default.conf, k8s/*.yaml, check-console.mjs, .husky/pre-commit, docker-compose.override.yml \u8212? \u1087?\u1088?\u1086?\u1074?\u1077?\u1088?\u1080?\u1090?\u1100? \u1074?\u1089?\u1077? \u1092?\u1072?\u1081?\u1083?\u1099? \u1074? \u1092?\u1080?\u1085?\u1072?\u1083?\u1100?\u1085?\u1086?\u1084? re-audit \u1089?\u1074?\u1077?\u1078?\u1077?\u1081? \u1087?\u1072?\u1087?\u1082?\u1086?\u1081? test-analysis.\par
+\pard\sa120\sb200\b\fs26 8. \u1055?\u1088?\u1086?\u1094?\u1077?\u1089?\u1089? / \u1087?\u1088?\u1072?\u1074?\u1080?\u1083?\u1072?\b0\fs22\par
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+#\cell 
+\u1055?\u1088?\u1072?\u1074?\u1080?\u1083?\u1086?\cell 
+\u1048?\u1089?\u1090?\u1086?\u1095?\u1085?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+1\cell 
+\u1055?\u1088?\u1072?\u1074?\u1080?\u1083?\u1086? \u1087?\u1086?\u1088?\u1086?\u1075?\u1086?\u1074? \u1074? AGENTS.md: \u1073?\u1091?\u1092?\u1077?\u1088? +2 \u1087?.\u1087?. vs \u1086?\u1073?\u1103?\u1079?\u1072?\u1090?\u1077?\u1083?\u1100?\u1085?\u1099?\u1077? \u1090?\u1077?\u1089?\u1090?\u1099? (\u1089?\u1077?\u1081?\u1095?\u1072?\u1089? \u1073?\u1091?\u1092?\u1077?\u1088? 0.2\u8211?0.7 \u1087?.\u1087?. \u8212? CI-\u1093?\u1088?\u1091?\u1087?\u1082?\u1086?)\cell 
+\u1076?\u1080?\u1087?\u1089?\u1080?\u1082?, kimi, qwen\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+2\cell 
+CI-check \u1089?\u1080?\u1085?\u1093?\u1088?\u1086?\u1085?\u1085?\u1086?\u1089?\u1090?\u1080? \u171?\u1063?\u1090?\u1086?-\u1076?\u1086?\u1076?\u1077?\u1083?\u1072?\u1090?\u1100? \u8596? test-inventory\u187? (\u1073?\u1077?\u1079? \u1101?\u1090?\u1086?\u1075?\u1086? \u1082?\u1072?\u1078?\u1076?\u1099?\u1081? AI-\u1072?\u1091?\u1076?\u1080?\u1090? \u1076?\u1072?\u1089?\u1090? \u1088?\u1072?\u1079?\u1073?\u1088?\u1086?\u1089? \u1094?\u1080?\u1092?\u1088?)\cell 
+\u1076?\u1080?\u1087?\u1089?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+3\cell 
+\u171?\u1092?\u1080?\u1095?\u1072? = \u1092?\u1083?\u1072?\u1075?\u187? \u1074? AGENTS.md \u8212? \u1085?\u1086?\u1074?\u1099?\u1081? \u1087?\u1091?\u1073?\u1083?\u1080?\u1095?\u1085?\u1099?\u1081? \u1084?\u1086?\u1076?\u1091?\u1083?\u1100? \u1073?\u1077?\u1079? useFeature() \u1085?\u1077? \u1084?\u1077?\u1088?\u1078?\u1080?\u1090?\u1089?\u1103?\cell 
+\u1091?\u1078?\u1077? \u1074? AGENTS.md (\u1087?\u1088?\u1072?\u1074?\u1080?\u1083?\u1086? 12)\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+4\cell 
+ESLint 56 warnings \u8594? <20 (\u1087?\u1086?\u1089?\u1090?\u1077?\u1087?\u1077?\u1085?\u1085?\u1086?)\cell 
+qwen, \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+5\cell 
+Dockerize dev (docker-compose.dev.yml \u1089? MySQL + Redis)\cell 
+qwen\cell 
+\row\pard\lang1049 
+\sa80\par
+\pard\sa120\sb200\b\fs26 9. \u1056?\u1077?\u1082?\u1086?\u1084?\u1077?\u1085?\u1076?\u1091?\u1077?\u1084?\u1099?\u1081? \u1087?\u1086?\u1088?\u1103?\u1076?\u1086?\u1082? (\u1089?\u1074?\u1086?\u1076? 4 \u1089?\u1087?\u1088?\u1080?\u1085?\u1090?\u1086?\u1074? kimi + \u1101?\u1090?\u1072?\u1087?\u1099? qwen)\b0\fs22\par
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+\u1069?\u1090?\u1072?\u1087?\cell 
+\u1057?\u1086?\u1089?\u1090?\u1072?\u1074?\cell 
+\u1048?\u1090?\u1086?\u1075?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+57\cell 
+Race-\u1090?\u1077?\u1089?\u1090?\u1099? + N+1/\u1080?\u1085?\u1076?\u1077?\u1082?\u1089?\u1099?\cell 
+\u9989? \u1079?\u1072?\u1082?\u1088?\u1099?\u1090? 23.09 (\u1087?\u1086? kimi \u8212? \u171?\u1091?\u1078?\u1077? \u1089?\u1087?\u1083?\u1072?\u1085?\u1080?\u1088?\u1086?\u1074?\u1072?\u1085?\u1086?\u187?)\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+58\cell 
+\u1040?\u1076?\u1084?\u1080?\u1085?\u1082?\u1072? 11 \u1092?\u1080?\u1095?\cell 
+\u9989? \u1088?\u1077?\u1072?\u1083?\u1080?\u1079?\u1086?\u1074?\u1072?\u1085?\u1086? 24.09\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+59\cell 
+Resilience: JWT rotation, idempotency \u1074?\u1085?\u1077? Redis, \u1090?\u1088?\u1072?\u1085?\u1079?\u1072?\u1082?\u1094?\u1080?\u1080?; auth/oidc.test.js, background sub-\u1090?\u1077?\u1089?\u1090?\u1099?\cell 
+\u1087?\u1088?\u1086?\u1076?-\u1088?\u1080?\u1089?\u1082?\u1080? \u1089?\u1085?\u1103?\u1090?\u1099?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+60\cell 
+\u1055?\u1088?\u1086?\u1094?\u1077?\u1089?\u1089?: \u1087?\u1088?\u1072?\u1074?\u1080?\u1083?\u1086? \u1087?\u1086?\u1088?\u1086?\u1075?\u1086?\u1074? \u1074? AGENTS.md, \u1092?\u1080?\u1085?\u1072?\u1083?\u1100?\u1085?\u1099?\u1081? re-audit \u1089?\u1074?\u1077?\u1078?\u1077?\u1081? \u1087?\u1072?\u1087?\u1082?\u1086?\u1081? test-analysis, i18n parity, contract, migration idempotency\cell 
+\u1076?\u1086?\u1074?\u1077?\u1088?\u1080?\u1077? \u1082? \u1094?\u1080?\u1092?\u1088?\u1072?\u1084?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+61\cell 
+\u1055?\u1086?\u1082?\u1088?\u1099?\u1090?\u1080?\u1077? \u1103?\u1076?\u1088?\u1072?: ticket-context.optimistic, TicketDetail/ChatDetail/Kanban, virtual scroll jsdom, E2E export/upload/search-real\cell 
+\u1094?\u1077?\u1087?\u1086?\u1095?\u1082?\u1080? UI \u1080? E2E-\u1088?\u1077?\u1072?\u1083?\u1080?\u1079?\u1084?\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+62\cell 
+qwen P0: 2FA + \u1072?\u1082?\u1090?\u1080?\u1074?\u1085?\u1099?\u1077? \u1089?\u1077?\u1089?\u1089?\u1080?\u1080? + notification preferences\cell 
+~40 \u1089?\u1077?\u1088?\u1074? / ~25 \u1082?\u1083?\u1080?\u1077?\u1085?\u1090? / ~3 E2E\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+63\cell 
+qwen P0: watchers + ticket relations + merge\cell 
+~30 \u1089?\u1077?\u1088?\u1074? / ~20 \u1082?\u1083?\u1080?\u1077?\u1085?\u1090? / ~2 E2E\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+64\cell 
+qwen P1: wiki versioning + chat edit/reply + SLA UI\cell 
+~35 \u1089?\u1077?\u1088?\u1074? / ~25 \u1082?\u1083?\u1080?\u1077?\u1085?\u1090? / ~3 E2E\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+65\cell 
+qwen P1: custom roles + org chart + ticket forms (\u1080?, \u1087?\u1088?\u1080? \u1078?\u1077?\u1083?\u1072?\u1085?\u1080?\u1080?, scheduled reports + GDPR export)\cell 
+~50 \u1089?\u1077?\u1088?\u1074? / ~40 \u1082?\u1083?\u1080?\u1077?\u1085?\u1090? / ~4 E2E\cell 
+\row\pard\lang1049 
+\trowd\trgaph80\trleft0
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx4400
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx12200
+\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx20000
+\pard\intbl\ql\lang1049 
+66\cell 
+Coverage push + \u1092?\u1080?\u1085?\u1072?\u1083?\u1100?\u1085?\u1099?\u1081? \u1072?\u1091?\u1076?\u1080?\u1090?: client branches 65+, server branches 70+, E2E ~80\cell 
+~160 \u1090?\u1077?\u1089?\u1090?\u1086?\u1074?, \u1080?\u1085?\u1074?\u1077?\u1085?\u1090?\u1072?\u1088?\u1100? \u1080? docs \u1087?\u1077?\u1088?\u1077?\u1075?\u1077?\u1085?\u1077?\u1088?\u1080?\u1088?\u1086?\u1074?\u1072?\u1085?\u1099?\cell 
+\row\pard\lang1049 
+\sa80\par
+\pard\sa60\ql \u1048?\u1090?\u1086?\u1075? \u1074? \u1094?\u1080?\u1092?\u1088?\u1072?\u1093? (qwen): \u1089?\u1077?\u1081?\u1095?\u1072?\u1089? 1328 \u8594? \u1087?\u1086?\u1089?\u1083?\u1077? \u1069?\u1090?\u1072?\u1087?\u1072? 65 ~1780 \u1090?\u1077?\u1089?\u1090?\u1086?\u1074?; client branches 59.65 \u8594? 65+; server branches 64.66 \u8594? 70+; \u1084?\u1086?\u1076?\u1091?\u1083?\u1080? ~25 \u8594? ~35.\par
+\pard\sa120\sb200\b\fs26 10. \u1063?\u1090?\u1086? \u1053?\u1045? \u1076?\u1077?\u1083?\u1072?\u1090?\u1100? (\u1089?\u1074?\u1086?\u1076? \u1072?\u1085?\u1090?\u1080?\u1087?\u1072?\u1090?\u1090?\u1077?\u1088?\u1085?\u1086?\u1074?)\b0\fs22\par
+\pard\sa60\ql Snapshot-\u1090?\u1077?\u1089?\u1090?\u1099? (\u1093?\u1088?\u1091?\u1087?\u1082?\u1080?\u1077?), visual regression, mutation testing, read replica, \u1090?\u1077?\u1089?\u1090?\u1099? \u1085?\u1072? shadcn/ui \u1087?\u1088?\u1080?\u1084?\u1080?\u1090?\u1080?\u1074?\u1099? (Button, Input), \u1087?\u1086?\u1082?\u1088?\u1099?\u1090?\u1080?\u1077? \u1082?\u1086?\u1085?\u1089?\u1090?\u1072?\u1085?\u1090?/\u1090?\u1080?\u1087?\u1086?\u1074?/\u1080?\u1085?\u1090?\u1077?\u1088?\u1092?\u1077?\u1081?\u1089?\u1086?\u1074?, Tauri / mobile app, coverage \u1076?\u1086? 90% (\u1079?\u1072?\u1082?\u1086?\u1085? \u1091?\u1073?\u1099?\u1074?\u1072?\u1102?\u1097?\u1077?\u1081? \u1076?\u1086?\u1093?\u1086?\u1076?\u1085?\u1086?\u1089?\u1090?\u1080?), \u1087?\u1088?\u1086?\u1084?\u1090?\u1099? \u171?\u1086?\u1094?\u1077?\u1085?\u1080? \u1087?\u1088?\u1086?\u1077?\u1082?\u1090? \u1094?\u1077?\u1083?\u1080?\u1082?\u1086?\u1084?\u187? \u1087?\u1072?\u1095?\u1082?\u1086?\u1081?, \u1087?\u1086?\u1093?\u1074?\u1072?\u1083?\u1072? \u1073?\u1077?\u1079? \u1087?\u1088?\u1080?\u1095?\u1080?\u1085?\u1099? \u1080? \u171?\u1089?\u1090?\u1086?\u1080?\u1090? \u1088?\u1072?\u1089?\u1089?\u1084?\u1086?\u1090?\u1088?\u1077?\u1090?\u1100?\u187? \u8212? \u1090?\u1086?\u1083?\u1100?\u1082?\u1086? \u171?\u1089?\u1076?\u1077?\u1083?\u1072?\u1081? \u1090?\u1072?\u1082?\u187?. (kimi, qwen, \u1076?\u1080?\u1087?\u1089?\u1080?\u1082?)\par
+}
