@@ -327,10 +327,10 @@
 
 ---
 
-## ПЛАН ДОРАБОТКИ ПО ЭТАПАМ (54–61)
+## ПЛАН ДОРАБОТКИ ПО ЭТАПАМ (54–66)
 
 > Самодостаточный план: каждый этап = конкретный файл/промт из разборов выше.
-> Детальные таблицы — в разделах «Kimi 7.5/10» и «Доделать.rtf».
+> Детальные таблицы — в разделах «Kimi 7.5/10», «Доделать.rtf», «Дополнения из аудитов 24.09» и «Оценка ии.rtf».
 
 | Этап | Задача | Промт | Где детали |
 |------|--------|-------|------------|
@@ -342,6 +342,11 @@
 | **59** | **Resilience** — Secrets rotation (2-ключевой JWT: sign=new, verify=[old,new]), idempotency keys вне Redis (TTL 24ч без защиты при падении), транзакции для multi-step (bulk/assign/escalation), **каскады FK (onDelete) — проверить фактически в schema.prisma** (Этап 57 был «только отчёт»); **+ auth/oidc.test.js, background sub-тесты**; **+ 🐞 SLA/TZ-баг** (TIMEZONE из настроек не в addBusinessHours — дедлайн в чужом TZ и DST-переход ±1ч, нужно фикс+тест), **+ refresh-token family** (база reuse-detection есть, auth.js:81; нужен отзыв всех сессий юзера), **+ trust proxy/XFF спуфинг-тест** (по коду, дипсик P1/P2, «Оценка ии» 24.09) | — | БД #2,10,9 + Дипсик P1/P2 + «Оценка ии.rtf» |
 | **60** | **Процесс** — правило порогов coverage в AGENTS.md (буфер vs обязательные тесты), финальный re-аудит свежей папкой test-analysis (Kimi/DeepSeek/Qwen); **+ i18n parity, contract tests (zod), migration idempotency** | Промт 6 (обновить) | Кimi #3 + Дипсик P2 |
 | **61** | **Покрытие ядра + E2E-реализм + Security-hardening** — ticket-context.optimistic (35%→60%+), TicketDetail/ChatDetail/Kanban, virtual scroll jsdom, E2E export/upload/search-real; **+ XSS-инвариант на client-рендер** (экранирование &<> есть, но regression-тест: `<img onerror>`/`javascript:` не исполняется; при расширении markdown — DOMPurify), **+ notify регресс-тест** (email/webhook упал → тикет создан 201), **+ тест-предохранители**: клампинг limit, soft-delete в списках, N+1 (spy на prisma); правило «фича = флаг» в AGENTS.md; CI-check синхронности доков | Промт 5 (расширенный) | Дипсик «новый 61», Kimi, Qwen + «Оценка ии.rtf» |
+| **62** | **Timeline + импорт** — `GET /tickets/:id/history` (из audit_log) + вкладка «История» в TicketDetail (кто/когда менял статус/приоритет/исполнителя) → PDF с историей (jsPDF подхватит); CSV-импорт сотрудников: UI-кнопка + превью + валидация + тест роута (admin.js:446); retention-политика (audit/files/chat) — после утверждения политики хранения | — | «Оценка ии.rtf» №8–11 + «Новый Этап 62» |
+| **63** | **qwen P0 #1–3** — 2FA/TOTP для admin/super_admin (otplib + QR-код в Profile, require2FA); активные сессии пользователя (view/revoke, таблица sessions); notification preferences per user (email/push/in-app × события) | — | «Дополнения 24.09» — qwen P0 |
+| **64** | **qwen P0 #4–6** — Watchers/Subscribers тикета (ticket_watchers + UI); ticket relations (parent/child, blocked-by, duplicates + UI в деталях); Merge/Duplicate tickets (перенос сообщений/вложений) | — | «Дополнения 24.09» — qwen P0 |
+| **65** | **qwen P1 (часть 1)** — версионирование Wiki (wiki_revisions + diff + rollback); редактирование сообщений чата (edited_at, WS message:edited); reply-to/threads (reply_to_message_id); SLA business hours UI в админке (форма + таймзоны вместо хардкода в sla.service.js) | — | «Дополнения 24.09» — qwen P1 |
+| **66** | **qwen P1 (часть 2) + финальный аудит** — custom roles (roles+permissions, конструктор ролей); org chart (manager_id + граф); ticket forms (JSON-схема в ticket_categories); scheduled reports (cron + шаблон письма); GDPR export (JSON/ZIP в Profile); coverage-пуш: client branches 65+, server branches 70+, E2E ~80 (~1780 тестов), инвентарь и docs перегенерированы | — | «Дополнения 24.09» — qwen P1 + «Итоговый ориентир» |
 
 ### Низкий приоритет (не блокирует)
 
@@ -441,7 +446,7 @@ vite.config.ts, playwright.config.ts, eslint.config.js, server/vitest.config.js,
 
 ### Итоговый ориентир (qwen)
 
-Сейчас 1328 → после Этапов 62–66 ~1780 тестов; client branches 59.65 → 65+, server branches 64.66 → 70+; E2E 57 → ~80. Coverage-пуш — финальный этап после 66 (не самоцель): сначала закрыть P0-фичи (2FA, watchers, relations, notification prefs).
+Сейчас 1328 → после Этапов 62–66 ~1780 тестов; client branches 59.65 → 65+, server branches 64.66 → 70+; E2E 57 → ~80. Coverage-пуш — финал Этапа 66 (не самоцель): сначала закрыть P0-фичи (2FA, watchers, relations, notification prefs).
 
 ---
 
