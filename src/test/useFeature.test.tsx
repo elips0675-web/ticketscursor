@@ -2,7 +2,13 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { http, HttpResponse } from 'msw'
-import { useFeature, useAllFeatures, getRolloutBucket, isFeatureEnabledForUser } from '@/hooks/useFeature'
+import {
+  useFeature,
+  useAllFeatures,
+  getRolloutBucket,
+  isFeatureEnabledForUser,
+  isWithinSchedule,
+} from '@/hooks/useFeature'
 import { AuthContext, type AuthContextType } from '@/context/AuthContext'
 import { server } from './setup'
 
@@ -108,8 +114,8 @@ describe('useFeature with rollout (user bucket)', () => {
         HttpResponse.json({
           success: true,
           data: [{ key: 'beta_flag', enabled: true, description: 'beta', rollout_percent: 50 }],
-        })
-      )
+        }),
+      ),
     )
     const { result } = renderHook(() => useFeature('beta_flag'), {
       wrapper: ({ children }) => <AuthWrapper id={insideId}>{children}</AuthWrapper>,
@@ -123,8 +129,8 @@ describe('useFeature with rollout (user bucket)', () => {
         HttpResponse.json({
           success: true,
           data: [{ key: 'beta_flag', enabled: true, description: 'beta', rollout_percent: 50 }],
-        })
-      )
+        }),
+      ),
     )
     const { result } = renderHook(() => useFeature('beta_flag'), {
       wrapper: ({ children }) => <AuthWrapper id={outsideId}>{children}</AuthWrapper>,
@@ -138,8 +144,8 @@ describe('useFeature with rollout (user bucket)', () => {
         HttpResponse.json({
           success: true,
           data: [{ key: 'gamma_flag', enabled: true, description: 'gamma', rollout_percent: 100 }],
-        })
-      )
+        }),
+      ),
     )
     const { result } = renderHook(() => useFeature('gamma_flag'), {
       wrapper: ({ children }) => <AuthWrapper id={1}>{children}</AuthWrapper>,
@@ -155,6 +161,84 @@ describe('useAllFeatures', () => {
       expect(result.current.data).toBeDefined()
       expect(Array.isArray(result.current.data)).toBe(true)
       expect(result.current.data.length).toBeGreaterThan(0)
+    })
+  })
+})
+
+describe('schedule logic (pure)', () => {
+  const at = (h: number, m: number) => new Date(2026, 6, 11, h, m)
+
+  it('null schedule → always within', () => {
+    expect(isWithinSchedule(null, at(3, 0))).toBe(true)
+    expect(isWithinSchedule(undefined, at(23, 59))).toBe(true)
+  })
+
+  it('integer day window', () => {
+    const s = { from: '09:00', to: '18:00' }
+    expect(isWithinSchedule(s, at(8, 59))).toBe(false)
+    expect(isWithinSchedule(s, at(9, 0))).toBe(true)
+    expect(isWithinSchedule(s, at(12, 0))).toBe(true)
+    expect(isWithinSchedule(s, at(18, 0))).toBe(true)
+    expect(isWithinSchedule(s, at(18, 1))).toBe(false)
+  })
+
+  it('overnight window (from > to)', () => {
+    const s = { from: '22:00', to: '06:00' }
+    expect(isWithinSchedule(s, at(23, 0))).toBe(true)
+    expect(isWithinSchedule(s, at(2, 0))).toBe(true)
+    expect(isWithinSchedule(s, at(12, 0))).toBe(false)
+  })
+
+  it('only from → after that time', () => {
+    expect(isWithinSchedule({ from: '09:00', to: '' }, at(8, 0))).toBe(false)
+    expect(isWithinSchedule({ from: '09:00', to: '' }, at(10, 0))).toBe(true)
+  })
+
+  it('only to → before that time', () => {
+    expect(isWithinSchedule({ from: '', to: '18:00' }, at(12, 0))).toBe(true)
+    expect(isWithinSchedule({ from: '', to: '18:00' }, at(19, 0))).toBe(false)
+  })
+
+  it('empty schedule → always within', () => {
+    expect(isWithinSchedule({ from: '', to: '' }, at(12, 0))).toBe(true)
+  })
+})
+
+describe('useFeature with schedule', () => {
+  beforeEach(() => {
+    queryClient.clear()
+  })
+
+  it('flag outside schedule → disabled even if enabled=true', async () => {
+    const now = new Date()
+    const hour = String(now.getHours()).padStart(2, '0')
+    const minute = String(now.getMinutes()).padStart(2, '0')
+    server.use(
+      http.get('http://localhost:4000/api/admin/features', () =>
+        HttpResponse.json({
+          success: true,
+          data: [
+            {
+              key: 'nightly_flag',
+              enabled: true,
+              description: 'nightly',
+              rollout_percent: 100,
+              schedule: { from: '23:59', to: '00:01' },
+            },
+          ],
+        }),
+      ),
+    )
+    // Окно 23:59–00:01 (overnight). В 00:00 внутри, иначе — снаружи.
+    const { result } = renderHook(() => useFeature('nightly_flag'), {
+      wrapper: ({ children }) => <AuthWrapper id={1}>{children}</AuthWrapper>,
+    })
+    await waitFor(() => {
+      if (hour === '00' && Number(minute) <= 1) {
+        expect(result.current).toBe(true)
+      } else {
+        expect(result.current).toBe(false)
+      }
     })
   })
 })

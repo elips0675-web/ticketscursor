@@ -392,3 +392,28 @@ export async function notifySlaEscalated(ticketId, fromPriority, toPriority, lev
     io.to(`ticket:${ticketId}`).emit('ticket:sla:escalated', { ticketId, fromPriority, toPriority, level })
   }
 }
+
+const SAMPLE_VARS = {
+  ticketId: '101',
+  ticketTitle: 'Пример тикета',
+  priority: 'Высокий',
+  companyName: 'Service Desk',
+  userName: 'Иван Иванов',
+  oldStatus: 'Открыт',
+  newStatus: 'В работе',
+  status: 'В работе',
+  dueAt: '23.09.2026, 18:00',
+  senderName: 'Пётр Петров',
+  messageText: 'Текст примера сообщения',
+  level: '2',
+  fromPriority: 'Средний',
+  toPriority: 'Высокий',
+}
+
+/** Рендер шаблона email с примерами значений (Этап 58, предпросмотр). */
+export async function getEmailTemplatePreview(templateKey) {
+  const templates = await getTemplates()
+  const raw = templates[templateKey]
+  if (raw == null) return null
+  return { key: templateKey, rendered: replaceVariables(String(raw), SAMPLE_VARS) }
+}

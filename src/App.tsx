@@ -46,6 +46,9 @@ const AdminSettings = lazy(() => import('@/pages/AdminSettings'))
 const AdminAudit = lazy(() => import('@/pages/AdminAudit'))
 const AdminCannedResponses = lazy(() => import('@/pages/AdminCannedResponses'))
 const AdminCustomFields = lazy(() => import('@/pages/AdminCustomFields'))
+const AdminHealth = lazy(() => import('@/pages/AdminHealth'))
+const AdminQueues = lazy(() => import('@/pages/AdminQueues'))
+const AdminRbac = lazy(() => import('@/pages/AdminRbac'))
 const WikiPage = lazy(() => import('@/pages/Wiki'))
 const SearchPage = lazy(() => import('@/pages/Search'))
 const FilesPage = lazy(() => import('@/pages/Files'))
@@ -207,6 +210,30 @@ export default function App() {
                         element={
                           <Page>
                             <AdminCustomFields />
+                          </Page>
+                        }
+                      />
+                      <Route
+                        path="health"
+                        element={
+                          <Page>
+                            <AdminHealth />
+                          </Page>
+                        }
+                      />
+                      <Route
+                        path="queues"
+                        element={
+                          <Page>
+                            <AdminQueues />
+                          </Page>
+                        }
+                      />
+                      <Route
+                        path="rbac"
+                        element={
+                          <Page>
+                            <AdminRbac />
                           </Page>
                         }
                       />

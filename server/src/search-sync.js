@@ -141,6 +141,16 @@ export async function searchMeilisearch(query, limit = 10) {
   }
 }
 
+/** Полная переиндексация: настройка индексов + заливка всех данных (Этап 58). */
+export async function reindexAll() {
+  const c = getClient()
+  if (!c) return { reindexed: false, reason: 'Meilisearch не настроен — используется FULLTEXT search' }
+  const ok = await setupIndexes()
+  if (!ok) return { reindexed: false, reason: 'Не удалось настроить индексы Meilisearch' }
+  await fullSync()
+  return { reindexed: true }
+}
+
 export async function initSearchSync() {
   const c = getClient()
   if (!c) {

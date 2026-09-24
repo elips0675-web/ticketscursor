@@ -11,6 +11,7 @@ import {
   Eye,
   EyeOff,
   Database,
+  DatabaseBackup,
   Server,
   FileText,
   Search,
@@ -24,6 +25,10 @@ import {
   Key,
   Shield,
   Globe,
+  Upload,
+  LogOut,
+  Gauge,
+  X,
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { ApiTokensSection, WebhooksSection } from './AdminIntegrations'
@@ -196,8 +201,14 @@ export default function AdminSettings() {
               doneLabel={t('admin.geoDone')}
             />
           </div>
+
+          <RestoreRow />
+
+          <ReindexRow />
         </CardContent>
       </Card>
+
+      <SecuritySection />
 
       <FeatureFlagsSection />
 
@@ -218,6 +229,224 @@ export default function AdminSettings() {
         {saving ? t('common.loading') : t('common.save')}
       </Button>
     </div>
+  )
+}
+
+function RestoreRow() {
+  const { t } = useTranslation()
+  const [content, setContent] = useState('')
+  const [open, setOpen] = useState(false)
+  const [running, setRunning] = useState(false)
+
+  const restore = async () => {
+    if (!content.trim()) {
+      toast.error(t('admin.restoreEmpty'))
+      return
+    }
+    if (!window.confirm(t('admin.restoreConfirm'))) return
+    setRunning(true)
+    try {
+      await api.post('/admin/settings/restore', { content })
+      toast.success(t('admin.restoreDone'))
+      setContent('')
+      setOpen(false)
+    } catch {
+      /* ошибка уже показана через toast в api */
+    }
+    setRunning(false)
+  }
+
+  return (
+    <div className="rounded-lg border p-4 space-y-3" data-testid="restore-block">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <DatabaseBackup className="w-5 h-5 text-muted-foreground mt-0.5" />
+          <div>
+            <p className="text-sm font-medium">{t('admin.restoreTitle')}</p>
+            <p className="text-xs text-muted-foreground">{t('admin.restoreDesc')}</p>
+          </div>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => setOpen((v) => !v)} aria-label={t('admin.restoreBtn')}>
+          <Upload className="w-4 h-4" />
+          <span className="hidden sm:inline">{t('admin.restoreBtn')}</span>
+        </Button>
+      </div>
+      {open && (
+        <div className="space-y-2">
+          <label htmlFor="restoreContent" className="sr-only">
+            {t('admin.restoreTitle')}
+          </label>
+          <textarea
+            id="restoreContent"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder={t('admin.restorePlaceholder')}
+            data-testid="restore-content"
+            className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-[80px] resize-y"
+          />
+          <Button size="sm" onClick={restore} disabled={running} className="gap-1.5" data-testid="restore-run">
+            {running ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+            {running ? t('admin.restoreRunning') : t('admin.restoreBtn')}
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ReindexRow() {
+  const { t } = useTranslation()
+  const [running, setRunning] = useState(false)
+
+  const run = async () => {
+    setRunning(true)
+    try {
+      await api.post('/admin/search/reindex')
+      toast.success(t('admin.reindexDone'))
+    } catch {
+      /* ошибка уже показана через toast в api */
+    }
+    setRunning(false)
+  }
+
+  return (
+    <div className="flex items-center justify-between rounded-lg border p-4" data-testid="reindex-block">
+      <div className="flex items-start gap-3">
+        <Search className="w-5 h-5 text-muted-foreground mt-0.5" />
+        <div>
+          <p className="text-sm font-medium">{t('admin.reindexTitle')}</p>
+          <p className="text-xs text-muted-foreground">{t('admin.reindexDesc')}</p>
+        </div>
+      </div>
+      <Button variant="outline" size="sm" onClick={run} disabled={running} data-testid="reindex-run">
+        {running ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+        <span className="hidden sm:inline">{running ? t('admin.reindexRunning') : t('admin.reindexBtn')}</span>
+      </Button>
+    </div>
+  )
+}
+
+function SecuritySection() {
+  const { t } = useTranslation()
+  const [revoking, setRevoking] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [limits, setLimits] = useState<{ auth: string; api: string; admin: string }>({ auth: '', api: '', admin: '' })
+
+  useEffect(() => {
+    api
+      .get('/admin/settings')
+      .then((data: Record<string, string> | null) => {
+        const raw = data?.RATE_LIMITS
+        if (!raw) return
+        try {
+          const parsed = JSON.parse(raw)
+          setLimits({
+            auth: parsed.auth ?? '',
+            api: parsed.api ?? '',
+            admin: parsed.admin ?? '',
+          })
+        } catch {
+          /* ignore */
+        }
+      })
+      .catch(() => {
+        /* ignore */
+      })
+  }, [])
+
+  const revokeAll = async () => {
+    if (!window.confirm(t('admin.revokeAllConfirm'))) return
+    setRevoking(true)
+    try {
+      const res = await api.post<{ revoked?: number }>('/admin/sessions/revoke-all')
+      toast.success(`${t('admin.revokeAllDone')}: ${res?.revoked ?? 0}`)
+    } catch {
+      /* ошибка уже показана через toast в api */
+    }
+    setRevoking(false)
+  }
+
+  const saveLimits = async () => {
+    setSaving(true)
+    try {
+      await api.put('/admin/settings/rate-limits', {
+        auth: limits.auth === '' ? null : Number(limits.auth),
+        api: limits.api === '' ? null : Number(limits.api),
+        admin: limits.admin === '' ? null : Number(limits.admin),
+      })
+      toast.success(t('admin.rateLimitsSaved'))
+    } catch {
+      /* ошибка уже показана через toast в api */
+    }
+    setSaving(false)
+  }
+
+  const update = (key: 'auth' | 'api' | 'admin', value: string) => {
+    setLimits((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const limitFields: { key: 'auth' | 'api' | 'admin'; label: string }[] = [
+    { key: 'auth', label: t('admin.rateLimitAuth') },
+    { key: 'api', label: t('admin.rateLimitApi') },
+    { key: 'admin', label: t('admin.rateLimitAdmin') },
+  ]
+
+  return (
+    <Card data-testid="security-card">
+      <CardHeader>
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Shield className="w-4 h-4 text-primary" />
+          {t('admin.security')}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="flex items-center justify-between rounded-lg border p-4" data-testid="revoke-all-block">
+          <div className="flex items-start gap-3">
+            <LogOut className="w-5 h-5 text-muted-foreground mt-0.5" />
+            <div>
+              <p className="text-sm font-medium">{t('admin.revokeAllTitle')}</p>
+              <p className="text-xs text-muted-foreground">{t('admin.revokeAllDesc')}</p>
+            </div>
+          </div>
+          <Button variant="destructive" size="sm" onClick={revokeAll} disabled={revoking} data-testid="revoke-all-run">
+            {revoking ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
+            <span className="hidden sm:inline">{t('admin.revokeAllBtn')}</span>
+          </Button>
+        </div>
+
+        <div className="rounded-lg border p-4 space-y-3" data-testid="rate-limits-block">
+          <div className="flex items-start gap-3">
+            <Gauge className="w-5 h-5 text-muted-foreground mt-0.5" />
+            <div>
+              <p className="text-sm font-medium">{t('admin.rateLimits')}</p>
+              <p className="text-xs text-muted-foreground">{t('admin.rateLimitsDesc')}</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-4">
+            {limitFields.map(({ key, label }) => (
+              <div key={key} className="flex items-center gap-2">
+                <Label htmlFor={`rate-${key}`} className="text-xs text-muted-foreground">
+                  {label}
+                </Label>
+                <Input
+                  id={`rate-${key}`}
+                  type="number"
+                  min={1}
+                  value={limits[key]}
+                  onChange={(e) => update(key, e.target.value)}
+                  data-testid={`rate-${key}`}
+                  className="w-24 h-9"
+                />
+              </div>
+            ))}
+          </div>
+          <Button size="sm" onClick={saveLimits} disabled={saving} className="gap-1.5" data-testid="rate-save">
+            {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+            {t('common.save')}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -350,6 +579,8 @@ function EmailTemplatesSection() {
   const [templates, setTemplates] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [preview, setPreview] = useState<Record<string, string | null>>({})
+  const [previewKey, setPreviewKey] = useState<string | null>(null)
 
   useEffect(() => {
     api
@@ -401,6 +632,21 @@ function EmailTemplatesSection() {
     }
   }
 
+  const fetchPreview = async (key: string) => {
+    setPreviewKey(key)
+    try {
+      const data = await api.get(`/admin/email/preview?template=${key}`)
+      setPreview((prev) => ({ ...prev, [key]: data?.preview ?? data?.subject ?? '' }))
+    } catch (err) {
+      setPreview((prev) => ({ ...prev, [key]: err instanceof Error ? err.message : '' }))
+    }
+    setPreviewKey(null)
+  }
+
+  const closePreview = (key: string) => {
+    setPreview((prev) => ({ ...prev, [key]: undefined }))
+  }
+
   if (loading) {
     return (
       <Card>
@@ -431,9 +677,23 @@ function EmailTemplatesSection() {
         <p className="text-xs text-muted-foreground">{t('admin.emailTemplatesSubtitle')}</p>
         {EMAIL_TEMPLATE_KEYS.map(({ key, label, variables, multiline }) => (
           <div key={key}>
-            <label htmlFor={`et-${key}`} className="text-xs font-bold block mb-1">
-              {label}
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label htmlFor={`et-${key}`} className="text-xs font-bold block">
+                {label}
+              </label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 text-xs gap-1"
+                onClick={() => fetchPreview(key)}
+                disabled={previewKey === key}
+                data-testid={`email-preview-${key}`}
+              >
+                {previewKey === key ? <Loader2 className="w-3 h-3 animate-spin" /> : <Eye className="w-3 h-3" />}
+                {t('admin.emailPreviewBtn')}
+              </Button>
+            </div>
             <div className="flex flex-wrap gap-1 mb-1">
               {variables.map((v) => (
                 <code key={v} className="text-[10px] bg-muted px-1 rounded text-muted-foreground">
@@ -457,6 +717,32 @@ function EmailTemplatesSection() {
                 className="flex w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             )}
+            {preview[key] !== undefined && (
+              <div className="mt-2 rounded-md border bg-muted/40 p-3" data-testid={`email-preview-result-${key}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                    {t('admin.emailPreviewTitle')}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 text-xs gap-1"
+                    onClick={() => closePreview(key)}
+                    data-testid={`email-preview-close-${key}`}
+                  >
+                    <X className="w-3 h-3" />
+                    {t('admin.emailPreviewClose')}
+                  </Button>
+                </div>
+                <pre
+                  className="whitespace-pre-wrap break-words text-xs text-foreground font-mono mt-1"
+                  data-testid={`email-preview-text-${key}`}
+                >
+                  {preview[key]?.trim() ? preview[key] : t('admin.emailPreviewEmpty')}
+                </pre>
+              </div>
+            )}
           </div>
         ))}
         <div className="flex gap-2 pt-2">
@@ -479,6 +765,7 @@ interface FeatureFlag {
   enabled: boolean
   description: string
   rollout_percent?: number
+  schedule?: { from: string; to: string } | null
 }
 
 function ImapSection() {
@@ -814,6 +1101,17 @@ function FeatureFlagsSection() {
     setChanged(true)
   }
 
+  const setSchedule = (key: string, side: 'from' | 'to', value: string) => {
+    setFlags((prev) =>
+      prev.map((f) =>
+        f.key === key
+          ? { ...f, schedule: { from: f.schedule?.from || '', to: f.schedule?.to || '', [side]: value } }
+          : f,
+      ),
+    )
+    setChanged(true)
+  }
+
   const save = async () => {
     setSaving(true)
     try {
@@ -887,6 +1185,30 @@ function FeatureFlagsSection() {
                     className="w-16 rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   />
                   <span className="text-xs text-muted-foreground">%</span>
+                </div>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <label htmlFor={`feature-schedule-from-${f.key}`} className="text-xs text-muted-foreground">
+                    {t('admin.featureScheduleFrom')}
+                  </label>
+                  <input
+                    id={`feature-schedule-from-${f.key}`}
+                    type="time"
+                    value={f.schedule?.from || ''}
+                    data-testid={`feature-schedule-from-${f.key}`}
+                    onChange={(e) => setSchedule(f.key, 'from', e.target.value)}
+                    className="rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                  <label htmlFor={`feature-schedule-to-${f.key}`} className="text-xs text-muted-foreground">
+                    {t('admin.featureScheduleTo')}
+                  </label>
+                  <input
+                    id={`feature-schedule-to-${f.key}`}
+                    type="time"
+                    value={f.schedule?.to || ''}
+                    data-testid={`feature-schedule-to-${f.key}`}
+                    onChange={(e) => setSchedule(f.key, 'to', e.target.value)}
+                    className="rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
                 </div>
               </div>
             </div>

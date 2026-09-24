@@ -6,9 +6,23 @@ import bcrypt from 'bcryptjs'
 import prisma from '../prisma.js'
 import { auditLogMiddleware } from '../audit.js'
 import { authenticateToken, requireRole } from '../middleware.js'
-import { invalidateCache as invalidateSettingsCache } from '../settings.js'
+import { getSettings, invalidateCache as invalidateSettingsCache } from '../settings.js'
 import logger from '../logger.js'
 import { cacheMiddleware, invalidateCache } from '../cache.js'
+import {
+  checkDatabase,
+  checkRedis,
+  checkMeili,
+  checkSmtp,
+  checkImap,
+  getQueueStats,
+  getMigrations,
+  restoreBackup,
+  reindexSearch,
+} from '../services/admin-ops.js'
+import { getRbacMatrix } from '../rbac.js'
+import { getEmailTemplatePreview } from '../notify.js'
+import { setRateLimitOverrides } from '../limits.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const projectRoot = path.resolve(__dirname, '..', '..', '..')
@@ -280,9 +294,9 @@ const toRolloutPercent = (value) => {
 }
 
 const DEFAULT_FEATURES = [
-  { key: 'new_ticket_form', enabled: true, description: 'Новая форма создания тикета', rollout_percent: ROLLOUT_DEFAULT },
-  { key: 'kanban_view', enabled: true, description: 'Kanban-доска вместо списка', rollout_percent: ROLLOUT_DEFAULT },
-  { key: 'dark_theme', enabled: true, description: 'Тёмная тема интерфейса', rollout_percent: ROLLOUT_DEFAULT },
+  { key: 'new_ticket_form', enabled: true, description: 'Новая форма создания тикета', rollout_percent: ROLLOUT_DEFAULT, schedule: null },
+  { key: 'kanban_view', enabled: true, description: 'Kanban-доска вместо списка', rollout_percent: ROLLOUT_DEFAULT, schedule: null },
+  { key: 'dark_theme', enabled: true, description: 'Тёмная тема интерфейса', rollout_percent: ROLLOUT_DEFAULT, schedule: null },
 ]
 
 const toFeaturePayload = (f) => ({
@@ -291,6 +305,34 @@ const toFeaturePayload = (f) => ({
   description: f.description || '',
   rollout_percent: toRolloutPercent(f.rollout_percent),
 })
+
+const toSchedule = (value) => {
+  if (!value || typeof value !== 'object') return null
+  const cleanFrom = typeof value.from === 'string' ? value.from.trim() : ''
+  const cleanTo = typeof value.to === 'string' ? value.to.trim() : ''
+  if (!cleanFrom && !cleanTo) return null
+  return { from: cleanFrom || '', to: cleanTo || '' }
+}
+
+async function getSchedules() {
+  try {
+    const settings = await getSettings()
+    const raw = settings.FEATURE_SCHEDULES
+    if (!raw) return {}
+    return JSON.parse(raw)
+  } catch {
+    return {}
+  }
+}
+
+async function saveSchedules(schedules) {
+  await prisma.admin_settings.upsert({
+    where: { key: 'FEATURE_SCHEDULES' },
+    update: { value: JSON.stringify(schedules), updated_at: new Date() },
+    create: { key: 'FEATURE_SCHEDULES', value: JSON.stringify(schedules), updated_at: new Date() },
+  })
+  invalidateSettingsCache()
+}
 
 router.post('/sla/run-check', async (req, res) => {
   try {
@@ -309,9 +351,16 @@ router.get('/features', cacheMiddleware(30), async (req, res) => {
     if (rows.length === 0) {
       return res.json({ success: true, data: DEFAULT_FEATURES })
     }
+    const schedules = await getSchedules()
     res.json({
       success: true,
-      data: rows.map((r) => ({ key: r.key, enabled: r.enabled, description: r.description, rollout_percent: r.rollout_percent ?? ROLLOUT_DEFAULT })),
+      data: rows.map((r) => ({
+        key: r.key,
+        enabled: r.enabled,
+        description: r.description,
+        rollout_percent: r.rollout_percent ?? ROLLOUT_DEFAULT,
+        schedule: toSchedule(schedules[r.key]) || null,
+      })),
     })
   } catch (err) {
     logger.error('Features get error:', err)
@@ -325,6 +374,7 @@ router.put('/features', async (req, res) => {
     if (!Array.isArray(flags)) {
       return res.status(400).json({ success: false, message: 'Expected array of { key, enabled }' })
     }
+    const schedules = await getSchedules()
     for (const f of flags) {
       const payload = toFeaturePayload(f)
       await prisma.feature_flags.upsert({
@@ -332,7 +382,13 @@ router.put('/features', async (req, res) => {
         update: { ...payload, updated_at: new Date() },
         create: { ...payload, updated_at: new Date() },
       })
+      if (f.schedule !== undefined) {
+        const s = toSchedule(f.schedule)
+        if (s) schedules[f.key] = s
+        else delete schedules[f.key]
+      }
     }
+    await saveSchedules(schedules)
     await invalidateCache('cache:*')
     res.json({ success: true, data: { updated: true } })
   } catch (err) {
@@ -512,6 +568,137 @@ router.get('/csat/recent', async (req, res) => {
   } catch (err) {
     logger.error('CSAT recent error:', err)
     res.status(500).json({ success: false, message: 'Failed to fetch recent surveys' })
+  }
+})
+
+// ── Этап 58: диагностика, RBAC, сессии, восстановление ──
+
+const toPosInt = (value) => {
+  const n = Number(value)
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : null
+}
+
+router.get('/health', async (req, res) => {
+  try {
+    const [db, redis, meili, smtp, imap, queue] = await Promise.all([
+      checkDatabase(),
+      checkRedis(),
+      checkMeili(),
+      checkSmtp(),
+      checkImap(),
+      getQueueStats(),
+    ])
+    res.json({
+      success: true,
+      data: { checks: [db, redis, meili, smtp, imap], queue, updatedAt: new Date().toISOString() },
+    })
+  } catch (err) {
+    logger.error('Health check error:', err)
+    res.status(500).json({ success: false, message: 'Failed to run health checks' })
+  }
+})
+
+router.get('/queues', async (req, res) => {
+  try {
+    res.json({ success: true, data: await getQueueStats() })
+  } catch (err) {
+    logger.error('Queue stats error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch queue stats' })
+  }
+})
+
+router.get('/migrations', async (req, res) => {
+  try {
+    res.json({ success: true, data: await getMigrations() })
+  } catch (err) {
+    logger.error('Migrations status error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch migrations' })
+  }
+})
+
+router.post('/search/reindex', async (req, res) => {
+  try {
+    const result = await reindexSearch()
+    res.json({ success: true, data: result })
+  } catch (err) {
+    logger.error('Reindex error:', err)
+    res.status(500).json({ success: false, message: 'Failed to reindex search' })
+  }
+})
+
+router.get('/rbac', async (req, res) => {
+  try {
+    res.json({ success: true, data: getRbacMatrix() })
+  } catch (err) {
+    logger.error('RBAC matrix error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch RBAC matrix' })
+  }
+})
+
+router.post('/sessions/revoke-all', async (req, res) => {
+  try {
+    const { count } = await prisma.refresh_tokens.deleteMany({})
+    res.json({ success: true, data: { revoked: count } })
+  } catch (err) {
+    logger.error('Revoke all sessions error:', err)
+    res.status(500).json({ success: false, message: 'Failed to revoke sessions' })
+  }
+})
+
+router.post('/sessions/revoke/:userId', async (req, res) => {
+  try {
+    const userId = Number(req.params.userId)
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid user id' })
+    }
+    const { count } = await prisma.refresh_tokens.deleteMany({ where: { user_id: userId } })
+    res.json({ success: true, data: { revoked: count } })
+  } catch (err) {
+    logger.error('Revoke user sessions error:', err)
+    res.status(500).json({ success: false, message: 'Failed to revoke sessions' })
+  }
+})
+
+router.post('/settings/restore', async (req, res) => {
+  try {
+    const { content } = req.body || {}
+    const result = await restoreBackup(content)
+    if (!result.ok) return res.status(400).json({ success: false, message: result.message })
+    res.json({ success: true, data: result })
+  } catch (err) {
+    logger.error('Restore error:', err)
+    res.status(500).json({ success: false, message: 'Failed to restore backup' })
+  }
+})
+
+router.get('/email/preview', async (req, res) => {
+  try {
+    const { template } = req.query
+    if (!template) return res.status(400).json({ success: false, message: 'template is required' })
+    const preview = await getEmailTemplatePreview(String(template))
+    if (!preview) return res.status(404).json({ success: false, message: 'Template not found' })
+    res.json({ success: true, data: preview })
+  } catch (err) {
+    logger.error('Email preview error:', err)
+    res.status(500).json({ success: false, message: 'Failed to render preview' })
+  }
+})
+
+router.put('/settings/rate-limits', async (req, res) => {
+  try {
+    const { auth, api, admin } = req.body || {}
+    const payload = { auth: toPosInt(auth), api: toPosInt(api), admin: toPosInt(admin) }
+    await prisma.admin_settings.upsert({
+      where: { key: 'RATE_LIMITS' },
+      update: { value: JSON.stringify(payload), updated_at: new Date() },
+      create: { key: 'RATE_LIMITS', value: JSON.stringify(payload), updated_at: new Date() },
+    })
+    setRateLimitOverrides(payload)
+    invalidateSettingsCache()
+    res.json({ success: true, data: payload })
+  } catch (err) {
+    logger.error('Rate limits update error:', err)
+    res.status(500).json({ success: false, message: 'Failed to update rate limits' })
   }
 })
 

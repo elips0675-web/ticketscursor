@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
-import { Users, RefreshCw, UserCheck, UserX, Upload, FileText } from 'lucide-react'
+import { Users, RefreshCw, UserCheck, UserX, Upload, FileText, LogOut, Loader2 } from 'lucide-react'
 import mammoth from 'mammoth'
 
 interface User {
@@ -38,6 +38,7 @@ export default function AdminUsers() {
     defaultPassword: string
   } | null>(null)
   const [defaultPassword, setDefaultPassword] = useState('123456')
+  const [revokingId, setRevokingId] = useState<number | null>(null)
 
   const unwrapApiData = <T,>(payload: T | { success?: boolean; data?: T } | null): T | null => {
     if (!payload) return null
@@ -118,6 +119,25 @@ export default function AdminUsers() {
       console.error('Import error:', err)
     }
     setImporting(false)
+  }
+
+  const revokeUser = async (id: number, name: string) => {
+    if (!window.confirm(`${t('admin.revokeUserBtn')} — ${name}?`)) return
+    setRevokingId(id)
+    const token = localStorage.getItem('token')
+    try {
+      const res = await fetch(`/api/admin/sessions/revoke/${id}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        toast.success(t('admin.revokeUserDone'))
+      }
+    } catch (err) {
+      console.error('Revoke user error:', err)
+      toast.error(t('common.error'))
+    }
+    setRevokingId(null)
   }
 
   const handleDocxUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -245,6 +265,22 @@ export default function AdminUsers() {
                           <UserCheck className="w-3 h-3 mr-1" /> {t('admin.unblockBtn')}
                         </>
                       )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      disabled={revokingId === user.id}
+                      onClick={() => revokeUser(user.id, user.name)}
+                      aria-label={`${t('admin.revokeUserBtn')} — ${user.name}`}
+                      data-testid={`revoke-user-${user.id}`}
+                    >
+                      {revokingId === user.id ? (
+                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                      ) : (
+                        <LogOut className="w-3 h-3 mr-1" />
+                      )}
+                      {t('admin.revokeUserBtn')}
                     </Button>
                   </div>
                 </div>

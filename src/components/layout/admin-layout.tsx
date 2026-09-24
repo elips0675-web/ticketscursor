@@ -10,6 +10,9 @@ import {
   ArrowLeft,
   LogOut,
   Settings2,
+  Activity,
+  Cpu,
+  KeyRound,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -23,6 +26,9 @@ const adminNavItems = [
   { to: '/admin/push', icon: Bell, labelKey: 'admin.push' },
   { to: '/admin/settings', icon: Settings, labelKey: 'admin.settings' },
   { to: '/admin/audit', icon: History, labelKey: 'admin.audit' },
+  { to: '/admin/health', icon: Activity, labelKey: 'admin.health' },
+  { to: '/admin/queues', icon: Cpu, labelKey: 'admin.queues' },
+  { to: '/admin/rbac', icon: KeyRound, labelKey: 'admin.rbac' },
   { to: '/admin/canned-responses', icon: MessageSquare, labelKey: 'admin.cannedResponses' },
   { to: '/admin/custom-fields', icon: Settings2, labelKey: 'admin.customFields' },
 ]

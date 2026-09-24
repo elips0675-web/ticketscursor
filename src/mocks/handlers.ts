@@ -602,7 +602,13 @@ export const handlers = [
       data: [
         { key: 'new_ticket_form', enabled: true, description: 'New ticket form', rollout_percent: 100 },
         { key: 'kanban_view', enabled: false, description: 'Kanban view', rollout_percent: 40 },
-        { key: 'dark_theme', enabled: true, description: 'Dark theme', rollout_percent: 100 },
+        {
+          key: 'dark_theme',
+          enabled: true,
+          description: 'Dark theme',
+          rollout_percent: 100,
+          schedule: { from: '09:00', to: '18:00' },
+        },
       ],
     })
   }),
@@ -616,6 +622,103 @@ export const handlers = [
       { id: 1, name: 'Admin', email: 'admin@test.com', role: 'admin', isBlocked: false, createdAt: '2026-01-01' },
       { id: 2, name: 'User', email: 'user@test.com', role: 'agent', isBlocked: false, createdAt: '2026-01-02' },
     ])
+  }),
+
+  // ── Admin: Health ──
+  http.get(`${API}/admin/health`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        checks: [
+          { name: 'db', label: 'MySQL', ok: true, latency: 12 },
+          { name: 'redis', label: 'Redis', ok: true, latency: 3 },
+          { name: 'meili', label: 'Meilisearch', ok: false, latency: 0, message: 'MEILI_URL not configured' },
+        ],
+        queue: { mode: 'bullmq', queues: [{ name: 'email' }, { name: 'sla' }], note: 'BullMQ active' },
+        updatedAt: '2026-07-11T12:00:00Z',
+      },
+    })
+  }),
+
+  // ── Admin: Queues ──
+  http.get(`${API}/admin/queues`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        mode: 'bullmq',
+        queues: [
+          { name: 'email', waiting: 2, active: 1, completed: 10, failed: 0, delayed: 0 },
+          { name: 'sla', waiting: 0, active: 0, completed: 4, failed: 1, delayed: 2 },
+        ],
+        note: 'BullMQ active',
+      },
+    })
+  }),
+
+  // ── Admin: Migrations ──
+  http.get(`${API}/admin/migrations`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        applied: [
+          { name: '001_init.js', batch: 1, time: '2026-01-01T00:00:00Z' },
+          { name: '002_users.js', batch: 1, time: '2026-01-01T00:00:00Z' },
+        ],
+        pending: ['003_feature_flags.js'],
+        appliedCount: 2,
+        pendingCount: 1,
+      },
+    })
+  }),
+
+  // ── Admin: RBAC ──
+  http.get(`${API}/admin/rbac`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        roles: ['agent', 'senior_agent', 'admin', 'super_admin'],
+        permissions: [
+          {
+            key: 'ticket.create',
+            label: 'Создание тикетов',
+            roles: { agent: true, senior_agent: true, admin: true, super_admin: true },
+          },
+          {
+            key: 'ticket.assign',
+            label: 'Назначение тикетов',
+            roles: { agent: false, senior_agent: true, admin: true, super_admin: true },
+          },
+          {
+            key: 'admin.access',
+            label: 'Доступ к админке',
+            roles: { agent: false, senior_agent: false, admin: true, super_admin: true },
+          },
+        ],
+      },
+    })
+  }),
+
+  // ── Admin: Operations ──
+  http.post(`${API}/admin/search/reindex`, () => {
+    return HttpResponse.json({ success: true, data: { reindexed: true } })
+  }),
+  http.post(`${API}/admin/sessions/revoke-all`, () => {
+    return HttpResponse.json({ success: true, data: { revoked: 3 } })
+  }),
+  http.post(`${API}/admin/sessions/revoke/:userId`, () => {
+    return HttpResponse.json({ success: true, data: { revoked: true } })
+  }),
+  http.post(`${API}/admin/settings/restore`, () => {
+    return HttpResponse.json({ success: true, data: { restored: true } })
+  }),
+  http.get(`${API}/admin/email/preview`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: { preview: 'Тикет #42 создан: Тестовая заявка' },
+    })
+  }),
+  http.put(`${API}/admin/settings/rate-limits`, () => {
+    return HttpResponse.json({ success: true, data: { updated: true } })
   }),
 
   http.get(`${API}/tickets/sla/stats`, () => {

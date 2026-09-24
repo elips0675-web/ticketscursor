@@ -16,6 +16,11 @@ vi.mock('react-i18next', () => ({
         'admin.push': 'Push-уведомления',
         'admin.settings': 'Настройки',
         'admin.audit': 'Аудит',
+        'admin.health': 'Состояние системы',
+        'admin.queues': 'Очереди',
+        'admin.rbac': 'RBAC-матрица',
+        'admin.cannedResponses': 'Шаблоны ответов',
+        'admin.customFields': 'Поля заявок',
         'dashboard.title': 'Дашборд',
         'common.back': 'Назад',
         'common.notFound': 'Страница не найдена',
@@ -75,6 +80,37 @@ describe('AdminLayout', () => {
       expect(screen.getByText('Push-уведомления')).toBeInTheDocument()
       expect(screen.getByText('Настройки')).toBeInTheDocument()
       expect(screen.getByText('Аудит')).toBeInTheDocument()
+    })
+
+    it('renders new section nav items (health, queues, rbac)', () => {
+      render(<AdminLayout />, { wrapper: TestProviders })
+      expect(screen.getByText('Состояние системы')).toBeInTheDocument()
+      expect(screen.getByText('Очереди')).toBeInTheDocument()
+      expect(screen.getByText('RBAC-матрица')).toBeInTheDocument()
+    })
+
+    it('nav has descriptive aria-label', () => {
+      render(<AdminLayout />, { wrapper: TestProviders })
+      expect(screen.getByRole('navigation', { name: /Навигация админки/i })).toBeInTheDocument()
+    })
+
+    it('provides skip link to main content', () => {
+      render(<AdminLayout />, { wrapper: TestProviders })
+      const link = screen.getByRole('link', { name: /Перейти к содержимому/i })
+      expect(link).toHaveAttribute('href', '#admin-main-content')
+    })
+
+    it('main has id target for skip link', () => {
+      render(<AdminLayout />, { wrapper: TestProviders })
+      const main = document.getElementById('admin-main-content')
+      expect(main).toBeTruthy()
+    })
+
+    it('nav links point to admin sections', () => {
+      render(<AdminLayout />, { wrapper: TestProviders })
+      expect(screen.getByRole('link', { name: 'Состояние системы' })).toHaveAttribute('href', '/admin/health')
+      expect(screen.getByRole('link', { name: 'Очереди' })).toHaveAttribute('href', '/admin/queues')
+      expect(screen.getByRole('link', { name: 'RBAC-матрица' })).toHaveAttribute('href', '/admin/rbac')
     })
 
     it('renders back to main button', () => {

@@ -1,27 +1,27 @@
 {
-  "generated": "2026-09-23T13:47:23.339Z",
+  "generated": "2026-09-24T09:08:23.849Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 62,
-    "suites": 147,
-    "tests": 520,
+    "files": 65,
+    "suites": 155,
+    "tests": 573,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 53,
-    "suites": 325,
-    "tests": 808,
+    "files": 54,
+    "suites": 337,
+    "tests": 832,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 115,
-    "suites": 472,
-    "tests": 1328,
+    "files": 119,
+    "suites": 492,
+    "tests": 1405,
     "all_passing": true
   },
   "e2e": {
@@ -69,12 +69,20 @@
       "tests": 22
     },
     {
+      "file": "src/test/useFeature.test.tsx",
+      "tests": 21
+    },
+    {
       "file": "src/test/Calendar.expanded.test.tsx",
       "tests": 18
     },
     {
       "file": "src/test/Dashboard.expanded.test.tsx",
       "tests": 18
+    },
+    {
+      "file": "src/test/AdminSettings.test.tsx",
+      "tests": 17
     },
     {
       "file": "src/test/Kanban.test.tsx",
@@ -85,12 +93,12 @@
       "tests": 14
     },
     {
-      "file": "src/test/useFeature.test.tsx",
+      "file": "src/test/Wiki.expanded.test.tsx",
       "tests": 14
     },
     {
-      "file": "src/test/Wiki.expanded.test.tsx",
-      "tests": 14
+      "file": "src/test/AdminAudit.test.tsx",
+      "tests": 13
     },
     {
       "file": "src/test/AdminIntegrations.test.tsx",
@@ -117,6 +125,10 @@
       "tests": 13
     },
     {
+      "file": "src/test/AdminLayout.test.tsx",
+      "tests": 11
+    },
+    {
       "file": "src/test/ChatDetail.test.tsx",
       "tests": 11
     },
@@ -135,6 +147,10 @@
     {
       "file": "src/test/Search.expanded.test.tsx",
       "tests": 9
+    },
+    {
+      "file": "src/test/AdminHealth.test.tsx",
+      "tests": 8
     },
     {
       "file": "src/test/AppLayout.test.tsx",
@@ -173,15 +189,11 @@
       "tests": 7
     },
     {
-      "file": "src/test/AdminAudit.test.tsx",
+      "file": "src/test/AdminQueues.test.tsx",
       "tests": 6
     },
     {
-      "file": "src/test/AdminLayout.test.tsx",
-      "tests": 6
-    },
-    {
-      "file": "src/test/AdminSettings.test.tsx",
+      "file": "src/test/AdminRbac.test.tsx",
       "tests": 6
     },
     {
@@ -215,6 +227,10 @@
     {
       "file": "src/test/utils.test.ts",
       "tests": 6
+    },
+    {
+      "file": "src/test/AdminUsers.test.tsx",
+      "tests": 5
     },
     {
       "file": "src/test/Dashboard.test.tsx",
@@ -269,10 +285,6 @@
       "tests": 2
     },
     {
-      "file": "src/test/AdminUsers.test.tsx",
-      "tests": 2
-    },
-    {
       "file": "src/test/ForgotPassword.test.tsx",
       "tests": 2
     },
@@ -321,6 +333,10 @@
     {
       "file": "server/src/__tests__/socket.test.js",
       "tests": 27
+    },
+    {
+      "file": "server/src/__tests__/admin-stage58.test.js",
+      "tests": 24
     },
     {
       "file": "server/src/__tests__/public-portal.test.js",

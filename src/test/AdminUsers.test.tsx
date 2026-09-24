@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { AllTheProviders } from './test-utils'
 import AdminUsers from '@/pages/AdminUsers'
 
@@ -57,5 +58,42 @@ describe('AdminUsers', () => {
     await waitFor(() => {
       expect(screen.getByText(/admin\.blocked/i)).toBeTruthy()
     })
+  })
+
+  it('renders revoke button for each user', async () => {
+    render(<AdminUsers />, { wrapper: AllTheProviders })
+    await waitFor(() => {
+      expect(screen.getByTestId('revoke-user-1')).toBeTruthy()
+    })
+    expect(screen.getByTestId('revoke-user-2')).toBeTruthy()
+  })
+
+  it('revokes user sessions after confirm', async () => {
+    const fetchMock = vi.mocked(fetch)
+    fetchMock.mockClear()
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    render(<AdminUsers />, { wrapper: AllTheProviders })
+    await waitFor(() => {
+      expect(screen.getByTestId('revoke-user-1')).toBeTruthy()
+    })
+    await userEvent.click(screen.getByTestId('revoke-user-1'))
+    await waitFor(() => {
+      const revokeCall = fetchMock.mock.calls.find((c) => String(c[0]).includes('/api/admin/sessions/revoke/1'))
+      expect(revokeCall).toBeTruthy()
+    })
+  })
+
+  it('skips revoke when confirm declined', async () => {
+    const fetchMock = vi.mocked(fetch)
+    fetchMock.mockClear()
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    render(<AdminUsers />, { wrapper: AllTheProviders })
+    await waitFor(() => {
+      expect(screen.getByTestId('revoke-user-1')).toBeTruthy()
+    })
+    await userEvent.click(screen.getByTestId('revoke-user-1'))
+    const calls = fetchMock.mock.calls
+    const revokeCall = calls.find((c) => String(c[0]).includes('/api/admin/sessions/revoke/1'))
+    expect(revokeCall).toBeFalsy()
   })
 })

@@ -1,9 +1,9 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 53 файлов / 325 suite / 808 тестов (все PASS, vitest --reporter=json от 23.09.2026)
+Реальный результат: 54 файлов / 337 suite / 832 тестов (все PASS, vitest --reporter=json от 24.09.2026)
 
-===== ФАЙЛЫ (48 шт, все реальные, сгенерировано скриптом) =====
+===== ФАЙЛЫ (54 шт, все реальные, сгенерировано скриптом) =====
 
 # Файлы | Тестов | Описание
 server/src/api.test.js | 183 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk, feature rollout)
@@ -11,6 +11,7 @@ server/src/__tests__/rbac-matrix.test.js | 41 | RBAC: матрица 5×5, requi
 server/src/services/__tests__/tickets.service.sla.test.js | 40 | SLA: calculation, pause, business hours, breach detection, priority changes
 server/src/services/__tests__/email-ingestion.service.test.js | 28 | IMAP: extractTicketReference, stripTicketReference, getImapConfig, testImapConnection, pollOnce, reply/add, новый тикет, empty skip, errors
 server/src/__tests__/socket.test.js | 27 | WebSocket (реальный сервер на порту 0): JWT handshake, rate-limit, комнаты, typing, chat:read, disconnect, offline flush, delete, notify, getIO
+server/src/__tests__/admin-stage58.test.js | 24 | Этап 58: admin-ops (backup/seed/redis-status), RBAC-эндпоинты, rate-limit admin
 server/src/__tests__/public-portal.test.js | 22 | Public portal: POST /tickets (новый/существующий employee), 400-валидация, track, 500, upload
 server/src/services/__tests__/rules.service.test.js | 20 | Rules: правила и цепочки, условия, действия
 server/src/__tests__/middleware.test.js | 19 | Rate limiter, CORS, helmet, auth middleware, RBAC
@@ -29,16 +30,17 @@ server/src/services/__tests__/recurrence.service.test.js | 14 | Recurrence: со
 server/src/services/__tests__/time.service.test.js | 14 | Time tracking: start, stop, manual entry, total calculation
 server/src/services/__tests__/webhooks.service.test.js | 14 | Webhooks: подписки, доставка, retry
 server/src/services/__tests__/tickets.service.mentions.test.js | 13 | Mentions: @name parsing, notification creation, dedup
+server/src/__tests__/limiters.test.js | 12 | Rate limiters: auth 10/мин, api 100/мин, admin 30/мин
 server/src/__tests__/idor.test.js | 11 | IDOR: requester только свои тикеты (GET, messages, lock), agent свои+неназначенные, senior_agent полный доступ
 server/src/__tests__/sla.test.js | 11 | SLA: timer logic, escalation levels, breach alerts
 server/src/services/__tests__/polls.service.test.js | 11 | Polls: CRUD, vote, close, expire
 server/src/__tests__/background.expanded.test.js | 10 | Background: BullMQ setup, queues, workers, schedulers, DLQ
-server/src/__tests__/limiters.test.js | 10 | Rate limiters: auth 10/мин, api 100/мин, admin 30/мин
 server/src/__tests__/push.test.js | 10 | Push: VAPID keys, subscribe, send, unsubscribe
 server/src/__tests__/storage.test.js | 9 | Storage: file upload, delete, MIME validation
 server/src/__tests__/telegram.expanded.test.js | 9 | Telegram: init, /start, /link, /new, /tickets, notifications
 server/src/services/__tests__/chats.service.test.js | 9 | Chats: create, message, unread count, pagination
 server/src/__tests__/clamav.expanded.test.js | 8 | ClamAV: scan, clean file, infected file, timeout
+server/src/__tests__/soft-delete.test.js | 7 | 
 server/src/__tests__/validateUpload.test.js | 7 | Upload validation: MIME, size, magic bytes
 server/src/services/__tests__/roleUtils.test.js | 7 | Role utils: hasRole, canManage, hierarchy checks
 server/src/services/__tests__/wiki.service.test.js | 7 | Wiki: CRUD, categories, search, soft delete
@@ -53,10 +55,14 @@ server/src/services/__tests__/employees.service.test.js | 5 | Employees: list, s
 server/src/services/__tests__/news.service.test.js | 5 | News: CRUD, publish, archive
 server/src/__tests__/background.test.js | 4 | Background: setup, stop, warnAdminRedisMissing
 server/src/__tests__/clamav.test.js | 4 | ClamAV: basic scan, not installed fallback
+server/src/__tests__/outbox.delivery.test.js | 4 | 
 server/src/__tests__/search.test.js | 4 | Search: fulltext, LIKE fallback, empty query
+server/src/__tests__/ticket-lock.race.test.js | 2 | 
+server/src/__tests__/ticket-status.race.test.js | 2 | 
+server/src/__tests__/time-timer.race.test.js | 2 | 
 
 ===== ИСТОЧНИК ДАННЫХ =====
-Список файлов и количество тестов — из фактического прогона `npx vitest run --reporter=json` (server-report.json).
-Фактический запуск: 48 файлов / 791 тестов / 0 failures.
-Coverage (23.09.2026, Этап 56): stmts 70.09 / branches 63.73 / functions 69.26 / lines 71.19 (пороги: stmts 67 / branches 61 / functions 65 / lines 68, не менялись).
-Данные актуальны на: 22.09.2026
+Список файлов и количество тестов — из фактического прогона `cd server && npx vitest run --reporter=json` (vitest-*.json).
+Фактический запуск: 54 файлов / 832 тестов / 832 passed / 0 failures.
+Coverage (24.09.2026, Этап 58): stmts 71.29 / branches 64.64 / functions 71.56 / lines 72.29 (пороги: stmts 67 / branches 61 / functions 65 / lines 68, не менялись).
+Данные актуальны на: 24.09.2026

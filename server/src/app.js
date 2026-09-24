@@ -62,12 +62,13 @@ import { fileURLToPath } from 'url'
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET, authenticateToken } from './middleware.js'
 import { cacheMiddleware } from './cache.js'
-import { createLimiters } from './limits.js'
+import { createLimiters, loadRateLimitOverrides } from './limits.js'
 
 const app = express()
 app.set('trust proxy', 1)
 const server = createServer(app)
 
+await loadRateLimitOverrides()
 const { authLimiter, apiLimiter, adminLimiter } = createLimiters()
 
 const allowedOrigins = process.env.CORS_ORIGIN
