@@ -34,7 +34,7 @@
 | **SLA Pause** | Пауза SLA в статусе «Ожидает ответа клиента», бизнес-часы (Mon-Fri 9-18) |
 | **CSAT** | Авто-опрос после закрытия тикета, метрика в дашборде |
 | **Custom Fields** | Конструктор кастомных полей (текст, число, дата, select, checkbox, textarea) |
-| **Email Ingestion** | IMAP polling — письма на support@ → тикеты, ответы → комментарии (в разработке) |
+| **Email Ingestion** | IMAP polling — письма на support@ → тикеты, ответы → комментарии |
 | **Health / Readiness** | Probes для K8s — liveness + readiness endpoints |
 | **Load Testing** | k6 сценарии в `k6/` для тикетов, чатов, поиска |
 | **Grafana** | Дашборд с метриками API, WS, Redis, бизнес-показателями |
@@ -61,7 +61,7 @@
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌───────────┐  │
  │  │  Express 5  │  │   Prisma    │  │ Socket.IO 4 │  │  Zod v4   │  │
 │  │  Helmet     │  │   ORM 5.22  │  │  Redis Adap │  │  schemas  │  │
-│  │  Rate-limit │  │  17 models  │  │  Rooms/RBAC │  │  validate │  │
+│  │  Rate-limit │  │  32 models  │  │  Rooms/RBAC │  │  validate │  │
 │  └─────────────┘  └─────────────┘  └─────────────┘  └───────────┘  │
 │                              │                                       │
 └──────────────────────────────┼───────────────────────────────────────┘
@@ -71,7 +71,7 @@
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌───────────┐  │
 │  │  MySQL 8.4  │  │   Redis 7   │  │   Docker    │  │  K8s      │  │
 │  │  FULLTEXT   │  │  Cache/WS   │  │  Compose    │  │  Ingress  │  │
-│  │  16 INDEX   │  │  Sessions   │  │  Node 22    │  │  2 repl   │  │
+│  │  21 INDEX   │  │  Sessions   │  │  Node 22    │  │  2 repl   │  │
 │  │             │  │             │  │  Multi-stage│  │           │  │
 │  └─────────────┘  └─────────────┘  └─────────────┘  └───────────┘  │
 └─────────────────────────────────────────────────────────────────────┘
