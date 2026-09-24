@@ -1,32 +1,32 @@
 {
-  "generated": "2026-09-24T12:30:47.816Z",
+  "generated": "2026-09-24T14:14:10.863Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 66,
-    "suites": 157,
-    "tests": 578,
+    "files": 67,
+    "suites": 160,
+    "tests": 601,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 64,
-    "suites": 361,
-    "tests": 890,
+    "files": 66,
+    "suites": 366,
+    "tests": 897,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 130,
-    "suites": 518,
-    "tests": 1468,
+    "files": 133,
+    "suites": 526,
+    "tests": 1498,
     "all_passing": true
   },
   "e2e": {
     "files": 19,
-    "tests": 57,
+    "tests": 61,
     "all_passing": true,
     "run_command": "npx playwright test",
     "specs": [
@@ -57,12 +57,12 @@
       "tests": 27
     },
     {
-      "file": "src/test/Tickets.expanded.test.tsx",
-      "tests": 25
+      "file": "src/test/TicketDetail.test.tsx",
+      "tests": 26
     },
     {
-      "file": "src/test/TicketDetail.test.tsx",
-      "tests": 24
+      "file": "src/test/Tickets.expanded.test.tsx",
+      "tests": 25
     },
     {
       "file": "src/test/Admin.expanded.test.tsx",
@@ -81,15 +81,23 @@
       "tests": 18
     },
     {
+      "file": "src/test/Kanban.test.tsx",
+      "tests": 18
+    },
+    {
       "file": "src/test/AdminSettings.test.tsx",
       "tests": 17
     },
     {
-      "file": "src/test/Kanban.test.tsx",
-      "tests": 17
+      "file": "src/test/ChatDetail.test.tsx",
+      "tests": 14
     },
     {
       "file": "src/test/Polls.expanded.test.tsx",
+      "tests": 14
+    },
+    {
+      "file": "src/test/TicketContext.optimistic.test.tsx",
       "tests": 14
     },
     {
@@ -129,11 +137,11 @@
       "tests": 11
     },
     {
-      "file": "src/test/ChatDetail.test.tsx",
+      "file": "src/test/Login.expanded.test.tsx",
       "tests": 11
     },
     {
-      "file": "src/test/Login.expanded.test.tsx",
+      "file": "src/test/MarkdownEditor.test.tsx",
       "tests": 11
     },
     {
@@ -158,10 +166,6 @@
     },
     {
       "file": "src/test/Login.test.tsx",
-      "tests": 8
-    },
-    {
-      "file": "src/test/MarkdownEditor.test.tsx",
       "tests": 8
     },
     {
@@ -515,6 +519,10 @@
       "tests": 5
     },
     {
+      "file": "server/src/__tests__/query-guards.test.js",
+      "tests": 5
+    },
+    {
       "file": "server/src/__tests__/refresh-family.test.js",
       "tests": 5
     },
@@ -560,6 +568,10 @@
     },
     {
       "file": "server/src/__tests__/migration.idempotency.test.js",
+      "tests": 2
+    },
+    {
+      "file": "server/src/__tests__/notify-failure.test.js",
       "tests": 2
     },
     {

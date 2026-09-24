@@ -380,6 +380,7 @@ docker compose up -d --build
 - **Тесты**: сервер 523/523 (35 файлов), клиент 485 passing (102 файла), Vite build ✅
 - **Документация**: CHANGELOG, AGENTS, context, PLAYBOOK, README обновлены
 
-### Этапы 32–49 — см. «Что сделано.txt»
-- Актуальный инвентарь на 24.09.2026: клиент **65 файлов / 573 теста**, сервер **61 файл / 878 тестов** = **1451 тест, 0 failures**, E2E 19 spec'ов / 57 тестов
+### Этапы 32–61 — см. «Что сделано.txt» (детали каждого этапа — там)
+- Актуальный инвентарь на 24.09.2026: клиент **67 файлов / 601 тест**, сервер **66 файлов / 897 тестов** = **1498 тестов, 0 failures**, E2E 19 spec'ов / 61 тест
+- **Этап 61 — Покрытие ядра + E2E-реализм + Security-hardening**: ticket-context optimistic (14 тестов), XSS-инвариант (MarkdownEditor 8→11, TicketDetail 24→26), notify-регресс (201 при упавших уведомлениях), query-guards (клампинг limit + N+1 spy), E2E-реализм (search/export-download/upload); пороги coverage подняты (клиент 70/61/62/72, сервер 71/65/72/72 — факт − 2п.п.)
 - Машинно-читаемый: `test-analysis/test-inventory.json` (регенерация: `node scripts/regenerate-test-inventory.js`)

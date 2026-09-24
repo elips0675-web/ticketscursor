@@ -736,6 +736,18 @@
 - **CI-check синхронности**: `scripts/check-doc-sync.mjs` — MD5-сверка копий root ↔ test-analysis (`Что-доделать.txt`, `Что сделано.txt`, `AGENTS.md`) + наличие свежего `test-inventory.json` / `*-tests.txt`; прогон `node scripts/check-doc-sync.mjs` — всё синхронно ✅
 - **Инвентарь (правило 10)**: перегенерирован — клиент **66 файлов / 578**, сервер **64 файла / 890** = **1468 тестов, 0 failures**
 
+### Этап 61 — Покрытие ядра + E2E-реализм + Security-hardening: ticket-context optimistic, XSS-инвариант, notify-регресс, query-guards, E2E export/upload/search-real
+- **ticket-context optimistic**: `src/test/TicketContext.optimistic.test.tsx` — 14 тестов через renderHook + MSW (waitFor-ассерты): status/priority/assign/tags/bulk-мутации, создание тикета, сообщения, rollback при ошибке, 401-редирект; механика подтверждена probe-тестом (в onMutate кэш пишется мгновенно, ре-рендер хука асинхронный → waitFor)
+- **XSS-инвариант** (аудит «Оценка ии.rtf» №1): `MarkdownEditor.test.tsx` 8→11, `TicketDetail.test.tsx` 24→26 — `<img onerror>`/`javascript:` в preview и сообщениях не исполняются (экранирование `&<>` первым)
+- **Virtual scroll + WS-чистка**: `ChatDetail.test.tsx` 11→14 (delete через `onDeleteMessage`, typing, read), `Kanban.test.tsx` 17→18 (optimistic drop)
+- **MSW**: `src/mocks/handlers.ts` + `PUT /chats/:id/read`, `POST /chats/:id/messages` (убран «Not implemented: navigation»-шум, остался только легитимный 401-кейс)
+- **Notify-регресс** (аудит «Оценка ии.rtf» №6): `server/src/__tests__/notify-failure.test.js` — mock notify (спред importActual; notifyTicketCreated/Assigned → reject «SMTP: connection refused») → POST /api/tickets всё равно **201**, тикет реально в БД, cleanup deleteMany
+- **Query guards** (аудит «Оценка ии.rtf» №5/№7): `server/src/__tests__/query-guards.test.js` — клампинг limit (9999→500, 0→50 default, −5→1, abc→50), **N+1 spy** на prisma (ровно 1 findMany на список)
+- **E2E-реализм**: `search.spec.ts` 2→4 (реальный результат из БД «Добавить экспорт в Excel» + навигация `/tickets/{id}`, пустое состояние), `sla-autoassign-export.spec.ts` + `waitForEvent('download')` с `tickets-YYYY-MM-DD.csv`, `file-upload.spec.ts` 2→3 (реальный upload PNG с magic-bytes через setInputFiles → toast «Файл загружен»)
+- **Пороги coverage (правило 16, факт − 2п.п.)**: клиент 66/58/57/69 → **70/61/62/72** (факт 72.07/63.3/64.48/74.29), сервер 67/61/65/68 → **71/65/72/72** (факт 73.72/67.14/74.36/74.77)
+- **Инвентарь (правило 10)**: клиент **67 файлов / 160 suite / 601**, сервер **66 файлов / 366 suite / 897** = **133 файла / 1498 тестов, 0 failures**; E2E 19 spec / 61 тест; `*-tests.txt` обновлены
+- **Проверки (24.09)**: сервер vitest 897 ✅, клиент vitest 601 ✅, `npm run lint` 0 errors / 57 warnings ✅, `npm run type-check` ✅, `npm run build` ✅, `node check-console.mjs` 17/17 ALL OK ✅, E2E 61/61 ✅
+
 ### Мелкие правки (23.09.2026)
 - **bcrypt cost 10 → 12** (спека AI_AGENT_SPEC.md, п. 10 «Безопасность»): `routes/auth.js` (register + reset), `auth/oidc.js`, `routes/admin.js` (default-пароль), `routes/public-portal.js` (токен портала). Старые хеши продолжают работать (cost зашит в хеш). Сервер vitest 53/808 ✅, check-console 17/17 ✅
 
@@ -748,9 +760,9 @@
 - ~~Этап 58 — Админка (11 фич)~~ ✅ **закрыт 24.09** — см. Этап 58 выше (1405 тестов, все гейты зелёные, коммит запушен)
 - ~~Этап 59 — Resilience~~ ✅ **закрыт 24.09** — см. Этап 59 выше (1451 тест, все гейты зелёные, коммит запушен)
 - ~~Этап 60 — Процесс~~ ✅ **закрыт 24.09** — см. Этап 60 выше (1468 тестов, все гейты зелёные)
+- ~~Этап 61 — Покрытие ядра + Security-hardening~~ ✅ **закрыт 24.09** — см. Этап 61 выше (1498 тестов, E2E 61/61, все гейты зелёные)
 
-### План 61–67 (детали — в «Что-доделать.txt»)
-- Этап 61 — Покрытие ядра + Security-hardening: ticket-context.optimistic, TicketDetail/ChatDetail/Kanban, XSS-инвариант на client-рендер, notify регресс-тест, E2E-реализм (export/upload/search)
+### План 62–67 (детали — в «Что-доделать.txt»)
 - Этап 62 — Timeline тикета (GET /tickets/:id/history + вкладка «История» + PDF), CSV-импорт сотрудников (UI), retention-политика (audit/files/chat)
 - Этап 63 — qwen P0 #1–3: 2FA/TOTP (otplib + QR), активные сессии (view/revoke, таблица sessions), notification preferences per user
 - Этап 64 — qwen P0 #4–6: watchers/subscribers тикета, ticket relations (parent/child, blocked-by, duplicates), merge тикетов (перенос сообщений/вложений)

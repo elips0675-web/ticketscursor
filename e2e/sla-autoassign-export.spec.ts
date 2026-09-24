@@ -6,6 +6,15 @@ test.describe('SLA / Auto-assign / Export', () => {
     await expect(page.getByRole('button').filter({ hasText: /csv/i }).first()).toBeVisible()
   })
 
+  test('exports tickets list as a real CSV download', async ({ page }) => {
+    await page.goto('/tickets')
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button').filter({ hasText: /csv/i }).first().click(),
+    ])
+    expect(download.suggestedFilename()).toMatch(/^tickets-\d{4}-\d{2}-\d{2}\.csv$/)
+  })
+
   test('tickets page has export PDF button', async ({ page }) => {
     await page.goto('/tickets')
     await expect(page.getByRole('button').filter({ hasText: /pdf/i }).first()).toBeVisible()

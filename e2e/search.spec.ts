@@ -14,4 +14,19 @@ test.describe('Global search', () => {
     await input.fill('test')
     await expect(input).toHaveValue('test')
   })
+
+  test('search returns real results from API and navigates to the ticket', async ({ page }) => {
+    await page.goto('/search')
+    await page.getByPlaceholder(/Введите запрос/).fill('экспорт')
+    // Реальный результат из БД (seed-тикет «Добавить экспорт в Excel»)
+    await expect(page.getByText('Добавить экспорт в Excel')).toBeVisible({ timeout: 15000 })
+    await page.getByText('Добавить экспорт в Excel').click()
+    await expect(page).toHaveURL(/\/tickets\/\d+/)
+  })
+
+  test('search shows empty state for unknown query', async ({ page }) => {
+    await page.goto('/search')
+    await page.getByPlaceholder(/Введите запрос/).fill('zzqzzq')
+    await expect(page.getByText('Ничего не найдено')).toBeVisible({ timeout: 15000 })
+  })
 })

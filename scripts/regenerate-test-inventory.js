@@ -19,7 +19,7 @@ const E2E_SPECS = [
   'sla-escalation.spec.ts', 'tickets-lifecycle.spec.ts', 'user-flow.spec.ts',
   'websocket-chat.spec.ts',
 ]
-const E2E_TESTS = 57 // фиксируется прогоном `npx playwright test` (19 файлов)
+const E2E_TESTS = 61 // фиксируется прогоном `npx playwright test` (19 файлов)
 
 function load(file) {
   return JSON.parse(readFileSync(file, 'utf8'))

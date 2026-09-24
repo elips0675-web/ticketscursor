@@ -363,3 +363,67 @@ describe('TicketDetail time tracking', () => {
     expect(screen.queryByTestId('time-card')).not.toBeInTheDocument()
   })
 })
+
+describe('TicketDetail XSS-инвариант и virtual scroll (Этап 61)', () => {
+  const API = 'http://localhost:4000/api'
+
+  function ticketWithMessages(messages: Record<string, unknown>[]) {
+    return HttpResponse.json({
+      data: {
+        id: 1,
+        title: 'Проблема с доступом',
+        description: 'Не могу войти в систему',
+        status: 'open',
+        priority: 'high',
+        category: 'incident',
+        tags: [],
+        created_by: 1,
+        assigned_to: 2,
+        created_at: '2026-07-01T10:00:00Z',
+        updated_at: '2026-07-01T10:00:00Z',
+        messages,
+      },
+    })
+  }
+
+  it('XSS-инвариант: <img onerror> в сообщении рендерится как текст, тег не исполняется', async () => {
+    server.use(
+      http.get(`${API}/tickets/:id`, () =>
+        ticketWithMessages([
+          {
+            id: 1,
+            ticket_id: 1,
+            sender_id: 1,
+            sender_name: 'Admin',
+            text: '<img src=x onerror=alert(1)>',
+            created_at: '2026-07-01T10:00:00Z',
+          },
+        ]),
+      ),
+    )
+    render(<TicketDetail />, { wrapper: TestProviders })
+    await screen.findByText('Проблема с доступом')
+    await waitFor(() => {
+      expect(screen.getByText(/onerror=alert\(1\)/)).toBeInTheDocument()
+    })
+    expect(document.querySelector('img')).not.toBeInTheDocument()
+    expect(document.querySelector('[onerror]')).not.toBeInTheDocument()
+    expect(document.querySelector('script')).not.toBeInTheDocument()
+  })
+
+  it('рендерит тикет со 150 сообщениями — virtual scroll в jsdom не падает', async () => {
+    const messages = Array.from({ length: 150 }, (_, i) => ({
+      id: i + 1,
+      ticket_id: 1,
+      sender_id: 1,
+      sender_name: 'Admin',
+      text: `Сообщение ${i + 1}`,
+      created_at: '2026-07-01T10:00:00Z',
+    }))
+    server.use(http.get(`${API}/tickets/:id`, () => ticketWithMessages(messages)))
+    render(<TicketDetail />, { wrapper: TestProviders })
+    await screen.findByText('Проблема с доступом')
+    expect(screen.getByText('Сообщения (150)')).toBeInTheDocument()
+    expect(screen.getByText('Сообщение 1')).toBeInTheDocument()
+  })
+})

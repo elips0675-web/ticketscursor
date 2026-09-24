@@ -1,20 +1,20 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 66 файлов / 157 suite / 578 тестов (все PASS, vitest --reporter=json от 24.09.2026)
+Реальный результат: 67 файлов / 160 suite / 601 тестов (все PASS, vitest --reporter=json от 24.09.2026)
 
-===== ФАЙЛЫ (65 шт, все реальные, сгенерировано скриптом) =====
+===== ФАЙЛЫ (67 шт, все реальные, сгенерировано скриптом) =====
 
 # Файлы | Тестов | Описание
 src/test/Files.expanded.test.tsx | 27 | Files: empty, search, view, category, upload, drag-drop, keyboard, folder switch, list view, drag overlay
 src/test/Tickets.expanded.test.tsx | 25 | Tickets: фильтры, пагинация, пустое, socket, export CSV/PDF
-src/test/TicketDetail.test.tsx | 24 | TicketDetail: сообщения, статус, приоритет, назначение, RBAC, virtual scroll
+src/test/TicketDetail.test.tsx | 26 | TicketDetail: сообщения, статус, приоритет, назначение, RBAC, virtual scroll, XSS
 src/test/Admin.expanded.test.tsx | 22 | Admin: stat cards, employee list, role stats, SLA stats, refresh, API errors
 src/test/useFeature.test.tsx | 21 | useFeature: enabled, disabled, rollout buckets, user bucket 50%, loading
 src/test/Calendar.expanded.test.tsx | 18 | Calendar: клик по дню, события, create/edit/delete, RBAC, CSV export, навигация
 src/test/Dashboard.expanded.test.tsx | 18 | Dashboard: stat cards, charts, employees, onClick/onKeyDown handlers
 src/test/AdminSettings.test.tsx | 17 | AdminSettings: renders, toggles, rollout percent, Save, clamp
-src/test/Kanban.test.tsx | 17 | Kanban: rendering, DnD, column counts, ticket cards, empty state
+src/test/Kanban.test.tsx | 18 | Kanban: rendering, DnD, column counts, ticket cards, empty state, optimistic drop
 src/test/Polls.expanded.test.tsx | 14 | Polls: форма, голосование, empty, closed, delete
 src/test/Wiki.expanded.test.tsx | 14 | Wiki: categories, search, create, edit, delete, markdown
 src/test/AdminAudit.test.tsx | 13 | AdminAudit: renders, filter, export
@@ -25,7 +25,8 @@ src/test/Csatisfaction.test.tsx | 13 |
 src/test/Employees.expanded.test.tsx | 13 | Employees: list, search, filter, role, cards/table toggle
 src/test/SSO.test.tsx | 13 | SSO: вход через SSO, обмен кода, ошибки, i18n
 src/test/AdminLayout.test.tsx | 11 | AdminLayout: sidebar, navigation, RBAC
-src/test/ChatDetail.test.tsx | 11 | ChatDetail: messages, send, loading, empty, virtual scroll
+src/test/ChatDetail.test.tsx | 14 | ChatDetail: messages, send, loading, empty, virtual scroll, delete, typing
+src/test/TicketContext.optimistic.test.tsx | 14 | ticket-context: optimistic-мутации (status/priority/assign/tags/bulk/messages/createTicket, rollback, 401)
 src/test/Login.expanded.test.tsx | 11 | Login: form, submit, validation, error, loading, SSO button
 src/test/News.expanded.test.tsx | 11 | News: search, filter, create, CSV, empty, pagination
 src/test/CommandPalette.test.tsx | 10 | CommandPalette: open/close, поиск, навигация, Enter
@@ -33,7 +34,7 @@ src/test/Search.expanded.test.tsx | 9 | Search: query, results, sections, empty,
 src/test/AdminHealth.test.tsx | 8 | AdminHealth: health-дашборд, статусы сервисов, задержки, refresh
 src/test/AppLayout.test.tsx | 8 | AppLayout: sidebar, navigation, Ctrl+K shortcut
 src/test/Login.test.tsx | 8 | Login: renders, submit, redirect, validation
-src/test/MarkdownEditor.test.tsx | 8 | MarkdownEditor: редактирование, preview, toolbar
+src/test/MarkdownEditor.test.tsx | 11 | MarkdownEditor: редактирование, preview, toolbar, XSS-инвариант
 src/test/ResetPassword.expanded.test.tsx | 8 | ResetPassword: form, validation, API error, loading, success
 src/test/SocketContext.test.tsx | 8 | SocketContext: connect, disconnect, events, reconnection
 src/test/Calculator.test.tsx | 7 | Calculator: renders, operations, keyboard
@@ -75,6 +76,6 @@ src/test/Tickets.test.tsx | 1 | Tickets: renders
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона `npx vitest run --config vitest.client.config.ts --reporter=json` (vitest-*.json).
-Фактический запуск: 66 файлов / 578 тестов / 578 passed / 0 failures.
-Coverage (24.09.2026, Этап 60; в Этап 59 клиент не менялся): stmts 69.13 / branches 61.21 / functions 60.12 / lines 71.69 (пороги: stmts 66 / branches 58 / functions 57 / lines 69).
-Данные актуальны на: 24.09.2026 (Этап 60 — +5: i18n.parity.test.ts)
+Фактический запуск: 67 файлов / 601 тестов / 601 passed / 0 failures.
+Coverage (24.09.2026, Этап 61): stmts 72.07 / branches 63.3 / functions 64.48 / lines 74.29 (пороги: stmts 70 / branches 61 / functions 62 / lines 72).
+Данные актуальны на: 24.09.2026 (Этап 61 — ticket-context optimistic, XSS-инвариант, virtual scroll, WS delete/typing, E2E-реализм)

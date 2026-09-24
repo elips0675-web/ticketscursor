@@ -1,6 +1,6 @@
-===== E2E ТЕСТЫ (Playwright, 19 файлов, 57 тестов) =====
+===== E2E ТЕСТЫ (Playwright, 19 файлов, 61 тест) =====
 Стек: Playwright + TypeScript, базовый URL http://localhost:5173
-Запуск: npx playwright test (зелёный прогон 24.09.2026, 57/57)
+Запуск: npx playwright test (зелёный прогон 24.09.2026, 61/61)
 Файлы: admin, admin-audit, calculator, chats, crud-lifecycle, file-upload, files, kanban,
         ldap-login, login, notifications, profile, rbac-matrix, search, sla-autoassign-export,
         sla-escalation, tickets-lifecycle, user-flow, websocket-chat
@@ -125,14 +125,27 @@ test.describe('Global search', () => {
   test('search dialog opens with Ctrl+K', async ({ page }) => {
     await page.goto('/')
     await page.keyboard.press('Control+k')
-    await expect(page.getByPlaceholder(/поиск|search/i).first()).toBeVisible()
+    await expect(page.getByPlaceholder(/поищите|поиск|search/i).first()).toBeVisible()
   })
   test('search input accepts text', async ({ page }) => {
     await page.goto('/')
     await page.keyboard.press('Control+k')
-    const input = page.getByPlaceholder(/поиск|search/i).first()
+    const input = page.getByPlaceholder(/поищите|поиск|search/i).first()
     await input.fill('test')
     await expect(input).toHaveValue('test')
+  })
+  test('search returns real results from API and navigates to the ticket', async ({ page }) => {
+    await page.goto('/search')
+    await page.getByPlaceholder(/Введите запрос/).fill('экспорт')
+    // Реальный результат из БД (seed-тикет «Добавить экспорт в Excel»)
+    await expect(page.getByText('Добавить экспорт в Excel')).toBeVisible({ timeout: 15000 })
+    await page.getByText('Добавить экспорт в Excel').click()
+    await expect(page).toHaveURL(/\/tickets\/\d+/)
+  })
+  test('search shows empty state for unknown query', async ({ page }) => {
+    await page.goto('/search')
+    await page.getByPlaceholder(/Введите запрос/).fill('zzqzzq')
+    await expect(page.getByText('Ничего не найдено')).toBeVisible({ timeout: 15000 })
   })
 })
 
@@ -176,6 +189,20 @@ test.describe('File upload', () => {
   test('files page has upload area', async ({ page }) => {
     await page.goto('/files')
     await expect(page.locator('[class*="drop"], [class*="upload"], button, [role="button"]').first()).toBeVisible()
+  })
+  test('uploads a real file through the dropzone input', async ({ page }) => {
+    await page.goto('/files')
+    const pngBuffer = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+      'base64',
+    )
+    await page.setInputFiles('input[type="file"]', {
+      name: 'e2e-upload.png',
+      mimeType: 'image/png',
+      buffer: pngBuffer,
+    })
+    // Реальная загрузка на сервер (multer + file-type magic) → toast об успехе на русском
+    await expect(page.getByText(/Файл загружен: e2e-upload\.png/)).toBeVisible({ timeout: 15000 })
   })
 })
 
@@ -235,6 +262,14 @@ test.describe('SLA / Auto-assign / Export', () => {
   test('tickets page has export CSV button', async ({ page }) => {
     await page.goto('/tickets')
     await expect(page.getByRole('button').filter({ hasText: /csv/i }).first()).toBeVisible()
+  })
+  test('exports tickets list as a real CSV download', async ({ page }) => {
+    await page.goto('/tickets')
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button').filter({ hasText: /csv/i }).first().click(),
+    ])
+    expect(download.suggestedFilename()).toMatch(/^tickets-\d{4}-\d{2}-\d{2}\.csv$/)
   })
   test('tickets page has export PDF button', async ({ page }) => {
     await page.goto('/tickets')

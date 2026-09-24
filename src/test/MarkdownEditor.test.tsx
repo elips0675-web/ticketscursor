@@ -45,6 +45,30 @@ describe('MarkdownEditor', () => {
     expect(screen.getByText(/alert\(1\)/)).toBeInTheDocument()
   })
 
+  it('XSS-инвариант: <img onerror> не исполняется в preview', () => {
+    render(<MarkdownEditor value={'<img src=x onerror=alert(1)>'} onChange={() => {}} />)
+    fireEvent.click(screen.getByText('Просмотр'))
+    expect(document.querySelector('img')).not.toBeInTheDocument()
+    expect(document.querySelector('[onerror]')).not.toBeInTheDocument()
+    expect(screen.getByText(/onerror=alert\(1\)/)).toBeInTheDocument()
+  })
+
+  it('XSS-инвариант: javascript: не создаёт исполняемой ссылки', () => {
+    render(<MarkdownEditor value={'javascript:alert(document.cookie)'} onChange={() => {}} />)
+    fireEvent.click(screen.getByText('Просмотр'))
+    expect(document.querySelector('a[href^="javascript:"]')).not.toBeInTheDocument()
+    expect(document.querySelector('script')).not.toBeInTheDocument()
+    expect(screen.getByText(/javascript:alert/)).toBeInTheDocument()
+  })
+
+  it('XSS-инвариант: теги вложенные в **bold** тоже экранируются', () => {
+    render(<MarkdownEditor value={'**<script>alert(1)</script>**'} onChange={() => {}} />)
+    fireEvent.click(screen.getByText('Просмотр'))
+    expect(document.querySelector('strong')).toBeInTheDocument()
+    expect(document.querySelector('script')).not.toBeInTheDocument()
+    expect(document.querySelector('strong')).toHaveTextContent('alert(1)')
+  })
+
   it('respects rows prop', () => {
     render(<MarkdownEditor value="" onChange={() => {}} rows={6} />)
     expect(screen.getByRole('textbox').getAttribute('rows')).toBe('6')

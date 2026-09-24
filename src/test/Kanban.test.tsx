@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { AllTheProviders } from './test-utils'
 import Kanban from '@/pages/Kanban'
 
@@ -123,6 +123,19 @@ describe('Kanban', () => {
             expect(dataTransfer.dropEffect).toBe('move')
           }
         })
+      })
+    })
+
+    it('drop на колонку меняет статус тикета (optimistic update)', async () => {
+      render(<Kanban />, { wrapper: AllTheProviders })
+      await screen.findByText('Проблема с доступом')
+      const inProgressCol = screen.getByText('В работе').closest('[class*="rounded-xl"]') as HTMLElement
+      expect(inProgressCol).not.toBeNull()
+      const dt = { setData: vi.fn(), effectAllowed: 'move', getData: () => '1' } as unknown as DataTransfer
+      fireEvent.dragStart(screen.getAllByRole('button')[0], { dataTransfer: dt })
+      fireEvent.drop(inProgressCol, { dataTransfer: dt })
+      await waitFor(() => {
+        expect(within(inProgressCol).getByText('Проблема с доступом')).toBeInTheDocument()
       })
     })
   })

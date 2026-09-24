@@ -401,6 +401,14 @@ export const handlers = [
     })
   }),
 
+  http.put(`${API}/chats/:id/read`, () => {
+    return HttpResponse.json({ success: true })
+  }),
+
+  http.post(`${API}/chats/:id/messages`, () => {
+    return HttpResponse.json({ success: true })
+  }),
+
   // ── Search ──
   http.get(`${API}/search`, () => {
     return HttpResponse.json({

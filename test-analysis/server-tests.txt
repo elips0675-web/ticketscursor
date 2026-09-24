@@ -1,9 +1,9 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 64 файлов / 361 suite / 890 тестов (все PASS, vitest --reporter=json от 24.09.2026)
+Реальный результат: 66 файлов / 366 suite / 897 тестов (все PASS, vitest --reporter=json от 24.09.2026)
 
-===== ФАЙЛЫ (61 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (66 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 server/src/api.test.js | 183 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk, feature rollout)
@@ -52,6 +52,7 @@ server/src/__tests__/csat.route.test.js | 6 | CSAT routes: GET survey, POST resp
 server/src/services/__tests__/calendar.service.test.js | 6 | Calendar: CRUD, recurring events, conflicts
 server/src/services/__tests__/files.service.test.js | 6 | Files: upload, list, folder structure
 server/src/__tests__/contract.api.test.js | 5 | Contract (zod): ответы /tickets, /employees, /chats, /wiki, /news — конверт success:true + элементы с id
+server/src/__tests__/query-guards.test.js | 5 | Query guards: клампинг limit (9999→500, 0→50 default, -5→1, abc→50), N+1 — один findMany на список
 server/src/__tests__/email.test.js | 5 | Email: SMTP transport, template rendering
 server/src/__tests__/files.route.test.js | 5 | Files routes: GET list, POST upload, DELETE
 server/src/middleware/__tests__/metrics.test.js | 5 | Metrics: request counting, response time
@@ -67,12 +68,13 @@ server/src/__tests__/search.test.js | 4 | Search: fulltext, LIKE fallback, empty
 server/src/__tests__/secrets-rotation.test.js | 4 | Secrets rotation: JWT_SECRET="new,old" — подпись новым, verify старым/новым, отклонение неизвестного, export JWT_SECRET
 server/src/__tests__/trust-proxy.test.js | 4 | Trust proxy: TRUST_PROXY=1|true → 1, off по умолчанию, спуфинг X-Forwarded-For при off/on
 server/src/__tests__/migration.idempotency.test.js | 2 | Migration idempotency: knex migrate:latest дважды no-op, fk_cascades up() повторно без дублей FK
+server/src/__tests__/notify-failure.test.js | 2 | Notify-регресс: падение email/webhook-уведомлений → тикет всё равно создаётся (201)
 server/src/__tests__/ticket-lock.race.test.js | 2 | 
 server/src/__tests__/ticket-status.race.test.js | 2 | 
 server/src/__tests__/time-timer.race.test.js | 2 | 
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона `cd server && npx vitest run --reporter=json` (vitest-*.json).
-Фактический запуск: 64 файлов / 890 тестов / 890 passed / 0 failures.
-Coverage (24.09.2026, Этап 59): пороги пройдены — stmts 67 / branches 61 / functions 65 / lines 68 (не менялись).
-Данные актуальны на: 24.09.2026 (Этап 60 — +12: contract.api, migration.idempotency, process-guards, idempotency collision)
+Фактический запуск: 66 файлов / 897 тестов / 897 passed / 0 failures.
+Coverage (24.09.2026, Этап 61): stmts 73.72 / branches 67.14 / functions 74.36 / lines 74.77 (пороги: stmts 71 / branches 65 / functions 72 / lines 72).
+Данные актуальны на: 24.09.2026 (Этап 61 — +7: query-guards, notify-failure)
