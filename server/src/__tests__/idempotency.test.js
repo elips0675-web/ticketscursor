@@ -61,6 +61,23 @@ describe('idempotent — idempotency key вне Redis (in-memory fallback)', () 
     expect(next2).not.toHaveBeenCalled()
   })
 
+  it('тот же ключ, другой payload — 409 не отдаётся, возвращается первый ответ (by design)', async () => {
+    cacheMock.get.mockRejectedValue(new Error('redis down'))
+    // первый запрос с payload A
+    const res1 = makeRes()
+    const next1 = vi.fn()
+    await run({ headers: { 'idempotency-key': 'k-collide' }, user: { userId: 1 } }, res1, next1)
+    expect(next1).toHaveBeenCalledTimes(1)
+    res1.json({ id: 'A' })
+    // повторный запрос с другим payload B — middleware не должен отдавать 409,
+    // а вернуть сохранённый первый ответ (идемпотентность по ключу)
+    const res2 = makeRes()
+    const next2 = vi.fn()
+    const jsonSpy2 = await run({ headers: { 'idempotency-key': 'k-collide' }, user: { userId: 1 } }, res2, next2)
+    expect(jsonSpy2).toHaveBeenCalledWith({ id: 'A' })
+    expect(next2).not.toHaveBeenCalled()
+  })
+
   it('пишет результат и в Redis, и в память при живом Redis', async () => {
     cacheMock.get.mockResolvedValue(null)
     cacheMock.set.mockResolvedValue(true)

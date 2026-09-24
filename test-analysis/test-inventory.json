@@ -1,27 +1,27 @@
 {
-  "generated": "2026-09-24T10:39:32.508Z",
+  "generated": "2026-09-24T12:30:47.816Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 65,
-    "suites": 155,
-    "tests": 573,
+    "files": 66,
+    "suites": 157,
+    "tests": 578,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 61,
-    "suites": 354,
-    "tests": 878,
+    "files": 64,
+    "suites": 361,
+    "tests": 890,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 126,
-    "suites": 509,
-    "tests": 1451,
+    "files": 130,
+    "suites": 518,
+    "tests": 1468,
     "all_passing": true
   },
   "e2e": {
@@ -234,6 +234,10 @@
     },
     {
       "file": "src/test/Dashboard.test.tsx",
+      "tests": 5
+    },
+    {
+      "file": "src/test/i18n.parity.test.ts",
       "tests": 5
     },
     {
@@ -487,6 +491,10 @@
       "tests": 6
     },
     {
+      "file": "server/src/__tests__/idempotency.test.js",
+      "tests": 6
+    },
+    {
       "file": "server/src/services/__tests__/calendar.service.test.js",
       "tests": 6
     },
@@ -495,15 +503,15 @@
       "tests": 6
     },
     {
+      "file": "server/src/__tests__/contract.api.test.js",
+      "tests": 5
+    },
+    {
       "file": "server/src/__tests__/email.test.js",
       "tests": 5
     },
     {
       "file": "server/src/__tests__/files.route.test.js",
-      "tests": 5
-    },
-    {
-      "file": "server/src/__tests__/idempotency.test.js",
       "tests": 5
     },
     {
@@ -535,6 +543,10 @@
       "tests": 4
     },
     {
+      "file": "server/src/__tests__/process-guards.test.js",
+      "tests": 4
+    },
+    {
       "file": "server/src/__tests__/search.test.js",
       "tests": 4
     },
@@ -545,6 +557,10 @@
     {
       "file": "server/src/__tests__/trust-proxy.test.js",
       "tests": 4
+    },
+    {
+      "file": "server/src/__tests__/migration.idempotency.test.js",
+      "tests": 2
     },
     {
       "file": "server/src/__tests__/ticket-lock.race.test.js",

@@ -726,6 +726,16 @@
 - **Инвентарь (правило 10)**: `test-inventory.json` перегенерирован из фактического прогона (`vitest --reporter=json` 24.09) — клиент **65 файлов / 155 suite / 573**, сервер **61 файл / 354 suite / 878** = **126 файлов / 1451 тест, 0 failures**; `frontend-tests.txt` 65/573, `server-tests.txt` 61/878 (было 54/832, +46); E2E 19 spec / 57 тестов
 - **Проверки (24.09)**: сервер vitest **61/878** ✅ (пороги 67/61/65/68), клиент vitest **65/573** ✅ (пороги 66/58/57/69), `npm run lint` (0 errors / 57 warnings) ✅, `npm run type-check` ✅, `npm run build` ✅, `node check-console.mjs` **17/17 ALL OK** ✅
 
+### Этап 60 — Процесс: DoD-правила в AGENTS.md, i18n parity, contract-тесты (zod), migration idempotency, process guards (CSP/413), CI-check синхронности доков
+- **Правила в AGENTS.md** (аудит «Оценка ии.rtf» №12, 24.09): п. 12–16 добавлены — DoD на фичу (флаг + тест + i18n + check-console + инвентарь), «AI-пункт без цитаты кода не идёт в план», «сначала фикс, потом тест», пороги coverage с буфером +2 п.п.; правило 11: план 54–61 → 54–67; таблица контроля ошибок + строка «Синхронность доков»; копия `test-analysis/AGENTS.md` синхронизирована (MD5)
+- **i18n parity**: `src/test/i18n.parity.test.ts` — рекурсивная сверка ключей ru.json ↔ en.json (оба направления) + проверка дублей ключей; **найден реальный пропуск**: в ru.json не было `admin.emailTemplates`/`admin.emailTemplatesSubtitle` (в EN были) — добавлены с переводом
+- **Contract-тесты (zod)**: `server/src/__tests__/contract.api.test.js` — zod-схемы ответов топ-5 list-эндпоинтов (`/api/tickets`, `/api/employees`, `/api/chats`, `/api/wiki`, `/api/news`): конверт `success: true` + массив элементов с числовым `id` (+ пагинация для tickets/wiki/news)
+- **Migration idempotency**: `server/src/__tests__/migration.idempotency.test.js` — повторный `knex migrate:latest` ничего не применяет; `20260924_fk_cascades.up(knex)` повторно не падает и не плодит дубли FK
+- **Process guards**: `server/src/__tests__/process-guards.test.js` — CSP `script-src 'self'` без unsafe-inline/unsafe-eval, `connect-src localhost:*`, 413 при теле >100kb; **фикс app.js**: error handler теперь отдаёт честный `413` для `entity.too.large` (было 500 на всё)
+- **Idempotency-коллизия**: `idempotency.test.js` + тест — тот же ключ с другим payload → 409 не отдаётся, возвращается сохранённый первый ответ (by design)
+- **CI-check синхронности**: `scripts/check-doc-sync.mjs` — MD5-сверка копий root ↔ test-analysis (`Что-доделать.txt`, `Что сделано.txt`, `AGENTS.md`) + наличие свежего `test-inventory.json` / `*-tests.txt`; прогон `node scripts/check-doc-sync.mjs` — всё синхронно ✅
+- **Инвентарь (правило 10)**: перегенерирован — клиент **66 файлов / 578**, сервер **64 файла / 890** = **1468 тестов, 0 failures**
+
 ### Мелкие правки (23.09.2026)
 - **bcrypt cost 10 → 12** (спека AI_AGENT_SPEC.md, п. 10 «Безопасность»): `routes/auth.js` (register + reset), `auth/oidc.js`, `routes/admin.js` (default-пароль), `routes/public-portal.js` (токен портала). Старые хеши продолжают работать (cost зашит в хеш). Сервер vitest 53/808 ✅, check-console 17/17 ✅
 
@@ -737,9 +747,9 @@
 - ~~Этап 57 — N+1 audit: prisma log query, топ-10 эндпоинтов (Промт 5); FULLTEXT/индексы, каскады FK, soft-delete тесты~~ ✅ **закрыт 23.09** — см. Этап 57 выше
 - ~~Этап 58 — Админка (11 фич)~~ ✅ **закрыт 24.09** — см. Этап 58 выше (1405 тестов, все гейты зелёные, коммит запушен)
 - ~~Этап 59 — Resilience~~ ✅ **закрыт 24.09** — см. Этап 59 выше (1451 тест, все гейты зелёные, коммит запушен)
+- ~~Этап 60 — Процесс~~ ✅ **закрыт 24.09** — см. Этап 60 выше (1468 тестов, все гейты зелёные)
 
-### План 60–66 (детали — в «Что-доделать.txt»)
-- Этап 60 — Процесс: пороги coverage в AGENTS.md, DoD на фичу, i18n parity, contract tests, migration idempotency, финальный re-аудит свежей папкой test-analysis
+### План 61–67 (детали — в «Что-доделать.txt»)
 - Этап 61 — Покрытие ядра + Security-hardening: ticket-context.optimistic, TicketDetail/ChatDetail/Kanban, XSS-инвариант на client-рендер, notify регресс-тест, E2E-реализм (export/upload/search)
 - Этап 62 — Timeline тикета (GET /tickets/:id/history + вкладка «История» + PDF), CSV-импорт сотрудников (UI), retention-политика (audit/files/chat)
 - Этап 63 — qwen P0 #1–3: 2FA/TOTP (otplib + QR), активные сессии (view/revoke, таблица sessions), notification preferences per user

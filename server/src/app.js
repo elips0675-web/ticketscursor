@@ -213,6 +213,10 @@ if (process.env.SENTRY_DSN) {
 }
 
 app.use((err, req, res, _next) => {
+  // PayloadTooLargeError (express.json лимит) — честный 413, а не 500
+  if (err.type === 'entity.too.large' || err.status === 413) {
+    return res.status(413).json({ message: 'Payload too large' })
+  }
   logger.error('Unhandled error', { error: err.message, stack: err.stack, requestId: req.id })
   res.status(500).json({ message: 'Internal server error' })
 })

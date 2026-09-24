@@ -448,6 +448,8 @@
     "features": "Фиче-флаги",
     "featuresSubtitle": "Включать/выключать функции без релиза",
     "featuresPercent": "Охват аудитории",
+    "emailTemplates": "Шаблоны писем",
+    "emailTemplatesSubtitle": "Используйте {{variable}} — при отправке подставится реальное значение",
     "emailSettings": "Email (SMTP)",
     "smtpHost": "SMTP Host",
     "smtpPort": "SMTP Port",

@@ -1,7 +1,7 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 65 файлов / 155 suite / 573 тестов (все PASS, vitest --reporter=json от 24.09.2026)
+Реальный результат: 66 файлов / 157 suite / 578 тестов (все PASS, vitest --reporter=json от 24.09.2026)
 
 ===== ФАЙЛЫ (65 шт, все реальные, сгенерировано скриптом) =====
 
@@ -52,6 +52,7 @@ src/test/PublicKBArticle.test.tsx | 6 | PublicKBArticle: рендер стать
 src/test/utils.test.ts | 6 | utils: formatDate, formatNumber, debounce
 src/test/AdminUsers.test.tsx | 5 | AdminUsers: renders, list
 src/test/Dashboard.test.tsx | 5 | Dashboard: renders, stat cards
+src/test/i18n.parity.test.ts | 5 | i18n parity: симметричность ключей ru.json ↔ en.json, дубли ключей, непустые namespace
 src/test/ProtectedRoute.test.tsx | 5 | ProtectedRoute: redirect, adminOnly, loading
 src/test/PwaInstallPrompt.test.tsx | 5 | PwaInstallPrompt: beforeinstallprompt, install, dismiss
 src/test/Calendar.test.tsx | 4 | Calendar: renders, events
@@ -74,6 +75,6 @@ src/test/Tickets.test.tsx | 1 | Tickets: renders
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона `npx vitest run --config vitest.client.config.ts --reporter=json` (vitest-*.json).
-Фактический запуск: 65 файлов / 573 тестов / 573 passed / 0 failures.
-Coverage (24.09.2026, Этап 58; в Этап 59 клиент не менялся): stmts 69.13 / branches 61.21 / functions 60.12 / lines 71.69 (пороги: stmts 66 / branches 58 / functions 57 / lines 69, не менялись).
-Данные актуальны на: 24.09.2026
+Фактический запуск: 66 файлов / 578 тестов / 578 passed / 0 failures.
+Coverage (24.09.2026, Этап 60; в Этап 59 клиент не менялся): stmts 69.13 / branches 61.21 / functions 60.12 / lines 71.69 (пороги: stmts 66 / branches 58 / functions 57 / lines 69).
+Данные актуальны на: 24.09.2026 (Этап 60 — +5: i18n.parity.test.ts)
