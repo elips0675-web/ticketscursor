@@ -214,7 +214,7 @@
 РЕПОЗИТОРИЙ
 
   https://github.com/elips0675-web/ticketsCursor
-  Последний коммит (24.09): a4c7f95 (см. git log --oneline -1)
+  Последний коммит: см. git log --oneline -1 (актуально на 24.09)
 
 ### Доработка по Оценка deeps.txt
 - **Этап 1** (✅) notify.js — вынесен `sendTicketNotification` в `sendEmail()`, устранено дублирование
