@@ -1,27 +1,27 @@
 {
-  "generated": "2026-09-25T07:12:57.201Z",
+  "generated": "2026-09-25T07:35:13.206Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 68,
-    "suites": 163,
-    "tests": 613,
+    "files": 69,
+    "suites": 165,
+    "tests": 619,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 69,
-    "suites": 372,
-    "tests": 921,
+    "files": 70,
+    "suites": 375,
+    "tests": 931,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 137,
-    "suites": 535,
-    "tests": 1534,
+    "files": 139,
+    "suites": 540,
+    "tests": 1550,
     "all_passing": true
   },
   "e2e": {
@@ -226,6 +226,10 @@
     },
     {
       "file": "src/test/PublicKBArticle.test.tsx",
+      "tests": 6
+    },
+    {
+      "file": "src/test/SessionsSection.test.tsx",
       "tests": 6
     },
     {
@@ -445,6 +449,10 @@
     {
       "file": "server/src/services/__tests__/polls.service.test.js",
       "tests": 11
+    },
+    {
+      "file": "server/src/__tests__/auth-sessions.test.js",
+      "tests": 10
     },
     {
       "file": "server/src/__tests__/background.expanded.test.js",

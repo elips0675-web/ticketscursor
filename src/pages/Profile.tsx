@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { User, Mail, Phone, Briefcase, MapPin, FileText, Settings, Camera, Save, Monitor, Loader2 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import TwoFactorSection from '@/components/TwoFactorSection'
+import SessionsSection from '@/components/SessionsSection'
 import type { EmployeeProfile } from '@/types'
 import { API_URL } from '@/lib/api'
 
@@ -293,6 +294,7 @@ export default function ProfilePage() {
         <TabsContent value="settings" className="mt-6">
           <div className="space-y-4">
             <TwoFactorSection />
+            <SessionsSection />
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm">{t('profile.settings')}</CardTitle>

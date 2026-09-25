@@ -419,7 +419,15 @@
     "disable2fa": "Disable 2FA",
     "twoFactorSecret": "Or enter the secret manually:",
     "twoFactorEnabled": "2FA enabled",
-    "twoFactorDisabled": "2FA disabled"
+    "twoFactorDisabled": "2FA disabled",
+    "sessions": "Active sessions",
+    "sessionsDesc": "Devices you are signed in from (7-day refresh tokens)",
+    "currentSession": "Current session",
+    "revokeSession": "Revoke",
+    "revokeAllSessions": "Revoke all sessions",
+    "noSessions": "No active sessions",
+    "sessionRevoked": "Session revoked",
+    "sessionsRevoked": "All sessions revoked"
   },
   "admin": {
     "title": "Admin Panel",

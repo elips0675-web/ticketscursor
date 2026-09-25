@@ -1,9 +1,9 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 68 файлов / 163 suite / 613 тестов (все PASS, vitest --reporter=json от 25.09.2026)
+Реальный результат: 69 файлов / 165 suite / 619 тестов (все PASS, vitest --reporter=json от 25.09.2026)
 
-===== ФАЙЛЫ (68 шт, все реальные, сгенерировано скриптом) =====
+===== ФАЙЛЫ (69 шт, все реальные, сгенерировано скриптом) =====
 
 # Файлы | Тестов | Описание
 src/test/TicketDetail.test.tsx | 31 | TicketDetail: сообщения, статус, приоритет, назначение, RBAC, virtual scroll, XSS, История (timeline, PDF, флаг off)
@@ -50,6 +50,7 @@ src/test/News.test.tsx | 6 | News: renders, create, pagination
 src/test/NewTicket.test.tsx | 6 | NewTicket: form, submit, validation, category
 src/test/Portal.test.tsx | 6 | Portal: создание обращения без авторизации
 src/test/PublicKBArticle.test.tsx | 6 | PublicKBArticle: рендер статьи, markdown, назад
+src/test/SessionsSection.test.tsx | 6 | SessionsSection: список сессий (флаг user_sessions), Badge «Текущая сессия», revoke одной, revoke-all, ошибки загрузки/отзыва
 src/test/utils.test.ts | 6 | utils: formatDate, formatNumber, debounce
 src/test/AdminUsers.test.tsx | 5 | AdminUsers: renders, list
 src/test/Dashboard.test.tsx | 5 | Dashboard: renders, stat cards
@@ -77,6 +78,6 @@ src/test/Tickets.test.tsx | 1 | Tickets: renders
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона `npx vitest run --config vitest.client.config.ts --reporter=json` (vitest-*.json).
-Фактический запуск: 68 файлов / 613 тестов / 613 passed / 0 failures.
-Coverage (25.09.2026, Этап 63, перемерено --coverage): stmts 72.79 / branches 63.83 / functions 65.02 / lines 75.13 (пороги: stmts 70 / branches 61 / functions 63 / lines 73).
-Данные актуальны на: 25.09.2026 (Этап 63 — 2FA: +7 — TwoFactorSection (5), Login 2fa-verify (2))
+Фактический запуск: 69 файлов / 619 тестов / 619 passed / 0 failures.
+Coverage (25.09.2026, Этап 63, перемерено --coverage): stmts 73.08 / branches 63.99 / functions 65.33 / lines 75.41 (пороги: stmts 71 / branches 61 / functions 63 / lines 73).
+Данные актуальны на: 25.09.2026 (Этап 63 — 2FA: +7 — TwoFactorSection (5), Login 2fa-verify (2); подфича 2 «Сессии»: +6 — SessionsSection.test.tsx (6))

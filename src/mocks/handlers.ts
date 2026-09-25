@@ -583,6 +583,36 @@ export const handlers = [
     return HttpResponse.json({ success: true, data: { enabled: false } })
   }),
 
+  // ── Auth: active sessions (Этап 63, подфича 2) ──
+  http.get(`${API}/auth/sessions`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        sessions: [
+          {
+            id: 11,
+            device: 'Chrome · Windows',
+            ip: '192.168.1.10',
+            createdAt: '2026-09-25T08:00:00Z',
+            lastSeenAt: '2026-09-25T09:30:00Z',
+            current: true,
+          },
+          {
+            id: 12,
+            device: 'Firefox · macOS',
+            ip: '192.168.1.20',
+            createdAt: '2026-09-24T14:00:00Z',
+            lastSeenAt: '2026-09-24T18:00:00Z',
+            current: false,
+          },
+        ],
+      },
+    })
+  }),
+  http.post(`${API}/auth/sessions/:id/revoke`, ({ params }) => {
+    return HttpResponse.json({ success: true, data: { revoked: true, id: Number(params.id) } })
+  }),
+
   // ── Tickets mutations ──
   http.put(`${API}/tickets/:id/status`, ({ params }) => {
     return HttpResponse.json({ success: true, data: { id: Number(params.id), status: 'resolved' } })
@@ -680,6 +710,7 @@ export const handlers = [
         { key: 'kanban_view', enabled: false, description: 'Kanban view', rollout_percent: 40 },
         { key: 'ticket_history', enabled: true, description: 'Ticket history tab', rollout_percent: 100 },
         { key: 'two_fa', enabled: true, description: '2FA/TOTP for admins', rollout_percent: 100 },
+        { key: 'user_sessions', enabled: false, description: 'Active user sessions (Profile)', rollout_percent: 100 },
         {
           key: 'dark_theme',
           enabled: true,

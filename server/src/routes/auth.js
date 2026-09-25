@@ -10,6 +10,7 @@ import { authenticateLDAP } from '../auth/ldap.js'
 import { initOIDCClient, getSSOConfig, isSSOEnabled, generateSSOState, generateSSONonce, getSSOAuthorizationUrl, handleSSOCallback } from '../auth/oidc.js'
 import { generateTotpSecret, totpUri, verifyTotp } from '../auth/totp.js'
 import { isFeatureEnabled } from '../feature-flags.js'
+import { sessionMeta } from '../auth/session-meta.js'
 import logger from '../logger.js'
 
 const router = Router()
@@ -20,6 +21,22 @@ function generateTokens(user, familyId) {
   const accessToken = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '15m' })
   const refreshToken = jwt.sign({ userId: user.id, familyId: family, tokenId: crypto.randomUUID() }, REFRESH_SECRET, { expiresIn: '7d' })
   return { accessToken, refreshToken, familyId: family }
+}
+
+// Создание refresh-токена с метаданными сессии (device/ip/UA — подфича 2 «активные сессии»).
+async function storeRefreshToken(userId, token, familyId, meta) {
+  return prisma.refresh_tokens.create({
+    data: {
+      user_id: userId,
+      token,
+      family_id: familyId,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      device_name: meta.device_name,
+      ip_address: meta.ip_address,
+      user_agent: meta.user_agent,
+      last_seen_at: new Date(),
+    },
+  })
 }
 
 router.post('/login', loginValidation, async (req, res) => {
@@ -45,9 +62,7 @@ router.post('/login', loginValidation, async (req, res) => {
     }
 
     const { accessToken, refreshToken, familyId } = generateTokens(employee)
-    await prisma.refresh_tokens.create({
-      data: { user_id: employee.id, token: refreshToken, family_id: familyId, expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
-    })
+    await storeRefreshToken(employee.id, refreshToken, familyId, sessionMeta(req))
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -96,9 +111,7 @@ router.post('/2fa/verify', async (req, res) => {
       return res.status(401).json({ message: 'Invalid 2FA code', code: 'INVALID_2FA' })
     }
     const { accessToken, refreshToken, familyId } = generateTokens(employee)
-    await prisma.refresh_tokens.create({
-      data: { user_id: employee.id, token: refreshToken, family_id: familyId, expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
-    })
+    await storeRefreshToken(employee.id, refreshToken, familyId, sessionMeta(req))
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -230,9 +243,7 @@ router.post('/refresh', async (req, res) => {
     })
     if (!user) return res.status(403).json({ message: 'User not found' })
     const { accessToken, refreshToken, familyId } = generateTokens(user, stored.family_id)
-    await prisma.refresh_tokens.create({
-      data: { user_id: user.id, token: refreshToken, family_id: familyId, expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
-    })
+    await storeRefreshToken(user.id, refreshToken, familyId, sessionMeta(req))
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -267,6 +278,50 @@ router.post('/revoke-all', authenticateToken, async (req, res) => {
     res.json({ success: true, data: { revoked: count } })
   } catch (err) {
     logger.error('Revoke all error:', err)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+})
+
+// Активные сессии (подфича 2, флаг user_sessions): список устройств текущего пользователя.
+router.get('/sessions', authenticateToken, async (req, res) => {
+  try {
+    const rows = await prisma.refresh_tokens.findMany({
+      where: { user_id: req.user.userId, expires_at: { gt: new Date() } },
+      orderBy: [{ last_seen_at: 'desc' }, { created_at: 'desc' }],
+      take: 100,
+    })
+    const currentToken = req.cookies?.refreshToken || ''
+    const sessions = rows.map((r) => ({
+      id: r.id,
+      device: r.device_name || 'Unknown device',
+      ip: r.ip_address || '',
+      createdAt: r.created_at,
+      lastSeenAt: r.last_seen_at || r.created_at,
+      current: r.token === currentToken,
+    }))
+    res.json({ success: true, data: { sessions } })
+  } catch (err) {
+    logger.error('Sessions list error:', err)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+})
+
+// Отзыв ОДНОЙ сессии (только своей; текущую сессию отозвать нельзя — для этого /revoke-all).
+router.post('/sessions/:id/revoke', authenticateToken, async (req, res) => {
+  try {
+    const id = Number(req.params.id)
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ message: 'Invalid session id' })
+    }
+    const row = await prisma.refresh_tokens.findFirst({ where: { id, user_id: req.user.userId } })
+    if (!row) return res.status(404).json({ message: 'Session not found' })
+    if (row.token === (req.cookies?.refreshToken || '')) {
+      return res.status(400).json({ message: 'Cannot revoke current session' })
+    }
+    await prisma.refresh_tokens.delete({ where: { id } })
+    res.json({ success: true, data: { revoked: true } })
+  } catch (err) {
+    logger.error('Session revoke error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 })

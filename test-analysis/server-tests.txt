@@ -1,9 +1,9 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 69 файлов / 372 suite / 921 тестов (все PASS, vitest --reporter=json от 25.09.2026)
+Реальный результат: 70 файлов / 375 suite / 931 тестов (все PASS, vitest --reporter=json от 25.09.2026)
 
-===== ФАЙЛЫ (69 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (70 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 server/src/api.test.js | 183 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk, feature rollout)
@@ -36,6 +36,7 @@ server/src/__tests__/limiters.test.js | 12 | Rate limiters: auth 10/мин, api 
 server/src/__tests__/idor.test.js | 11 | IDOR: requester только свои тикеты (GET, messages, lock), agent свои+неназначенные, senior_agent полный доступ
 server/src/__tests__/sla.test.js | 11 | SLA: timer logic, escalation levels, breach alerts
 server/src/services/__tests__/polls.service.test.js | 11 | Polls: CRUD, vote, close, expire
+server/src/__tests__/auth-sessions.test.js | 10 | Сессии (флаг user_sessions): GET /auth/sessions — список своих (token не утекает), POST /auth/sessions/:id/revoke — своя/чужая/текущая (400)/несуществующая (400), санитизация id; unit: parseUserAgent (Chrome/Firefox/Safari/Edge/Opera × Windows/macOS/Android/iOS/Linux, isMobile)
 server/src/__tests__/background.expanded.test.js | 10 | Background: BullMQ setup, queues, workers, schedulers, DLQ
 server/src/__tests__/push.test.js | 10 | Push: VAPID keys, subscribe, send, unsubscribe
 server/src/__tests__/storage.test.js | 9 | Storage: file upload, delete, MIME validation
@@ -78,6 +79,6 @@ server/src/__tests__/time-timer.race.test.js | 2 |
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона `cd server && npx vitest run --reporter=json` (vitest-*.json).
-Фактический запуск: 69 файлов / 921 тестов / 921 passed / 0 failures.
-Coverage (25.09.2026, Этап 63, перемерено --coverage): stmts 74.61 / branches 68.69 / functions 75.77 / lines 75.55 (пороги: stmts 72 / branches 66 / functions 73 / lines 73).
-Данные актуальны на: 25.09.2026 (Этап 63 — 2FA: +14 auth-2fa.test.js (изоляция: vi.mock флага + выделенный админ id 600), фикс гонки login с api.test.js)
+Фактический запуск: 70 файлов / 931 тестов / 931 passed / 0 failures.
+Coverage (25.09.2026, Этап 63, перемерено --coverage): stmts 74.78 / branches 68.82 / functions 75.98 / lines 75.75 (пороги: stmts 72 / branches 66 / functions 73 / lines 73).
+Данные актуальны на: 25.09.2026 (Этап 63 — 2FA: +14 auth-2fa.test.js (изоляция: vi.mock флага + выделенный админ id 600), фикс гонки login с api.test.js; подфича 2 «Сессии»: +10 auth-sessions.test.js (роуты сессий, revoke, parseUserAgent))

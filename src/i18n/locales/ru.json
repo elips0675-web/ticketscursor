@@ -420,7 +420,15 @@
     "disable2fa": "Отключить 2FA",
     "twoFactorSecret": "Или введите секрет вручную:",
     "twoFactorEnabled": "2FA включена",
-    "twoFactorDisabled": "2FA отключена"
+    "twoFactorDisabled": "2FA отключена",
+    "sessions": "Активные сессии",
+    "sessionsDesc": "Устройства, с которых выполнен вход (refresh-токены на 7 дней)",
+    "currentSession": "Текущая сессия",
+    "revokeSession": "Завершить",
+    "revokeAllSessions": "Завершить все сессии",
+    "noSessions": "Нет активных сессий",
+    "sessionRevoked": "Сессия завершена",
+    "sessionsRevoked": "Все сессии завершены"
   },
   "admin": {
     "title": "Админ-панель",

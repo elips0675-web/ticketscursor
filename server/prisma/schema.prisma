@@ -312,12 +312,16 @@ model push_subscriptions {
 }
 
 model refresh_tokens {
-  id         Int       @id @default(autoincrement())
-  user_id    Int
-  token      String    @db.VarChar(500)
-  family_id  String?   @db.VarChar(36)
-  created_at DateTime? @default(now())
-  expires_at DateTime
+  id           Int       @id @default(autoincrement())
+  user_id      Int
+  token        String    @db.VarChar(500)
+  family_id    String?   @db.VarChar(36)
+  device_name  String?   @db.VarChar(100)
+  ip_address   String?   @db.VarChar(45)
+  user_agent   String?   @db.VarChar(500)
+  last_seen_at DateTime?
+  created_at   DateTime? @default(now())
+  expires_at   DateTime
 
   user employees? @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
