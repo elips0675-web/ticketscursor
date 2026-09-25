@@ -2,7 +2,7 @@
 
 > Дата обновления: 25.09.2026
 > Источники: Kimi (7.5/10 → **8/10**), DeepSeek (6.5/10 → **8.5/10**), Qwen (8.2/10 → **8.5/10**) — финальные вердикты в «Оценка kimi/дипсик/qwen.rtf» (23.09), Доделать.rtf (промты 1-6)
-> Доп. аудиты 24.09: «Тесты и функционал qwen.rtf», «Тесты и функционал дипсик.rtf», «Тесты и функционал kimi.docx» → полные тексты qwen/дипсик изучены 24.09 и сведены в «Тесты и функционал общее.md» (был .rtf; .md удобнее читать) — см. раздел «Дополнения из аудитов 24.09» ниже и «Новое поверх плана (qwen+дипсик 24.09)»
+> Доп. аудиты 24.09 + 25.09: «Тесты и функционал qwen.rtf», «Тесты и функционал дипсик.rtf» (полные тексты изучены **25.09**), «Тесты и функционал kimi.docx» → сведены в «Тесты и функционал общее.md» (+ .rtf, пересоздан 25.09 из md тем же составом) — см. раздел «Дополнения из аудитов 24.09» ниже, «Новое поверх плана (qwen+дипсик 24.09)» и §4/§14/§15 «Тесты и функционал общее.md» (бэклог документов/ops из полных текстов + Trivy-резолюция)
 > Фактическая проверка кодовой базы: 24.09.2026
 > Тесты (закоммичено 25.09, инвентарь из vitest-прогона): **70 файлов / 625 клиентских + 71 файл / 947 серверных = 1572 теста, 0 failures** — клиент coverage 73.48/64.19/65.78/75.79, сервер 75.03/69.15/76.51/76.05 (пороги 71/62/63/73 и 73/67/74/74 пройдены)
 > E2E: 19 spec'ов / 61 тест (Playwright, зелёный прогон 24.09) + check-console 17/17
@@ -462,6 +462,28 @@ vite.config.ts, playwright.config.ts, eslint.config.js, server/vitest.config.js,
 
 - Клиент: error boundaries, offline/network error, двойной submit, keyboard navigation, toast lifecycle, WS reconnect UI, large data/virtualization, form validation edge cases, i18n fallback, lazy loading/Suspense
 - Сервер: catch-ветки сервисов (мок prisma throw), env-условия, seed validation (FK/orphan), full integration flow (supertest create→…→close + аудит + WS), outbox reliability после рестарта, Redis cache invalidation, BullMQ DLQ, rate-limiter edge (10-й ок, 11-й 429)
+
+### Документы / процесс / ops из полных текстов qwen + дипсик (25.09) — бэклог, не код
+
+> Источник: §4 «Документы/процесс/ops» и §14–15 «Тесты и функционал общее.md» (полные тексты qwen.rtf/дипсик.rtf изучены 25.09).
+> Всё это — не блокеры, а «дошлифовка»; суть покрыта правилами 11–16 AGENTS.md и check-doc-sync (правило 60).
+
+| # | Что | Зачем | Статус |
+|---|-----|-------|--------|
+| 1 | **Trivy (или Snyk)** в CI: scan Docker-образов + `trivy fs --security-checks vuln,secret` | npm audit не видит CVE в alpine/nginx/redis (резолюция из конца общее.rtf: «добавить как мини-этап ~2–3 часа, отдельным PR») | ⏳ бэклог (инфра) |
+| 2 | **ARCHITECTURE.md** — Data Flow Diagram для 5 сценариев (создание тикета, real-time чат, фон. задача, загрузка файла, аудит) | «единый источник истины» для ИИ (qwen §2 артефакты) | ⏳ бэклог (дока) |
+| 3 | **API_CONTRACTS.md** — формат ошибок `{error:{code,message,details}}`, пагинация, rate-limit заголовки | единый контракт API (qwen) | ⏳ бэклог (дока) |
+| 4 | ADR (почему Express 5, localStorage, no read replica, Tauri удалён) | новичок не ломает решения | ⏳ бэклог (дока) |
+| 5 | Runbooks: восстановление из бэкапа, ротация JWT, выгреб DLQ, рестарт IMAP, сброс Redis | «что делать в 3 ночи» | ⏳ бэклог (дока) |
+| 6 | SLO/SLI + alerting rules (Grafana/Sentry) — p95 < X, error rate < Y, uptime > Z | Grafana есть, алертов нет | ⏳ бэклог (инфра) |
+| 7 | Deprecation/backward-compat/versioning policy (semver) | для релизов | ⏳ бэклог (процесс) |
+| 8 | Commit convention + auto-changelog из коммитов | сейчас changelog вручную | ⏳ бэклог (процесс) |
+| 9 | Rollback/canary/smoke-after-deploy политики (api-smoke.mjs есть, не в CD) | механика есть, политики нет | ⏳ бэклог (процесс) |
+| 10 | Feature flag lifecycle: удаление флага после 100% rollout на 2 недели | иначе флаги копятся | ⏳ бэклог (процесс) |
+| 11 | Secrets manager (Vault/SOPS), tracing (OpenTelemetry), CDN, SPF/DKIM/DMARC, log aggregation (Loki/ELK) | инфраструктура (дипсик §4.2) | ⏳ бэклог (инфра) |
+| 12 | 12 промт-шаблонов ИИ (Фича/Баг/Рефактор/Doc-sync/Инвентарь/Аудит/Цепочка/Cross-layer/Resilience/Security/Coverage/E2E-real) | суть уже в правилах 11–16 AGENTS.md; шаблоны — опционально | ⏳ бэклог (опц.) |
+| 13 | 15 инвентарей связей (routes/menu/buttons/fields/permissions/WS/notify/background/chains/cache/limits/i18n/MSW/migrations/env) | автогенерация, иначе устареют; роуты/меню/кнопки/цепочки — см. раздел выше | ⏳ бэклог (по одному) |
+| 14 | Inventory-of-inventories (meta-таблица: какой инвентарь когда обновлялся) | чтобы не устаревали | ⏳ бэклог |
 
 ### Итоговый ориентир (qwen)
 
