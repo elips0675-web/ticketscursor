@@ -427,7 +427,32 @@
     "revokeAllSessions": "Revoke all sessions",
     "noSessions": "No active sessions",
     "sessionRevoked": "Session revoked",
-    "sessionsRevoked": "All sessions revoked"
+    "sessionsRevoked": "All sessions revoked",
+    "prefs": {
+      "title": "Notification preferences",
+      "subtitle": "Choose delivery channels for each event",
+      "eventColumn": "Event",
+      "allEvents": "All events",
+      "save": "Save",
+      "saved": "Preferences saved",
+      "loadError": "Failed to load preferences",
+      "saveError": "Failed to save preferences",
+      "channel": {
+        "email": "Email",
+        "push": "Push",
+        "in_app": "In-app"
+      },
+      "event": {
+        "ticket_created": "Ticket created",
+        "ticket_status": "Status changed",
+        "ticket_priority": "Priority changed",
+        "ticket_assigned": "Ticket assigned",
+        "ticket_message": "New message",
+        "ticket_mention": "Mention",
+        "ticket_sla_overdue": "SLA breach",
+        "ticket_sla_escalated": "SLA escalation"
+      }
+    }
   },
   "admin": {
     "title": "Admin Panel",

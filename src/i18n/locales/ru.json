@@ -428,7 +428,32 @@
     "revokeAllSessions": "Завершить все сессии",
     "noSessions": "Нет активных сессий",
     "sessionRevoked": "Сессия завершена",
-    "sessionsRevoked": "Все сессии завершены"
+    "sessionsRevoked": "Все сессии завершены",
+    "prefs": {
+      "title": "Настройки уведомлений",
+      "subtitle": "Выберите каналы доставки для каждого события",
+      "eventColumn": "Событие",
+      "allEvents": "Все события",
+      "save": "Сохранить",
+      "saved": "Настройки сохранены",
+      "loadError": "Не удалось загрузить настройки",
+      "saveError": "Не удалось сохранить настройки",
+      "channel": {
+        "email": "Email",
+        "push": "Push",
+        "in_app": "В приложении"
+      },
+      "event": {
+        "ticket_created": "Тикет создан",
+        "ticket_status": "Статус изменён",
+        "ticket_priority": "Приоритет изменён",
+        "ticket_assigned": "Назначение тикета",
+        "ticket_message": "Новое сообщение",
+        "ticket_mention": "Упоминание",
+        "ticket_sla_overdue": "Нарушение SLA",
+        "ticket_sla_escalated": "Эскалация SLA"
+      }
+    }
   },
   "admin": {
     "title": "Админ-панель",

@@ -4,9 +4,26 @@ import { sendTelegramNotification } from './telegram.js'
 import { createNotification } from './routes/notifications.js'
 import { getSettings } from './settings.js'
 import logger from './logger.js'
+import webpush from 'web-push'
+import { allowedUserIds } from './notification-prefs.js'
 
 const STATUS_LABELS = { open: 'Открыт', in_progress: 'В работе', resolved: 'Решён', closed: 'Закрыт' }
 const PRIORITY_LABELS = { low: 'Низкий', medium: 'Средний', high: 'Высокий', critical: 'Критичный' }
+
+const PUSH_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY
+const PUSH_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY
+if (PUSH_PUBLIC_KEY && PUSH_PRIVATE_KEY) {
+  try {
+    webpush.setVapidDetails(
+      process.env.VAPID_SUBJECT || 'mailto:admin@servicedesk.local',
+      PUSH_PUBLIC_KEY,
+      PUSH_PRIVATE_KEY,
+    )
+  } catch (e) {
+    logger.warn(`VAPID setup failed: ${e.message}`)
+  }
+}
+const PUSH_ICON = '/icon.svg'
 
 const DEFAULT_TEMPLATES = {
   ticketCreatedSubject: 'Тикет #{{ticketId}} создан: {{ticketTitle}}',
@@ -74,6 +91,32 @@ function safeNotify(promise) {
   promise.catch(err => logger.error(`Notify failed: ${err.message}`))
 }
 
+/** Push-доставка по подпискам пользователей, чей канал push включён для события. */
+async function sendPushToUsers(userIds, eventType, payload) {
+  try {
+    const ids = await allowedUserIds(userIds, eventType, 'push')
+    if (ids.length === 0) return
+    const subs = await prisma.push_subscriptions.findMany({
+      where: { user_id: { in: ids } },
+      select: { user_id: true, subscription_json: true },
+    })
+    await Promise.allSettled(subs.map((row) => (async () => {
+      try {
+        await webpush.sendNotification(
+          JSON.parse(row.subscription_json),
+          JSON.stringify({ ...payload, icon: PUSH_ICON }),
+        )
+      } catch (err) {
+        if (err && (err.statusCode === 410 || err.statusCode === 404)) {
+          try { await prisma.push_subscriptions.deleteMany({ where: { user_id: row.user_id } }) } catch { /* noop */ }
+        }
+      }
+    })()))
+  } catch (err) {
+    logger.error(`Push notification failed: ${err.message}`)
+  }
+}
+
 function sendEmail(to, subject, text) {
   safeSend(() => retryWithBackoff(() => sendTicketNotification({ to, subject, text })))
 }
@@ -114,13 +157,17 @@ export async function notifyTicketCreated(ticketId, _actorName) {
   if (!t) return
 
   const tag = `#${ticketId}: ${t.title}`
-  safeNotify(createNotification({
-    userId: t.creatorId, type: 'ticket_created',
-    title: 'Тикет создан', body: t.title,
-    link: `/tickets/${ticketId}`,
-  }))
+  const inAppIds = await allowedUserIds([t.creatorId], 'ticket_created', 'in_app')
+  if (inAppIds.includes(t.creatorId)) {
+    safeNotify(createNotification({
+      userId: t.creatorId, type: 'ticket_created',
+      title: 'Тикет создан', body: t.title,
+      link: `/tickets/${ticketId}`,
+    }))
+  }
   sendTelegramNotification(`🆕 Новый тикет ${tag}\nПриоритет: ${PRIORITY_LABELS[t.priority] || t.priority}\nКатегория: ${t.category}`)
-  if (t.creatorEmail) {
+  const emailIds = await allowedUserIds([t.creatorId], 'ticket_created', 'email')
+  if (t.creatorEmail && emailIds.includes(t.creatorId)) {
     const templates = await getTemplates()
     const cn = await companyName()
     const vars = { ticketId: String(ticketId), ticketTitle: t.title, priority: PRIORITY_LABELS[t.priority] || t.priority, companyName: cn, userName: t.creatorName || '' }
@@ -128,6 +175,7 @@ export async function notifyTicketCreated(ticketId, _actorName) {
       replaceVariables(templates.ticketCreatedSubject, vars),
       replaceVariables(templates.ticketCreatedBody, vars))
   }
+  sendPushToUsers([t.creatorId], 'ticket_created', { title: 'Тикет создан', body: t.title, url: `/tickets/${ticketId}` })
 }
 
 export async function notifyStatusChanged(ticketId, oldStatus, newStatus, actorName) {
@@ -140,7 +188,10 @@ export async function notifyStatusChanged(ticketId, oldStatus, newStatus, actorN
 
   const targets = [t.creatorId]
   if (t.assigneeId && !targets.includes(t.assigneeId)) targets.push(t.assigneeId)
+  const inAppIds = await allowedUserIds(targets, 'ticket_status', 'in_app')
+  const emailIds = new Set(await allowedUserIds(targets, 'ticket_status', 'email'))
   for (const userId of targets) {
+    if (!inAppIds.includes(userId)) continue
     safeNotify(createNotification({
       userId, type: 'ticket_status',
       title: `Статус изменён: ${newLabel}`,
@@ -151,8 +202,8 @@ export async function notifyStatusChanged(ticketId, oldStatus, newStatus, actorN
   sendTelegramNotification(`📋 Статус тикета ${tag}\n${oldLabel} → ${newLabel}\nИзменил: ${actorName}`)
 
   const emailTargets = []
-  if (t.creatorEmail && !emailTargets.includes(t.creatorId)) emailTargets.push({ email: t.creatorEmail, name: t.creatorName })
-  if (t.assigneeEmail && t.assigneeId !== t.creatorId) emailTargets.push({ email: t.assigneeEmail, name: t.assigneeName })
+  if (t.creatorEmail && emailIds.has(t.creatorId)) emailTargets.push({ email: t.creatorEmail, name: t.creatorName })
+  if (t.assigneeEmail && t.assigneeId !== t.creatorId && emailIds.has(t.assigneeId)) emailTargets.push({ email: t.assigneeEmail, name: t.assigneeName })
   const templates = await getTemplates()
   const cn = await companyName()
   for (const et of emailTargets) {
@@ -161,6 +212,7 @@ export async function notifyStatusChanged(ticketId, oldStatus, newStatus, actorN
       replaceVariables(templates.ticketStatusSubject, vars),
       replaceVariables(templates.ticketStatusBody, vars))
   }
+  sendPushToUsers(targets, 'ticket_status', { title: `Статус изменён: ${newLabel}`, body: t.title, url: `/tickets/${ticketId}` })
 }
 
 const PRIORITY_BODY_TEMPLATE = 'Приоритет тикета "{{ticketTitle}}" (#{{ticketId}}) изменён.\n{{oldPriority}} → {{newPriority}}\n\n{{companyName}}'
@@ -176,7 +228,10 @@ export async function notifyPriorityChanged(ticketId, oldPriority, newPriority, 
 
   const targets = [t.creatorId]
   if (t.assigneeId && !targets.includes(t.assigneeId)) targets.push(t.assigneeId)
+  const inAppIds = await allowedUserIds(targets, 'ticket_priority', 'in_app')
+  const emailIds = new Set(await allowedUserIds(targets, 'ticket_priority', 'email'))
   for (const userId of targets) {
+    if (!inAppIds.includes(userId)) continue
     safeNotify(createNotification({
       userId, type: 'ticket_priority',
       title: `Приоритет изменён: ${newLabel}`,
@@ -187,8 +242,8 @@ export async function notifyPriorityChanged(ticketId, oldPriority, newPriority, 
   sendTelegramNotification(`⚡ Приоритет тикета ${tag}\n${oldLabel} → ${newLabel}`)
 
   const emailTargets = []
-  if (t.creatorEmail && !emailTargets.includes(t.creatorId)) emailTargets.push({ email: t.creatorEmail, name: t.creatorName })
-  if (t.assigneeEmail && t.assigneeId !== t.creatorId) emailTargets.push({ email: t.assigneeEmail, name: t.assigneeName })
+  if (t.creatorEmail && emailIds.has(t.creatorId)) emailTargets.push({ email: t.creatorEmail, name: t.creatorName })
+  if (t.assigneeEmail && t.assigneeId !== t.creatorId && emailIds.has(t.assigneeId)) emailTargets.push({ email: t.assigneeEmail, name: t.assigneeName })
   const cn = await companyName()
   for (const et of emailTargets) {
     const vars = { ticketId: String(ticketId), ticketTitle: t.title, oldPriority: oldLabel, newPriority: newLabel, companyName: cn }
@@ -196,6 +251,7 @@ export async function notifyPriorityChanged(ticketId, oldPriority, newPriority, 
       replaceVariables(PRIORITY_SUBJECT_TEMPLATE, vars),
       replaceVariables(PRIORITY_BODY_TEMPLATE, vars))
   }
+  sendPushToUsers(targets, 'ticket_priority', { title: `Приоритет изменён: ${newLabel}`, body: t.title, url: `/tickets/${ticketId}` })
 }
 
 export async function notifyTicketAssigned(ticketId, assigneeId, assignedByName) {
@@ -204,14 +260,18 @@ export async function notifyTicketAssigned(ticketId, assigneeId, assignedByName)
 
   if (!assigneeId || assigneeId === t.creatorId) return
 
-  safeNotify(createNotification({
-    userId: assigneeId, type: 'ticket_assigned',
-    title: 'Назначен тикет', body: t.title,
-    link: `/tickets/${ticketId}`,
-  }))
+  const inAppIds = await allowedUserIds([assigneeId], 'ticket_assigned', 'in_app')
+  if (inAppIds.includes(assigneeId)) {
+    safeNotify(createNotification({
+      userId: assigneeId, type: 'ticket_assigned',
+      title: 'Назначен тикет', body: t.title,
+      link: `/tickets/${ticketId}`,
+    }))
+  }
   sendTelegramNotification(`👤 Тикет #${ticketId} назначен на пользователя\n"${t.title}"\nНазначил: ${assignedByName}`)
 
-  if (t.assigneeEmail) {
+  const emailIds = await allowedUserIds([assigneeId], 'ticket_assigned', 'email')
+  if (t.assigneeEmail && emailIds.includes(assigneeId)) {
     const templates = await getTemplates()
     const cn = await companyName()
     const vars = { ticketId: String(ticketId), ticketTitle: t.title, status: STATUS_LABELS[t.status] || t.status, priority: PRIORITY_LABELS[t.priority] || t.priority, companyName: cn, userName: t.assigneeName || '' }
@@ -219,6 +279,7 @@ export async function notifyTicketAssigned(ticketId, assigneeId, assignedByName)
       replaceVariables(templates.ticketAssignedSubject, vars),
       replaceVariables(templates.ticketAssignedBody, vars))
   }
+  sendPushToUsers([assigneeId], 'ticket_assigned', { title: 'Назначен тикет', body: t.title, url: `/tickets/${ticketId}` })
 }
 
 const MESSAGE_SUBJECT_TEMPLATE = 'Новое сообщение в тикете #{{ticketId}}: {{ticketTitle}}'
@@ -230,10 +291,14 @@ export async function notifyTicketMessage(ticketId, senderId, senderName, text) 
 
   const participantIds = await getTicketParticipants(ticketId, senderId)
   const targets = new Set([t.creatorId, t.assigneeId, ...participantIds].filter(Boolean))
+  const targetList = [...targets]
+  const inAppIds = await allowedUserIds(targetList, 'ticket_message', 'in_app')
+  const emailIds = new Set(await allowedUserIds(targetList, 'ticket_message', 'email'))
 
   const toNotify = []
   for (const userId of targets) {
     if (userId === senderId) continue
+    if (!inAppIds.includes(userId)) continue
     toNotify.push(userId)
     safeNotify(createNotification({
       userId, type: 'ticket_message',
@@ -246,10 +311,10 @@ export async function notifyTicketMessage(ticketId, senderId, senderName, text) 
   sendTelegramNotification(`💬 Новое сообщение в тикете #${ticketId}: ${t.title}\n${senderName}: ${text.slice(0, 200)}`)
 
   const emailRecipients = []
-  if (t.creatorEmail && t.creatorId !== senderId && toNotify.includes(t.creatorId)) {
+  if (t.creatorEmail && t.creatorId !== senderId && emailIds.has(t.creatorId)) {
     emailRecipients.push({ email: t.creatorEmail, name: t.creatorName })
   }
-  if (t.assigneeEmail && t.assigneeId !== senderId && t.assigneeId && toNotify.includes(t.assigneeId)) {
+  if (t.assigneeEmail && t.assigneeId !== senderId && t.assigneeId && emailIds.has(t.assigneeId)) {
     emailRecipients.push({ email: t.assigneeEmail, name: t.assigneeName })
   }
   if (emailRecipients.length > 0) {
@@ -261,14 +326,21 @@ export async function notifyTicketMessage(ticketId, senderId, senderName, text) 
         replaceVariables(MESSAGE_BODY_TEMPLATE, vars))
     }
   }
+  sendPushToUsers(targetList.filter((id) => id !== senderId), 'ticket_message', {
+    title: senderName || 'Пользователь',
+    body: text,
+    url: `/tickets/${ticketId}`,
+  })
 }
 
 export async function notifyTicketMention(ticketId, mentionedUserIds, senderId, senderName) {
   const t = await getTicketWithUsers(ticketId)
   if (!t) return
 
+  const inAppIds = await allowedUserIds(mentionedUserIds, 'ticket_mention', 'in_app')
   for (const userId of mentionedUserIds) {
     if (!userId || userId === senderId) continue
+    if (!inAppIds.includes(userId)) continue
     safeNotify(createNotification({
       userId, type: 'ticket_mention',
       title: 'Упоминание в тикете',
@@ -278,6 +350,11 @@ export async function notifyTicketMention(ticketId, mentionedUserIds, senderId, 
   }
 
   sendTelegramNotification(`📣 Упоминание в тикете #${ticketId}: ${t.title}\n${senderName || 'Пользователь'} упомянул: ${mentionedUserIds.filter(id => id !== senderId).join(', ')}`)
+  sendPushToUsers(mentionedUserIds, 'ticket_mention', {
+    title: 'Упоминание в тикете',
+    body: `${senderName || 'Пользователь'}: ${t.title}#${ticketId}`,
+    url: `/tickets/${ticketId}`,
+  })
 }
 
 export async function notifySlaBreached(ticketId) {
@@ -313,8 +390,10 @@ export async function notifySlaBreached(ticketId) {
     })
     alreadyNotifiedIds = new Set(rows.map(r => r.user_id))
   }
+  const inAppIds = await allowedUserIds([...targets], 'ticket_sla_overdue', 'in_app')
   for (const userId of targets) {
     if (alreadyNotifiedIds.has(userId)) continue
+    if (!inAppIds.includes(userId)) continue
     await createNotification({
       userId,
       type: 'ticket_sla_overdue',
@@ -324,7 +403,9 @@ export async function notifySlaBreached(ticketId) {
     })
   }
 
+  const emailAdminIds = new Set(await allowedUserIds(admins.map(a => a.id), 'ticket_sla_overdue', 'email'))
   const adminEmails = admins
+    .filter(a => emailAdminIds.has(a.id))
     .map(a => a.email)
     .filter(Boolean)
   const templates = await getTemplates()
@@ -337,6 +418,11 @@ export async function notifySlaBreached(ticketId) {
   }
 
   sendTelegramNotification(`🚨 SLA просрочка\nТикет #${ticketId}: ${t.title}\nСрок реакции истёк: ${new Date(t.due_at).toLocaleString('ru-RU')}`)
+  sendPushToUsers([...targets], 'ticket_sla_overdue', {
+    title: 'Нарушение SLA',
+    body: `Тикет #${ticketId} просрочен по SLA`,
+    url: `/tickets/${ticketId}`,
+  })
 }
 
 const PRIORITY_ORDER = ['low', 'medium', 'high', 'critical']
@@ -361,13 +447,16 @@ export async function notifySlaEscalated(ticketId, fromPriority, toPriority, lev
   const targets = new Set([t.creatorId, t.assigneeId].filter(Boolean))
   for (const a of admins) targets.add(a.id)
 
+  const inAppIds = await allowedUserIds([...targets], 'ticket_sla_escalated', 'in_app')
   for (const userId of targets) {
+    if (!inAppIds.includes(userId)) continue
     await createNotification({ userId, type: 'ticket_sla_escalated', title, body, link: `/tickets/${ticketId}` })
   }
 
   const cn = await companyName()
   const vars = { ticketId: String(ticketId), ticketTitle: t.title, fromPriority: PRIORITY_LABELS[fromPriority] || fromPriority, toPriority: PRIORITY_LABELS[toPriority] || toPriority, level: String(level), companyName: cn }
-  const adminEmails = admins.map(a => a.email).filter(Boolean)
+  const emailAdminIds = new Set(await allowedUserIds(admins.map(a => a.id), 'ticket_sla_escalated', 'email'))
+  const adminEmails = admins.filter(a => emailAdminIds.has(a.id)).map(a => a.email).filter(Boolean)
   for (const email of adminEmails) {
     sendEmail(email,
       `SLA эскалация #${ticketId}: ${PRIORITY_LABELS[fromPriority] || fromPriority} → ${PRIORITY_LABELS[toPriority] || toPriority}`,
@@ -375,6 +464,11 @@ export async function notifySlaEscalated(ticketId, fromPriority, toPriority, lev
   }
 
   sendTelegramNotification(`🚨 Эскалация SLA\nТикет #${ticketId}: ${t.title}\nПриоритет: ${PRIORITY_LABELS[fromPriority] || fromPriority} → ${PRIORITY_LABELS[toPriority] || toPriority}`)
+  sendPushToUsers([...targets], 'ticket_sla_escalated', {
+    title: `Эскалация SLA #${ticketId}: ${PRIORITY_LABELS[fromPriority] || fromPriority} → ${PRIORITY_LABELS[toPriority] || toPriority}`,
+    body: `Тикет "${t.title}" (#${ticketId}) просрочен по SLA. Приоритет повышен (уровень ${level}).`,
+    url: `/tickets/${ticketId}`,
+  })
 
   const { logAudit } = await import('./audit.js')
   await logAudit({

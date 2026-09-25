@@ -11,6 +11,7 @@ import { User, Mail, Phone, Briefcase, MapPin, FileText, Settings, Camera, Save,
 import { useAuth } from '@/context/AuthContext'
 import TwoFactorSection from '@/components/TwoFactorSection'
 import SessionsSection from '@/components/SessionsSection'
+import NotificationPreferencesSection from '@/components/NotificationPreferencesSection'
 import type { EmployeeProfile } from '@/types'
 import { API_URL } from '@/lib/api'
 
@@ -295,6 +296,7 @@ export default function ProfilePage() {
           <div className="space-y-4">
             <TwoFactorSection />
             <SessionsSection />
+            <NotificationPreferencesSection />
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm">{t('profile.settings')}</CardTitle>

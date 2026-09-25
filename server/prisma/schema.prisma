@@ -42,6 +42,7 @@ model employees {
   user_totp           user_totp?
   refresh_tokens      refresh_tokens[]
   notifications       notifications[]
+  notification_preferences notification_preferences?
   poll_votes          poll_votes[]
   ticket_messages     ticket_messages[]
   time_entries        time_entries[]
@@ -333,6 +334,16 @@ model user_totp {
   user_id    Int       @unique
   secret     String    @db.VarChar(200)
   enabled    Boolean   @default(false)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  user employees? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model notification_preferences {
+  id         Int       @id @default(autoincrement())
+  user_id    Int       @unique
+  prefs      String?   @db.Text
   created_at DateTime? @default(now())
   updated_at DateTime? @default(now())
 

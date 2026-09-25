@@ -501,6 +501,27 @@ export const handlers = [
     return HttpResponse.json({ success: true })
   }),
 
+  http.get(`${API}/notifications/preferences`, () => {
+    const events = [
+      'ticket_created',
+      'ticket_status',
+      'ticket_priority',
+      'ticket_assigned',
+      'ticket_message',
+      'ticket_mention',
+      'ticket_sla_overdue',
+      'ticket_sla_escalated',
+    ]
+    const channels = ['email', 'push', 'in_app']
+    const prefs: Record<string, Record<string, boolean>> = {}
+    for (const ev of events) prefs[ev] = Object.fromEntries(channels.map((ch) => [ch, true]))
+    return HttpResponse.json({ success: true, data: { prefs, events, channels } })
+  }),
+
+  http.put(`${API}/notifications/preferences`, () => {
+    return HttpResponse.json({ success: true, data: { prefs: {} } })
+  }),
+
   // ── Files ──
   http.get(`${API}/files/folders`, () => {
     return HttpResponse.json([
@@ -711,6 +732,12 @@ export const handlers = [
         { key: 'ticket_history', enabled: true, description: 'Ticket history tab', rollout_percent: 100 },
         { key: 'two_fa', enabled: true, description: '2FA/TOTP for admins', rollout_percent: 100 },
         { key: 'user_sessions', enabled: false, description: 'Active user sessions (Profile)', rollout_percent: 100 },
+        {
+          key: 'notification_prefs',
+          enabled: false,
+          description: 'Notification preferences (Profile)',
+          rollout_percent: 100,
+        },
         {
           key: 'dark_theme',
           enabled: true,

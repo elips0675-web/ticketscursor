@@ -15,7 +15,17 @@ vi.mock('../../prisma.js', () => ({
       findFirst: vi.fn(),
       findMany: vi.fn(),
     },
+    notification_preferences: {
+      findUnique: vi.fn(),
+    },
+    push_subscriptions: {
+      findMany: vi.fn(),
+    },
   },
+}))
+
+vi.mock('web-push', () => ({
+  default: { setVapidDetails: vi.fn(), sendNotification: vi.fn().mockResolvedValue() },
 }))
 
 vi.mock('../../email.js', () => ({ sendTicketNotification: vi.fn().mockResolvedValue() }))
@@ -27,6 +37,7 @@ import prisma from '../../prisma.js'
 import { sendTicketNotification } from '../../email.js'
 import { sendTelegramNotification } from '../../telegram.js'
 import { createNotification } from '../../routes/notifications.js'
+import { invalidateNotificationPrefsCache } from '../../notification-prefs.js'
 import {
   notifyTicketCreated,
   notifyStatusChanged,
@@ -57,6 +68,12 @@ beforeEach(() => {
     { id: 99, email: 'admin@test.com', name: 'Admin' },
   ])
   prisma.notifications.findMany.mockResolvedValue([])
+  prisma.notification_preferences.findUnique.mockResolvedValue(null)
+  prisma.push_subscriptions.findMany.mockResolvedValue([])
+  invalidateNotificationPrefsCache(10)
+  invalidateNotificationPrefsCache(20)
+  invalidateNotificationPrefsCache(30)
+  invalidateNotificationPrefsCache(99)
 })
 
 describe('notifyTicketCreated', () => {
@@ -187,5 +204,54 @@ describe('notifySlaBreached', () => {
     prisma.tickets.findUnique.mockResolvedValue(null)
     await notifySlaBreached(1)
     expect(createNotification).not.toHaveBeenCalled()
+  })
+})
+
+describe('notification preferences — фильтрация каналов (Этап 63, подфича 3)', () => {
+  function prefsByUser(map) {
+    prisma.notification_preferences.findUnique.mockImplementation(({ where }) => {
+      const p = map[where.user_id]
+      return Promise.resolve(p ? { prefs: JSON.stringify(p) } : null)
+    })
+  }
+
+  it('skips email when creator disabled email for ticket_created', async () => {
+    prefsByUser({ 10: { ticket_created: { email: false, push: true, in_app: true } } })
+    await notifyTicketCreated(1, 'User')
+    expect(sendTicketNotification).not.toHaveBeenCalled()
+    expect(createNotification).toHaveBeenCalled()
+  })
+
+  it('skips in-app notification when creator disabled in_app', async () => {
+    prefsByUser({ 10: { ticket_created: { email: true, push: true, in_app: false } } })
+    await notifyTicketCreated(1, 'User')
+    expect(createNotification).not.toHaveBeenCalled()
+    expect(sendTicketNotification).toHaveBeenCalled()
+  })
+
+  it('filters in-app по пользователям: у 10 выключен, у 20 — включён', async () => {
+    prefsByUser({ 10: { ticket_status: { email: true, push: true, in_app: false } } })
+    await notifyStatusChanged(1, 'open', 'in_progress', 'Admin')
+    expect(createNotification).toHaveBeenCalledTimes(1)
+    expect(createNotification.mock.calls[0][0].userId).toBe(20)
+  })
+
+  it('sends push when push enabled and subscription exists', async () => {
+    prisma.push_subscriptions.findMany.mockResolvedValue([
+      { user_id: 10, subscription_json: JSON.stringify({ endpoint: 'https://example.com/push' }) },
+    ])
+    await notifyTicketCreated(1, 'User')
+    const WebPush = (await import('web-push')).default
+    await vi.waitFor(() => expect(WebPush.sendNotification).toHaveBeenCalled())
+  })
+
+  it('does not send push when push disabled for event', async () => {
+    prefsByUser({ 10: { ticket_created: { email: true, push: false, in_app: true } } })
+    prisma.push_subscriptions.findMany.mockResolvedValue([
+      { user_id: 10, subscription_json: JSON.stringify({ endpoint: 'https://example.com/push' }) },
+    ])
+    await notifyTicketCreated(1, 'User')
+    const WebPush = (await import('web-push')).default
+    expect(WebPush.sendNotification).not.toHaveBeenCalled()
   })
 })
