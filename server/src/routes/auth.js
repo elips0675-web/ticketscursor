@@ -3,11 +3,13 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import prisma from '../prisma.js'
-import { JWT_SECRET, authenticateToken, requireRole } from '../middleware.js'
+import { JWT_SECRET, verifyJwtSecret, authenticateToken, requireRole } from '../middleware.js'
 import { sendTicketNotification } from '../email.js'
 import { loginValidation, registerValidation, changePasswordValidation } from '../validate.js'
 import { authenticateLDAP } from '../auth/ldap.js'
 import { initOIDCClient, getSSOConfig, isSSOEnabled, generateSSOState, generateSSONonce, getSSOAuthorizationUrl, handleSSOCallback } from '../auth/oidc.js'
+import { generateTotpSecret, totpUri, verifyTotp } from '../auth/totp.js'
+import { isFeatureEnabled } from '../feature-flags.js'
 import logger from '../logger.js'
 
 const router = Router()
@@ -34,6 +36,14 @@ router.post('/login', loginValidation, async (req, res) => {
     if (!valid) {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
+
+    // 2FA: если у пользователя включён TOTP — двухшаговый вход (tempToken живёт 5 минут)
+    const totpRow = await prisma.user_totp.findUnique({ where: { user_id: employee.id } })
+    if (totpRow?.enabled) {
+      const tempToken = jwt.sign({ userId: employee.id, purpose: '2fa' }, JWT_SECRET, { expiresIn: '5m' })
+      return res.json({ success: true, step: '2fa', tempToken })
+    }
+
     const { accessToken, refreshToken, familyId } = generateTokens(employee)
     await prisma.refresh_tokens.create({
       data: { user_id: employee.id, token: refreshToken, family_id: familyId, expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
@@ -45,9 +55,137 @@ router.post('/login', loginValidation, async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/api/auth',
     })
-    res.json({ success: true, data: { token: accessToken, employee: { id: employee.id, name: employee.name, email: employee.email, role: employee.role } } })
+    const isAdmin = employee.role === 'admin' || employee.role === 'super_admin'
+    const require2faSetup = isAdmin && (await isFeatureEnabled('two_fa'))
+    res.json({
+      success: true,
+      data: {
+        token: accessToken,
+        employee: { id: employee.id, name: employee.name, email: employee.email, role: employee.role },
+        require2faSetup,
+      },
+    })
   } catch (err) {
     logger.error('Login error:', err)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+})
+
+// Второй шаг входа: проверка TOTP-кода, выдача JWT + refresh-токена
+router.post('/2fa/verify', async (req, res) => {
+  const { tempToken, code } = req.body || {}
+  try {
+    let decoded
+    try {
+      decoded = verifyJwtSecret(tempToken)
+    } catch {
+      return res.status(401).json({ message: 'Invalid or expired 2FA session' })
+    }
+    if (!decoded || decoded.purpose !== '2fa') {
+      return res.status(401).json({ message: 'Invalid 2FA session' })
+    }
+    const employee = await prisma.employees.findFirst({
+      where: { id: decoded.userId, is_active: true },
+      select: { id: true, name: true, email: true, role: true },
+    })
+    if (!employee) {
+      return res.status(401).json({ message: 'User not found' })
+    }
+    const totpRow = await prisma.user_totp.findUnique({ where: { user_id: employee.id } })
+    if (!totpRow?.enabled || !verifyTotp(totpRow.secret, code)) {
+      return res.status(401).json({ message: 'Invalid 2FA code', code: 'INVALID_2FA' })
+    }
+    const { accessToken, refreshToken, familyId } = generateTokens(employee)
+    await prisma.refresh_tokens.create({
+      data: { user_id: employee.id, token: refreshToken, family_id: familyId, expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
+    })
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/api/auth',
+    })
+    res.json({
+      success: true,
+      data: { token: accessToken, employee: { id: employee.id, name: employee.name, email: employee.email, role: employee.role } },
+    })
+  } catch (err) {
+    logger.error('2FA verify error:', err)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+})
+
+// Статус 2FA текущего пользователя (для Profile)
+router.get('/2fa/status', authenticateToken, async (req, res) => {
+  try {
+    const row = await prisma.user_totp.findUnique({ where: { user_id: req.user.userId } })
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'super_admin'
+    res.json({
+      success: true,
+      data: {
+        enabled: !!row?.enabled,
+        secretSet: !!row?.secret,
+        required: isAdmin && (await isFeatureEnabled('two_fa')),
+      },
+    })
+  } catch (err) {
+    logger.error('2FA status error:', err)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+})
+
+// Генерация секрета + otpauth:// URI для QR-кода (только admin/super_admin)
+router.post('/2fa/setup', authenticateToken, requireRole('admin'), async (req, res) => {
+  try {
+    const secret = generateTotpSecret()
+    const employee = await prisma.employees.findUnique({ where: { id: req.user.userId }, select: { email: true } })
+    await prisma.user_totp.upsert({
+      where: { user_id: req.user.userId },
+      update: { secret, enabled: false, updated_at: new Date() },
+      create: { user_id: req.user.userId, secret, enabled: false },
+    })
+    res.json({ success: true, data: { secret, otpauthUrl: totpUri(secret, employee?.email || '') } })
+  } catch (err) {
+    logger.error('2FA setup error:', err)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+})
+
+// Включение 2FA после проверки кода
+router.post('/2fa/enable', authenticateToken, requireRole('admin'), async (req, res) => {
+  const { code } = req.body || {}
+  try {
+    const row = await prisma.user_totp.findUnique({ where: { user_id: req.user.userId } })
+    if (!row) {
+      return res.status(400).json({ message: 'Setup 2FA first' })
+    }
+    if (!verifyTotp(row.secret, code)) {
+      return res.status(401).json({ message: 'Invalid 2FA code', code: 'INVALID_2FA' })
+    }
+    await prisma.user_totp.update({ where: { user_id: req.user.userId }, data: { enabled: true, updated_at: new Date() } })
+    res.json({ success: true, data: { enabled: true } })
+  } catch (err) {
+    logger.error('2FA enable error:', err)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+})
+
+// Отключение 2FA (требует действующий код)
+router.post('/2fa/disable', authenticateToken, requireRole('admin'), async (req, res) => {
+  const { code } = req.body || {}
+  try {
+    const row = await prisma.user_totp.findUnique({ where: { user_id: req.user.userId } })
+    if (!row?.enabled) {
+      return res.status(400).json({ message: '2FA is not enabled' })
+    }
+    if (!verifyTotp(row.secret, code)) {
+      return res.status(401).json({ message: 'Invalid 2FA code', code: 'INVALID_2FA' })
+    }
+    await prisma.user_totp.update({ where: { user_id: req.user.userId }, data: { enabled: false, updated_at: new Date() } })
+    res.json({ success: true, data: { enabled: false } })
+  } catch (err) {
+    logger.error('2FA disable error:', err)
     res.status(500).json({ message: 'Internal server error' })
   }
 })

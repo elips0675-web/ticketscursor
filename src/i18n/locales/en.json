@@ -60,6 +60,10 @@
     "fillFields": "Enter email and password",
     "loginError": "Login error",
     "connectionError": "Connection error",
+    "twoFactorTitle": "Enter the code from your authenticator app",
+    "twoFactorCode": "2FA code",
+    "twoFactorVerify": "Verify code",
+    "twoFactorError": "Invalid 2FA code",
     "hasAccount": "Already have an account?",
     "registerSubtitle": "Create an account",
     "registering": "Registering...",
@@ -406,7 +410,16 @@
     "notificationSound": "Notification Sound",
     "privacy": "Privacy",
     "showOnlineStatus": "Show online status",
-    "department": "Department"
+    "department": "Department",
+    "twoFactor": "Two-factor authentication (2FA)",
+    "twoFactorDesc": "One-time TOTP codes from an authenticator app (Google Authenticator, etc.)",
+    "twoFactorOn": "2FA enabled",
+    "setup2fa": "Set up 2FA",
+    "enable2fa": "Enable 2FA",
+    "disable2fa": "Disable 2FA",
+    "twoFactorSecret": "Or enter the secret manually:",
+    "twoFactorEnabled": "2FA enabled",
+    "twoFactorDisabled": "2FA disabled"
   },
   "admin": {
     "title": "Admin Panel",

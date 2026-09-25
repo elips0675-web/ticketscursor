@@ -22,6 +22,10 @@ vi.mock('react-i18next', () => ({
         'auth.noAccount': 'Нет аккаунта?',
         'auth.register': 'Регистрация',
         'auth.loginSubtitle': 'Войдите в систему',
+        'auth.twoFactorTitle': 'Введите код из приложения-аутентификатора',
+        'auth.twoFactorCode': 'Код 2FA',
+        'auth.twoFactorVerify': 'Проверить код',
+        'auth.twoFactorError': 'Неверный код 2FA',
       })[key] || key,
   }),
 }))
@@ -87,6 +91,59 @@ describe('Login form', () => {
     await user.click(screen.getByText('Войти'))
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith('/api/auth/login', expect.objectContaining({ method: 'POST' }))
+    })
+  })
+
+  it('shows 2FA step when login returns step=2fa, then verifies code', async () => {
+    const user = userEvent.setup()
+    mockFetchOnce({ success: true, step: '2fa', tempToken: 'temp-123' })
+    mockFetchOnce({ data: { token: '2fa-token', employee: { id: 1, name: 'Admin', role: 'admin' } } })
+    render(<Login />, { wrapper: AllTheProviders })
+
+    await user.type(screen.getByPlaceholderText('ivan@company.ru'), 'admin@test.com')
+    await user.type(screen.getByPlaceholderText('Пароль'), 'password123')
+    await user.click(screen.getByText('Войти'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Введите код из приложения-аутентификатора')).toBeInTheDocument()
+    })
+
+    const codeInput = screen.getByLabelText('Код 2FA')
+    await user.type(codeInput, '123456')
+    await user.click(screen.getByText('Проверить код'))
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/auth/2fa/verify',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ tempToken: 'temp-123', code: '123456' }),
+        }),
+      )
+    })
+    await waitFor(() => {
+      expect(localStorage.getItem('token')).toBe('2fa-token')
+    })
+  })
+
+  it('shows error message when 2FA code is invalid', async () => {
+    const user = userEvent.setup()
+    mockFetchOnce({ success: true, step: '2fa', tempToken: 'temp-123' })
+    mockFetchOnce({ message: 'Invalid 2FA code', code: 'INVALID_2FA' }, false)
+    render(<Login />, { wrapper: AllTheProviders })
+
+    await user.type(screen.getByPlaceholderText('ivan@company.ru'), 'admin@test.com')
+    await user.type(screen.getByPlaceholderText('Пароль'), 'password123')
+    await user.click(screen.getByText('Войти'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Введите код из приложения-аутентификатора')).toBeInTheDocument()
+    })
+    await user.type(screen.getByLabelText('Код 2FA'), '000000')
+    await user.click(screen.getByText('Проверить код'))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Invalid 2FA code')
     })
   })
 

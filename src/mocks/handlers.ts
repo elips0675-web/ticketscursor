@@ -555,6 +555,34 @@ export const handlers = [
     })
   }),
 
+  // ── Auth: 2FA ──
+  http.get(`${API}/auth/2fa/status`, () => {
+    return HttpResponse.json({ success: true, data: { enabled: false, secretSet: false, required: true } })
+  }),
+  http.post(`${API}/auth/2fa/setup`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        secret: 'JBSWY3DPEHPK3PXP',
+        otpauthUrl: 'otpauth://totp/Service%20Desk:admin%40test.com?secret=JBSWY3DPEHPK3PXP&issuer=Service%20Desk',
+      },
+    })
+  }),
+  http.post(`${API}/auth/2fa/enable`, async ({ request }) => {
+    const body = await request.json()
+    if (body?.code !== '123456') {
+      return HttpResponse.json({ success: false, message: 'Invalid 2FA code', code: 'INVALID_2FA' }, { status: 401 })
+    }
+    return HttpResponse.json({ success: true, data: { enabled: true } })
+  }),
+  http.post(`${API}/auth/2fa/disable`, async ({ request }) => {
+    const body = await request.json()
+    if (body?.code !== '123456') {
+      return HttpResponse.json({ success: false, message: 'Invalid 2FA code', code: 'INVALID_2FA' }, { status: 401 })
+    }
+    return HttpResponse.json({ success: true, data: { enabled: false } })
+  }),
+
   // ── Tickets mutations ──
   http.put(`${API}/tickets/:id/status`, ({ params }) => {
     return HttpResponse.json({ success: true, data: { id: Number(params.id), status: 'resolved' } })
@@ -651,6 +679,7 @@ export const handlers = [
         { key: 'new_ticket_form', enabled: true, description: 'New ticket form', rollout_percent: 100 },
         { key: 'kanban_view', enabled: false, description: 'Kanban view', rollout_percent: 40 },
         { key: 'ticket_history', enabled: true, description: 'Ticket history tab', rollout_percent: 100 },
+        { key: 'two_fa', enabled: true, description: '2FA/TOTP for admins', rollout_percent: 100 },
         {
           key: 'dark_theme',
           enabled: true,

@@ -23,12 +23,36 @@ import {
 import { getRbacMatrix } from '../rbac.js'
 import { getEmailTemplatePreview } from '../notify.js'
 import { setRateLimitOverrides } from '../limits.js'
+import { isFeatureEnabled, invalidateFeatureFlagCache } from '../feature-flags.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const projectRoot = path.resolve(__dirname, '..', '..', '..')
 
 const router = Router()
 router.use(authenticateToken, requireRole('admin'))
+// require2FA: при включённом флаге two_fa admin/super_admin обязаны иметь настроенный TOTP.
+// GET/PUT /features пропускаем — иначе админ не сможет увидеть флаг и включить 2FA.
+router.use(async (req, res, next) => {
+  try {
+    if (req.path === '/features') return next()
+    const flagOn = await isFeatureEnabled('two_fa')
+    if (!flagOn) return next()
+    if (req.user?.role === 'admin' || req.user?.role === 'super_admin') {
+      const totp = await prisma.user_totp.findUnique({ where: { user_id: req.user.userId } })
+      if (!totp?.enabled) {
+        return res.status(403).json({
+          success: false,
+          code: '2FA_REQUIRED',
+          message: 'Two-factor authentication must be enabled for admin access',
+        })
+      }
+    }
+    next()
+  } catch (err) {
+    logger.error('require2FA middleware error:', err)
+    next()
+  }
+})
 router.use(auditLogMiddleware)
 
 const ALLOWED_SETTINGS = [
@@ -390,6 +414,7 @@ router.put('/features', async (req, res) => {
     }
     await saveSchedules(schedules)
     await invalidateCache('cache:*')
+    invalidateFeatureFlagCache()
     res.json({ success: true, data: { updated: true } })
   } catch (err) {
     logger.error('Features update error:', err)

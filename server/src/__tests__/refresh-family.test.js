@@ -11,6 +11,12 @@ const prismaMock = {
   employees: {
     findFirst: vi.fn(),
   },
+  user_totp: {
+    findUnique: vi.fn().mockResolvedValue(null),
+  },
+  feature_flags: {
+    findMany: vi.fn().mockResolvedValue([]),
+  },
 }
 
 vi.mock('../middleware.js', () => ({

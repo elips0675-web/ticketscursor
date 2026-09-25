@@ -1,27 +1,27 @@
 {
-  "generated": "2026-09-25T06:50:04.679Z",
+  "generated": "2026-09-25T07:12:57.201Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 67,
-    "suites": 161,
-    "tests": 606,
+    "files": 68,
+    "suites": 163,
+    "tests": 613,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 68,
-    "suites": 370,
-    "tests": 907,
+    "files": 69,
+    "suites": 372,
+    "tests": 921,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 135,
-    "suites": 531,
-    "tests": 1513,
+    "files": 137,
+    "suites": 535,
+    "tests": 1534,
     "all_passing": true
   },
   "e2e": {
@@ -129,15 +129,15 @@
       "tests": 13
     },
     {
+      "file": "src/test/Login.expanded.test.tsx",
+      "tests": 13
+    },
+    {
       "file": "src/test/SSO.test.tsx",
       "tests": 13
     },
     {
       "file": "src/test/AdminLayout.test.tsx",
-      "tests": 11
-    },
-    {
-      "file": "src/test/Login.expanded.test.tsx",
       "tests": 11
     },
     {
@@ -250,6 +250,10 @@
     },
     {
       "file": "src/test/PwaInstallPrompt.test.tsx",
+      "tests": 5
+    },
+    {
+      "file": "src/test/TwoFactorSection.test.tsx",
       "tests": 5
     },
     {
@@ -393,6 +397,10 @@
     {
       "file": "server/src/services/__tests__/csat.service.test.js",
       "tests": 15
+    },
+    {
+      "file": "server/src/__tests__/auth-2fa.test.js",
+      "tests": 14
     },
     {
       "file": "server/src/__tests__/search-sync.expanded.test.js",

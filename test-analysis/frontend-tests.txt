@@ -1,9 +1,9 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 67 файлов / 161 suite / 606 тестов (все PASS, vitest --reporter=json от 25.09.2026)
+Реальный результат: 68 файлов / 163 suite / 613 тестов (все PASS, vitest --reporter=json от 25.09.2026)
 
-===== ФАЙЛЫ (67 шт, все реальные, сгенерировано скриптом) =====
+===== ФАЙЛЫ (68 шт, все реальные, сгенерировано скриптом) =====
 
 # Файлы | Тестов | Описание
 src/test/TicketDetail.test.tsx | 31 | TicketDetail: сообщения, статус, приоритет, назначение, RBAC, virtual scroll, XSS, История (timeline, PDF, флаг off)
@@ -27,7 +27,7 @@ src/test/SSO.test.tsx | 13 | SSO: вход через SSO, обмен кода, 
 src/test/AdminLayout.test.tsx | 11 | AdminLayout: sidebar, navigation, RBAC
 src/test/ChatDetail.test.tsx | 14 | ChatDetail: messages, send, loading, empty, virtual scroll, delete, typing
 src/test/TicketContext.optimistic.test.tsx | 14 | ticket-context: optimistic-мутации (status/priority/assign/tags/bulk/messages/createTicket, rollback, 401)
-src/test/Login.expanded.test.tsx | 11 | Login: form, submit, validation, error, loading, SSO button
+src/test/Login.expanded.test.tsx | 13 | Login: form, submit, validation, error, loading, SSO button, 2fa-verify (step 2fa → код → token)
 src/test/News.expanded.test.tsx | 11 | News: search, filter, create, CSV, empty, pagination
 src/test/CommandPalette.test.tsx | 10 | CommandPalette: open/close, поиск, навигация, Enter
 src/test/Search.expanded.test.tsx | 9 | Search: query, results, sections, empty, keyboard
@@ -56,6 +56,7 @@ src/test/Dashboard.test.tsx | 5 | Dashboard: renders, stat cards
 src/test/i18n.parity.test.ts | 5 | i18n parity: симметричность ключей ru.json ↔ en.json, дубли ключей, непустые namespace
 src/test/ProtectedRoute.test.tsx | 5 | ProtectedRoute: redirect, adminOnly, loading
 src/test/PwaInstallPrompt.test.tsx | 5 | PwaInstallPrompt: beforeinstallprompt, install, dismiss
+src/test/TwoFactorSection.test.tsx | 5 | TwoFactorSection: 2FA в Profile (флаг two_fa), setup/QR-секрет, enable/disable, status
 src/test/Calendar.test.tsx | 4 | Calendar: renders, events
 src/test/Employees.test.tsx | 4 | Employees: renders, list
 src/test/Files.test.tsx | 4 | Files: renders, folders
@@ -76,6 +77,6 @@ src/test/Tickets.test.tsx | 1 | Tickets: renders
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона `npx vitest run --config vitest.client.config.ts --reporter=json` (vitest-*.json).
-Фактический запуск: 67 файлов / 606 тестов / 606 passed / 0 failures.
-Coverage (24.09.2026, Этап 61, не перемеривалось в Этап 62): stmts 72.07 / branches 63.3 / functions 64.48 / lines 74.29 (пороги: stmts 70 / branches 61 / functions 62 / lines 72).
-Данные актуальны на: 25.09.2026 (Этап 62 — +5: История тикета в TicketDetail: timeline, PDF, пустая история, флаг off)
+Фактический запуск: 68 файлов / 613 тестов / 613 passed / 0 failures.
+Coverage (25.09.2026, Этап 63, перемерено --coverage): stmts 72.79 / branches 63.83 / functions 65.02 / lines 75.13 (пороги: stmts 70 / branches 61 / functions 63 / lines 73).
+Данные актуальны на: 25.09.2026 (Этап 63 — 2FA: +7 — TwoFactorSection (5), Login 2fa-verify (2))

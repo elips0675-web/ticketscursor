@@ -759,6 +759,22 @@
 - **Инвентарь (правило 10)**: клиент **67 файлов / 161 suite / 606**, сервер **68 файлов / 370 suite / 907** = **135 файлов / 1513 тестов, 0 failures**
 - **Проверки (25.09)**: сервер vitest 907 ✅, клиент vitest 606 ✅, `npm run lint` 0 errors ✅, `npm run type-check` ✅, `npm run build` ✅, doc-sync ✅
 
+### Этап 63 (подфича 1 из 3) — 2FA/TOTP для admin/super_admin (25.09.2026)
+- **totp.js**: `server/src/auth/totp.js` — `generateTotpSecret` (otplib v12: `generateSecret`), `verifyTotp` (`verifySync({secret, token, epochTolerance})`, окно 30с), `totpUri` (v12: `generateURI({issuer, label, secret})` → `otpauth://totp/...`)
+- **feature-flags.js**: `server/src/feature-flags.js` — `isFeatureEnabled(key)` с in-memory кэшем 30с (`findMany select key/enabled`), `invalidateFeatureFlagCache()`
+- **Миграции + Prisma**: `server/migrations/20260925_user_totp.js` (таблица `user_totp`: user_id PK/FK, secret, enabled, updated_at), `20260925_two_fa_flag.js` (флаг `two_fa`, дефолт **off**, включение через админку); модель `user_totp` в `schema.prisma`, клиент перегенерирован
+- **auth.js — двухшаговый логин**: при `user_totp.enabled` POST /login → `{success, step:'2fa', tempToken}` (JWT `purpose:'2fa'`, 5 мин); обычный вход дополнен `require2faSetup` (admin + флаг on); `POST /2fa/verify` (tempToken + код → JWT + employee, неверный/подделанный → 401 INVALID_2FA / 401); `GET /2fa/status` (enabled/secretSet/required = admin && флаг); `POST /2fa/setup|enable|disable` под `requireRole('admin')`
+- **require2FA middleware** (`server/src/routes/admin.js`): после `authenticateToken, requireRole('admin')` на `/api/admin/*`, исключение `req.path === '/features'` (админ должен мочь включить 2FA); флаг on + `enabled=false` → **403 2FA_REQUIRED**; в `PUT /features` — инвалидация кэша флага
+- **🐞 найден и исправлен**: `requireRole('admin','super_admin')` вычисляет max требуемого уровня (`Math.max(...roles)`) → фактически требовал super_admin; 2FA-роуты переведены на `requireRole('admin')` (уровень 3 → admin + super_admin)
+- **QR-код**: пакет `qrcode` (+`@types/qrcode`); `src/components/TwoFactorSection.tsx` — `QRCode.toDataURL(otpauthUrl)` с try/catch (fallback — текст секрета)
+- **UI**: `TwoFactorSection.tsx` (секция в Profile под `useFeature('two_fa')`): setup (secret + QR + otpauth URI), enable (ввод кода), disable, status; `Profile.tsx` рендерит секцию; `Login.tsx` — при `step='2fa'` экран ввода кода → `/2fa/verify`
+- **i18n**: ключи `auth.twoFactor*` / `profile.twoFactor*` в ru.json + en.json (симметрично, i18n-parity прошёл); MSW: флаг `two_fa` + 2FA-хендлеры (`src/mocks/handlers.ts`)
+- **Тесты сервер**: `server/src/__tests__/auth-2fa.test.js` — **14 тестов**, изоляция от общего seed: `vi.mock('../feature-flags.js')` (per-file, НЕ задевает api.test.js) + **выделенный админ id 600** (свой employee/user_totp/refresh_tokens, cleanup в afterAll) → устранена гонка login с api.test.js (user 1 больше не трогается); покрыты: login step=2fa + tempToken, /2fa/verify (верный/неверный/подделанный tempToken), setup (2 вызова → секрет меняется) + agent 403, enable/disable, status required, require2FA (403 при флаге без TOTP / off → проход / pass / /features не блокируется); `refresh-family.test.js` — +`user_totp`/`feature_flags` в prismaMock
+- **Тесты клиент**: `TwoFactorSection.test.tsx` (5), `Login.expanded.test.tsx` 11→13 (+2fa-verify) = **+7**
+- **Инвентарь (правило 10)**: клиент **68 файлов / 163 suite / 613**, сервер **69 файлов / 372 suite / 921** = **137 файлов / 1534 теста, 0 failures**
+- **Пороги coverage (правило 16, факт − 2п.п.)**: клиент 70/61/62/72 → **70/61/63/73** (факт 72.79/63.83/65.02/75.13), сервер 71/65/72/72 → **72/66/73/73** (факт 74.61/68.69/75.77/75.55)
+- **Проверки (25.09)**: сервер vitest 921 ✅, клиент vitest 613 ✅, `npm run lint` 0 errors / 57 warnings ✅, `npm run type-check` ✅, `npm run build` ✅, `node check-console.mjs` 17/17 ALL OK ✅, doc-sync ✅
+
 ### Мелкие правки (23.09.2026)
 - **bcrypt cost 10 → 12** (спека AI_AGENT_SPEC.md, п. 10 «Безопасность»): `routes/auth.js` (register + reset), `auth/oidc.js`, `routes/admin.js` (default-пароль), `routes/public-portal.js` (токен портала). Старые хеши продолжают работать (cost зашит в хеш). Сервер vitest 53/808 ✅, check-console 17/17 ✅
 
@@ -775,7 +791,7 @@
 
 ### План 62–67 (детали — в «Что-доделать.txt»)
 - ~~Этап 62 — Timeline тикета (GET /tickets/:id/history + вкладка «История» + PDF), CSV-импорт сотрудников (UI), retention-политика (audit/files/chat)~~ ✅ **закрыт 25.09** — см. Этап 62 выше (1513 тестов, все гейты зелёные); retention — вне скоупа
-- Этап 63 — qwen P0 #1–3: 2FA/TOTP (otplib + QR), активные сессии (view/revoke, таблица sessions), notification preferences per user
+- Этап 63 — qwen P0 #1–3: 2FA/TOTP (otplib + QR) ✅ **подфича 1 закрыта 25.09** (2FA: 1534 теста, все гейты зелёные, коммит запушен) — см. Этап 63 выше; **активные сессии (view/revoke, таблица sessions)** и **notification preferences per user** — ⏳ в работе (подфичи 2–3)
 - Этап 64 — qwen P0 #4–6: watchers/subscribers тикета, ticket relations (parent/child, blocked-by, duplicates), merge тикетов (перенос сообщений/вложений)
 - Этап 65 — qwen P1 (часть 1): версионирование Wiki (revisions + diff + rollback), edit сообщений чата (edited_at + WS message:edited), reply-to/threads, SLA business hours UI (форма + таймзоны вместо хардкода sla.service.js)
 - Этап 66 — qwen P1 (часть 2) + финальный аудит: custom roles, org chart (manager_id), ticket forms (JSON-схема), scheduled reports, GDPR export; coverage-пуш: client branches 65+, server 70+, E2E ~80 (~1780 тестов)

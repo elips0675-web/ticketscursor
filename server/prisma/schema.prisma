@@ -39,6 +39,7 @@ model employees {
   wiki_articles       wiki_articles[]
   news_posts          news_posts[]
   push_subscriptions  push_subscriptions?
+  user_totp           user_totp?
   refresh_tokens      refresh_tokens[]
   notifications       notifications[]
   poll_votes          poll_votes[]
@@ -321,6 +322,17 @@ model refresh_tokens {
   user employees? @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([family_id])
+}
+
+model user_totp {
+  id         Int       @id @default(autoincrement())
+  user_id    Int       @unique
+  secret     String    @db.VarChar(200)
+  enabled    Boolean   @default(false)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  user employees? @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model notifications {

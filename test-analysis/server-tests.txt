@@ -1,9 +1,9 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 68 файлов / 370 suite / 907 тестов (все PASS, vitest --reporter=json от 25.09.2026)
+Реальный результат: 69 файлов / 372 suite / 921 тестов (все PASS, vitest --reporter=json от 25.09.2026)
 
-===== ФАЙЛЫ (68 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (69 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 server/src/api.test.js | 183 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk, feature rollout)
@@ -29,6 +29,7 @@ server/src/__tests__/webhooks.route.test.js | 14 | Webhooks routes: подпис
 server/src/services/__tests__/recurrence.service.test.js | 14 | Recurrence: создание, апдейт, soft-delete, list, processRecurrences
 server/src/services/__tests__/time.service.test.js | 14 | Time tracking: start, stop, manual entry, total calculation
 server/src/services/__tests__/webhooks.service.test.js | 14 | Webhooks: подписки, доставка, retry
+server/src/__tests__/auth-2fa.test.js | 14 | 2FA/TOTP: login step=2fa + tempToken, /2fa/verify (верный/неверный/подделанный tempToken), setup/enable/disable, status required, require2FA middleware (403 при флаге on без TOTP, off → проход, pass, /features не блокируется); изоляция — vi.mock флага + выделенный админ id 600
 server/src/services/__tests__/tickets.service.mentions.test.js | 13 | Mentions: @name parsing, notification creation, dedup
 server/src/__tests__/oidc.test.js | 13 | SSO OIDC: discovery, authorization URL (state/nonce), callback + auto-provisioning, disabled, no email, initOIDCClient null/error
 server/src/__tests__/limiters.test.js | 12 | Rate limiters: auth 10/мин, api 100/мин, admin 30/мин
@@ -77,6 +78,6 @@ server/src/__tests__/time-timer.race.test.js | 2 |
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона `cd server && npx vitest run --reporter=json` (vitest-*.json).
-Фактический запуск: 68 файлов / 907 тестов / 907 passed / 0 failures.
-Coverage (24.09.2026, Этап 61, не перемеривалось в Этап 62): stmts 73.72 / branches 67.14 / functions 74.36 / lines 74.77 (пороги: stmts 71 / branches 65 / functions 72 / lines 72).
-Данные актуальны на: 25.09.2026 (Этап 62 — +10: ticket-history, admin-import)
+Фактический запуск: 69 файлов / 921 тестов / 921 passed / 0 failures.
+Coverage (25.09.2026, Этап 63, перемерено --coverage): stmts 74.61 / branches 68.69 / functions 75.77 / lines 75.55 (пороги: stmts 72 / branches 66 / functions 73 / lines 73).
+Данные актуальны на: 25.09.2026 (Этап 63 — 2FA: +14 auth-2fa.test.js (изоляция: vi.mock флага + выделенный админ id 600), фикс гонки login с api.test.js)

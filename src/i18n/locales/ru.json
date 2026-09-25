@@ -61,6 +61,10 @@
     "fillFields": "Введите email и пароль",
     "loginError": "Ошибка входа",
     "connectionError": "Ошибка соединения с сервером",
+    "twoFactorTitle": "Введите код из приложения-аутентификатора",
+    "twoFactorCode": "Код 2FA",
+    "twoFactorVerify": "Проверить код",
+    "twoFactorError": "Неверный код 2FA",
     "registerSubtitle": "Создайте учётную запись",
     "registering": "Регистрация...",
     "registerBtn": "Зарегистрироваться",
@@ -407,7 +411,16 @@
     "notificationSound": "Звук уведомлений",
     "privacy": "Приватность",
     "showOnlineStatus": "Показывать онлайн-статус",
-    "department": "Отдел"
+    "department": "Отдел",
+    "twoFactor": "Двухфакторная аутентификация (2FA)",
+    "twoFactorDesc": "Одноразовые коды TOTP из приложения-аутентификатора (Google Authenticator и др.)",
+    "twoFactorOn": "2FA включена",
+    "setup2fa": "Настроить 2FA",
+    "enable2fa": "Включить 2FA",
+    "disable2fa": "Отключить 2FA",
+    "twoFactorSecret": "Или введите секрет вручную:",
+    "twoFactorEnabled": "2FA включена",
+    "twoFactorDisabled": "2FA отключена"
   },
   "admin": {
     "title": "Админ-панель",

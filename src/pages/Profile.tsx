@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { User, Mail, Phone, Briefcase, MapPin, FileText, Settings, Camera, Save, Monitor, Loader2 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
+import TwoFactorSection from '@/components/TwoFactorSection'
 import type { EmployeeProfile } from '@/types'
 import { API_URL } from '@/lib/api'
 
@@ -290,35 +291,38 @@ export default function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="settings" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">{t('profile.settings')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  {t('profile.notifications')}
-                </p>
-                <label className="flex items-center justify-between py-2">
-                  <span className="text-sm font-medium">{t('profile.notificationSound')}</span>
-                  <input type="checkbox" defaultChecked className="rounded" />
-                </label>
-                <label className="flex items-center justify-between py-2">
-                  <span className="text-sm font-medium">{t('profile.pushNotifications')}</span>
-                  <input type="checkbox" defaultChecked className="rounded" />
-                </label>
-              </div>
-              <div className="space-y-3 pt-3 border-t">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  {t('profile.privacy')}
-                </p>
-                <label className="flex items-center justify-between py-2">
-                  <span className="text-sm font-medium">{t('profile.showOnlineStatus')}</span>
-                  <input type="checkbox" defaultChecked className="rounded" />
-                </label>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <TwoFactorSection />
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">{t('profile.settings')}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    {t('profile.notifications')}
+                  </p>
+                  <label className="flex items-center justify-between py-2">
+                    <span className="text-sm font-medium">{t('profile.notificationSound')}</span>
+                    <input type="checkbox" defaultChecked className="rounded" />
+                  </label>
+                  <label className="flex items-center justify-between py-2">
+                    <span className="text-sm font-medium">{t('profile.pushNotifications')}</span>
+                    <input type="checkbox" defaultChecked className="rounded" />
+                  </label>
+                </div>
+                <div className="space-y-3 pt-3 border-t">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    {t('profile.privacy')}
+                  </p>
+                  <label className="flex items-center justify-between py-2">
+                    <span className="text-sm font-medium">{t('profile.showOnlineStatus')}</span>
+                    <input type="checkbox" defaultChecked className="rounded" />
+                  </label>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

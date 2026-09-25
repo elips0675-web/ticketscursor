@@ -22,6 +22,10 @@ export default function Login() {
     resolver: zodResolver(loginSchema),
   })
   const [ldapLoading, setLdapLoading] = useState(false)
+  const [twoFaTempToken, setTwoFaTempToken] = useState<string | null>(null)
+  const [twoFaCode, setTwoFaCode] = useState('')
+  const [twoFaError, setTwoFaError] = useState('')
+  const [twoFaLoading, setTwoFaLoading] = useState(false)
 
   useEffect(() => {
     if (localStorage.getItem('token')) navigate('/', { replace: true })
@@ -39,11 +43,41 @@ export default function Login() {
         setError('root', { message: json.message || t('auth.loginError') })
         return
       }
+      if (json.step === '2fa') {
+        setTwoFaTempToken(json.tempToken)
+        setTwoFaError('')
+        return
+      }
       const d = json.data || json
       login(d.token, d.employee)
       navigate('/', { replace: true })
     } catch {
       setError('root', { message: t('auth.connectionError') })
+    }
+  }
+
+  const submitTwoFa = async () => {
+    if (!twoFaTempToken) return
+    setTwoFaLoading(true)
+    setTwoFaError('')
+    try {
+      const res = await fetch('/api/auth/2fa/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tempToken: twoFaTempToken, code: twoFaCode }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setTwoFaError(json.message || t('auth.twoFactorError'))
+        return
+      }
+      const d = json.data || json
+      login(d.token, d.employee)
+      navigate('/', { replace: true })
+    } catch {
+      setTwoFaError(t('auth.connectionError'))
+    } finally {
+      setTwoFaLoading(false)
     }
   }
 
@@ -98,47 +132,83 @@ export default function Login() {
           <CardDescription>{t('auth.loginSubtitle')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {errors.root && (
-              <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium" role="alert">
-                {errors.root.message}
+          {twoFaTempToken ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                submitTwoFa()
+              }}
+              className="space-y-4"
+            >
+              <div className="p-3 rounded-lg bg-primary/10 text-primary text-sm font-medium">
+                {t('auth.twoFactorTitle')}
               </div>
-            )}
-            <div className="space-y-1.5">
-              <label htmlFor="login-email" className="text-sm font-bold">
-                {t('auth.email')}
-              </label>
-              <Input
-                id="login-email"
-                type="email"
-                autoComplete="email"
-                {...register('email')}
-                placeholder="ivan@company.ru"
-              />
-              {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
-            </div>
-            <div className="space-y-1.5">
-              <label htmlFor="login-password" className="text-sm font-bold">
-                {t('auth.password')}
-              </label>
-              <Input
-                id="login-password"
-                type="password"
-                autoComplete="current-password"
-                {...register('password')}
-                placeholder={t('auth.passwordPlaceholder')}
-              />
-              {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
-            </div>
-            <div className="flex justify-end">
-              <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-                {t('auth.forgotPassword')}
-              </Link>
-            </div>
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? t('auth.loggingIn') : t('auth.login')}
-            </Button>
-          </form>
+              {twoFaError && (
+                <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium" role="alert">
+                  {twoFaError}
+                </div>
+              )}
+              <div className="space-y-1.5">
+                <label htmlFor="login-2fa-code" className="text-sm font-bold">
+                  {t('auth.twoFactorCode')}
+                </label>
+                <Input
+                  id="login-2fa-code"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={twoFaCode}
+                  onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder="000000"
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={twoFaLoading || twoFaCode.length < 6}>
+                {twoFaLoading ? t('auth.loggingIn') : t('auth.twoFactorVerify')}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {errors.root && (
+                <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium" role="alert">
+                  {errors.root.message}
+                </div>
+              )}
+              <div className="space-y-1.5">
+                <label htmlFor="login-email" className="text-sm font-bold">
+                  {t('auth.email')}
+                </label>
+                <Input
+                  id="login-email"
+                  type="email"
+                  autoComplete="email"
+                  {...register('email')}
+                  placeholder="ivan@company.ru"
+                />
+                {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="login-password" className="text-sm font-bold">
+                  {t('auth.password')}
+                </label>
+                <Input
+                  id="login-password"
+                  type="password"
+                  autoComplete="current-password"
+                  {...register('password')}
+                  placeholder={t('auth.passwordPlaceholder')}
+                />
+                {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+              </div>
+              <div className="flex justify-end">
+                <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                  {t('auth.forgotPassword')}
+                </Link>
+              </div>
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? t('auth.loggingIn') : t('auth.login')}
+              </Button>
+            </form>
+          )}
 
           <div className="mt-4 pt-4 border-t space-y-2">
             <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider text-center mb-2">
