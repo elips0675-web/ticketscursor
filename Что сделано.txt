@@ -748,6 +748,17 @@
 - **Инвентарь (правило 10)**: клиент **67 файлов / 160 suite / 601**, сервер **66 файлов / 366 suite / 897** = **133 файла / 1498 тестов, 0 failures**; E2E 19 spec / 61 тест; `*-tests.txt` обновлены
 - **Проверки (24.09)**: сервер vitest 897 ✅, клиент vitest 601 ✅, `npm run lint` 0 errors / 57 warnings ✅, `npm run type-check` ✅, `npm run build` ✅, `node check-console.mjs` 17/17 ALL OK ✅, E2E 61/61 ✅
 
+### Этап 62 — Timeline + импорт (25.09.2026)
+- **GET /api/tickets/:id/history**: `server/src/routes/tickets.js` — события из `audit_log` (entity_type='ticket'): id/user/action/details/created_at, details парсится JSON, `take: 200`, сортировка `created_at desc, id desc` (вторичный ключ при равных мс-таймстемпах); 400 (невалидный id) / 404 (нет тикета, soft-deleted) / 403 (чужой requester через canAccessTicket) / 500; отдаёт `{success: true, data}`
+- **Вкладка «История» в TicketDetail**: `src/pages/TicketDetail.tsx` — кастомный таб-бар «Сообщения»/«История» (state, default messages), условный рендер при `useFeature('ticket_history')`; у «Сообщений» счётчик не выводится (регресс `getByText('Сообщения (150)')` цел)
+- **TicketHistoryCard**: `src/components/TicketHistoryCard.tsx` — timeline (иконка+метка по action: created/status_changed/priority_changed/assigned + details), «Экспорт PDF» (jsPDF dynamic import, паттерн Tickets.tsx), loading/empty
+- **Флаг `ticket_history`** (правило «фича = флаг»): миграция `server/migrations/20260925_ticket_history_flag.js` (idempotent, insert enabled=false, дефолт **off**, включение только через админку); в dev-БД строка добавлена напрямую (knex_migrations там не ведётся — БД из SQL-дампов); MSW: флаг enabled:true + хендлер `GET /tickets/:id/history` (4 события)
+- **i18n**: 19 ключей `tickets.history*` / `messagesTab` / `historyTab` в ru.json + en.json (симметрично, i18n-parity прошёл)
+- **CSV-импорт сотрудников — тест роута**: `server/src/__tests__/admin-import.test.js` (5 тестов: создание из rows + email-транслитерация, дубликат → skipped, пустое ФИО → skipped, пустой массив → 400, не-админ → 403); эндпоинт (`admin.js:446`) и UI (`AdminUsers.tsx`) существовали
+- **Тест history с учётом кэша и fire-and-forget**: `/tickets` смонтирован с `cacheMiddleware(120)` — GET-ответы кэшируются 120с; `logAudit` в роутах не авается → события дописываются в БД асинхронно. Тест `ticket-history.test.js` сбрасывает кэш (`invalidateCache('cache:*:/api/tickets*')`) перед каждым запросом и опрашивает до сходимости → детерминированно 5/5 даже под параллельным прогоном
+- **Инвентарь (правило 10)**: клиент **67 файлов / 161 suite / 606**, сервер **68 файлов / 370 suite / 907** = **135 файлов / 1513 тестов, 0 failures**
+- **Проверки (25.09)**: сервер vitest 907 ✅, клиент vitest 606 ✅, `npm run lint` 0 errors ✅, `npm run type-check` ✅, `npm run build` ✅, doc-sync ✅
+
 ### Мелкие правки (23.09.2026)
 - **bcrypt cost 10 → 12** (спека AI_AGENT_SPEC.md, п. 10 «Безопасность»): `routes/auth.js` (register + reset), `auth/oidc.js`, `routes/admin.js` (default-пароль), `routes/public-portal.js` (токен портала). Старые хеши продолжают работать (cost зашит в хеш). Сервер vitest 53/808 ✅, check-console 17/17 ✅
 
@@ -763,7 +774,7 @@
 - ~~Этап 61 — Покрытие ядра + Security-hardening~~ ✅ **закрыт 24.09** — см. Этап 61 выше (1498 тестов, E2E 61/61, все гейты зелёные)
 
 ### План 62–67 (детали — в «Что-доделать.txt»)
-- Этап 62 — Timeline тикета (GET /tickets/:id/history + вкладка «История» + PDF), CSV-импорт сотрудников (UI), retention-политика (audit/files/chat)
+- ~~Этап 62 — Timeline тикета (GET /tickets/:id/history + вкладка «История» + PDF), CSV-импорт сотрудников (UI), retention-политика (audit/files/chat)~~ ✅ **закрыт 25.09** — см. Этап 62 выше (1513 тестов, все гейты зелёные); retention — вне скоупа
 - Этап 63 — qwen P0 #1–3: 2FA/TOTP (otplib + QR), активные сессии (view/revoke, таблица sessions), notification preferences per user
 - Этап 64 — qwen P0 #4–6: watchers/subscribers тикета, ticket relations (parent/child, blocked-by, duplicates), merge тикетов (перенос сообщений/вложений)
 - Этап 65 — qwen P1 (часть 1): версионирование Wiki (revisions + diff + rollback), edit сообщений чата (edited_at + WS message:edited), reply-to/threads, SLA business hours UI (форма + таймзоны вместо хардкода sla.service.js)

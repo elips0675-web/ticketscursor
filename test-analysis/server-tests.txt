@@ -1,9 +1,9 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 66 файлов / 366 suite / 897 тестов (все PASS, vitest --reporter=json от 24.09.2026)
+Реальный результат: 68 файлов / 370 suite / 907 тестов (все PASS, vitest --reporter=json от 25.09.2026)
 
-===== ФАЙЛЫ (66 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (68 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 server/src/api.test.js | 183 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk, feature rollout)
@@ -57,6 +57,8 @@ server/src/__tests__/email.test.js | 5 | Email: SMTP transport, template renderi
 server/src/__tests__/files.route.test.js | 5 | Files routes: GET list, POST upload, DELETE
 server/src/middleware/__tests__/metrics.test.js | 5 | Metrics: request counting, response time
 server/src/services/__tests__/employees.service.test.js | 5 | Employees: list, search, role filter
+server/src/__tests__/ticket-history.test.js | 5 | Timeline: GET /tickets/:id/history — события (created/status/priority/assign) + details, RBAC, пустая история, 404/400; учёт cacheMiddleware(120) + fire-and-forget logAudit (сброс кэша + опрос до сходимости)
+server/src/__tests__/admin-import.test.js | 5 | CSV-импорт сотрудников: создание из rows + email-транслитерация, дубликат → skipped, пустое ФИО → skipped, пустой массив → 400, не-админ → 403
 server/src/services/__tests__/news.service.test.js | 5 | News: CRUD, publish, archive
 server/src/__tests__/idempotency.test.js | 6 | Idempotency: dual-store Redis+in-memory, TTL 24ч, повторный запрос из-под res.json, fallback при недоступном Redis, коллизия ключа (не 409, первый ответ)
 server/src/__tests__/refresh-family.test.js | 5 | Refresh-token family: family_id, reuse-detection (отзыв семьи), revoke-all, повторный /refresh
@@ -75,6 +77,6 @@ server/src/__tests__/time-timer.race.test.js | 2 |
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона `cd server && npx vitest run --reporter=json` (vitest-*.json).
-Фактический запуск: 66 файлов / 897 тестов / 897 passed / 0 failures.
-Coverage (24.09.2026, Этап 61): stmts 73.72 / branches 67.14 / functions 74.36 / lines 74.77 (пороги: stmts 71 / branches 65 / functions 72 / lines 72).
-Данные актуальны на: 24.09.2026 (Этап 61 — +7: query-guards, notify-failure)
+Фактический запуск: 68 файлов / 907 тестов / 907 passed / 0 failures.
+Coverage (24.09.2026, Этап 61, не перемеривалось в Этап 62): stmts 73.72 / branches 67.14 / functions 74.36 / lines 74.77 (пороги: stmts 71 / branches 65 / functions 72 / lines 72).
+Данные актуальны на: 25.09.2026 (Этап 62 — +10: ticket-history, admin-import)

@@ -380,7 +380,7 @@ docker compose up -d --build
 - **Тесты**: сервер 523/523 (35 файлов), клиент 485 passing (102 файла), Vite build ✅
 - **Документация**: CHANGELOG, AGENTS, context, PLAYBOOK, README обновлены
 
-### Этапы 32–61 — см. «Что сделано.txt» (детали каждого этапа — там)
-- Актуальный инвентарь на 24.09.2026: клиент **67 файлов / 601 тест**, сервер **66 файлов / 897 тестов** = **1498 тестов, 0 failures**, E2E 19 spec'ов / 61 тест
-- **Этап 61 — Покрытие ядра + E2E-реализм + Security-hardening**: ticket-context optimistic (14 тестов), XSS-инвариант (MarkdownEditor 8→11, TicketDetail 24→26), notify-регресс (201 при упавших уведомлениях), query-guards (клампинг limit + N+1 spy), E2E-реализм (search/export-download/upload); пороги coverage подняты (клиент 70/61/62/72, сервер 71/65/72/72 — факт − 2п.п.)
+### Этапы 32–62 — см. «Что сделано.txt» (детали каждого этапа — там)
+- Актуальный инвентарь на 25.09.2026: клиент **67 файлов / 606 тестов**, сервер **68 файлов / 907 тестов** = **1513 тестов, 0 failures**, E2E 19 spec'ов / 61 тест
+- **Этап 62 — Timeline + импорт**: `GET /tickets/:id/history` (audit_log, action+details JSON, take 200, sort created_at+id desc) + вкладка «История» в TicketDetail (`TicketHistoryCard`, табы «Сообщения»/«История», PDF через jsPDF) под флагом `ticket_history` (дефолт **off**, миграция `20260925_ticket_history_flag.js`); CSV-импорт сотрудников — тест роута `admin-import.test.js` (5 сценариев); тест history учитывает `cacheMiddleware(120)` + fire-and-forget logAudit (сброс кэша + опрос до сходимости); пороги coverage без изменений (факт − 2п.п.)
 - Машинно-читаемый: `test-analysis/test-inventory.json` (регенерация: `node scripts/regenerate-test-inventory.js`)

@@ -1,27 +1,27 @@
 {
-  "generated": "2026-09-24T14:14:10.863Z",
+  "generated": "2026-09-25T06:50:04.679Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
     "files": 67,
-    "suites": 160,
-    "tests": 601,
+    "suites": 161,
+    "tests": 606,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 66,
-    "suites": 366,
-    "tests": 897,
+    "files": 68,
+    "suites": 370,
+    "tests": 907,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 133,
-    "suites": 526,
-    "tests": 1498,
+    "files": 135,
+    "suites": 531,
+    "tests": 1513,
     "all_passing": true
   },
   "e2e": {
@@ -53,12 +53,12 @@
   },
   "frontend_files": [
     {
-      "file": "src/test/Files.expanded.test.tsx",
-      "tests": 27
+      "file": "src/test/TicketDetail.test.tsx",
+      "tests": 31
     },
     {
-      "file": "src/test/TicketDetail.test.tsx",
-      "tests": 26
+      "file": "src/test/Files.expanded.test.tsx",
+      "tests": 27
     },
     {
       "file": "src/test/Tickets.expanded.test.tsx",
@@ -507,6 +507,10 @@
       "tests": 6
     },
     {
+      "file": "server/src/__tests__/admin-import.test.js",
+      "tests": 5
+    },
+    {
       "file": "server/src/__tests__/contract.api.test.js",
       "tests": 5
     },
@@ -524,6 +528,10 @@
     },
     {
       "file": "server/src/__tests__/refresh-family.test.js",
+      "tests": 5
+    },
+    {
+      "file": "server/src/__tests__/ticket-history.test.js",
       "tests": 5
     },
     {

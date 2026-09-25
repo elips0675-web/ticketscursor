@@ -13,59 +13,80 @@ import TicketDetail from '@/pages/TicketDetail'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) =>
-      ({
-        'tickets.notFound': 'Тикет не найден',
-        'tickets.backToTickets': 'К списку тикетов',
-        'tickets.open': 'Открыт',
-        'tickets.inProgress': 'В работе',
-        'tickets.resolved': 'Решён',
-        'tickets.closed': 'Закрыт',
-        'tickets.low': 'Низкий',
-        'tickets.medium': 'Средний',
-        'tickets.high': 'Высокий',
-        'tickets.critical': 'Критичный',
-        'tickets.messages': 'Сообщения',
-        'tickets.messagePlaceholder': 'Напишите сообщение...',
-        'tickets.sendBtn': 'Отправить',
-        'tickets.management': 'Управление',
-        'tickets.status': 'Статус',
-        'tickets.priority': 'Приоритет',
-        'tickets.assignedTo': 'Исполнитель',
-        'tickets.selectEmployee': 'Выберите сотрудника...',
-        'tickets.details': 'Детали',
-        'tickets.createdBy': 'Создал',
-        'tickets.createdAt': 'Создан {date}',
-        'tickets.assignedNotify': 'Назначен',
-        'tickets.updatedAt': 'Обновлён',
-        'tickets.systemInfo': 'Системная информация',
-        'tickets.computerName': 'Имя ПК',
-        'tickets.userAccount': 'Учётная запись',
-        'tickets.internalNote': 'Внутренняя заметка',
-        'tickets.internalBadge': 'Внутр.',
-        'tickets.newMessageFrom': 'Новое сообщение от {name}',
-        'tickets.tags': 'Теги',
-        'tickets.tagsInputPlaceholder': 'добавить теги через запятую',
-        'tickets.saveTags': 'Сохранить',
-        'tickets.timeCard': 'Время',
-        'tickets.timeTotal': 'Всего затрачено: {time}',
-        'tickets.timeMinutes': 'Минуты',
-        'tickets.timeDescription': 'Описание',
-        'tickets.timeAdd': 'Добавить время',
-        'tickets.timeAddButton': 'Добавить',
-        'tickets.timeStart': 'Старт',
-        'tickets.timeStop': 'Стоп',
-        'tickets.timeEmpty': 'Записей нет',
-        'tickets.timeEntryMinutes': '{minutes} мин',
-        'tickets.assistant': 'Ассистент (Wiki)',
-        'tickets.assistantAsk': 'Спросить ассистента',
-        'tickets.assistantLoading': 'Ассистент думает...',
-        'tickets.assistantAnswer': 'Рекомендация',
-        'tickets.assistantSources': 'Источники',
-        'tickets.assistantInsert': 'Вставить в сообщение',
-        'tickets.assistantError': 'Не удалось получить ответ ассистента',
-        'common.back': 'Назад',
-      })[key] || key,
+    t: (key: string, params?: Record<string, unknown>) => {
+      const s =
+        {
+          'tickets.notFound': 'Тикет не найден',
+          'tickets.backToTickets': 'К списку тикетов',
+          'tickets.open': 'Открыт',
+          'tickets.inProgress': 'В работе',
+          'tickets.resolved': 'Решён',
+          'tickets.closed': 'Закрыт',
+          'tickets.low': 'Низкий',
+          'tickets.medium': 'Средний',
+          'tickets.high': 'Высокий',
+          'tickets.critical': 'Критичный',
+          'tickets.messages': 'Сообщения',
+          'tickets.messagePlaceholder': 'Напишите сообщение...',
+          'tickets.sendBtn': 'Отправить',
+          'tickets.management': 'Управление',
+          'tickets.status': 'Статус',
+          'tickets.priority': 'Приоритет',
+          'tickets.assignedTo': 'Исполнитель',
+          'tickets.selectEmployee': 'Выберите сотрудника...',
+          'tickets.details': 'Детали',
+          'tickets.createdBy': 'Создал',
+          'tickets.createdAt': 'Создан {date}',
+          'tickets.assignedNotify': 'Назначен',
+          'tickets.updatedAt': 'Обновлён',
+          'tickets.systemInfo': 'Системная информация',
+          'tickets.computerName': 'Имя ПК',
+          'tickets.userAccount': 'Учётная запись',
+          'tickets.internalNote': 'Внутренняя заметка',
+          'tickets.internalBadge': 'Внутр.',
+          'tickets.newMessageFrom': 'Новое сообщение от {name}',
+          'tickets.tags': 'Теги',
+          'tickets.tagsInputPlaceholder': 'добавить теги через запятую',
+          'tickets.saveTags': 'Сохранить',
+          'tickets.timeCard': 'Время',
+          'tickets.timeTotal': 'Всего затрачено: {time}',
+          'tickets.timeMinutes': 'Минуты',
+          'tickets.timeDescription': 'Описание',
+          'tickets.timeAdd': 'Добавить время',
+          'tickets.timeAddButton': 'Добавить',
+          'tickets.timeStart': 'Старт',
+          'tickets.timeStop': 'Стоп',
+          'tickets.timeEmpty': 'Записей нет',
+          'tickets.timeEntryMinutes': '{minutes} мин',
+          'tickets.assistant': 'Ассистент (Wiki)',
+          'tickets.assistantAsk': 'Спросить ассистента',
+          'tickets.assistantLoading': 'Ассистент думает...',
+          'tickets.assistantAnswer': 'Рекомендация',
+          'tickets.assistantSources': 'Источники',
+          'tickets.assistantInsert': 'Вставить в сообщение',
+          'tickets.assistantError': 'Не удалось получить ответ ассистента',
+          'tickets.messagesTab': 'Сообщения',
+          'tickets.historyTab': 'История',
+          'tickets.history': 'История изменений',
+          'tickets.historyEmpty': 'Изменения не зафиксированы',
+          'tickets.historyExportPdf': 'Экспорт PDF',
+          'tickets.historyCreated': 'Тикет создан',
+          'tickets.historyStatusChanged': 'Статус изменён',
+          'tickets.historyPriorityChanged': 'Приоритет изменён',
+          'tickets.historyAssigned': 'Назначен исполнитель',
+          'tickets.historyUnassigned': 'Исполнитель снят',
+          'tickets.historyTagsUpdated': 'Теги обновлены',
+          'tickets.historyUnknown': 'Действие: {{action}}',
+          'tickets.historyStatusDetail': 'Статус: {{from}} → {{to}}',
+          'tickets.historyPriorityDetail': 'Приоритет: {{from}} → {{to}}',
+          'common.back': 'Назад',
+        }[key] || key
+      return params
+        ? s.replace(/\{\{(-)?\s*(\w+)\s*\}\}/g, (_m: string, _dash: string | undefined, k: string) =>
+            String(params[k] ?? ''),
+          )
+        : s
+    },
   }),
 }))
 
@@ -135,7 +156,7 @@ describe('TicketDetail', () => {
   it('shows messages section', async () => {
     render(<TicketDetail />, { wrapper: TestProviders })
     await screen.findByText('Проблема с доступом')
-    expect(screen.getByText(/Сообщения/)).toBeInTheDocument()
+    expect(screen.getAllByText(/Сообщения/).length).toBeGreaterThan(0)
     expect(screen.getByText('Описание проблемы')).toBeInTheDocument()
   })
 
@@ -425,5 +446,79 @@ describe('TicketDetail XSS-инвариант и virtual scroll (Этап 61)', 
     await screen.findByText('Проблема с доступом')
     expect(screen.getByText('Сообщения (150)')).toBeInTheDocument()
     expect(screen.getByText('Сообщение 1')).toBeInTheDocument()
+  })
+})
+
+describe('TicketDetail История (Этап 62)', () => {
+  const API = 'http://localhost:4000/api'
+
+  it('показывает timeline: события, детали изменений и кнопку PDF', async () => {
+    const user = userEvent.setup()
+    render(<TicketDetail />, { wrapper: TestProviders })
+    await screen.findByText('Проблема с доступом')
+
+    await user.click(screen.getByRole('tab', { name: 'История' }))
+    await waitFor(() => {
+      expect(screen.getByText('Тикет создан')).toBeInTheDocument()
+    })
+    expect(screen.getByText('Статус изменён')).toBeInTheDocument()
+    expect(screen.getByText('Статус: Открыт → В работе')).toBeInTheDocument()
+    expect(screen.getByText('Приоритет изменён')).toBeInTheDocument()
+    expect(screen.getByText('Приоритет: Средний → Высокий')).toBeInTheDocument()
+    expect(screen.getByText('Назначен исполнитель')).toBeInTheDocument()
+    expect(screen.getByText('Экспорт PDF')).toBeInTheDocument()
+  })
+
+  it('возврат к сообщениям через вкладку «Сообщения»', async () => {
+    const user = userEvent.setup()
+    render(<TicketDetail />, { wrapper: TestProviders })
+    await screen.findByText('Проблема с доступом')
+
+    await user.click(screen.getByRole('tab', { name: 'История' }))
+    await waitFor(() => {
+      expect(screen.getByText('Тикет создан')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('tab', { name: 'Сообщения' }))
+    await waitFor(() => {
+      expect(screen.getByText('Описание проблемы')).toBeInTheDocument()
+    })
+  })
+
+  it('пустая история → «Изменения не зафиксированы»', async () => {
+    const user = userEvent.setup()
+    server.use(http.get(`${API}/tickets/:id/history`, () => HttpResponse.json({ success: true, data: [] })))
+    render(<TicketDetail />, { wrapper: TestProviders })
+    await screen.findByText('Проблема с доступом')
+
+    await user.click(screen.getByRole('tab', { name: 'История' }))
+    await waitFor(() => {
+      expect(screen.getByText('Изменения не зафиксированы')).toBeInTheDocument()
+    })
+  })
+
+  it('флаг ticket_history выключен → вкладки «История» нет', async () => {
+    server.use(
+      http.get(`${API}/admin/features`, () =>
+        HttpResponse.json({ success: true, data: [{ key: 'ticket_history', enabled: false }] }),
+      ),
+    )
+    render(<TicketDetail />, { wrapper: TestProviders })
+    await screen.findByText('Проблема с доступом')
+
+    await waitFor(() => {
+      expect(screen.queryByRole('tab', { name: 'История' })).not.toBeInTheDocument()
+    })
+    expect(screen.getByText('Описание проблемы')).toBeInTheDocument()
+  })
+
+  it('экспорт истории в PDF не падает (jsPDF dynamic import)', async () => {
+    const user = userEvent.setup()
+    render(<TicketDetail />, { wrapper: TestProviders })
+    await screen.findByText('Проблема с доступом')
+
+    await user.click(screen.getByRole('tab', { name: 'История' }))
+    const pdfBtn = await screen.findByText('Экспорт PDF')
+    await user.click(pdfBtn)
   })
 })

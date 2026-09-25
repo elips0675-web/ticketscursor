@@ -14,7 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator'
 import { useTickets } from '@/context/ticket-context'
 import { useAuth } from '@/context/AuthContext'
+import { useFeature } from '@/hooks/useFeature'
 import TimeTrackingCard from '@/components/TimeTrackingCard'
+import TicketHistoryCard from '@/components/TicketHistoryCard'
 import { formatDate, formatTime } from '@/lib/utils'
 import {
   ArrowLeft,
@@ -140,6 +142,8 @@ export default function TicketDetail() {
   const [isInternal, setIsInternal] = useState(false)
   const [attachments, setAttachments] = useState<{ url: string; name: string }[]>([])
   const [uploading, setUploading] = useState(false)
+  const [activeTab, setActiveTab] = useState<'messages' | 'history'>('messages')
+  const historyEnabled = useFeature('ticket_history')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -444,31 +448,105 @@ export default function TicketDetail() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-primary" />
-                {t('tickets.messages')} ({ticket.messages.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div ref={scrollRef} className="max-h-[400px] overflow-y-auto mb-4 pr-2">
-                <div style={{ height: `${virtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
-                  {virtualizer.getVirtualItems().length > 0
-                    ? virtualizer.getVirtualItems().map((virtualItem) => {
-                        const msg = ticket.messages[virtualItem.index]
-                        return (
-                          <div
-                            key={msg.id}
-                            style={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              width: '100%',
-                              transform: `translateY(${virtualItem.start}px)`,
-                            }}
-                            className={`flex gap-3 ${msg.isInternal ? 'opacity-70' : ''}`}
-                          >
+          {historyEnabled && (
+            <div role="tablist" aria-label={t('tickets.historyTab')} className="flex gap-1 border-b border-border">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'messages'}
+                onClick={() => setActiveTab('messages')}
+                className={`px-3 py-2 text-sm font-medium rounded-t-md transition-colors ${
+                  activeTab === 'messages'
+                    ? 'text-primary border-b-2 border-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {t('tickets.messagesTab')}
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'history'}
+                onClick={() => setActiveTab('history')}
+                className={`px-3 py-2 text-sm font-medium rounded-t-md transition-colors ${
+                  activeTab === 'history'
+                    ? 'text-primary border-b-2 border-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {t('tickets.historyTab')}
+              </button>
+            </div>
+          )}
+
+          {historyEnabled && activeTab === 'history' ? (
+            <TicketHistoryCard ticketId={ticket.id} />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-primary" />
+                  {t('tickets.messages')} ({ticket.messages.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div ref={scrollRef} className="max-h-[400px] overflow-y-auto mb-4 pr-2">
+                  <div style={{ height: `${virtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
+                    {virtualizer.getVirtualItems().length > 0
+                      ? virtualizer.getVirtualItems().map((virtualItem) => {
+                          const msg = ticket.messages[virtualItem.index]
+                          return (
+                            <div
+                              key={msg.id}
+                              style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                transform: `translateY(${virtualItem.start}px)`,
+                              }}
+                              className={`flex gap-3 ${msg.isInternal ? 'opacity-70' : ''}`}
+                            >
+                              <Avatar className="w-8 h-8 mt-0.5">
+                                <AvatarFallback className="text-[10px]">{msg.senderName[0]}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-sm font-bold">{msg.senderName}</span>
+                                  <span className="text-[10px] text-muted-foreground">{formatTime(msg.createdAt)}</span>
+                                  {msg.isInternal && (
+                                    <Badge variant="secondary" className="text-[8px] gap-0.5">
+                                      <Lock className="w-2.5 h-2.5" /> {t('tickets.internalBadge')}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-foreground/80">{renderMentionedText(msg.text)}</p>
+                                {msg.attachments && msg.attachments.length > 0 && (
+                                  <div className="flex flex-wrap gap-2 mt-2">
+                                    {msg.attachments.map((att: Record<string, unknown>, i: number) => (
+                                      <a
+                                        key={i}
+                                        href={att.url as string}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-1.5 text-xs bg-muted rounded-md px-2 py-1 hover:bg-muted/80 transition-colors"
+                                      >
+                                        {(att.url as string).match(/\.(png|jpg|jpeg|gif|svg)$/i) ? (
+                                          <ImageIcon className="w-3 h-3" />
+                                        ) : (
+                                          <FileText className="w-3 h-3" />
+                                        )}
+                                        {(att.name as string) || (att.url as string).split('/').pop()}
+                                      </a>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })
+                      : ticket.messages.map((msg) => (
+                          <div key={msg.id} className={`flex gap-3 mb-4 ${msg.isInternal ? 'opacity-70' : ''}`}>
                             <Avatar className="w-8 h-8 mt-0.5">
                               <AvatarFallback className="text-[10px]">{msg.senderName[0]}</AvatarFallback>
                             </Avatar>
@@ -488,186 +566,147 @@ export default function TicketDetail() {
                                   {msg.attachments.map((att: Record<string, unknown>, i: number) => (
                                     <a
                                       key={i}
-                                      href={att.url as string}
+                                      href={att.url}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="flex items-center gap-1.5 text-xs bg-muted rounded-md px-2 py-1 hover:bg-muted/80 transition-colors"
                                     >
-                                      {(att.url as string).match(/\.(png|jpg|jpeg|gif|svg)$/i) ? (
+                                      {att.url.match(/\.(png|jpg|jpeg|gif|svg)$/i) ? (
                                         <ImageIcon className="w-3 h-3" />
                                       ) : (
                                         <FileText className="w-3 h-3" />
                                       )}
-                                      {(att.name as string) || (att.url as string).split('/').pop()}
+                                      {att.name || att.url.split('/').pop()}
                                     </a>
                                   ))}
                                 </div>
                               )}
                             </div>
                           </div>
-                        )
-                      })
-                    : ticket.messages.map((msg) => (
-                        <div key={msg.id} className={`flex gap-3 mb-4 ${msg.isInternal ? 'opacity-70' : ''}`}>
-                          <Avatar className="w-8 h-8 mt-0.5">
-                            <AvatarFallback className="text-[10px]">{msg.senderName[0]}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-sm font-bold">{msg.senderName}</span>
-                              <span className="text-[10px] text-muted-foreground">{formatTime(msg.createdAt)}</span>
-                              {msg.isInternal && (
-                                <Badge variant="secondary" className="text-[8px] gap-0.5">
-                                  <Lock className="w-2.5 h-2.5" /> {t('tickets.internalBadge')}
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-sm text-foreground/80">{renderMentionedText(msg.text)}</p>
-                            {msg.attachments && msg.attachments.length > 0 && (
-                              <div className="flex flex-wrap gap-2 mt-2">
-                                {msg.attachments.map((att: Record<string, unknown>, i: number) => (
-                                  <a
-                                    key={i}
-                                    href={att.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 text-xs bg-muted rounded-md px-2 py-1 hover:bg-muted/80 transition-colors"
-                                  >
-                                    {att.url.match(/\.(png|jpg|jpeg|gif|svg)$/i) ? (
-                                      <ImageIcon className="w-3 h-3" />
-                                    ) : (
-                                      <FileText className="w-3 h-3" />
-                                    )}
-                                    {att.name || att.url.split('/').pop()}
-                                  </a>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                  </div>
+                  <div ref={messagesEndRef} />
                 </div>
-                <div ref={messagesEndRef} />
-              </div>
 
-              <Separator className="my-3" />
-              <div className="space-y-2 relative">
-                <div className="flex items-center justify-end">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 text-xs gap-1"
-                    onClick={() => setMdPreview(!mdPreview)}
-                  >
-                    {mdPreview ? '✏️' : '👁️'}
-                    {mdPreview ? 'Редактировать' : 'Просмотр'}
-                  </Button>
-                </div>
-                {mdPreview ? (
-                  <div
-                    className="min-h-[80px] rounded-md border border-input bg-muted/30 px-3 py-2 text-sm prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{
-                      __html: messageText
-                        .replace(/&/g, '&amp;')
-                        .replace(/</g, '&lt;')
-                        .replace(/>/g, '&gt;')
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                        .replace(/`(.*?)`/g, '<code>$1</code>')
-                        .replace(/^- (.+)$/gm, '<li>$1</li>')
-                        .replace(/\n/g, '<br/>'),
-                    }}
-                  />
-                ) : (
-                  <Textarea
-                    ref={textareaRef}
-                    value={messageText}
-                    onChange={handleMessageTextChange}
-                    onKeyDown={handleMessageKeyDown}
-                    placeholder={t('tickets.messagePlaceholder')}
-                    className="min-h-[80px]"
-                    id="ticket-message"
-                  />
-                )}
-                {showMentions && filteredMentions.length > 0 && (
-                  <div
-                    className="absolute z-50 w-64 max-h-48 overflow-y-auto rounded-md border bg-background shadow-md"
-                    data-testid="mention-menu"
-                  >
-                    {filteredMentions.map((emp, idx) => (
-                      <button
-                        key={emp.id}
-                        type="button"
-                        onMouseDown={(e) => {
-                          e.preventDefault()
-                          acceptMention(emp.name)
-                        }}
-                        className={`flex items-center gap-2 w-full px-3 py-2 text-left text-sm hover:bg-muted ${idx === mentionIndex ? 'bg-muted' : ''}`}
-                      >
-                        <Avatar className="w-5 h-5">
-                          <AvatarFallback className="text-[8px]">{emp.name[0]}</AvatarFallback>
-                        </Avatar>
-                        <span className="truncate">{emp.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {attachments.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {attachments.map((att, i) => (
-                      <div key={i} className="flex items-center gap-1.5 text-xs bg-muted rounded-md px-2 py-1">
-                        {att.url.match(/\.(png|jpg|jpeg|gif|svg)$/i) ? (
-                          <ImageIcon className="w-3 h-3" />
-                        ) : (
-                          <FileText className="w-3 h-3" />
-                        )}
-                        {att.name}
-                        <button
-                          onClick={() => setAttachments((prev) => prev.filter((_, j) => j !== i))}
-                          className="text-muted-foreground hover:text-foreground ml-1"
-                        >
-                          &times;
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <label
-                      htmlFor="ticket-internal"
-                      className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer"
-                    >
-                      <input
-                        id="ticket-internal"
-                        type="checkbox"
-                        checked={isInternal}
-                        onChange={(e) => setIsInternal(e.target.checked)}
-                        className="rounded"
-                      />
-                      <Lock className="w-3 h-3" />
-                      {t('tickets.internalNote')}
-                    </label>
-                    <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} />
+                <Separator className="my-3" />
+                <div className="space-y-2 relative">
+                  <div className="flex items-center justify-end">
                     <Button
+                      type="button"
                       variant="ghost"
                       size="sm"
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading}
+                      className="h-6 text-xs gap-1"
+                      onClick={() => setMdPreview(!mdPreview)}
                     >
-                      {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+                      {mdPreview ? '✏️' : '👁️'}
+                      {mdPreview ? 'Редактировать' : 'Просмотр'}
                     </Button>
                   </div>
-                  <Button size="sm" onClick={handleSend} disabled={!messageText.trim() && attachments.length === 0}>
-                    <Send className="w-4 h-4 mr-1.5" />
-                    {t('tickets.sendBtn')}
-                  </Button>
+                  {mdPreview ? (
+                    <div
+                      className="min-h-[80px] rounded-md border border-input bg-muted/30 px-3 py-2 text-sm prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{
+                        __html: messageText
+                          .replace(/&/g, '&amp;')
+                          .replace(/</g, '&lt;')
+                          .replace(/>/g, '&gt;')
+                          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                          .replace(/`(.*?)`/g, '<code>$1</code>')
+                          .replace(/^- (.+)$/gm, '<li>$1</li>')
+                          .replace(/\n/g, '<br/>'),
+                      }}
+                    />
+                  ) : (
+                    <Textarea
+                      ref={textareaRef}
+                      value={messageText}
+                      onChange={handleMessageTextChange}
+                      onKeyDown={handleMessageKeyDown}
+                      placeholder={t('tickets.messagePlaceholder')}
+                      className="min-h-[80px]"
+                      id="ticket-message"
+                    />
+                  )}
+                  {showMentions && filteredMentions.length > 0 && (
+                    <div
+                      className="absolute z-50 w-64 max-h-48 overflow-y-auto rounded-md border bg-background shadow-md"
+                      data-testid="mention-menu"
+                    >
+                      {filteredMentions.map((emp, idx) => (
+                        <button
+                          key={emp.id}
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault()
+                            acceptMention(emp.name)
+                          }}
+                          className={`flex items-center gap-2 w-full px-3 py-2 text-left text-sm hover:bg-muted ${idx === mentionIndex ? 'bg-muted' : ''}`}
+                        >
+                          <Avatar className="w-5 h-5">
+                            <AvatarFallback className="text-[8px]">{emp.name[0]}</AvatarFallback>
+                          </Avatar>
+                          <span className="truncate">{emp.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {attachments.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {attachments.map((att, i) => (
+                        <div key={i} className="flex items-center gap-1.5 text-xs bg-muted rounded-md px-2 py-1">
+                          {att.url.match(/\.(png|jpg|jpeg|gif|svg)$/i) ? (
+                            <ImageIcon className="w-3 h-3" />
+                          ) : (
+                            <FileText className="w-3 h-3" />
+                          )}
+                          {att.name}
+                          <button
+                            onClick={() => setAttachments((prev) => prev.filter((_, j) => j !== i))}
+                            className="text-muted-foreground hover:text-foreground ml-1"
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <label
+                        htmlFor="ticket-internal"
+                        className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer"
+                      >
+                        <input
+                          id="ticket-internal"
+                          type="checkbox"
+                          checked={isInternal}
+                          onChange={(e) => setIsInternal(e.target.checked)}
+                          className="rounded"
+                        />
+                        <Lock className="w-3 h-3" />
+                        {t('tickets.internalNote')}
+                      </label>
+                      <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                      >
+                        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                    <Button size="sm" onClick={handleSend} disabled={!messageText.trim() && attachments.length === 0}>
+                      <Send className="w-4 h-4 mr-1.5" />
+                      {t('tickets.sendBtn')}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className="space-y-4">

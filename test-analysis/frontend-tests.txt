@@ -1,14 +1,14 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 67 файлов / 160 suite / 601 тестов (все PASS, vitest --reporter=json от 24.09.2026)
+Реальный результат: 67 файлов / 161 suite / 606 тестов (все PASS, vitest --reporter=json от 25.09.2026)
 
 ===== ФАЙЛЫ (67 шт, все реальные, сгенерировано скриптом) =====
 
 # Файлы | Тестов | Описание
+src/test/TicketDetail.test.tsx | 31 | TicketDetail: сообщения, статус, приоритет, назначение, RBAC, virtual scroll, XSS, История (timeline, PDF, флаг off)
 src/test/Files.expanded.test.tsx | 27 | Files: empty, search, view, category, upload, drag-drop, keyboard, folder switch, list view, drag overlay
 src/test/Tickets.expanded.test.tsx | 25 | Tickets: фильтры, пагинация, пустое, socket, export CSV/PDF
-src/test/TicketDetail.test.tsx | 26 | TicketDetail: сообщения, статус, приоритет, назначение, RBAC, virtual scroll, XSS
 src/test/Admin.expanded.test.tsx | 22 | Admin: stat cards, employee list, role stats, SLA stats, refresh, API errors
 src/test/useFeature.test.tsx | 21 | useFeature: enabled, disabled, rollout buckets, user bucket 50%, loading
 src/test/Calendar.expanded.test.tsx | 18 | Calendar: клик по дню, события, create/edit/delete, RBAC, CSV export, навигация
@@ -76,6 +76,6 @@ src/test/Tickets.test.tsx | 1 | Tickets: renders
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона `npx vitest run --config vitest.client.config.ts --reporter=json` (vitest-*.json).
-Фактический запуск: 67 файлов / 601 тестов / 601 passed / 0 failures.
-Coverage (24.09.2026, Этап 61): stmts 72.07 / branches 63.3 / functions 64.48 / lines 74.29 (пороги: stmts 70 / branches 61 / functions 62 / lines 72).
-Данные актуальны на: 24.09.2026 (Этап 61 — ticket-context optimistic, XSS-инвариант, virtual scroll, WS delete/typing, E2E-реализм)
+Фактический запуск: 67 файлов / 606 тестов / 606 passed / 0 failures.
+Coverage (24.09.2026, Этап 61, не перемеривалось в Этап 62): stmts 72.07 / branches 63.3 / functions 64.48 / lines 74.29 (пороги: stmts 70 / branches 61 / functions 62 / lines 72).
+Данные актуальны на: 25.09.2026 (Этап 62 — +5: История тикета в TicketDetail: timeline, PDF, пустая история, флаг off)

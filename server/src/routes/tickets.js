@@ -142,6 +142,41 @@ router.get('/:id', async (req, res) => {
   }
 })
 
+// История изменений тикета (Этап 62): события из audit_log — кто/когда менял статус/приоритет/исполнителя.
+router.get('/:id/history', async (req, res) => {
+  try {
+    const ticketId = Number(req.params.id)
+    if (!Number.isFinite(ticketId)) return res.status(400).json({ success: false, message: 'Invalid ticket ID' })
+    const ticket = await prisma.tickets.findFirst({
+      where: { id: ticketId, deleted_at: null },
+      select: { id: true, created_by: true, assigned_to: true },
+    })
+    if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    if (!canAccessTicket(ticket, req.user)) return res.status(403).json({ success: false, message: 'Forbidden' })
+    const events = await prisma.audit_log.findMany({
+      where: { entity_type: 'ticket', entity_id: ticketId },
+      select: { id: true, user_id: true, user_name: true, action: true, details: true, created_at: true },
+      orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+      take: 200,
+    })
+    const rows = events.map((e) => {
+      let parsed = null
+      if (e.details) {
+        try {
+          parsed = JSON.parse(e.details)
+        } catch {
+          parsed = null
+        }
+      }
+      return { ...e, details: parsed }
+    })
+    res.json({ success: true, data: rows })
+  } catch (err) {
+    logger.error('Ticket history error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch ticket history' })
+  }
+})
+
 router.post('/', idempotent, createTicketValidation, async (req, res) => {
   const { title, description, priority, category, tags } = req.body
   try {

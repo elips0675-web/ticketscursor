@@ -119,6 +119,46 @@ export const handlers = [
     })
   }),
 
+  http.get(`${API}/tickets/:id/history`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: [
+        {
+          id: 11,
+          user_id: 2,
+          user_name: 'Иван Иванов',
+          action: 'created',
+          details: { title: 'Проблема с доступом', dueAt: null },
+          created_at: '2026-07-01T10:00:00Z',
+        },
+        {
+          id: 12,
+          user_id: 2,
+          user_name: 'Иван Иванов',
+          action: 'status_changed',
+          details: { from: 'open', to: 'in_progress' },
+          created_at: '2026-07-01T11:00:00Z',
+        },
+        {
+          id: 13,
+          user_id: 1,
+          user_name: 'Admin',
+          action: 'priority_changed',
+          details: { from: 'medium', to: 'high' },
+          created_at: '2026-07-01T12:00:00Z',
+        },
+        {
+          id: 14,
+          user_id: 1,
+          user_name: 'Admin',
+          action: 'assigned',
+          details: { assignedTo: 2, assignedName: 'Иван Иванов' },
+          created_at: '2026-07-01T13:00:00Z',
+        },
+      ],
+    })
+  }),
+
   // ── Ticket time tracking ──
   http.get(`${API}/tickets/:id/time`, () => {
     return HttpResponse.json({
@@ -610,6 +650,7 @@ export const handlers = [
       data: [
         { key: 'new_ticket_form', enabled: true, description: 'New ticket form', rollout_percent: 100 },
         { key: 'kanban_view', enabled: false, description: 'Kanban view', rollout_percent: 40 },
+        { key: 'ticket_history', enabled: true, description: 'Ticket history tab', rollout_percent: 100 },
         {
           key: 'dark_theme',
           enabled: true,
