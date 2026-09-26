@@ -7,6 +7,9 @@ import {
   updateCalendarSchema, searchSchema, changePasswordSchema,
   idParamSchema,
   addTimeSchema,
+  addWatcherSchema,
+  addRelationSchema,
+  mergeTicketSchema,
 } from './schemas.js'
 
 export function validate(schema) {
@@ -61,6 +64,9 @@ export const updateCalendarValidation = validate(updateCalendarSchema)
 export const searchValidation = validateQuery(searchSchema)
 export const changePasswordValidation = validate(changePasswordSchema)
 export const addTimeValidation = validate(addTimeSchema)
+export const addWatcherValidation = validate(addWatcherSchema)
+export const addRelationValidation = validate(addRelationSchema)
+export const mergeTicketValidation = validate(mergeTicketSchema)
 
 export function validateParams(schema) {
   return (req, res, next) => {

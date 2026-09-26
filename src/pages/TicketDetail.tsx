@@ -17,6 +17,9 @@ import { useAuth } from '@/context/AuthContext'
 import { useFeature } from '@/hooks/useFeature'
 import TimeTrackingCard from '@/components/TimeTrackingCard'
 import TicketHistoryCard from '@/components/TicketHistoryCard'
+import TicketWatchersCard from '@/components/TicketWatchersCard'
+import TicketRelationsCard from '@/components/TicketRelationsCard'
+import TicketMergeDialog from '@/components/TicketMergeDialog'
 import { formatDate, formatTime } from '@/lib/utils'
 import {
   ArrowLeft,
@@ -144,6 +147,9 @@ export default function TicketDetail() {
   const [uploading, setUploading] = useState(false)
   const [activeTab, setActiveTab] = useState<'messages' | 'history'>('messages')
   const historyEnabled = useFeature('ticket_history')
+  const watchersEnabled = useFeature('ticket_watchers')
+  const relationsEnabled = useFeature('ticket_relations')
+  const mergeEnabled = useFeature('ticket_merge')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -871,6 +877,12 @@ export default function TicketDetail() {
           )}
 
           <TimeTrackingCard ticketId={ticket.id} />
+
+          {watchersEnabled && <TicketWatchersCard ticketId={ticket.id} />}
+
+          {relationsEnabled && <TicketRelationsCard ticketId={ticket.id} />}
+
+          {mergeEnabled && canManage && <TicketMergeDialog ticketId={ticket.id} />}
 
           <Card>
             <CardHeader>

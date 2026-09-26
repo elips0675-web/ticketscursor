@@ -117,3 +117,17 @@ export const addTimeSchema = z.object({
   description: z.string().trim().max(500, 'Description too long').optional().default(''),
   entryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Valid date required (YYYY-MM-DD)').optional(),
 })
+
+// Этап 64: watcher / relations / merge
+export const addWatcherSchema = z.object({
+  employeeId: z.number().int().positive(),
+})
+
+export const addRelationSchema = z.object({
+  relatedTicketId: z.number().int().positive(),
+  type: z.enum(['parent', 'child', 'blocked_by', 'duplicate', 'related']),
+})
+
+export const mergeTicketSchema = z.object({
+  targetTicketId: z.number().int().positive(),
+})

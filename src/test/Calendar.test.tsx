@@ -5,16 +5,17 @@ import Calendar from '@/pages/Calendar'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => ({
-      'calendar.title': 'Календарь',
-      'calendar.subtitle': 'Планирование событий и встреч',
-      'calendar.upcoming': 'Ближайшие',
-      'calendar.exportCSV': 'Экспорт CSV',
-      'calendar.clickDay': 'Нажмите на день, чтобы увидеть события',
-      'calendar.noEvents': 'Нет событий',
-      'calendar.eventBtn': 'Добавить событие',
-      'common.delete': 'Удалить',
-    })[key] || key,
+    t: (key: string) =>
+      ({
+        'calendar.title': 'Календарь',
+        'calendar.subtitle': 'Планирование событий и встреч',
+        'calendar.upcoming': 'Ближайшие',
+        'calendar.exportCSV': 'Экспорт CSV',
+        'calendar.clickDay': 'Нажмите на день, чтобы увидеть события',
+        'calendar.noEvents': 'Нет событий',
+        'calendar.eventBtn': 'Добавить событие',
+        'common.delete': 'Удалить',
+      })[key] || key,
   }),
 }))
 
@@ -35,9 +36,10 @@ describe('Calendar', () => {
     expect(screen.getByLabelText('Следующий месяц')).toBeInTheDocument()
   })
 
-  it('shows day headers', () => {
+  it('shows day headers', async () => {
     render(<Calendar />, { wrapper: AllTheProviders })
-    expect(screen.getByText('Пн')).toBeInTheDocument()
+    // Данные приходят из MSW асинхронно — ждём рендера сетки, иначе isLoading=true и заголовков нет
+    expect(await screen.findByText('Пн')).toBeInTheDocument()
     expect(screen.getByText('Пт')).toBeInTheDocument()
     expect(screen.getByText('Вс')).toBeInTheDocument()
   })

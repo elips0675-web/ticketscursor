@@ -1,10 +1,12 @@
-# Что доделать — актуальный статус (25.09.2026)
+# Что доделать — актуальный статус (26.09.2026)
 
-> Дата обновления: 25.09.2026
+> Дата обновления: 26.09.2026
 > Источники: Kimi (7.5/10 → **8/10**), DeepSeek (6.5/10 → **8.5/10**), Qwen (8.2/10 → **8.5/10**) — финальные вердикты в «Оценка kimi/дипсик/qwen.rtf» (23.09), Доделать.rtf (промты 1-6)
 > Доп. аудиты 24.09 + 25.09: «Тесты и функционал qwen.rtf», «Тесты и функционал дипсик.rtf» (полные тексты изучены **25.09**), «Тесты и функционал kimi.docx» → сведены в «Тесты и функционал общее.md» (+ .rtf, пересоздан 25.09 из md тем же составом) — см. раздел «Дополнения из аудитов 24.09» ниже, «Новое поверх плана (qwen+дипсик 24.09)» и §4/§14/§15 «Тесты и функционал общее.md» (бэклог документов/ops из полных текстов + Trivy-резолюция)
-> Фактическая проверка кодовой базы: 24.09.2026
-> Тесты (закоммичено 25.09, инвентарь из vitest-прогона): **70 файлов / 625 клиентских + 71 файл / 947 серверных = 1572 теста, 0 failures** — клиент coverage 73.48/64.19/65.78/75.79, сервер 75.03/69.15/76.51/76.05 (пороги 71/62/63/73 и 73/67/74/74 пройдены)
+> **Новая волна верификации 26.09**: «Тесты qwen.txt» и «Тесты дипсик.txt» перепроверены по живому коду — каждое утверждение сверено grep/glob/фактическим прогоном vitest. Итог: раздел «Верификация 26.09.2026» ниже; исправлены 4 ложных «✅» в «Тесты и функционал общее.md» и шапках обоих аудитов
+> Фактическая проверка кодовой базы: 26.09.2026
+> Тесты (фактический прогон 26.09): **клиент 73 файла / 646 тестов, 0 failures** (coverage 74.02/64.86/66.54/76.33, пороги 71/62/63/73 — буфер ~3 п.п.) + **сервер 74 файла / 980 тестов, 0 failures** (coverage 75.43/69.74/77.11/76.68, пороги 73/67/74/74 — факт − 2п.п.) = **1626 тестов, 0 failures**
+> Итог 26.09: сервер 980 passed / 0 failed (после закрытия Этапа 64), клиент 646 passed / 0 failed; E2E 19 spec'ов / 61 тест (Playwright, зелёный прогон 24.09) + check-console 17/17
 > E2E: 19 spec'ов / 61 тест (Playwright, зелёный прогон 24.09) + check-console 17/17
 
 ---
@@ -42,6 +44,8 @@
 | 57 | N+1 и индексы: race-фиксы (collision TOCTOU, startTimer P2002, outbox-guard), soft-delete + Race-тесты (4 файла / 14 тестов), клиент Csatisfaction 0%→**70.23%** lines → **62/520 + 53/808 = 1328 тестов, 0 failures** | ✅ 23.09 |
 | 58 | Админка (11 фич): Health-дашборд, Queue-монитор, RBAC-матрица UI, rate-limit override, schedule rollout, email-template preview, доработки AdminAudit/AdminSettings/AdminUsers → клиент 65/573 + сервер 54/832 = **1405** | ✅ **закрыт 24.09** — гейты пройдены (vitest 1405 + coverage, lint 0/56, type-check, build, playwright 57/57, check-console 17/17), коммит `32e3122` запушен |
 | 59 | Resilience — SLA/TZ-фикс (P0), refresh-token family (reuse-detection + revoke-all), secrets rotation (JWT new,old), idempotency вне Redis (dual-store), транзакции multi-step (bulk/assign/escalation), каскады FK (32, явные onDelete), trust proxy/XFF, oidc/background/trust-proxy/secrets/idempotency-тесты → клиент 65/573 + сервер 61/878 = **1451** | ✅ **закрыт 24.09** — гейты пройдены (vitest 1451, lint 0/57, type-check, build, check-console 17/17), коммит запушен |
+| 60-63 | Процесс (пороги/DoD/правила), покрытие ядра + E2E-реализм + security-hardening, Timeline + CSV-импорт, 2FA/TOTP, активные сессии, настройки уведомлений | ✅ 24–25.09 (детали в «Что сделано.txt») |
+| 64 | Watchers / relations / merge тикетов (qwen P0 #4–6) | ✅ закрыт 26.09 (1626 тестов, 0 failures; детали в «Что сделано.txt») |
 
 ---
 
@@ -298,20 +302,20 @@
 
 | # | Задача | Источник | Статус |
 |---|--------|----------|--------|
-| 1 | **Race-тесты** (сейчас ни одного `*.race.test.js`): `ticket-lock.race.test.js` (2 параллельных POST /:id/lock → 200 + 409), `ticket-status.race.test.js` (нет двойного resolved_at), `time-timer.race.test.js` (только один активный таймер), `outbox.delivery.test.js` (outbox → воркер → delivered; сбой → retry) | Дипсик P1, Qwen P1 | ⏳ |
-| 2 | **auth/oidc.test.js** — единственный сервис Этапа 34 без backend-теста (discovery fetch, authorization URL build, callback exchange, auto-provisioning, discovery 500, invalid code 400). Есть только клиентский SSO.test.tsx | Дипсик P1 | ⏳ |
-| 3 | **ticket-context.optimistic.test.tsx** — coverage 35%, критично: optimistic insert + rollback при 500, updateStatus rollback при 403, invalidateQueries(['tickets']) после мутации | Дипсик P1, Kimi P1, Qwen P1 | ⏳ |
-| 4 | **E2E-реализм** (дипсиковские `*-real.spec.ts` НЕ закрыты): `export-real` (waitForEvent('download') + непустой файл + BOM — сейчас `sla-autoassign-export.spec.ts` только проверяет наличие кнопок), `file-upload-real` (setInputFiles реальным файлом → в списке → скачать → содержимое — сейчас `file-upload.spec.ts` без setInputFiles), `search-real` (Ctrl+K → в результатах title из seed — сейчас `search.spec.ts` только «диалог открылся») | Дипсик P1 | ⏳ |
-| 5 | **i18n parity-тест** — все ключи ru.json есть в en.json и наоборот (защита от регресса после дублей auth, Этап 36) | Дипсик P1, Kimi P1 | ⏳ |
-| 6 | **XSS/injection-тесты** — XSS в title тикета, SQL в search (частично перекрыто idor/limiters, отдельного файла нет) | Kimi P1 | ⏳ |
+| 1 | **Race-тесты** (сейчас ни одного `*.race.test.js`): `ticket-lock.race.test.js` (2 параллельных POST /:id/lock → 200 + 409), `ticket-status.race.test.js` (нет двойного resolved_at), `time-timer.race.test.js` (только один активный таймер), `outbox.delivery.test.js` (outbox → воркер → delivered; сбой → retry) | Дипсик P1, Qwen P1 | ✅ Этап 57 (4 файла / 14 тестов) |
+| 2 | **auth/oidc.test.js** — единственный сервис Этапа 34 без backend-теста (discovery fetch, authorization URL build, callback exchange, auto-provisioning, discovery 500, invalid code 400). Есть только клиентский SSO.test.tsx | Дипсик P1 | ✅ Этап 59 (`server/src/auth/oidc.test.js`) |
+| 3 | **ticket-context.optimistic.test.tsx** — coverage 35%, критично: optimistic insert + rollback при 500, updateStatus rollback при 403, invalidateQueries(['tickets']) после мутации | Дипсик P1, Kimi P1, Qwen P1 | ✅ Этап 61 (`src/test/ticket-context.optimistic.test.tsx`, 14 тестов) |
+| 4 | **E2E-реализм** (дипсиковские `*-real.spec.ts` НЕ закрыты): `export-real` (waitForEvent('download') + непустой файл + BOM — сейчас `sla-autoassign-export.spec.ts` только проверяет наличие кнопок), `file-upload-real` (setInputFiles реальным файлом → в списке → скачать → содержимое — сейчас `file-upload.spec.ts` без setInputFiles), `search-real` (Ctrl+K → в результатах title из seed — сейчас `search.spec.ts` только «диалог открылся») | Дипсик P1 | ⚠️ **частично, верифицировано 26.09**: search — ✅ (реальные результаты из seed); export — ❌ `e2e/sla-autoassign-export.spec.ts:12` проверяет только `suggestedFilename()`, нет `waitForEvent('download')`/проверки непустого файла/BOM (BOM ставится в `src/pages/Tickets.tsx:182`); upload — ⚠️ `e2e/file-upload.spec.ts:20` загружает реальный файл, но скачивания нет. Доработка ⏳ |
+| 5 | **i18n parity-тест** — все ключи ru.json есть в en.json и наоборот (защита от регресса после дублей auth, Этап 36) | Дипсик P1, Kimi P1 | ✅ Этап 60 (`src/test/i18n.parity.test.ts`; нашёл пропуск `admin.emailTemplates`) |
+| 6 | **XSS/injection-тесты** — XSS в title тикета, SQL в search (частично перекрыто idor/limiters, отдельного файла нет) | Kimi P1 | ⚠️ **частично 26.09**: XSS-инвариант закрыт Этапом 61 (`src/test/TicketDetail.test.tsx:388` «XSS-инвариант и virtual scroll»), но **SQL-injection не покрыт вообще** — `server/src/__tests__/injection.test.js` не существует (glob → 0), grep `OR 1=1\|DROP TABLE\|union select` по тестам → 0 совпадений. Ложное «✅ Этап 61» исправлено в «Тесты и функционал общее.md» |
 
 ### P2 — желательно
 
 | # | Задача | Источник | Статус |
 |---|--------|----------|--------|
-| 1 | a11y-тесты (сейчас 0): aria-label на icon-only кнопках, htmlFor+id на формах, Tab-навигация по Sidebar, focus-trap в Radix Dialog | Дипсик P2, Qwen | ⏳ |
-| 2 | Background sub-тесты: SLA-эскалация по интервалам, cleanup >90 дней, DLQ >10 за час → email, stopImapPolling без запуска не падает | Дипсик P2 | ⏳ |
-| 3 | Virtual scroll в jsdom — при 1000 сообщениях DOM содержит < N элементов (или fallback работает) | Дипсик P2 | ⏳ |
+| 1 | a11y-тесты (сейчас 0): aria-label на icon-only кнопках, htmlFor+id на формах, Tab-навигация по Sidebar, focus-trap в Radix Dialog | Дипсик P2, Qwen | ⏳ **открыто, верифицировано 26.09**: `axe-core` нет в зависимостях (grep по `package.json` → 0 совпадений), файлов `a11y.*` нет; точечные aria-label есть лишь в `src/test/AdminLayout.test.tsx:92`, `AdminRbac.test.tsx:63,73`, `AdminIntegrations.test.tsx:177`. Icon-only кнопки без aria-label есть, напр. `src/pages/AdminCannedResponses.tsx:154` |
+| 2 | Background sub-тесты: SLA-эскалация по интервалам, cleanup >90 дней, DLQ >10 за час → email, stopImapPolling без запуска не падает | Дипсик P2 | ✅ Этап 59 (`background.sub.test.js`) |
+| 3 | Virtual scroll в jsdom — при 1000 сообщениях DOM содержит < N элементов (или fallback работает) | Дипсик P2 | ⚠️ **частично 26.09**: тест только в `src/test/TicketDetail.test.tsx:435` и на **150** сообщениях, причём проверяет «не падает», а не «DOM < N». В `ChatDetail` теста виртуализации нет (grep `useVirtualizer\|virtual` → 0 в ChatDetail-тестах). Доработка ⏳ |
 | 4 | Contract tests (zod-схема ответов API) + Migration idempotency (прогнать миграции дважды) | Дипсик P2 | ⏳ |
 
 ### Процесс / правила (Kimi, Qwen)
@@ -327,7 +331,80 @@
 
 ---
 
-## ПЛАН ДОРАБОТКИ ПО ЭТАПАМ (54–67)
+## Верификация 26.09.2026 — «Тесты qwen.txt» / «Тесты дипсик.txt» по живому коду
+
+> Метод: каждое утверждение из шапок обоих аудитов (от 23.09) проверено grep/glob по репозиторию и фактическим прогоном vitest, а не по описаниям. Ниже — только то, что изменилось после 23.09.
+
+### P0 — блокер инфраструктуры тестов (найден и исправлен 26.09)
+
+| # | Проблема | Доказательство | Статус |
+|---|----------|----------------|--------|
+| 1 | **Прогон серверных тестов не параллелизуется**: `server/vitest.global-setup.js:18` делает `DROP DATABASE` + `CREATE`, а `teardown():78` снова `DROP`. Два одновременных `vitest run` в `server/` уничтожают БД друг друга. Наблюдалось дважды: 15 файлов / 49 тестов упали с `The table 'refresh_tokens' does not exist`, затем прогон умер **посреди миграций** с `alter table 'notifications' add constraint ... - Unknown database 'servicedesk_test'` | `server/vitest.global-setup.js:4,18,23,78` | ✅ **исправлено 26.09**: имя БД вынесено в переменную `process.env.TEST_DB_NAME \|\| 'servicedesk_test'` (дефолт не менялся → CI не затронут, `ci.yml:39,62` продолжает использовать `servicedesk_test`). Изолированный прогон `TEST_DB_NAME=servicedesk_test_a` прошёл полностью |
+
+### Закрыто по коду (было «⏳» в шапках 23.09)
+
+| Пункт аудита | Доказательство (файл:строка) |
+|--------------|---------------------------|
+| Race-тесты (lock/status/timer/outbox) | 4 файла `*.race.test.js` + `outbox.delivery` — Этап 57 |
+| `auth/oidc.test.js` (discovery, callback, auto-provisioning, 500/400) | `server/src/auth/oidc.test.js` — Этап 59 |
+| `ticket-context.optimistic` (insert + rollback 500/403, invalidateQueries) | `src/test/ticket-context.optimistic.test.tsx` (14 тестов) — Этап 61 |
+| i18n parity (ru.json ↔ en.json) | `src/test/i18n.parity.test.ts` — Этап 60 (нашёл реальный пропуск `admin.emailTemplates`) |
+| Contract tests (zod) + migration idempotency | `contract.api.test.js` (5 list-эндпоинтов), `migration.idempotency.test.js` — Этап 60 |
+| Background sub-тесты (SLA/cleanup 90д/DLQ>10/час/stopImapPolling) | `background.sub.test.js` — Этап 59 |
+| Web-push, Meilisearch (+ все fallback-ветки) | `push.test.js`, `search.test.js`, `search-sync.expanded.test.js` |
+| Миграции идемпотентны | `migration.idempotency.test.js` — Этап 60 |
+
+### НЕ закрыто (остаётся в плане)
+
+| # | Пункт | Доказательство | Приоритет |
+|---|-------|----------------|-----------|
+| 1 | **SQL-injection не покрыт** | `injection.test.js` не существует (glob → 0); grep `OR 1=1\|DROP TABLE\|union select` → 0 | P1 |
+| 2 | **a11y-тестов нет** | `axe-core` нет в deps; файлов `a11y.*` нет; icon-only кнопка без aria-label — `src/pages/AdminCannedResponses.tsx:154` | P1 |
+| 3 | **LDAP не покрыт (0%)** | `server/src/auth/ldap.js` — 0% строк; единственное упоминание — `vi.mock('../auth/ldap.js')` в `refresh-family.test.js:43` (мок, не тест) | P1 |
+| 4 | **E2E-real неполный** | `e2e/sla-autoassign-export.spec.ts:12` — только `suggestedFilename()`, нет проверки непустого файла/BOM (BOM ставится в `src/pages/Tickets.tsx:182`); `e2e/file-upload.spec.ts:20` загружает, но не скачивает | P1 |
+| 5 | **Virtual scroll только TicketDetail** | `src/test/TicketDetail.test.tsx:435` (150 сообщений, «не падает»); в ChatDetail теста нет | P2 |
+| 6 | **dockerize dev** | `docker-compose.dev.yml` в репо отсутствует | P2 |
+| 7 | **Bundle-budget лимиты только на entry-chunk** | `scripts/check-bundle-size.js:9-12` — паттерны только `assets/index-*.js\|css`, per-chunk лимитов нет | P2 |
+
+### Ложные «✅», исправленные 26.09
+
+| Утверждение | Факт | Где исправлено |
+|-------------|------|----------------|
+| «S3 нет в проекте (диск)» (шапка `Тесты qwen.txt`) | **Неверно**: `server/src/storage.js` + `server/src/__tests__/storage.test.js` (9 тестов) | Шапка `Тесты qwen.txt` |
+| «injection.test.js — ✅ Этап 61» | **Файла нет**; закрыт только XSS-инвариант | `Тесты и функционал общее.md` стр. 40 |
+| «Virtual scroll 1000 сообщений — ✅ Этап 61 (ChatDetail)» | **Только 150 сообщений в TicketDetail**, в ChatDetail теста нет | `Тесты и функционал общее.md` стр. 48 |
+| «Telegram: команда `/status` возвращает данные» | `/status` **не существует** — в коде только `/start`, `/new`, `/reply` (`server/src/telegram.js:21,38,55`). Это **фича**, а не недостающий тест → бэклог | Шапка `Тесты qwen.txt` |
+| «csrf.test.js — cookie-based endpoints требуют CSRF» | **Неприменимо**: refresh-cookie `httpOnly` + `sameSite:'strict'` + `path:'/api/auth'` (`server/src/routes/auth.js:66-72`) — CSRF-атака через JS невозможна | Решено, в план не идёт |
+
+### Дыры покрытия 0% (кандидаты в Этап 68)
+
+| Файл | Строк | Файл | Строк |
+|------|-------|------|-------|
+| `src/pages/AdminCannedResponses.tsx` | 55 | `server/src/auth/ldap.js` | 42 |
+| `src/pages/AdminCustomFields.tsx` | 82 | `server/src/index.js` | 40 |
+| `src/components/KeyboardShortcuts.tsx` | 18 | `server/src/middleware/fileCheck.js` | 22 |
+
+Низкое покрытие: сервер — `routes/api-tokens.js` 23.8%, `routes/canned-responses.js` 16.7% (CRUD на 4 роута), `telegram.js` 21.5%, `routes/admin.js` 51%, `routes/auth.js` 65.9%; клиент — `NewTicket.tsx` 41.07%, `AdminUsers.tsx` 43.39%, `NotificationBell.tsx` 48.8%, `Employees.tsx` 54.9%, `Profile.tsx` 56.86%, `AdminSettings.tsx` 62.8%, `TicketDetail.tsx` 65.9%, `ChatDetail.tsx` 73.2%.
+
+### «Доделать.rtf» §2 «Админка» — фактический статус (10 из 11 закрыто, не 0)
+
+| # | Фича | Статус (проверено по коду 26.09) |
+|---|------|-------------------------------|
+| 1 | RBAC-матрица UI | ✅ `AdminRbac.tsx` + `rbac-matrix.spec.ts` (Этап 47/58) |
+| 2 | Backup/restore UI | ✅ backup+restore в `AdminSettings.tsx`, `scripts/verify-backup.mjs` (Этапы 58, промт 4) |
+| 3 | Audit log фильтры + CSV | ✅ `AdminAudit.tsx` (Этап 58) |
+| 4 | Health dashboard | ✅ `AdminHealth.tsx` — `/health`, `/queues`, `/migrations` (Этап 58) |
+| 5 | Feature flags: расписание rollout | ⏳ **единственный нереализованный**: grep `rollout_at\|scheduled` → 0 совпадений. Есть percentage rollout (Этап 51), но не «включить завтра в 9:00» |
+| 6 | Queue monitor | ✅ `AdminQueues.tsx` + `/api/admin/queues` (Этап 58) |
+| 7 | User sessions + «разлогинить везде» | ✅ Этап 63 подфича 2 (`SessionsSection.tsx`, `GET /auth/sessions`, `POST /auth/revoke-all`) |
+| 8 | Rate-limit override | ✅ `/api/admin/settings/rate-limits` (Этап 58) |
+| 9 | Email templates preview | ✅ `EmailTemplatesSection.tsx` + `/api/admin/email/preview` (Этапы 30, 58) |
+| 10 | Reindex Meilisearch | ✅ `/api/admin/search/reindex` (Этап 58) |
+| 11 | Migrations status | ✅ `/api/admin/migrations` (Этап 58) |
+
+---
+
+## ПЛАН ДОРАБОТКИ ПО ЭТАПАМ (54–68)
 
 > Самодостаточный план: каждый этап = конкретный файл/промт из разборов выше.
 > Детальные таблицы — в разделах «Kimi 7.5/10», «Доделать.rtf», «Дополнения из аудитов 24.09» и «Оценка ии.rtf».
@@ -344,10 +421,11 @@
 | ~~**61**~~ | ~~**Покрытие ядра + E2E-реализм + Security-hardening** — ticket-context.optimistic (35%→60%+), TicketDetail/ChatDetail/Kanban, virtual scroll jsdom, E2E export/upload/search-real; **+ XSS-инвариант на client-рендер** (экранирование &<> есть, но regression-тест: `<img onerror>`/`javascript:` не исполняется; при расширении markdown — DOMPurify), **+ notify регресс-тест** (email/webhook упал → тикет создан 201), **+ тест-предохранители**: клампинг limit, soft-delete в списках, N+1 (spy на prisma); правило «фича = флаг» в AGENTS.md; CI-check синхронности доков~~ | Промт 5 (расширенный) | ✅ **закрыт 24.09** — клиент 67/601 + сервер 66/897 = **1498 тестов, 0 failures**, lint 0/57, type-check/build ✅, check-console 17/17, E2E 61/61; см. «Что сделано.txt» Этап 61 |
 | ~~**62**~~ | ~~**Timeline + импорт** — `GET /tickets/:id/history` (из audit_log) + вкладка «История» в TicketDetail (кто/когда менял статус/приоритет/исполнителя) → PDF с историей (jsPDF подхватит); CSV-импорт сотрудников: UI-кнопка + превью + валидация + тест роута (admin.js:446); retention-политика (audit/files/chat) — после утверждения политики хранения~~ | — | ✅ **закрыт 25.09** — `GET /tickets/:id/history` (audit_log, action+details JSON, take 200, sort created_at+id desc, 400/404/403/500) + вкладка «История» (флаг `ticket_history`, миграция `20260925_ticket_history_flag.js`, дефолт **off**, включение через админку) + PDF (jsPDF); CSV-импорт — добавлен `admin-import.test.js` (6 сценариев / 5 тестов: created+email-транслитерация, duplicate→skipped, пустое ФИО→skipped, без данных→400, не-админ→403); retention — вне скоупа (после утверждения политики хранения); клиент **67/606** + сервер **68/907** = **1513 тестов, 0 failures**, lint 0 errors, type-check/build ✅ |
 | **63** | **qwen P0 #1–3** — 2FA/TOTP для admin/super_admin (otplib + QR-код в Profile, require2FA) ✅ **подфича 1 закрыта 25.09** (2FA, флаг `two_fa`, см. «Что сделано.txt» Этап 63); ✅ **подфича 2 закрыта 25.09** (активные сессии, флаг `user_sessions` дефолт **off**: миграция `20260925_user_sessions.js`, колонки device_name/ip_address/user_agent/last_seen_at в `refresh_tokens`, `session-meta.js` parseUserAgent, `GET /auth/sessions` + `POST /auth/sessions/:id/revoke` (400 на текущую/чужую/некорр. id), `SessionsSection.tsx` в Profile (Badge «Текущая сессия», revoke + «Завершить все сессии» через существующий POST /auth/revoke-all), i18n ru/en, MSW; **1550 тестов, 0 failures** — клиент 69/619 + сервер 70/931, lint 0/57, type-check/build ✅, check-console 17/17 — см. «Что сделано.txt» Этап 63); ✅ **подфича 3 закрыта 25.09** — notification preferences per user (флаг `notification_prefs`, дефолт **off**; таблица `notification_preferences` user_id UNIQUE + prefs JSON, upsert; каналы email/push/in_app × 8 событий тикетов, дефолт все включены; `GET/PUT /notifications/preferences` — API вне флага; реальный push: webpush fire-and-forget + cleanup 404/410 подписок; фильтры каналов во всех 7 notify-функциях через `allowedUserIds`; UI `NotificationPreferencesSection.tsx` в Profile — таблица 8×3, мастер-чекбоксы, Save→PUT; i18n `profile.prefs.*`; **1572 теста, 0 failures** — клиент 70/625 + сервер 71/947, пороги клиент 71/62/63/73, сервер 73/67/74/74 (факт − 2п.п.), lint 0/57, type-check/build ✅, check-console 17/17 — см. «Что сделано.txt» Этап 63) | — | «Дополнения 24.09» — qwen P0 |
-| **64** | **qwen P0 #4–6** — Watchers/Subscribers тикета (ticket_watchers + UI); ticket relations (parent/child, blocked-by, duplicates + UI в деталях); Merge/Duplicate tickets (перенос сообщений/вложений) | — | «Дополнения 24.09» — qwen P0 |
+| ~~**64**~~ | ~~**qwen P0 #4–6** — Watchers/Subscribers тикета (ticket_watchers + UI); ticket relations (parent/child, blocked-by, duplicates + UI в деталях); Merge/Duplicate tickets (перенос сообщений/вложений)~~ | — | ~~«Дополнения 24.09» — qwen P0~~ | ✅ **закрыт 26.09** — см. «Что сделано.txt» Этап 64: миграции `20260925_ticket_{watchers,relations,merge}.js` (idempotent), роуты в `routes/tickets.js`, `services/tickets.service.js`, 3 компонента (`TicketWatchersCard`/`TicketRelationsCard`/`TicketMergeDialog`), i18n ru/en, MSW, флаги `ticket_watchers`/`ticket_relations`/`ticket_merge` (дефолт off); 🐞 фикс `DELETE /:id/watchers/:employeeId` — самоотписка без `canAccessTicket` (isSelf), снятие чужого — senior_agent+; тесты **+31 серверных** (watchers 12 / relations 11 / merge 8) + **+21 клиентских** (3 файла); сервер **74/980**, клиент **73/646** = **1626 тестов, 0 failures**, coverage сервер 75.43/69.74/77.11/76.68 (пороги 73/67/74/74), клиент 74.02/64.86/66.54/76.33 (пороги 71/62/63/73), check-console 17/17, build ✅ |
 | **65** | **qwen P1 (часть 1)** — версионирование Wiki (wiki_revisions + diff + rollback); редактирование сообщений чата (edited_at, WS message:edited); reply-to/threads (reply_to_message_id); SLA business hours UI в админке (форма + таймзоны вместо хардкода в sla.service.js) | — | «Дополнения 24.09» — qwen P1 |
 | **66** | **qwen P1 (часть 2) + финальный аудит** — custom roles (roles+permissions, конструктор ролей); org chart (manager_id + граф); ticket forms (JSON-схема в ticket_categories); scheduled reports (cron + шаблон письма); GDPR export (JSON/ZIP в Profile); coverage-пуш: client branches 65+, server branches 70+, E2E ~80 (~1780 тестов), инвентарь и docs перегенерированы | — | «Дополнения 24.09» — qwen P1 + «Итоговый ориентир» |
 | **67** | **P1 сверх плана (дипсик ⚡ 24.09)** — Approval chains (ticket_approvals, POST /tickets/:id/approve\|reject, GET /tickets/:id/approvals, UI «Запросить approval»/«Approve/Reject», notify approver, audit_log); Team/Group scope (teams + team_members, tickets.team_id, CRUD /admin/teams + members, assign на команду, доступ по членству); Field-level permissions (field_permissions role×field×entity read/write, GET/PUT /admin/field-permissions, скрытие полей в UI + серверная проверка); SLA policies per category/priority (sla_policies + business_hours_calendars, GET/POST/PUT/DELETE /admin/sla-policies, tickets.sla_policy_id, пересчёт due_at); Webhooks journal + replay (GET /admin/webhooks/:id/deliveries, POST /replay, UI в AdminIntegrations); Impersonation + аудит (POST /admin/impersonate/:userId + log, «Войти как пользователь» в AdminUsers) | — | «Дополнения 24.09» — P1 «стоит добавить» (дипсик ⚡) |
+| **68** | **Дыры 0% + честные a11y/security-тесты** (из верификации 26.09) — (1) **`injection.test.js`** — SQL-injection в query-параметрах → 400/экранирование, БД цела (сейчас 0 тестов); (2) **a11y** — добавить `axe-core` + `a11y` vitest-тесты на ключевые страницы (icon-only кнопки без aria-label, напр. `AdminCannedResponses.tsx:154`); (3) **покрыть 0%-файлы**: `AdminCannedResponses.tsx`, `AdminCustomFields.tsx`, `KeyboardShortcuts.tsx`, `auth/ldap.js`, `index.js`, `middleware/fileCheck.js`; (4) поднять низкое: `routes/api-tokens.js` 23.8%, `routes/canned-responses.js` 16.7%, `telegram.js` 21.5%; (5) дотянуть virtual scroll до 1000 сообщений + ChatDetail; (6) `docker-compose.dev.yml` (MySQL+Redis для dev) | — | Верификация 26.09 |
 
 ### Низкий приоритет (не блокирует)
 
@@ -400,9 +478,9 @@
 | 1 | 2FA / TOTP для admin/super_admin (otplib + QR в Profile, require2FA) | 2–3 дня | ✅ **закрыта 25.09** (Этап 63 подфича 1) |
 | 2 | Активные сессии пользователя (view/revoke) — таблица sessions + UI в Profile (в админке revoke уже есть, Этап 58) | 1–2 дня | ✅ **закрыта 25.09** (Этап 63 подфича 2, флаг `user_sessions`) |
 | 3 | Notification preferences per user (email/push/in-app × события) | 1–2 дня | ✅ **закрыта 25.09** (Этап 63 подфича 3, флаг `notification_prefs`, дефолт **off**) |
-| 4 | Watchers / Subscribers тикета (ticket_watchers + UI) | 1 день | ⏳ Этап 64 |
-| 5 | Ticket relations (parent/child, blocked-by, duplicates) + UI в деталях | 2 дня | ⏳ Этап 64 |
-| 6 | Merge / Duplicate tickets («Объединить с…», перенос сообщений/вложений) | 1 день | ⏳ Этап 64 |
+| 4 | Watchers / Subscribers тикета (ticket_watchers + UI) | 1 день | ✅ **закрыта 26.09** (Этап 64 подфича 1, флаг `ticket_watchers` дефолт **off**) |
+| 5 | Ticket relations (parent/child, blocked-by, duplicates) + UI в деталях | 2 дня | ✅ **закрыта 26.09** (Этап 64 подфича 2, флаг `ticket_relations` дефолт **off**) |
+| 6 | Merge / Duplicate tickets («Объединить с…», перенос сообщений/вложений) | 1 день | ✅ **закрыта 26.09** (Этап 64 подфича 3, флаг `ticket_merge` дефолт **off**) |
 
 ### Новые фичи — qwen P1 (предложение Этапов 65–66)
 
@@ -487,7 +565,9 @@ vite.config.ts, playwright.config.ts, eslint.config.js, server/vitest.config.js,
 
 ### Итоговый ориентир (qwen)
 
-Сейчас 1572 (после Этапа 63) → после Этапа 66 ~1850 тестов (+ Этап 67 ≈ +100–120 → ~1950); client branches 64.19 → 68+, server branches 69.15 → 72+; E2E 61 → ~80. Coverage-пуш — финал Этапа 66 (не самоцель): сначала закрыть P0-фичи (2FA, watchers, relations, notification prefs), затем Этап 67 (P1 сверх плана).
+Факт на 26.09: **1626 тестов, 0 failures** (клиент 73 файла / 646; сервер 74 файла / 980; Этап 64 закрыт). Ориентир: после Этапа 66 ~1850 тестов (+ Этап 67 ≈ +100–120 → ~1950); client branches 64.86 → 68+, server branches 69.74 → 72+; E2E 61 → ~80. Coverage-пуш — финал Этапа 66 (не самоцель).
+
+**Текущий порядок работ:** (1) **Этап 68** — дыры 0%, a11y, SQL-injection (это дёшево и закрывает реальные пробелы аудитов); (2) Этап 65–66 (qwen P1 + coverage-пуш); (3) Этап 67 (P1 сверх плана).
 
 ---
 

@@ -41,6 +41,7 @@ model employees {
   push_subscriptions  push_subscriptions?
   user_totp           user_totp?
   refresh_tokens      refresh_tokens[]
+  ticket_watchers     ticket_watchers[]
   notifications       notifications[]
   notification_preferences notification_preferences?
   poll_votes          poll_votes[]
@@ -70,6 +71,7 @@ model tickets {
   tags        Json?
   locked_by   Int?
   locked_at   DateTime?
+  merged_into Int?
   created_at  DateTime? @default(now())
   updated_at  DateTime? @default(now())
   deleted_at  DateTime?
@@ -77,9 +79,14 @@ model tickets {
   created_by_employee  employees?      @relation("tickets_created_by", fields: [created_by], references: [id], onDelete: Restrict)
   assigned_to_employee employees?      @relation("tickets_assigned_to", fields: [assigned_to], references: [id], onDelete: SetNull)
   locked_by_employee   employees?      @relation("tickets_locked_by", fields: [locked_by], references: [id], onDelete: SetNull)
+  merged_tickets       tickets[]       @relation("tickets_merged_into")
+  merged_into_ticket   tickets?        @relation("tickets_merged_into", fields: [merged_into], references: [id], onDelete: SetNull)
   ticket_messages      ticket_messages[]
   time_entries         time_entries[]
   ticket_timers        ticket_timers[]
+  ticket_watchers      ticket_watchers[]
+  ticket_relations_from ticket_relations[] @relation("TicketRelationFrom")
+  ticket_relations_to   ticket_relations[] @relation("TicketRelationTo")
   csat_surveys         csat_surveys[]
   custom_field_values  custom_field_values[]
 
@@ -165,6 +172,34 @@ model ticket_messages {
 
   ticket   tickets?   @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
   employee employees? @relation(fields: [sender_id], references: [id], onDelete: Cascade)
+}
+
+model ticket_watchers {
+  id          Int       @id @default(autoincrement())
+  ticket_id   Int
+  employee_id Int
+  created_at  DateTime? @default(now())
+
+  ticket   tickets?   @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  employee employees? @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+
+  @@unique([ticket_id, employee_id])
+  @@index([employee_id])
+}
+
+model ticket_relations {
+  id                Int       @id @default(autoincrement())
+  ticket_id         Int
+  related_ticket_id Int
+  type              String    @default("related") @db.VarChar(20)
+  created_by        Int?
+  created_at        DateTime? @default(now())
+
+  ticket          tickets? @relation("TicketRelationFrom", fields: [ticket_id], references: [id], onDelete: Cascade)
+  related_ticket  tickets? @relation("TicketRelationTo", fields: [related_ticket_id], references: [id], onDelete: Cascade)
+
+  @@unique([ticket_id, related_ticket_id])
+  @@index([related_ticket_id])
 }
 
 model events {

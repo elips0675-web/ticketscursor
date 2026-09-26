@@ -1,9 +1,10 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 70 файлов / 167 suite / 625 тестов (все PASS, vitest --reporter=json от 25.09.2026)
+Реальный результат: 73 файлов / 173 suite / 646 тестов (все PASS, vitest --reporter=json от 26.09.2026)
+Coverage (All files): 74.02 stmts / 64.86 branches / 66.54 funcs / 76.33 lines (пороги 71/62/63/73 — буфер ~3 п.п.)
 
-===== ФАЙЛЫ (70 шт, все реальные, сгенерировано скриптом) =====
+===== ФАЙЛЫ (73 шт, все реальные, сгенерировано скриптом) =====
 
 # Файлы | Тестов | Описание
 src/test/TicketDetail.test.tsx | 31 | TicketDetail: сообщения, статус, приоритет, назначение, RBAC, virtual scroll, XSS, История (timeline, PDF, флаг off)
@@ -79,6 +80,12 @@ src/test/Tickets.test.tsx | 1 | Tickets: renders
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона `npx vitest run --config vitest.client.config.ts --reporter=json` (vitest-*.json).
-Фактический запуск: 70 файлов / 625 тестов / 625 passed / 0 failures.
-Coverage (25.09.2026, Этап 63, перемерено --coverage): stmts 73.48 / branches 64.19 / functions 65.78 / lines 75.79 (пороги: stmts 71 / branches 62 / functions 63 / lines 73).
-Данные актуальны на: 25.09.2026 (Этап 63 — 2FA: +7 — TwoFactorSection (5), Login 2fa-verify (2); подфича 2 «Сессии»: +6 — SessionsSection.test.tsx (6); подфича 3 «Настройки уведомлений»: +6 — NotificationPreferencesSection.test.tsx (6))
+Фактический запуск: 73 файлов / 646 тестов / 646 passed / 0 failures.
+Coverage (26.09.2026, перемерено --coverage): stmts 74.02 / branches 64.86 / functions 66.54 / lines 76.33 (пороги: stmts 71 / branches 62 / functions 63 / lines 73 — буфер ~3 п.п.).
+Данные актуальны на: 26.09.2026. Прирост к Этапу 63: +21 тест — Этап 64 в работе (TicketWatchersCard 8, TicketRelationsCard 7, TicketMergeDialog 6).
+Прочие правки прогона 26.09: src/test/Calendar.test.tsx — хрупкий ассерт «shows day headers» заменён на await screen.findByText('Пн') (Calendar.tsx:168 гейтит рендер по isLoading, синхронный getBy падал до ответа MSW).
+
+Новые файлы Этапа 64 (покрытие флагов ticket_watchers / ticket_relations / ticket_merge):
+src/test/TicketWatchersCard.test.tsx | 8 | Watchers: подписка/отписка, бейдж, RBAC (флаг ticket_watchers)
+src/test/TicketRelationsCard.test.tsx | 7 | Relations: parent/child, blocked-by, duplicates (флаг ticket_relations)
+src/test/TicketMergeDialog.test.tsx | 6 | Merge: выбор тикета, предпросмотр, подтверждение (флаг ticket_merge)

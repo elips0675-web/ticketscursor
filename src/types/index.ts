@@ -89,6 +89,45 @@ export interface TicketStats {
   avgResolutionTime: number
 }
 
+/** Этап 64 (подфича 1): подписчик тикета (watcher). */
+export interface TicketWatcher {
+  id: number
+  name: string
+  email: string
+  avatar: string | null
+  created_at: string | null
+}
+
+export type TicketRelationType = 'parent' | 'child' | 'blocked_by' | 'duplicate' | 'related'
+
+/** Этап 64 (подфича 2): связь тикета с другим (одна сторона, other_ticket — парный). */
+export interface TicketRelation {
+  id: number
+  type: TicketRelationType
+  type_label: string
+  direction: 'in' | 'out'
+  other_ticket: {
+    id: number
+    title: string
+    status: string
+    priority: string
+  }
+  created_by: number | null
+  created_at: string | null
+}
+
+/** Этап 64 (подфича 3): результат merge/duplicate тикета. */
+export interface TicketMergeResult {
+  ticketId?: number
+  targetTicketId?: number
+  id?: number
+  title?: string
+  movedMessages?: number
+  movedEntries?: number
+  movedTimers?: number
+  targetTitle?: string
+}
+
 export interface CalendarEvent {
   id: number
   title: string

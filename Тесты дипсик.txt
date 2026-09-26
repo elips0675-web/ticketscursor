@@ -1,20 +1,30 @@
-⚠️ СТАТУС ФАЙЛА (обновлено 23.09.2026)
+⚠️ СТАТУС ФАЙЛА (обновлено 26.09.2026)
 Этот документ написан против состояния «934 теста / 87 файлов / 36 E2E (~2 реальных)».
-Факт на 23.09.2026: **1298 тестов / 109 файлов / 19 E2E-спеков (57 тестов)**.
+Факт на 26.09.2026: **1626 тестов / 147 файлов (клиент 73/646 + сервер 74/980) / 19 E2E-спеков (61 тест)**.
 
 Из списка ниже УЖЕ ЗАКРЫТО (заново не писать):
 - Спринты 1-2 (новые фичи 32-35): api-tokens/webhooks/collision/recurrence/rules/public-portal/public-kb/SSO-UI — Этапы 46/47 (+134 теста)
 - Спринт 3 (E2E user-flow): tickets-lifecycle, rbac-matrix, sla-escalation, websocket-chat — Этап 55
-- RBAC-матрица: rbac-matrix.test.js 41 тест — Этап 47
-- rate-limit: limiters.test.js 10 — Этап 47
+- Спринт 4 (безопасность + RBAC-матрица): rbac-matrix.test.js 41, limiters.test.js 12, idor.test.js 11 — Этапы 47/56
 - socket.js без моков: Этап 54 (реальный сервер порт 0 + БД, 27 тестов, 22%→83%)
-- IDOR: Этап 56 (idor.test.js 11 тестов)
-- auth.security/jwt: закрыто Этапами 47/52 (dev-login 404 в prod, rate-limit, refresh rotation в api.test.js)
+- auth.security/jwt: закрыто Этапами 47/52 (dev-login 404 в prod, rate-limit, refresh rotation)
+- **Race-тесты** (п. 4 ниже): 4 файла `ticket-lock/ticket-status/time-timer` + `outbox.delivery` — Этап 57
+- **`auth/oidc.test.js`** (Спринт 1): Этап 59
+- **`ticket-context.optimistic.test.tsx`** (п. 6 ниже): Этап 61, 14 тестов
+- **Background sub-тесты** (п. 5 ниже): `background.sub.test.js` — Этап 59
+- **i18n parity** (P2 ниже): `src/test/i18n.parity.test.ts` — Этап 60
+- **Contract + migration idempotency** (P2 ниже): `contract.api.test.js`, `migration.idempotency.test.js` — Этап 60
 
-РЕАЛЬНЫЙ ОСТАТОК (пережил все волны) — в корневом «Что-доделать.txt», раздел «Финальные оценки 23.09»:
-P1: race-тесты (lock/status/timer/outbox), auth/oidc.test.js, ticket-context.optimistic,
-    E2E-real (export/upload/search), i18n parity, XSS/injection
-P2: a11y, background sub-тесты, virtual scroll jsdom, contract (zod) + migration idempotency
+РЕАЛЬНЫЙ ОСТАТОК (пережил все волны; проверено по коду 26.09) — в корневом «Что-доделать.txt», раздел «Верификация 26.09.2026» + **Этап 68**:
+- P1: **SQL-injection** — файла `injection.test.js` НЕ существует (glob → 0), grep `OR 1=1|DROP TABLE|union select` → 0. XSS-инвариант закрыт Этапом 61, SQL — нет
+- P1: **a11y** — `axe-core` нет в зависимостях, файлов `a11y.*` нет; icon-only кнопки без aria-label есть (`src/pages/AdminCannedResponses.tsx:154`)
+- P1: **LDAP** — `server/src/auth/ldap.js` 0% строк; единственное упоминание — `vi.mock('../auth/ldap.js')` в `refresh-family.test.js:43` (мок, не тест логина через AD)
+- P1: **E2E-real** — не полностью: search ✅ (результаты из seed), export ⚠️ (`e2e/sla-autoassign-export.spec.ts:12` только `suggestedFilename()`, нет проверки непустого файла/BOM), upload ⚠️ (`e2e/file-upload.spec.ts:20` загружает, но не скачивает)
+- P2: **virtual scroll в jsdom** — только `src/test/TicketDetail.test.tsx:435` на **150** сообщениях (проверяет «не падает», не «DOM < N»); в **ChatDetail теста нет**
+- P2: **dockerize dev** — `docker-compose.dev.yml` в репо отсутствует
+- ~~csrf.test.js~~ — **НЕ ПРИМЕНИМО**: refresh-cookie `httpOnly` + `sameSite:'strict'` + `path:'/api/auth'` (`server/src/routes/auth.js:66-72`), CSRF через JS невозможен. Закрыт как неактуальный
+
+⚠️ Отдельно: прогон серверных тестов **не параллелизуется** — `server/vitest.global-setup.js:18,78` дропает `servicedesk_test` в setup и teardown, два одновременных `vitest run` убивают БД друг друга («Unknown database»). Исправлено 26.09 через `TEST_DB_NAME`.
 
 Само содержимое ниже — исторический список рекомендаций от 22.09; сверяйтесь со сводным остатком.
 ---

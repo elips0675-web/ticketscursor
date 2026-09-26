@@ -21,6 +21,9 @@ vi.mock('../../prisma.js', () => ({
     push_subscriptions: {
       findMany: vi.fn(),
     },
+    ticket_watchers: {
+      findMany: vi.fn(),
+    },
   },
 }))
 
@@ -64,6 +67,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   prisma.tickets.findUnique.mockResolvedValue(mockTicket)
   prisma.ticket_messages.findMany.mockResolvedValue([{ sender_id: 30 }])
+  prisma.ticket_watchers.findMany.mockResolvedValue([])
   prisma.employees.findMany.mockResolvedValue([
     { id: 99, email: 'admin@test.com', name: 'Admin' },
   ])
@@ -112,6 +116,23 @@ describe('notifyStatusChanged', () => {
   it('sends email to creator and assignee', async () => {
     await notifyStatusChanged(1, 'open', 'resolved', 'Admin')
     expect(sendTicketNotification).toHaveBeenCalledTimes(2)
+  })
+
+  it('notifies ticket watchers (Этап 64)', async () => {
+    prisma.ticket_watchers.findMany.mockResolvedValue([{ employee_id: 50 }, { employee_id: 60 }])
+    await notifyStatusChanged(1, 'open', 'resolved', 'Admin')
+    const calledFor = createNotification.mock.calls.map(c => c[0].userId)
+    expect(calledFor).toContain(50)
+    expect(calledFor).toContain(60)
+  })
+
+  it('does not notify watchers when none subscribed', async () => {
+    prisma.ticket_watchers.findMany.mockResolvedValue([])
+    await notifyStatusChanged(1, 'open', 'resolved', 'Admin')
+    const calledFor = createNotification.mock.calls.map(c => c[0].userId)
+    expect(calledFor).toContain(10)
+    expect(calledFor).toContain(20)
+    expect(calledFor).not.toContain(50)
   })
 })
 

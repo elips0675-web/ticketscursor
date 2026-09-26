@@ -1,7 +1,9 @@
 import mysql from 'mysql2/promise'
 import { execSync } from 'child_process'
 
-const dbName = 'servicedesk_test'
+// Имя тестовой БД можно переопределить через TEST_DB_NAME — иначе два параллельных
+// vitest-прогона дропают общий servicedesk_test друг другу (Unknown database).
+const dbName = process.env.TEST_DB_NAME || 'servicedesk_test'
 
 async function addColumnIfNotExists(conn, table, column, definition) {
   const [rows] = await conn.execute(

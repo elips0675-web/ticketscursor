@@ -452,3 +452,202 @@ export async function resolveMentionedEmployees(text, excludeUserId) {
   }
   return ids
 }
+
+// ── Этап 64, подфича 1: Watchers / Subscribers тикета ──────────────────────────
+
+export async function listTicketWatchers(ticketId) {
+  const rows = await prisma.ticket_watchers.findMany({
+    where: { ticket_id: ticketId },
+    include: { employee: { select: { id: true, name: true, email: true, avatar: true } } },
+    orderBy: { created_at: 'asc' },
+  })
+  return rows.map(r => ({
+    id: r.employee.id,
+    name: r.employee.name,
+    email: r.employee.email,
+    avatar: r.employee.avatar,
+    created_at: r.created_at,
+  }))
+}
+
+export async function addTicketWatcher(ticketId, employeeId) {
+  const ticket = await prisma.tickets.findUnique({
+    where: { id: ticketId },
+    select: { id: true, deleted_at: true },
+  })
+  if (!ticket || ticket.deleted_at) return null
+  const emp = await prisma.employees.findUnique({
+    where: { id: employeeId },
+    select: { id: true, name: true, email: true, avatar: true },
+  })
+  if (!emp) return null
+  const existing = await prisma.ticket_watchers.findUnique({
+    where: { ticket_id_employee_id: { ticket_id: ticketId, employee_id: employeeId } },
+  })
+  if (existing) return { ...emp, alreadyWatching: true }
+  await prisma.ticket_watchers.create({
+    data: { ticket_id: ticketId, employee_id: employeeId },
+  })
+  return { ...emp, alreadyWatching: false }
+}
+
+export async function removeTicketWatcher(ticketId, employeeId) {
+  const existing = await prisma.ticket_watchers.findUnique({
+    where: { ticket_id_employee_id: { ticket_id: ticketId, employee_id: employeeId } },
+  })
+  if (!existing) return false
+  await prisma.ticket_watchers.delete({ where: { id: existing.id } })
+  return true
+}
+
+// ── Этап 64, подфича 2: Ticket relations (parent/child, blocked_by, duplicate, related) ──
+
+const RELATION_TYPES = ['parent', 'child', 'blocked_by', 'duplicate', 'related']
+const RELATION_TYPE_LABELS = {
+  parent: 'Родительский',
+  child: 'Подчинённый',
+  blocked_by: 'Заблокирован',
+  duplicate: 'Дубликат',
+  related: 'Связан',
+}
+
+export function isRelationTypeValid(type) {
+  return RELATION_TYPES.includes(type)
+}
+
+export function relationTypeLabel(type) {
+  return RELATION_TYPE_LABELS[type] || type
+}
+
+export async function listTicketRelations(ticketId) {
+  const rows = await prisma.ticket_relations.findMany({
+    where: {
+      OR: [{ ticket_id: ticketId }, { related_ticket_id: ticketId }],
+    },
+    include: {
+      ticket: { select: { id: true, title: true, status: true, priority: true } },
+      related_ticket: { select: { id: true, title: true, status: true, priority: true } },
+    },
+    orderBy: { created_at: 'desc' },
+  })
+  return rows.map(r => {
+    const isFrom = r.ticket_id === ticketId
+    return {
+      id: r.id,
+      type: r.type,
+      type_label: relationTypeLabel(r.type),
+      direction: isFrom ? 'out' : 'in',
+      other_ticket: isFrom ? r.related_ticket : r.ticket,
+      created_by: r.created_by,
+      created_at: r.created_at,
+    }
+  })
+}
+
+export async function addTicketRelation(ticketId, relatedTicketId, type, createdBy) {
+  const ticket = await prisma.tickets.findUnique({
+    where: { id: ticketId },
+    select: { id: true, deleted_at: true },
+  })
+  if (!ticket || ticket.deleted_at) return null
+  if (ticketId === relatedTicketId) return { error: 'self' }
+  const related = await prisma.tickets.findUnique({
+    where: { id: relatedTicketId },
+    select: { id: true, title: true, status: true, priority: true, deleted_at: true },
+  })
+  if (!related || related.deleted_at) return { error: 'not_found' }
+  const existing = await prisma.ticket_relations.findFirst({
+    where: {
+      OR: [
+        { ticket_id: ticketId, related_ticket_id: relatedTicketId },
+        { ticket_id: relatedTicketId, related_ticket_id: ticketId },
+      ],
+    },
+  })
+  if (existing) return { error: 'exists', id: existing.id }
+  const created = await prisma.ticket_relations.create({
+    data: { ticket_id: ticketId, related_ticket_id: relatedTicketId, type, created_by: createdBy || null },
+  })
+  return { id: created.id, other_ticket: related }
+}
+
+export async function removeTicketRelation(relationId) {
+  const existing = await prisma.ticket_relations.findUnique({ where: { id: relationId } })
+  if (!existing) return false
+  await prisma.ticket_relations.delete({ where: { id: relationId } })
+  return true
+}
+
+// ── Этап 64, подфича 3: Merge / Duplicate tickets ─────────────────────────────
+
+export async function duplicateTicket(ticketId, createdBy) {
+  const ticket = await prisma.tickets.findUnique({
+    where: { id: ticketId },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      priority: true,
+      category: true,
+      tags: true,
+      deleted_at: true,
+    },
+  })
+  if (!ticket || ticket.deleted_at) return null
+  const data = {
+    title: `${ticket.title} (копия)`,
+    description: ticket.description || '',
+    status: 'open',
+    priority: ticket.priority || 'medium',
+    category: ticket.category || 'support',
+    created_by: createdBy,
+    tags: ticket.tags || undefined,
+  }
+  const created = await prisma.tickets.create({ data })
+  return { id: created.id, title: created.title }
+}
+
+export async function mergeTicketInto(ticketId, targetTicketId) {
+  if (ticketId === targetTicketId) return { error: 'self' }
+  const source = await prisma.tickets.findUnique({
+    where: { id: ticketId },
+    select: { id: true, title: true, status: true, deleted_at: true },
+  })
+  if (!source || source.deleted_at) return null
+  const target = await prisma.tickets.findUnique({
+    where: { id: targetTicketId },
+    select: { id: true, title: true, deleted_at: true },
+  })
+  if (!target || target.deleted_at) return { error: 'target_not_found' }
+
+  // Переносим сообщения, таймеры и time entries в target; исходный тикет закрываем с пометкой merged_into.
+  const [movedMessages, movedEntries, movedTimers] = await prisma.$transaction([
+    prisma.ticket_messages.updateMany({
+      where: { ticket_id: ticketId },
+      data: { ticket_id: targetTicketId },
+    }),
+    prisma.time_entries.updateMany({
+      where: { ticket_id: ticketId },
+      data: { ticket_id: targetTicketId },
+    }),
+    prisma.ticket_timers.updateMany({
+      where: { ticket_id: ticketId },
+      data: { ticket_id: targetTicketId },
+    }),
+  ])
+  await prisma.tickets.update({
+    where: { id: ticketId },
+    data: {
+      status: 'closed',
+      resolved_at: new Date(),
+      merged_into: targetTicketId,
+      updated_at: new Date(),
+    },
+  })
+  return {
+    movedMessages: movedMessages.count,
+    movedEntries: movedEntries.count,
+    movedTimers: movedTimers.count,
+    targetTitle: target.title,
+  }
+}

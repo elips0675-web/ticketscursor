@@ -16,7 +16,7 @@ import { sendCsatSurvey } from '../email.js'
 import { triggerWebhooks } from '../services/webhooks.service.js'
 import { acquireLock, releaseLock, forceRelease, getLockStatus } from '../services/collision.service.js'
 import { evaluateRules } from '../services/rules.service.js'
-import { createTicketValidation, updateStatusValidation, updatePriorityValidation, assignTicketValidation, updateTagsValidation, bulkTicketValidation, addMessageValidation, addTimeValidation } from '../validate.js'
+import { createTicketValidation, updateStatusValidation, updatePriorityValidation, assignTicketValidation, updateTagsValidation, bulkTicketValidation, addMessageValidation, addTimeValidation, addWatcherValidation, addRelationValidation, mergeTicketValidation } from '../validate.js'
 import logger from '../logger.js'
 import { idempotent } from '../middleware/idempotency.js'
 import { validateUpload } from '../middleware/validateUpload.js'
@@ -35,6 +35,14 @@ import {
   generateTicketFilename,
   resolveMentionedEmployees,
   deleteTicket,
+  listTicketWatchers,
+  addTicketWatcher,
+  removeTicketWatcher,
+  listTicketRelations,
+  addTicketRelation,
+  removeTicketRelation,
+  duplicateTicket,
+  mergeTicketInto,
 } from '../services/tickets.service.js'
 import {
   listTimeEntries,
@@ -655,6 +663,188 @@ router.get('/:id/lock', async (req, res) => {
   } catch (err) {
     logger.error('Get lock status error:', err)
     res.status(500).json({ success: false, message: 'Failed to get lock status' })
+  }
+})
+
+// ── Этап 64, подфича 1: Watchers / Subscribers тикета ─────────────────────────
+router.get('/:id/watchers', async (req, res) => {
+  const ticketId = Number(req.params.id)
+  try {
+    const ticket = await prisma.tickets.findUnique({
+      where: { id: ticketId },
+      select: { id: true, created_by: true, assigned_to: true, deleted_at: true },
+    })
+    if (!ticket || ticket.deleted_at) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    if (!canAccessTicket(ticket, req.user)) return res.status(403).json({ success: false, message: 'Forbidden' })
+    const data = await listTicketWatchers(ticketId)
+    res.json({ success: true, data })
+  } catch (err) {
+    logger.error('List watchers error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch watchers' })
+  }
+})
+
+router.post('/:id/watchers', addWatcherValidation, async (req, res) => {
+  const ticketId = Number(req.params.id)
+  const { employeeId } = req.body
+  try {
+    const ticket = await prisma.tickets.findUnique({
+      where: { id: ticketId },
+      select: { id: true, created_by: true, assigned_to: true, deleted_at: true },
+    })
+    if (!ticket || ticket.deleted_at) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    if (!canAccessTicket(ticket, req.user)) return res.status(403).json({ success: false, message: 'Forbidden' })
+    const result = await addTicketWatcher(ticketId, employeeId)
+    if (!result) return res.status(404).json({ success: false, message: 'Ticket or employee not found' })
+    if (result.alreadyWatching) return res.json({ success: true, data: result, alreadyWatching: true })
+    invalidateCache('cache:*:/api/tickets*')
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'watcher_added', entityType: 'ticket', entityId: ticketId, details: { employeeId } })
+    res.status(201).json({ success: true, data: result })
+  } catch (err) {
+    logger.error('Add watcher error:', err)
+    res.status(500).json({ success: false, message: 'Failed to add watcher' })
+  }
+})
+
+router.delete('/:id/watchers/:employeeId', async (req, res) => {
+  const ticketId = Number(req.params.id)
+  const employeeId = Number(req.params.employeeId)
+  try {
+    const ticket = await prisma.tickets.findUnique({
+      where: { id: ticketId },
+      select: { id: true, created_by: true, assigned_to: true, deleted_at: true },
+    })
+    if (!ticket || ticket.deleted_at) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    const isSelf = employeeId === req.user.userId
+    // Самоотписка не требует доступа к тикету (подписался → могу отписаться);
+    // снятие чужого watcher'а — только senior_agent+ с доступом к тикету
+    if (!isSelf) {
+      if (!canAccessTicket(ticket, req.user)) return res.status(403).json({ success: false, message: 'Forbidden' })
+      if (!hasRole(req.user.role, 'senior_agent')) {
+        return res.status(403).json({ success: false, message: 'Forbidden' })
+      }
+    }
+    const removed = await removeTicketWatcher(ticketId, employeeId)
+    if (!removed) return res.status(404).json({ success: false, message: 'Watcher not found' })
+    invalidateCache('cache:*:/api/tickets*')
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'watcher_removed', entityType: 'ticket', entityId: ticketId, details: { employeeId } })
+    res.json({ success: true, data: { employeeId } })
+  } catch (err) {
+    logger.error('Remove watcher error:', err)
+    res.status(500).json({ success: false, message: 'Failed to remove watcher' })
+  }
+})
+
+// ── Этап 64, подфича 2: Ticket relations ──────────────────────────────────────
+router.get('/:id/relations', async (req, res) => {
+  const ticketId = Number(req.params.id)
+  try {
+    const ticket = await prisma.tickets.findUnique({
+      where: { id: ticketId },
+      select: { id: true, created_by: true, assigned_to: true, deleted_at: true },
+    })
+    if (!ticket || ticket.deleted_at) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    if (!canAccessTicket(ticket, req.user)) return res.status(403).json({ success: false, message: 'Forbidden' })
+    const data = await listTicketRelations(ticketId)
+    res.json({ success: true, data })
+  } catch (err) {
+    logger.error('List relations error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch relations' })
+  }
+})
+
+router.post('/:id/relations', addRelationValidation, async (req, res) => {
+  const ticketId = Number(req.params.id)
+  const { relatedTicketId, type } = req.body
+  try {
+    const ticket = await prisma.tickets.findUnique({
+      where: { id: ticketId },
+      select: { id: true, created_by: true, assigned_to: true, deleted_at: true },
+    })
+    if (!ticket || ticket.deleted_at) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    if (!canAccessTicket(ticket, req.user)) return res.status(403).json({ success: false, message: 'Forbidden' })
+    const result = await addTicketRelation(ticketId, relatedTicketId, type, req.user.userId)
+    if (result === null) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    if (result.error === 'self') return res.status(400).json({ success: false, message: 'Cannot relate ticket to itself' })
+    if (result.error === 'not_found') return res.status(404).json({ success: false, message: 'Related ticket not found' })
+    if (result.error === 'exists') return res.status(409).json({ success: false, message: 'Relation already exists', relationId: result.id })
+    invalidateCache('cache:*:/api/tickets*')
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'relation_added', entityType: 'ticket', entityId: ticketId, details: { relatedTicketId, type } })
+    res.status(201).json({ success: true, data: { id: result.id, other_ticket: result.other_ticket } })
+  } catch (err) {
+    logger.error('Add relation error:', err)
+    res.status(500).json({ success: false, message: 'Failed to add relation' })
+  }
+})
+
+router.delete('/:id/relations/:relationId', async (req, res) => {
+  const ticketId = Number(req.params.id)
+  const relationId = Number(req.params.relationId)
+  try {
+    const ticket = await prisma.tickets.findUnique({
+      where: { id: ticketId },
+      select: { id: true, created_by: true, assigned_to: true, deleted_at: true },
+    })
+    if (!ticket || ticket.deleted_at) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    if (!canAccessTicket(ticket, req.user)) return res.status(403).json({ success: false, message: 'Forbidden' })
+    const relation = await prisma.ticket_relations.findUnique({ where: { id: relationId } })
+    if (!relation) return res.status(404).json({ success: false, message: 'Relation not found' })
+    if (relation.ticket_id !== ticketId && relation.related_ticket_id !== ticketId) {
+      return res.status(403).json({ success: false, message: 'Forbidden' })
+    }
+    await removeTicketRelation(relationId)
+    invalidateCache('cache:*:/api/tickets*')
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'relation_removed', entityType: 'ticket', entityId: ticketId, details: { relationId } })
+    res.json({ success: true, data: { relationId } })
+  } catch (err) {
+    logger.error('Remove relation error:', err)
+    res.status(500).json({ success: false, message: 'Failed to remove relation' })
+  }
+})
+
+// ── Этап 64, подфича 3: Merge / Duplicate tickets ─────────────────────────────
+router.post('/:id/duplicate', requireRole('admin', 'senior_agent'), async (req, res) => {
+  const ticketId = Number(req.params.id)
+  try {
+    const ticket = await prisma.tickets.findUnique({
+      where: { id: ticketId },
+      select: { id: true, created_by: true, assigned_to: true, deleted_at: true },
+    })
+    if (!ticket || ticket.deleted_at) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    if (!canAccessTicket(ticket, req.user)) return res.status(403).json({ success: false, message: 'Forbidden' })
+    const result = await duplicateTicket(ticketId, req.user.userId)
+    if (!result) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    invalidateCache('cache:*:/api/tickets*')
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'duplicated', entityType: 'ticket', entityId: ticketId, details: { copyId: result.id } })
+    enqueueEvent('ticket:created', null, { ticketId: result.id, duplicatedFrom: ticketId })
+    res.status(201).json({ success: true, data: result })
+  } catch (err) {
+    logger.error('Duplicate ticket error:', err)
+    res.status(500).json({ success: false, message: 'Failed to duplicate ticket' })
+  }
+})
+
+router.post('/:id/merge', requireRole('admin', 'senior_agent'), mergeTicketValidation, async (req, res) => {
+  const ticketId = Number(req.params.id)
+  const { targetTicketId } = req.body
+  try {
+    const ticket = await prisma.tickets.findUnique({
+      where: { id: ticketId },
+      select: { id: true, created_by: true, assigned_to: true, deleted_at: true },
+    })
+    if (!ticket || ticket.deleted_at) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    if (!canAccessTicket(ticket, req.user)) return res.status(403).json({ success: false, message: 'Forbidden' })
+    const result = await mergeTicketInto(ticketId, targetTicketId)
+    if (result === null) return res.status(404).json({ success: false, message: 'Ticket not found' })
+    if (result.error === 'self') return res.status(400).json({ success: false, message: 'Cannot merge ticket into itself' })
+    if (result.error === 'target_not_found') return res.status(404).json({ success: false, message: 'Target ticket not found' })
+    invalidateCache('cache:*:/api/tickets*')
+    logAudit({ userId: req.user.userId, userName: req.user.name, action: 'merged', entityType: 'ticket', entityId: ticketId, details: { targetTicketId, ...result } })
+    enqueueEvent('ticket:merged', null, { ticketId, targetTicketId })
+    res.json({ success: true, data: { ticketId, targetTicketId, ...result } })
+  } catch (err) {
+    logger.error('Merge ticket error:', err)
+    res.status(500).json({ success: false, message: 'Failed to merge ticket' })
   }
 })
 

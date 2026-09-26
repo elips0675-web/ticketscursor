@@ -159,6 +159,37 @@ export const handlers = [
     })
   }),
 
+  // ── Ticket watchers (Этап 64) ──
+  http.get(`${API}/tickets/:id/watchers`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: [
+        { id: 4, name: 'Анна Смирнова', email: 'anna@example.com', avatar: '', created_at: '2026-07-01T10:00:00Z' },
+        {
+          id: 5,
+          name: 'Дмитрий Кузнецов',
+          email: 'dmitry@example.com',
+          avatar: '',
+          created_at: '2026-07-01T11:00:00Z',
+        },
+      ],
+    })
+  }),
+  http.post(`${API}/tickets/:id/watchers`, async ({ request }) => {
+    const body = (await request.json()) as { employeeId?: number }
+    const id = body?.employeeId ?? 0
+    return HttpResponse.json(
+      {
+        success: true,
+        data: { id, name: 'Иван Иванов', email: 'ivan@example.com', avatar: '', created_at: new Date().toISOString() },
+      },
+      { status: 201 },
+    )
+  }),
+  http.delete(`${API}/tickets/:id/watchers/:employeeId`, () => {
+    return HttpResponse.json({ success: true, data: { removed: true } })
+  }),
+
   // ── Ticket time tracking ──
   http.get(`${API}/tickets/:id/time`, () => {
     return HttpResponse.json({

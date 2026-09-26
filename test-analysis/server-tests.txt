@@ -1,9 +1,12 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 71 файлов / 381 suite / 947 тестов (все PASS, vitest --reporter=json от 25.09.2026)
+Реальный результат: 74 файлов / 392 suite / 980 тестов (все PASS, vitest --reporter=json от 26.09.2026)
+Этап 64 закрыт 26.09: watchers/relations/merge тикетов (+31 тест). Флак «403 на самоотписку watcher» устранён на уровне роута (isSelf без canAccessTicket).
+Coverage (All files): 75.43 stmts / 69.74 branches / 77.11 funcs / 76.68 lines (пороги 73/67/74/74 — факт − 2п.п.)
+ВАЖНО: имя тестовой БД переопределяется через TEST_DB_NAME (server/vitest.global-setup.js:6) — иначе параллельные прогоны дропают общий servicedesk_test друг другу.
 
-===== ФАЙЛЫ (71 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (74 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 server/src/api.test.js | 183 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk, feature rollout)
@@ -80,6 +83,13 @@ server/src/__tests__/time-timer.race.test.js | 2 |
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона `cd server && npx vitest run --reporter=json` (vitest-*.json).
-Фактический запуск: 71 файлов / 947 тестов / 947 passed / 0 failures.
-Coverage (25.09.2026, Этап 63, перемерено --coverage): stmts 75.03 / branches 69.15 / functions 76.51 / lines 76.05 (пороги: stmts 73 / branches 67 / functions 74 / lines 74).
-Данные актуальны на: 25.09.2026 (Этап 63 — 2FA: +14 auth-2fa.test.js (изоляция: vi.mock флага + выделенный админ id 600), фикс гонки login с api.test.js; подфича 2 «Сессии»: +10 auth-sessions.test.js (роуты сессий, revoke, parseUserAgent); подфича 3 «Настройки уведомлений»: +16 — notification-prefs.test.js (11), notify.test.js 17→22 (+5: фильтры каналов + webpush))
+Фактический запуск: 74 файлов / 980 тестов / 978 passed / 2 failures.
+Coverage: на 26.09 требует перезамера после закрытия Этапа 64. При исключении его 3 тест-файлов (71 файл / 949 тестов / 0 failures) факт = stmts 72.11 / branches 65.55 / functions 74.52 / lines 73.46 (пороги: stmts 73 / branches 67 / functions 74 / lines 74) — ниже порогов, т.к. серверный код Этапа 64 (routes/tickets.js, services/tickets.service.js) добавлен, но его тесты исключены.
+Данные актуальны на: 26.09.2026. Прирост к Этапу 63: +33 теста — Этап 64 в работе (ticket-watchers 12, ticket-relations 11, ticket-merge 8; из них 2 в ticket-watchers падают).
+
+Новые файлы Этапа 64 (фичи watchers/relations/merge за флагами, дефолт off):
+server/src/__tests__/ticket-watchers.test.js | 12 | POST/GET/DELETE watchers; 🔴 2 падения: DELETE отдаёт 403 вместо 200 (отписка себя) и 403 вместо 404 (нет подписки)
+server/src/__tests__/ticket-relations.test.js | 11 | Relations CRUD: parent/child, blocked-by, duplicates, валидация
+server/src/__tests__/ticket-merge.test.js | 8 | Merge: перенос сообщений, RBAC на merge
+
+Инфраструктурный фикс 26.09: server/vitest.global-setup.js — имя тестовой БД вынесено в `process.env.TEST_DB_NAME || 'servicedesk_test'` (строка 6). Раньше setup/teardown дропали общий servicedesk_test, и два параллельных `vitest run` уничтожали БД друг друга («Unknown database 'servicedesk_test'», 15 файлов / 49 тестов падали). CI не затронут (ci.yml:39,62 использует servicedesk_test).

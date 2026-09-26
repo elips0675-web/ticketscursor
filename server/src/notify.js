@@ -152,6 +152,25 @@ async function getTicketParticipants(ticketId, excludeUserId) {
   return rows.map(r => r.sender_id)
 }
 
+/** Этап 64: id подписчиков (watchers) тикета — для уведомлений об изменениях. */
+async function getTicketWatcherIds(ticketId) {
+  try {
+    const rows = await prisma.ticket_watchers.findMany({
+      where: { ticket_id: ticketId },
+      select: { employee_id: true },
+    })
+    return rows.map(r => r.employee_id)
+  } catch {
+    return []
+  }
+}
+
+function mergeWatcherTargets(targets, watcherIds) {
+  for (const id of watcherIds) {
+    if (id && !targets.includes(id)) targets.push(id)
+  }
+}
+
 export async function notifyTicketCreated(ticketId, _actorName) {
   const t = await getTicketWithUsers(ticketId)
   if (!t) return
@@ -188,6 +207,8 @@ export async function notifyStatusChanged(ticketId, oldStatus, newStatus, actorN
 
   const targets = [t.creatorId]
   if (t.assigneeId && !targets.includes(t.assigneeId)) targets.push(t.assigneeId)
+  const watcherIds = await getTicketWatcherIds(ticketId)
+  mergeWatcherTargets(targets, watcherIds)
   const inAppIds = await allowedUserIds(targets, 'ticket_status', 'in_app')
   const emailIds = new Set(await allowedUserIds(targets, 'ticket_status', 'email'))
   for (const userId of targets) {
@@ -228,6 +249,8 @@ export async function notifyPriorityChanged(ticketId, oldPriority, newPriority, 
 
   const targets = [t.creatorId]
   if (t.assigneeId && !targets.includes(t.assigneeId)) targets.push(t.assigneeId)
+  const watcherIds = await getTicketWatcherIds(ticketId)
+  mergeWatcherTargets(targets, watcherIds)
   const inAppIds = await allowedUserIds(targets, 'ticket_priority', 'in_app')
   const emailIds = new Set(await allowedUserIds(targets, 'ticket_priority', 'email'))
   for (const userId of targets) {
@@ -291,6 +314,8 @@ export async function notifyTicketMessage(ticketId, senderId, senderName, text) 
 
   const participantIds = await getTicketParticipants(ticketId, senderId)
   const targets = new Set([t.creatorId, t.assigneeId, ...participantIds].filter(Boolean))
+  const watcherIds = await getTicketWatcherIds(ticketId)
+  for (const id of watcherIds) if (id) targets.add(id)
   const targetList = [...targets]
   const inAppIds = await allowedUserIds(targetList, 'ticket_message', 'in_app')
   const emailIds = new Set(await allowedUserIds(targetList, 'ticket_message', 'email'))

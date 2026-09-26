@@ -1,18 +1,26 @@
-⚠️ СТАТУС ФАЙЛА (обновлено 23.09.2026)
-Документ написан против состояния «36 E2E — по сути smoke». Факт на 23.09:
-- **Lifecycle тикета (P1 #1)** — закрыт Этапом 55: tickets-lifecycle.spec.ts (create→assign→message→in_progress→resolved→reopen + API-проверки)
-- **SLA-эскалация (P1 #2)** — закрыт: sla-escalation.spec.ts
-- **RBAC (P1 #3)** — закрыт: rbac-matrix.spec.ts + rbac-matrix.test.js (41 тест)
-- **Socket.io realtime (P2)** — закрыт Этапом 54: реальный сервер (порт 0) + websocket-chat.spec.ts (2 браузера), socket.test.js 27
-- **API-валидация/edge (P1 #4)** — частично: api.test.js 183 интеграционных, Zod-схемы
-- **Security** — закрыто Этапами 47/52: rate-limit 10, dev-login 404 в prod, IDOR (Этап 56)
+⚠️ СТАТУС ФАЙЛА (обновлено 26.09.2026)
+Документ написан против состояния «36 E2E — по сути smoke». Факт на 26.09 — проверено по живому коду:
+- **Lifecycle тикета (P1 #1)** — ✅ закрыт Этапом 55: tickets-lifecycle.spec.ts (create→assign→message→in_progress→resolved→reopen + API-проверки)
+- **SLA-эскалация (P1 #2)** — ✅ закрыт: sla-escalation.spec.ts
+- **RBAC (P1 #3)** — ✅ закрыт: rbac-matrix.spec.ts + rbac-matrix.test.js (41 тест)
+- **Socket.io realtime (P2)** — ✅ закрыт Этапом 54: реальный сервер (порт 0) + websocket-chat.spec.ts (2 браузера), socket.test.js 27
+- **API-валидация/edge (P1 #4)** — ✅ закрыт: api.test.js 183 интеграционных, Zod-схемы
+- **Security (P4 #8)** — ✅ закрыто Этапами 47/52/56: rate-limit (limiters.test.js 12), dev-login 404 в prod, IDOR (idor.test.js 11)
+- **Meilisearch (P2)** — ✅ search.test.js 100% + search-sync.expanded.test.js (Meili → FULLTEXT → LIKE → 500, все fallback-ветки)
+- **Web-push (P2)** — ✅ push.test.js
+- **S3 / MinIO (P2)** — ⚠️ **поправка к шапке 23.09**: «S3 нет в проекте (диск)» было НЕВЕРНО. Абстракция хранилища есть — `server/src/storage.js` (+ `server/src/__tests__/storage.test.js`). Спека на presigned URL по-прежнему нет ⏳
+- **Telegram-бот `/status` (P2)** — ⚠️ это **фича, а не тест**: команды в коде только `/start`, `/new`, `/reply` (`server/src/telegram.js:21,38,55`). Добавление `/status` — бэклог, не «недостающий тест»
+- **LDAP (P2)** — ⏳ **НЕ закрыто**: `server/src/auth/ldap.js` покрыт на 0%; единственное упоминание — `vi.mock('../auth/ldap.js')` в `refresh-family.test.js:43`, это мок, а не тест логина через AD
 - **Snapshot-тесты** — решение НЕ делать (хрупкие при активной разработке)
-- **Visual regression** — решение НЕ делать (низкий приоритет в сводном остатке)
-- **Интеграции (S3/Meilisearch/BullMQ)** — Meilisearch→LIKE fallback покрыт в search.test (100%); S3 нет в проекте (диск), BullMQ — in-memory fallback + DLQ-тесты
+- **Visual regression (P3 #7)** — решение НЕ делать (низкий приоритет в сводном остатке)
+- **A11y (P3 #6)** — ⏳ **открыто**: `axe-core` нет в зависимостях (grep по package.json → 0), a11y-тестов нет; точечные aria-label только в AdminLayout.test.tsx:92, AdminRbac.test.tsx:63,73
+- **SQL-injection (P4 #8)** — ⏳ **открыто**: файла `injection.test.js` нет (glob → 0), grep `OR 1=1|DROP TABLE|union select` → 0 совпадений
+- **Virtual scroll в jsdom** — ⚠️ частично: тест только в `src/test/TicketDetail.test.tsx:435` на 150 сообщениях; в ChatDetail теста нет
+- **E2E-real (export/upload/search)** — ⚠️ частично: `e2e/sla-autoassign-export.spec.ts:12` проверяет только `suggestedFilename()` (нет проверки непустого файла/BOM; BOM ставится в `src/pages/Tickets.tsx:182`); `e2e/file-upload.spec.ts:20` загружает, но не скачивает; `e2e/search.spec.ts` результаты из seed есть
+- **Dockerize dev (P4 #10)** — ⏳ открыто: `docker-compose.dev.yml` в репо отсутствует
+- **Миграции БД (P4 #10)** — ✅ закрыто Этапом 60: `migration.idempotency.test.js` (migrate:latest дважды + fk_cascades повторно)
 
-Остаток, который реально НЕ закрыт, — в корневом «Что-доделать.txt», раздел «Финальные оценки 23.09»:
-P1: race-тесты, auth/oidc.test.js, ticket-context.optimistic, E2E-real (export/upload/search), i18n parity
-P2: a11y, background sub-тесты, contract (zod) + migration idempotency, dockerize dev
+Остаток, который реально НЕ закрыт, — в корневом «Что-доделать.txt»: раздел «Верификация 26.09.2026» и новый **Этап 68** (a11y, SQL-injection, LDAP, дыры 0%, dockerize dev). Пункты P1 из шапки 23.09 (race-тесты, auth/oidc.test.js, ticket-context.optimistic, i18n parity) закрыты Этапами 57/59/60/61 — см. «Тесты и функционал общее.md» §P1.
 
 Само содержимое ниже — исторический список рекомендаций от 22.09; сверяйтесь со сводным остатком.
 ---
