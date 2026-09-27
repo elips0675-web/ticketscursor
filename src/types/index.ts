@@ -201,6 +201,7 @@ export interface ChatMessage {
   createdAt: string
   edited?: boolean
   reactions?: Record<string, number[]>
+  replyTo?: { id: number; senderName: string; text: string }
 }
 
 export interface ChatReadReceipt {

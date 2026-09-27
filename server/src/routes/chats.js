@@ -4,7 +4,7 @@ import { authenticateToken, requireRole } from '../middleware.js'
 import logger from '../logger.js'
 import { idempotent } from '../middleware/idempotency.js'
 import { enqueueEvent } from '../outbox.js'
-import { getChats, getChatById, createMessage, getChatParticipants, markRead, findOrCreatePersonalChat } from '../services/chats.service.js'
+import { getChats, getChatById, createMessage, getChatParticipants, markRead, findOrCreatePersonalChat, updateMessage } from '../services/chats.service.js'
 
 const router = Router()
 router.use(authenticateToken)
@@ -35,7 +35,7 @@ router.get('/:id', async (req, res) => {
 })
 
 router.post('/:id/messages', idempotent, async (req, res) => {
-  const { text } = req.body
+  const { text, replyToId } = req.body
   if (!text?.trim()) return res.status(400).json({ message: 'Text required' })
   if (text.length > 2000) return res.status(400).json({ message: 'Text too long (max 2000 chars)' })
   try {
@@ -44,7 +44,9 @@ router.post('/:id/messages', idempotent, async (req, res) => {
       userId: req.user.userId,
       userName: req.user.name || 'User',
       text,
+      replyToId,
     })
+    if (msg?.error === 'REPLY_NOT_FOUND') return res.status(404).json({ message: 'Replied message not found' })
     const participants = await getChatParticipants(Number(req.params.id), req.user.userId)
     const { createNotification } = await import('./notifications.js')
     await Promise.all(participants.map(p => createNotification({
@@ -76,6 +78,28 @@ router.put('/:id/read', async (req, res) => {
   } catch (err) {
     logger.error('Chat mark read error:', err)
     res.status(500).json({ message: 'Failed to mark read' })
+  }
+})
+
+// Этап 65 (подзадача 2): редактирование сообщения (только автор). WS message:edited — ниже в socket.js.
+router.put('/:id/messages/:msgId', async (req, res) => {
+  const { text } = req.body
+  if (!text?.trim()) return res.status(400).json({ message: 'Text required' })
+  if (text.length > 2000) return res.status(400).json({ message: 'Text too long (max 2000 chars)' })
+  try {
+    const result = await updateMessage({
+      id: Number(req.params.msgId),
+      chatId: Number(req.params.id),
+      userId: req.user.userId,
+      text,
+    })
+    if (result.error === 'NOT_FOUND') return res.status(404).json({ message: 'Message not found' })
+    if (result.error === 'FORBIDDEN') return res.status(403).json({ message: 'Only author can edit the message' })
+    enqueueEvent('message:edited', `chat:${req.params.id}`, result.message)
+    res.json({ success: true, data: result.message })
+  } catch (err) {
+    logger.error('Edit message error:', err)
+    res.status(500).json({ message: 'Failed to edit message' })
   }
 })
 

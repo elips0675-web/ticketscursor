@@ -26,3 +26,10 @@ vitest-client.json
 server/vitest-server.json
 test-analysis/client-report.json
 diag-db.mjs
+client-run.log
+server-run.log
+
+# Аудит-файлы (внешние .rtf/.docx) и локальные coverage-отчёты — не коммитить
+*.rtf
+*.docx
+server/et68-server-cov.txt

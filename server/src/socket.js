@@ -4,7 +4,7 @@ import prisma from './prisma.js'
 import { verifyJwtSecret } from './middleware.js'
 import { hasRole } from './utils/roleUtils.js'
 import { createNotification } from './routes/notifications.js'
-import { markRead } from './services/chats.service.js'
+import { markRead, updateMessage } from './services/chats.service.js'
 import logger from './logger.js'
 
 let io
@@ -140,20 +140,34 @@ export async function setupSocket(server) {
       socket.leave(`chat:${chatId}`)
     })
 
-    socket.on('message:send', async ({ chatId, text, clientId }) => {
+    socket.on('message:send', async ({ chatId, text, clientId, replyToId }) => {
       if (!text?.trim()) return
       if (text.length > 2000) return socket.emit('error', { message: 'Text too long (max 2000 chars)' })
       if (!wsRateLimit(socket)) return socket.emit('rate:limited', { event: 'message:send' })
       try {
         const user = await prisma.employees.findUnique({ where: { id: socket.userId }, select: { name: true } })
         const senderName = user?.name || 'User'
+        // Этап 65 (подзадача 3): reply-to/threads — валидация reply_to_message_id по чату.
+        if (replyToId != null) {
+          const replied = await prisma.chat_messages.findFirst({
+            where: { id: Number(replyToId), chat_id: chatId, deleted_at: null },
+            select: { id: true },
+          })
+          if (!replied) return socket.emit('error', { message: 'Replied message not found' })
+        }
         const msg = await prisma.chat_messages.create({
           data: {
             chat_id: chatId,
             sender_id: socket.userId,
             sender_name: senderName,
             text,
+            reply_to_message_id: replyToId != null ? Number(replyToId) : null,
           },
+          include: replyToId != null
+            ? {
+                reply_to: { select: { id: true, sender_id: true, sender_name: true, text: true } },
+              }
+            : undefined,
         })
         io.to(`chat:${chatId}`).emit('message:new', msg)
         if (clientId) socket.emit('message:ack', { clientId, msg })
@@ -177,6 +191,24 @@ export async function setupSocket(server) {
 
     socket.on('chat:typing', ({ chatId }) => {
       socket.to(`chat:${chatId}`).emit('chat:typing', { userId: socket.userId })
+    })
+
+    // Этап 65 (подзадача 2): редактирование сообщения — только автор, затем WS message:edited.
+    socket.on('message:edit', async ({ chatId, msgId, text }) => {
+      if (!text?.trim() || text.length > 2000) return
+      if (!wsRateLimit(socket)) return socket.emit('rate:limited', { event: 'message:edit' })
+      try {
+        const result = await updateMessage({
+          id: Number(msgId),
+          chatId: Number(chatId),
+          userId: socket.userId,
+          text,
+        })
+        if (result.error === 'NOT_FOUND' || result.error === 'FORBIDDEN') return
+        io.to(`chat:${chatId}`).emit('message:edited', result.message)
+      } catch (err) {
+        logger.error('WS message edit error:', err)
+      }
     })
 
     socket.on('message:read', async ({ chatId, lastReadMessageId }) => {

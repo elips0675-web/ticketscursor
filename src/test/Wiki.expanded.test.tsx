@@ -96,6 +96,10 @@ vi.mock('@/lib/api', () => ({ api: mockApi }))
 vi.mock('@/context/AuthContext', () => ({
   useAuth: () => mockAuth,
   AuthProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  // Актуальный вызов require(): useFeature.ts импортирует AuthContext напрямую,
+  // а vi.mock-фабрика хуистится выше импортов — createContext из import недоступен.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  AuthContext: require('react').createContext(null),
 }))
 
 function makeWrapper() {
@@ -108,7 +112,10 @@ function makeWrapper() {
 describe('Wiki', () => {
   beforeEach(() => {
     mockApi.get.mockReset()
-    mockApi.get.mockResolvedValue({ data: mockArticles })
+    mockApi.get.mockImplementation(async (url: string) => {
+      if (url === '/admin/features') return []
+      return { data: mockArticles }
+    })
     mockAuth.canManage = false
   })
 
@@ -131,7 +138,10 @@ describe('Wiki', () => {
   })
 
   it('shows empty state', async () => {
-    mockApi.get.mockResolvedValue({ data: [] })
+    mockApi.get.mockImplementation(async (url: string) => {
+      if (url === '/admin/features') return []
+      return { data: [] }
+    })
     render(<WikiPage />, { wrapper: makeWrapper() })
     expect(await screen.findByText('Статьи не найдены')).toBeInTheDocument()
   })

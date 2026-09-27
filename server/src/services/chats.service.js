@@ -32,6 +32,9 @@ export async function getChatById(id, page = 1, limit = 50) {
       orderBy: { created_at: 'asc' },
       take: limit,
       skip,
+      include: {
+        reply_to: { select: { id: true, sender_id: true, sender_name: true, text: true } },
+      },
     }),
     prisma.chat_messages.count({ where: { chat_id: id, deleted_at: null } }),
     prisma.chat_read_receipts.findMany({ where: { chat_id: id } }),
@@ -50,11 +53,32 @@ export async function getChatById(id, page = 1, limit = 50) {
   }
 }
 
-export async function createMessage({ chatId, userId, userName, text }) {
+// Этап 65 (подзадача 3): reply-to/threads — replyToId ссылается на сообщение в том же чате.
+export async function createMessage({ chatId, userId, userName, text, replyToId }) {
+  if (replyToId != null) {
+    const replied = await prisma.chat_messages.findFirst({
+      where: { id: Number(replyToId), chat_id: chatId, deleted_at: null },
+      select: { id: true },
+    })
+    if (!replied) return { error: 'REPLY_NOT_FOUND' }
+  }
+  const createData = {
+    chat_id: chatId,
+    sender_id: userId,
+    sender_name: userName,
+    text,
+    reply_to_message_id: replyToId != null ? Number(replyToId) : null,
+  }
+  const createOptions = replyToId != null
+    ? {
+        data: createData,
+        include: {
+          reply_to: { select: { id: true, sender_id: true, sender_name: true, text: true } },
+        },
+      }
+    : { data: createData }
   const [msg] = await Promise.all([
-    prisma.chat_messages.create({
-      data: { chat_id: chatId, sender_id: userId, sender_name: userName, text },
-    }),
+    prisma.chat_messages.create(createOptions),
     prisma.chat_rooms.update({
       where: { id: chatId },
       data: { unread: { increment: 1 } },
@@ -69,6 +93,22 @@ export async function getChatParticipants(chatId, excludeUserId) {
     distinct: ['sender_id'],
     select: { sender_id: true },
   })
+}
+
+// Этап 65 (подзадача 2): редактирование сообщения — только автор, текст сохраняется,
+// проставляется edited_at (признак «изменено» на фронте).
+export async function updateMessage({ id, chatId, userId, text }) {
+  const existing = await prisma.chat_messages.findFirst({
+    where: { id, chat_id: chatId, deleted_at: null },
+    select: { id: true, sender_id: true },
+  })
+  if (!existing) return { error: 'NOT_FOUND' }
+  if (existing.sender_id !== userId) return { error: 'FORBIDDEN' }
+  const message = await prisma.chat_messages.update({
+    where: { id },
+    data: { text, edited_at: new Date() },
+  })
+  return { message }
 }
 
 export async function markRead(chatId, userId, lastReadMessageId) {

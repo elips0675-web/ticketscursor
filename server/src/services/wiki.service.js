@@ -21,3 +21,57 @@ export async function createArticle({ title, content, category, tags, userId, us
     },
   })
 }
+
+async function getNextRevision(articleId) {
+  const last = await prisma.wiki_revisions.findFirst({
+    where: { article_id: articleId },
+    orderBy: { revision: 'desc' },
+    select: { revision: true },
+  })
+  return (last?.revision || 0) + 1
+}
+
+export async function createRevision({ articleId, authorId, authorName, title, content, category, tags }) {
+  const revision = await getNextRevision(articleId)
+  return prisma.wiki_revisions.create({
+    data: {
+      article_id: articleId, revision,
+      title, content, category: category || 'Другое', tags: tags || [],
+      author_id: authorId || null, author_name: authorName || 'User',
+    },
+  })
+}
+
+export async function updateArticle({ id, title, content, category, tags, userId, userName }) {
+  const article = await prisma.wiki_articles.update({
+    where: { id },
+    data: { title, content, category: category || 'Другое', tags: tags || [], updated_at: new Date() },
+  })
+  await createRevision({ articleId: id, authorId: userId, authorName: userName, title, content, category, tags })
+  return article
+}
+
+export async function listRevisions(articleId) {
+  return prisma.wiki_revisions.findMany({
+    where: { article_id: articleId },
+    orderBy: { revision: 'desc' },
+  })
+}
+
+export async function getRevision(id, articleId) {
+  return prisma.wiki_revisions.findFirst({ where: { id, article_id: articleId } })
+}
+
+export async function rollbackArticle({ id, revisionId, userId, userName }) {
+  const rev = await prisma.wiki_revisions.findFirst({ where: { id: revisionId, article_id: id } })
+  if (!rev) return null
+  const article = await prisma.wiki_articles.update({
+    where: { id },
+    data: { title: rev.title, content: rev.content, category: rev.category || 'Другое', tags: rev.tags || [], updated_at: new Date() },
+  })
+  const revision = await createRevision({
+    articleId: id, authorId: userId, authorName: userName,
+    title: rev.title, content: rev.content, category: rev.category, tags: rev.tags,
+  })
+  return { article, revision }
+}

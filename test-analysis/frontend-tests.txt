@@ -1,10 +1,10 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 77 файлов / 182 suite / 670 тестов (все PASS, vitest --reporter=json от 26.09.2026)
-Coverage (All files): 77.51 stmts / 67.35 branches / 69.63 funcs / 80.08 lines (пороги 75/65/67/78 — буфер ~2 п.п.)
+Реальный результат: 82 файлов / 195 suite / 699 тестов (все PASS, vitest --reporter=json от 27.09.2026)
+Coverage (All files): 78.29 stmts / 69 branches / 70.39 funcs / 80.9 lines (пороги 76/67/68/78 — факт − 2п.п., перемерено 27.09 в Этапе 65)
 
-===== ФАЙЛЫ (77 шт, все реальные, сгенерировано скриптом) =====
+===== ФАЙЛЫ (82 шт, все реальные, сгенерировано скриптом) =====
 
 # Файлы | Тестов | Описание
 src/test/TicketDetail.test.tsx | 32 | TicketDetail: сообщения, статус, приоритет, назначение, RBAC, virtual scroll (150 и 1000 — не падает), XSS, История (timeline, PDF, флаг off)
@@ -84,12 +84,19 @@ src/test/Tickets.test.tsx | 1 | Tickets: renders
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона `npx vitest run --config vitest.client.config.ts --reporter=json` (vitest-*.json).
-Фактический запуск: 77 файлов / 670 тестов / 670 passed / 0 failures.
-Coverage (26.09.2026, перемерено --coverage): stmts 77.51 / branches 67.35 / functions 69.63 / lines 80.08 (пороги: stmts 75 / branches 65 / functions 67 / lines 78 — буфер ~2 п.п.).
-Данные актуальны на: 26.09.2026. Прирост к Этапу 64: +24 теста — Этап 68 (a11y + дыры 0%): AdminCustomFields 7, KeyboardShortcuts 6, AdminCannedResponses 5, a11y (axe-core) 4, ChatDetail virtual 300 +1, TicketDetail virtual 1000 +1.
+Фактический запуск: 82 файлов / 699 тестов / 699 passed / 0 failures.
+Coverage (27.09.2026, перемерено --coverage): значения см. выше.
+Данные актуальны на: 27.09.2026. Прирост к Этапу 68: +29 тестов — Этап 65 (qwen P1 #1): wiki-diff 10, Wiki.versioning 6, ChatDetail.edit 5, ChatDetail.replyto 5, AdminSettings.sla 3.
 Прочие правки прогона 26.09: src/test/Calendar.test.tsx — хрупкий ассерт «shows day headers» заменён на await screen.findByText('Пн') (Calendar.tsx:168 гейтит рендер по isLoading, синхронный getBy падал до ответа MSW).
 
 Новые файлы Этапа 64 (покрытие флагов ticket_watchers / ticket_relations / ticket_merge):
 src/test/TicketWatchersCard.test.tsx | 8 | Watchers: подписка/отписка, бейдж, RBAC (флаг ticket_watchers)
 src/test/TicketRelationsCard.test.tsx | 7 | Relations: parent/child, blocked-by, duplicates (флаг ticket_relations)
 src/test/TicketMergeDialog.test.tsx | 6 | Merge: выбор тикета, предпросмотр, подтверждение (флаг ticket_merge)
+
+Новые файлы Этапа 65 (qwen P1, часть 1):
+src/test/wiki-diff.test.ts | 10 | wiki-diff (LCS): diff статей Wiki, applyPatch (строки/вставки/удаления), rollback
+src/test/Wiki.versioning.test.tsx | 6 | Wiki версионирование (флаг wiki_versioning): история ревизий, diff, откат к ревизии
+src/test/ChatDetail.edit.test.tsx | 5 | ChatDetail редактирование сообщений: кнопка на своих, режим, optimistic + WS message:edit (флаг chat_message_edit → true)
+src/test/ChatDetail.replyto.test.tsx | 5 | ChatDetail reply-to (флаг chat_reply_to): кнопка «Ответить», превью, цитата в пузыре, отправка replyToId
+src/test/AdminSettings.sla.test.tsx | 3 | AdminSettings SLA business hours: секция, дни/часы/таймзона, Save→PUT

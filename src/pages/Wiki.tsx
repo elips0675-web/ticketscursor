@@ -6,13 +6,28 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Search, BookOpen, Plus, Clock, User, Layers, ImageIcon, Download } from 'lucide-react'
+import {
+  Search,
+  BookOpen,
+  Plus,
+  Clock,
+  User,
+  Layers,
+  ImageIcon,
+  Download,
+  History,
+  Pencil,
+  RotateCcw,
+  Loader2,
+} from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import type { WikiArticle } from '@/types'
 import { useAuth } from '@/context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { api } from '@/lib/api'
 import { SkeletonCardGrid } from '@/components/skeletons'
+import { useFeature } from '@/hooks/useFeature'
+import { diffLines, diffStats, type DiffLine } from '@/lib/wiki-diff'
 
 function mapArticle(raw: Record<string, unknown>): WikiArticle {
   return {
@@ -30,6 +45,32 @@ function mapArticle(raw: Record<string, unknown>): WikiArticle {
 
 const CATEGORIES = ['Все', 'Руководство', 'Правила', 'Инструкции', 'FAQ', 'Интеграции']
 
+interface WikiRevision {
+  id: number
+  article_id: number
+  revision: number
+  title: string
+  content: string
+  category: string
+  tags: string[] | string
+  author_name?: string | null
+  created_at: string
+}
+
+function mapRevision(raw: Record<string, unknown>): WikiRevision {
+  return {
+    id: raw.id as number,
+    article_id: raw.article_id as number,
+    revision: raw.revision as number,
+    title: raw.title as string,
+    content: raw.content as string,
+    category: (raw.category as string) || 'Другое',
+    tags: typeof raw.tags === 'string' ? JSON.parse(raw.tags) : (raw.tags as string[]) || [],
+    author_name: raw.author_name as string | null,
+    created_at: raw.created_at as string,
+  }
+}
+
 export default function WikiPage() {
   const { canManage } = useAuth()
   const { t } = useTranslation()
@@ -44,6 +85,25 @@ export default function WikiPage() {
   const [newTags, setNewTags] = useState('')
   const imageInputRef = useRef<HTMLInputElement>(null)
   const [uploadingImg, setUploadingImg] = useState(false)
+
+  // — Этап 65: версионирование Wiki (флаг wiki_versioning) + редактирование —
+  const versioningEnabled = useFeature('wiki_versioning')
+  const [editOpen, setEditOpen] = useState(false)
+  const [editTitle, setEditTitle] = useState('')
+  const [editContent, setEditContent] = useState('')
+  const [editCategory, setEditCategory] = useState('Руководство')
+  const [editTags, setEditTags] = useState('')
+  const [histOpen, setHistOpen] = useState(false)
+  const [revisions, setRevisions] = useState<WikiRevision[]>([])
+  const [selectedRev, setSelectedRev] = useState<WikiRevision | null>(null)
+  const [revisionLoading, setRevisionLoading] = useState(false)
+  const [rollbackPending, setRollbackPending] = useState(false)
+
+  const diff: DiffLine[] = useMemo(
+    () => (article && selectedRev ? diffLines(article.content, selectedRev.content) : []),
+    [article, selectedRev],
+  )
+  const diffStat = useMemo(() => diffStats(diff), [diff])
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -106,6 +166,63 @@ export default function WikiPage() {
       setNewTags('')
     },
   })
+
+  const editMutation = useMutation({
+    mutationFn: (id: number) => {
+      if (!editTitle.trim() || !editContent.trim()) return Promise.reject(new Error('Invalid form'))
+      return api.put(`/wiki/${id}`, {
+        title: editTitle,
+        content: editContent,
+        category: editCategory,
+        tags: editTags
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
+      })
+    },
+    onSuccess: (updated) => {
+      queryClient.invalidateQueries({ queryKey: ['wiki'] })
+      setArticle(mapArticle(updated))
+      setEditOpen(false)
+    },
+  })
+
+  const openEdit = (a: WikiArticle) => {
+    setEditTitle(a.title)
+    setEditContent(a.content)
+    setEditCategory(a.category)
+    setEditTags((a.tags || []).join(', '))
+    setEditOpen(true)
+  }
+
+  const openHistory = async () => {
+    if (!article) return
+    setHistOpen(true)
+    setRevisionLoading(true)
+    setSelectedRev(null)
+    try {
+      const data = await api.get(`/wiki/${article.id}/revisions`)
+      setRevisions(((data?.data || data || []) as Record<string, unknown>[]).map(mapRevision))
+    } catch {
+      /* toast handled by api client */
+      setRevisions([])
+    }
+    setRevisionLoading(false)
+  }
+
+  const rollbackTo = async (rev: WikiRevision) => {
+    if (!article || rollbackPending) return
+    setRollbackPending(true)
+    try {
+      const updated = await api.post(`/wiki/${article.id}/rollback/${rev.id}`)
+      queryClient.invalidateQueries({ queryKey: ['wiki'] })
+      setArticle(mapArticle(updated))
+      setHistOpen(false)
+    } catch {
+      /* toast handled by api client */
+    }
+    setRollbackPending(false)
+  }
 
   const exportCSV = () => {
     const data = filtered
@@ -290,9 +407,23 @@ export default function WikiPage() {
                 ))}
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setArticle(null)}>
-              {t('common.back')}
-            </Button>
+            <div className="flex items-center gap-1">
+              {versioningEnabled && (
+                <Button variant="outline" size="sm" onClick={openHistory}>
+                  <History className="w-3.5 h-3.5 mr-1" />
+                  {t('wiki.history')}
+                </Button>
+              )}
+              {canManage && (
+                <Button variant="outline" size="sm" onClick={() => openEdit(article)}>
+                  <Pencil className="w-3.5 h-3.5 mr-1" />
+                  {t('wiki.edit')}
+                </Button>
+              )}
+              <Button variant="ghost" size="sm" onClick={() => setArticle(null)}>
+                {t('common.back')}
+              </Button>
+            </div>
           </div>
           <Separator />
           <div className="text-sm leading-relaxed whitespace-pre-wrap">{article.content}</div>
@@ -340,6 +471,146 @@ export default function WikiPage() {
           ))}
         </div>
       )}
+
+      {/* — Этап 65: диалог редактирования (PUT /wiki/:id + ревизия) — */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>{t('wiki.editTitle')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <label htmlFor="wiki-edit-title" className="text-sm font-medium">
+              {t('wiki.articleTitle')}
+            </label>
+            <Input id="wiki-edit-title" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+            <label htmlFor="wiki-edit-content" className="text-sm font-medium">
+              {t('wiki.content')}
+            </label>
+            <Textarea
+              id="wiki-edit-content"
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              rows={8}
+            />
+            <div className="flex gap-3">
+              <div className="w-1/2 space-y-1">
+                <label htmlFor="wiki-edit-category" className="text-sm font-medium">
+                  {t('wiki.category')}
+                </label>
+                <Select value={editCategory} onValueChange={setEditCategory}>
+                  <SelectTrigger id="wiki-edit-category">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.filter((c) => c !== 'Все').map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-1/2 space-y-1">
+                <label htmlFor="wiki-edit-tags" className="text-sm font-medium">
+                  {t('wiki.tags')}
+                </label>
+                <Input
+                  id="wiki-edit-tags"
+                  value={editTags}
+                  onChange={(e) => setEditTags(e.target.value)}
+                  placeholder={t('wiki.tagsPlaceholder')}
+                />
+              </div>
+            </div>
+            {versioningEnabled && <p className="text-xs text-muted-foreground">{t('wiki.editCreatesRevision')}</p>}
+            <Button
+              onClick={() => article && editMutation.mutate(article.id)}
+              className="w-full"
+              disabled={editMutation.isPending}
+            >
+              {t('common.save')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* — Этап 65: история версий (list + diff + rollback, флаг wiki_versioning) — */}
+      <Dialog open={histOpen} onOpenChange={setHistOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{t('wiki.historyTitle')}</DialogTitle>
+          </DialogHeader>
+          {revisionLoading ? (
+            <div className="space-y-2 py-4">
+              <div className="h-4 w-2/3 rounded bg-muted animate-pulse" />
+              <div className="h-4 w-1/2 rounded bg-muted animate-pulse" />
+            </div>
+          ) : revisions.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4">{t('wiki.noRevisions')}</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-3 overflow-y-auto min-h-40">
+              <div className="space-y-1">
+                {revisions.map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => setSelectedRev(r)}
+                    className={`w-full text-left text-xs rounded-lg border px-3 py-2 transition-colors ${
+                      selectedRev?.id === r.id ? 'border-primary bg-primary/10 text-primary' : 'hover:bg-muted/50'
+                    }`}
+                  >
+                    <span className="font-bold">#{r.revision}</span>{' '}
+                    <span className="text-muted-foreground">{new Date(r.created_at).toLocaleString()}</span>
+                    {r.author_name && <div className="text-muted-foreground mt-0.5">{r.author_name}</div>}
+                  </button>
+                ))}
+              </div>
+              <div>
+                {selectedRev ? (
+                  <>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+                      <span>
+                        {t('wiki.diffFromCurrent')} #{selectedRev.revision}
+                      </span>
+                      <Badge variant="outline">
+                        +{diffStat.added} / −{diffStat.removed}
+                      </Badge>
+                    </div>
+                    <div className="text-xs font-mono whitespace-pre-wrap border rounded-lg p-3 max-h-64 overflow-y-auto">
+                      {diff.map((l, i) => (
+                        <div
+                          key={i}
+                          className={
+                            l.type === 'add'
+                              ? 'bg-green-500/10 text-green-700'
+                              : l.type === 'del'
+                                ? 'bg-red-500/10 text-red-600 line-through'
+                                : ''
+                          }
+                        >
+                          {l.type === 'add' ? '+ ' : l.type === 'del' ? '- ' : '  '}
+                          {l.text}
+                        </div>
+                      ))}
+                    </div>
+                    {canManage && (
+                      <Button className="mt-3 gap-2" disabled={rollbackPending} onClick={() => rollbackTo(selectedRev)}>
+                        <RotateCcw className="w-4 h-4" />
+                        {t('wiki.rollback')}
+                      </Button>
+                    )}
+                    {!canManage && (
+                      <p className="text-xs text-muted-foreground mt-3">{t('wiki.rollbackManagerOnly')}</p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{t('wiki.selectRevision')}</p>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

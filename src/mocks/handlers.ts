@@ -347,6 +347,66 @@ export const handlers = [
     })
   }),
 
+  // ── Wiki versioning (Этап 65) ──
+  http.put(`${API}/wiki/:id`, ({ params }) => {
+    return HttpResponse.json({
+      id: Number(params.id),
+      title: 'Как настроить VPN (v2)',
+      content: 'Инструкция обновлена',
+      category: 'Инструкции',
+      tags: ['vpn', 'network'],
+      author_id: 1,
+      author_name: 'Admin',
+      created_at: '2026-07-01T10:00:00Z',
+      updated_at: '2026-07-09T11:00:00Z',
+    })
+  }),
+
+  http.get(`${API}/wiki/:id/revisions`, () => {
+    return HttpResponse.json({
+      data: [
+        {
+          id: 2,
+          article_id: 1,
+          revision: 2,
+          title: 'Как настроить VPN (v2)',
+          content: 'Инструкция обновлена',
+          category: 'Инструкции',
+          tags: ['vpn', 'network'],
+          author_id: 1,
+          author_name: 'Admin',
+          created_at: '2026-07-09T11:00:00Z',
+        },
+        {
+          id: 1,
+          article_id: 1,
+          revision: 1,
+          title: 'Как настроить VPN',
+          content: 'Инструкция по настройке VPN-клиента',
+          category: 'Инструкции',
+          tags: ['vpn', 'network'],
+          author_id: 1,
+          author_name: 'Admin',
+          created_at: '2026-07-01T10:00:00Z',
+        },
+      ],
+    })
+  }),
+
+  http.post(`${API}/wiki/:id/rollback/:revId`, () => {
+    return HttpResponse.json({
+      id: 1,
+      title: 'Как настроить VPN',
+      content: 'Инструкция по настройке VPN-клиента',
+      category: 'Инструкции',
+      tags: ['vpn', 'network'],
+      author_id: 1,
+      author_name: 'Admin',
+      created_at: '2026-07-01T10:00:00Z',
+      updated_at: '2026-07-09T12:00:00Z',
+    })
+  }),
+
   // ── News ──
   http.get(`${API}/news`, () => {
     return HttpResponse.json({
@@ -477,6 +537,10 @@ export const handlers = [
   }),
 
   http.post(`${API}/chats/:id/messages`, () => {
+    return HttpResponse.json({ success: true })
+  }),
+
+  http.put(`${API}/chats/:id/messages/:msgId`, () => {
     return HttpResponse.json({ success: true })
   }),
 
@@ -776,6 +840,12 @@ export const handlers = [
           rollout_percent: 100,
           schedule: { from: '09:00', to: '18:00' },
         },
+        {
+          key: 'chat_message_edit',
+          enabled: false,
+          description: 'Edit chat messages (edited_at + WS message:edited)',
+          rollout_percent: 100,
+        },
       ],
     })
   }),
@@ -875,6 +945,24 @@ export const handlers = [
   http.post(`${API}/admin/sessions/revoke/:userId`, () => {
     return HttpResponse.json({ success: true, data: { revoked: true } })
   }),
+  http.get(`${API}/admin/settings`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        COMPANY_NAME: 'ServiceDesk',
+        TIMEZONE: 'Europe/Moscow',
+        BUSINESS_WORKING_DAYS: '[1,2,3,4,5]',
+        BUSINESS_HOURS_START: '9',
+        BUSINESS_HOURS_END: '18',
+      },
+    })
+  }),
+
+  http.put(`${API}/admin/settings`, async ({ request }) => {
+    const body = await request.json()
+    return HttpResponse.json({ success: true, data: { updated: true, ...body } })
+  }),
+
   http.post(`${API}/admin/settings/restore`, () => {
     return HttpResponse.json({ success: true, data: { restored: true } })
   }),

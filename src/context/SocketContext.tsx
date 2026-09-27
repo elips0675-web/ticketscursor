@@ -32,8 +32,9 @@ function writeOutbox(entries: OutboxEntry[]) {
 interface SocketContextType {
   socket: Socket | null
   connected: boolean
-  sendMessage: (chatId: number, text: string, clientId?: string) => void
+  sendMessage: (chatId: number, text: string, clientId?: string, replyToId?: number) => void
   deleteMessage: (chatId: number, msgId: number) => void
+  editMessage: (chatId: number, msgId: number, text: string) => void
   joinChat: (chatId: number) => void
   leaveChat: (chatId: number) => void
   notifyAll: (data: { title: string; body: string; url?: string }) => void
@@ -78,10 +79,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   }, [token])
 
   const sendMessage = useCallback(
-    (chatId: number, text: string, clientId?: string) => {
+    (chatId: number, text: string, clientId?: string, replyToId?: number) => {
       const id = clientId || `${Date.now()}-${Math.random().toString(36).slice(2)}`
       if (connected && socket) {
-        socket.emit('message:send', { chatId, text, clientId: id })
+        socket.emit('message:send', { chatId, text, clientId: id, replyToId })
       } else {
         writeOutbox([...readOutbox(), { clientId: id, chatId, text, createdAt: new Date().toISOString() }])
       }
@@ -92,6 +93,13 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const deleteMessage = useCallback(
     (chatId: number, msgId: number) => {
       socket?.emit('message:delete', { chatId, msgId })
+    },
+    [socket],
+  )
+
+  const editMessage = useCallback(
+    (chatId: number, msgId: number, text: string) => {
+      socket?.emit('message:edit', { chatId, msgId, text })
     },
     [socket],
   )
@@ -133,7 +141,18 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
   return (
     <SocketContext.Provider
-      value={{ socket, connected, sendMessage, deleteMessage, joinChat, leaveChat, notifyAll, sendTyping, markRead }}
+      value={{
+        socket,
+        connected,
+        sendMessage,
+        deleteMessage,
+        editMessage,
+        joinChat,
+        leaveChat,
+        notifyAll,
+        sendTyping,
+        markRead,
+      }}
     >
       {children}
     </SocketContext.Provider>

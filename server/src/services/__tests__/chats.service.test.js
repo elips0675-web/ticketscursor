@@ -3,13 +3,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('../../prisma.js', () => ({
   default: {
     chat_rooms: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn(), create: vi.fn(), findFirst: vi.fn() },
-    chat_messages: { create: vi.fn(), findMany: vi.fn(), count: vi.fn() },
+    chat_messages: { create: vi.fn(), findMany: vi.fn(), count: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
     chat_read_receipts: { findMany: vi.fn(), findUnique: vi.fn(), upsert: vi.fn() },
     employees: { findUnique: vi.fn() },
   },
 }))
 
-import { getChats, getChatById, createMessage, markRead, findOrCreatePersonalChat } from '../chats.service.js'
+import { getChats, getChatById, createMessage, markRead, findOrCreatePersonalChat, updateMessage } from '../chats.service.js'
 import prisma from '../../prisma.js'
 
 beforeEach(() => { vi.clearAllMocks() })
@@ -54,8 +54,28 @@ describe('createMessage', () => {
     prisma.chat_messages.create.mockResolvedValue({ id: 1 })
     await createMessage({ chatId: 1, userId: 1, userName: 'Alice', text: 'hello' })
     expect(prisma.chat_messages.create).toHaveBeenCalledWith({
-      data: { chat_id: 1, sender_id: 1, sender_name: 'Alice', text: 'hello' },
+      data: { chat_id: 1, sender_id: 1, sender_name: 'Alice', text: 'hello', reply_to_message_id: null },
     })
+  })
+})
+
+describe('createMessage с replyToId (Этап 65, reply-to/threads)', () => {
+  it('валидирует исходное сообщение и проставляет reply_to_message_id + include', async () => {
+    prisma.chat_messages.findFirst.mockResolvedValue({ id: 3 })
+    prisma.chat_messages.create.mockResolvedValue({ id: 9, reply_to: { id: 3 } })
+    const result = await createMessage({ chatId: 1, userId: 1, userName: 'Alice', text: 'ответ', replyToId: 3 })
+    expect(prisma.chat_messages.create).toHaveBeenCalledWith({
+      data: { chat_id: 1, sender_id: 1, sender_name: 'Alice', text: 'ответ', reply_to_message_id: 3 },
+      include: { reply_to: { select: { id: true, sender_id: true, sender_name: true, text: true } } },
+    })
+    expect(result.id).toBe(9)
+  })
+
+  it('REPLY_NOT_FOUND, если исходное сообщение не в этом чате/удалено', async () => {
+    prisma.chat_messages.findFirst.mockResolvedValue(null)
+    const result = await createMessage({ chatId: 1, userId: 1, userName: 'Alice', text: 'ответ', replyToId: 999 })
+    expect(result.error).toBe('REPLY_NOT_FOUND')
+    expect(prisma.chat_messages.create).not.toHaveBeenCalled()
   })
 })
 
@@ -112,5 +132,32 @@ describe('findOrCreatePersonalChat', () => {
     prisma.employees.findUnique.mockResolvedValue(null)
     const result = await findOrCreatePersonalChat(999, 1)
     expect(result.error).toBe('User not found')
+  })
+})
+
+describe('updateMessage (Этап 65 — редактирование, только автор)', () => {
+  it('updates own message and sets edited_at', async () => {
+    prisma.chat_messages.findFirst.mockResolvedValue({ id: 5, sender_id: 1 })
+    prisma.chat_messages.update.mockResolvedValue({ id: 5, text: 'new text', edited_at: new Date() })
+    const result = await updateMessage({ id: 5, chatId: 1, userId: 1, text: 'new text' })
+    expect(result.message.text).toBe('new text')
+    expect(prisma.chat_messages.update).toHaveBeenCalledWith({
+      where: { id: 5 },
+      data: expect.objectContaining({ text: 'new text', edited_at: expect.any(Date) }),
+    })
+  })
+
+  it('returns NOT_FOUND when message missing or deleted', async () => {
+    prisma.chat_messages.findFirst.mockResolvedValue(null)
+    const result = await updateMessage({ id: 999, chatId: 1, userId: 1, text: 'x' })
+    expect(result.error).toBe('NOT_FOUND')
+    expect(prisma.chat_messages.update).not.toHaveBeenCalled()
+  })
+
+  it('returns FORBIDDEN when editing someone else message', async () => {
+    prisma.chat_messages.findFirst.mockResolvedValue({ id: 5, sender_id: 2 })
+    const result = await updateMessage({ id: 5, chatId: 1, userId: 1, text: 'hack' })
+    expect(result.error).toBe('FORBIDDEN')
+    expect(prisma.chat_messages.update).not.toHaveBeenCalled()
   })
 })

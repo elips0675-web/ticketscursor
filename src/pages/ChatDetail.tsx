@@ -4,13 +4,29 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { ArrowLeft, Send, Smile, Users, CheckCheck, Trash2, Search, ImagePlus, X, Loader2 } from 'lucide-react'
+import {
+  ArrowLeft,
+  Send,
+  Smile,
+  Users,
+  CheckCheck,
+  Trash2,
+  Search,
+  ImagePlus,
+  X,
+  Loader2,
+  Pencil,
+  Check,
+  Reply,
+} from 'lucide-react'
 import { cn, formatTime } from '@/lib/utils'
 import { api } from '@/lib/api'
 import type { ChatMessage, ChatReadReceipt } from '@/types'
 import { motion } from 'framer-motion'
 import { useSocket } from '@/context/SocketContext'
 import { useAuth } from '@/context/AuthContext'
+import { useFeature } from '@/hooks/useFeature'
+import { useTranslation } from 'react-i18next'
 
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏']
 
@@ -18,12 +34,19 @@ export default function ChatDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const chatId = Number(id)
-  const { sendMessage, deleteMessage, joinChat, leaveChat, socket, connected, sendTyping, markRead } = useSocket()
+  const { sendMessage, deleteMessage, editMessage, joinChat, leaveChat, socket, connected, sendTyping, markRead } =
+    useSocket()
   const { user } = useAuth()
+  const { t } = useTranslation()
+  const editEnabled = useFeature('chat_message_edit')
+  const replyEnabled = useFeature('chat_reply_to')
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [chatInfo, setChatInfo] = useState<{ name: string; type: string }>({ name: 'Чат', type: 'personal' })
   const [loading, setLoading] = useState(true)
   const [input, setInput] = useState('')
+  const [editingMsgId, setEditingMsgId] = useState<number | null>(null)
+  const [editText, setEditText] = useState('')
+  const [replyTo, setReplyTo] = useState<Pick<ChatMessage, 'id' | 'senderName' | 'text'> | null>(null)
   const [showReactions, setShowReactions] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
@@ -44,7 +67,15 @@ export default function ChatDetail() {
     text: m.text as string,
     image: m.image as string | undefined,
     createdAt: (m.createdAt ?? m.created_at) as string,
+    edited: Boolean(m.edited_at ?? m.edited),
     reactions: m.reactions as Record<string, number[]> | undefined,
+    replyTo: m.reply_to
+      ? {
+          id: (m.reply_to as Record<string, unknown>).id as number,
+          senderName: ((m.reply_to as Record<string, unknown>).sender_name ?? '') as string,
+          text: ((m.reply_to as Record<string, unknown>).text ?? '') as string,
+        }
+      : undefined,
   })
 
   useEffect(() => {
@@ -86,10 +117,7 @@ export default function ChatDetail() {
         if (mapped.senderId === currentUserId) {
           const idx = prev.findIndex(
             (m) =>
-              m.id !== mapped.id &&
-              m.senderId === mapped.senderId &&
-              m.senderName === 'Я' &&
-              m.text === mapped.text,
+              m.id !== mapped.id && m.senderId === mapped.senderId && m.senderName === 'Я' && m.text === mapped.text,
           )
           if (idx !== -1) {
             const next = [...prev]
@@ -106,12 +134,24 @@ export default function ChatDetail() {
       }
     }
     const onRemove = (msgId: number) => setMessages((prev) => prev.filter((m) => m.id !== msgId))
+    const onEdited = (msg: Record<string, unknown>) => {
+      const mapped = mapMessage(msg)
+      setMessages((prev) => prev.map((m) => (m.id === mapped.id ? mapped : m)))
+    }
     const onTyping = ({ userId }: { userId: number }) => {
       if (userId === currentUserId) return
       setTypingUsers((prev) => (prev.includes(userId) ? prev : [...prev, userId]))
       setTimeout(() => setTypingUsers((prev) => prev.filter((id) => id !== userId)), 3000)
     }
-    const onRead = ({ userId, lastReadMessageId, lastReadAt }: { userId: number; lastReadMessageId?: number | null; lastReadAt?: string }) => {
+    const onRead = ({
+      userId,
+      lastReadMessageId,
+      lastReadAt,
+    }: {
+      userId: number
+      lastReadMessageId?: number | null
+      lastReadAt?: string
+    }) => {
       setReaders((prev) => [
         ...prev.filter((r) => r.userId !== userId),
         { userId, lastReadMessageId: lastReadMessageId ?? null, lastReadAt: lastReadAt || new Date().toISOString() },
@@ -119,11 +159,13 @@ export default function ChatDetail() {
     }
     socket.on('message:new', onNew)
     socket.on('message:removed', onRemove)
+    socket.on('message:edited', onEdited)
     socket.on('chat:typing', onTyping)
     socket.on('chat:read', onRead)
     return () => {
       socket.off('message:new', onNew)
       socket.off('message:removed', onRemove)
+      socket.off('message:edited', onEdited)
       socket.off('chat:typing', onTyping)
       socket.off('chat:read', onRead)
     }
@@ -144,14 +186,15 @@ export default function ChatDetail() {
       text: input.trim(),
       image: imageFile || undefined,
       createdAt: new Date().toISOString(),
+      replyTo: replyTo || undefined,
     }
     setMessages((prev) => [...prev, msg as ChatMessage])
     if (input.trim()) {
       if (connected) {
-        sendMessage(chatId, input.trim())
+        sendMessage(chatId, input.trim(), undefined, replyTo?.id)
       } else {
         try {
-          await api.post(`/chats/${chatId}/messages`, { text: input.trim() })
+          await api.post(`/chats/${chatId}/messages`, { text: input.trim(), replyToId: replyTo?.id })
         } catch {
           /* ignore */
         }
@@ -159,6 +202,7 @@ export default function ChatDetail() {
     }
     setInput('')
     setImageFile(null)
+    setReplyTo(null)
     setTimeout(() => msgEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
   }
 
@@ -197,6 +241,30 @@ export default function ChatDetail() {
     setMessages((prev) => prev.filter((m) => m.id !== msgId))
   }
 
+  // Этап 65 (подзадача 2): редактирование сообщения (флаг chat_message_edit)
+  const startEdit = (msg: ChatMessage) => {
+    setEditingMsgId(msg.id)
+    setEditText(msg.text)
+  }
+
+  const saveEdit = async () => {
+    if (!editText.trim() || editingMsgId === null) return
+    const id = editingMsgId
+    const trimmed = editText.trim()
+    if (connected) {
+      editMessage(chatId, id, trimmed)
+    } else {
+      try {
+        await api.put(`/chats/${chatId}/messages/${id}`, { text: trimmed })
+      } catch {
+        /* ignore */
+      }
+    }
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, text: trimmed, edited: true } : m)))
+    setEditingMsgId(null)
+    setEditText('')
+  }
+
   const filteredMsgs = messages.filter((m) => !searchQuery || m.text.toLowerCase().includes(searchQuery.toLowerCase()))
 
   // eslint-disable-next-line react-hooks/incompatible-library
@@ -218,9 +286,7 @@ export default function ChatDetail() {
   const currentUserId = user?.id ?? 0
 
   const readersOf = (msgId: number): ChatReadReceipt[] =>
-    readers.filter(
-      (r) => r.userId !== currentUserId && r.lastReadMessageId !== null && r.lastReadMessageId >= msgId,
-    )
+    readers.filter((r) => r.userId !== currentUserId && r.lastReadMessageId !== null && r.lastReadMessageId >= msgId)
 
   const renderMsg = (msg: ChatMessage) => {
     const isMe = msg.senderId === currentUserId || msg.senderName === 'Я'
@@ -249,8 +315,20 @@ export default function ChatDetail() {
                 className="max-w-full max-h-60 rounded-lg mb-2 cursor-pointer hover:opacity-90 transition-opacity object-cover"
               />
             )}
+            {msg.replyTo && (
+              <div
+                className={cn(
+                  'mb-1.5 px-2 py-1 rounded-md text-[11px] border-l-2 overflow-hidden',
+                  isMe ? 'bg-primary-foreground/10 border-primary-foreground/40' : 'bg-muted/60 border-primary/40',
+                )}
+              >
+                <span className="block font-semibold opacity-80 truncate">{msg.replyTo.senderName}</span>
+                <span className="block opacity-70 truncate">{msg.replyTo.text}</span>
+              </div>
+            )}
             {msg.text && <p className="leading-snug">{msg.text}</p>}
             <div className={cn('flex items-center gap-1 mt-1', isMe ? 'justify-end' : 'justify-start')}>
+              {msg.edited && <span className="text-[9px] opacity-60">{t('chat.edited')}</span>}
               <span className="text-[9px] opacity-60">{formatTime(msg.createdAt)}</span>
               {isMe && (
                 <span
@@ -324,6 +402,27 @@ export default function ChatDetail() {
                 aria-label="Удалить"
               >
                 <Trash2 className="w-3 h-3" />
+              </button>
+            )}
+            {isMe && editEnabled && (
+              <button
+                onClick={() => startEdit(msg)}
+                className="p-1 hover:bg-muted rounded-full text-muted-foreground"
+                aria-label={t('chat.editMessage')}
+              >
+                <Pencil className="w-3 h-3" />
+              </button>
+            )}
+            {replyEnabled && (
+              <button
+                onClick={() => {
+                  setReplyTo({ id: msg.id, senderName: msg.senderName || 'User', text: msg.text })
+                  if (editingMsgId !== null) setEditingMsgId(null)
+                }}
+                className="p-1 hover:bg-muted rounded-full text-muted-foreground"
+                aria-label={t('chat.reply')}
+              >
+                <Reply className="w-3 h-3" />
               </button>
             )}
           </div>
@@ -449,41 +548,94 @@ export default function ChatDetail() {
             </button>
           </div>
         )}
+        {replyTo && replyEnabled && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/60 text-xs">
+            <Reply className="w-3 h-3 text-muted-foreground shrink-0" />
+            <div className="flex-1 min-w-0">
+              <span className="block font-semibold text-primary truncate">
+                {t('chat.replyTo')}: {replyTo.senderName}
+              </span>
+              <span className="block text-muted-foreground truncate">{replyTo.text}</span>
+            </div>
+            <button
+              onClick={() => setReplyTo(null)}
+              className="p-1 hover:bg-muted rounded-full shrink-0"
+              aria-label={t('chat.cancelReply')}
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        )}
         <div className="flex items-center gap-1.5">
-          <Input
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value)
-              if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
-              sendTyping(chatId)
-              typingTimeoutRef.current = setTimeout(() => {}, 2000)
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') send()
-            }}
-            placeholder="Написать сообщение..."
-            className="flex-1 h-10 text-sm"
-          />
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={pickImage}
-            className="h-10 w-10 rounded-xl shrink-0 text-muted-foreground hover:text-foreground"
-            title="Прикрепить изображение"
-            aria-label="Прикрепить изображение"
-          >
-            <ImagePlus className="w-4 h-4" />
-          </Button>
-          <Button
-            size="icon"
-            onClick={send}
-            disabled={!input.trim() && !imageFile}
-            className="h-10 w-10 rounded-xl shrink-0"
-            aria-label="Отправить"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
+          {editingMsgId !== null ? (
+            <>
+              <Input
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') saveEdit()
+                }}
+                autoFocus
+                placeholder={t('chat.editMessage')}
+                className="flex-1 h-10 text-sm"
+              />
+              <Button
+                size="icon"
+                onClick={saveEdit}
+                disabled={!editText.trim()}
+                className="h-10 w-10 rounded-xl shrink-0"
+                aria-label={t('chat.saveEdit')}
+              >
+                <Check className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setEditingMsgId(null)}
+                className="h-10 w-10 rounded-xl shrink-0 text-muted-foreground hover:text-foreground"
+                aria-label={t('chat.cancelEdit')}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Input
+                value={input}
+                onChange={(e) => {
+                  setInput(e.target.value)
+                  if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+                  sendTyping(chatId)
+                  typingTimeoutRef.current = setTimeout(() => {}, 2000)
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') send()
+                }}
+                placeholder="Написать сообщение..."
+                className="flex-1 h-10 text-sm"
+              />
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={pickImage}
+                className="h-10 w-10 rounded-xl shrink-0 text-muted-foreground hover:text-foreground"
+                title="Прикрепить изображение"
+                aria-label="Прикрепить изображение"
+              >
+                <ImagePlus className="w-4 h-4" />
+              </Button>
+              <Button
+                size="icon"
+                onClick={send}
+                disabled={!input.trim() && !imageFile}
+                className="h-10 w-10 rounded-xl shrink-0"
+                aria-label="Отправить"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </>
+          )}
         </div>
         {previewImg && (
           <div

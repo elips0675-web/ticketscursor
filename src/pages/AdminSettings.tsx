@@ -31,6 +31,7 @@ import {
   X,
 } from 'lucide-react'
 import { api } from '@/lib/api'
+import { cn } from '@/lib/utils'
 import { ApiTokensSection, WebhooksSection } from './AdminIntegrations'
 import { RulesSection } from './AdminRules'
 
@@ -213,6 +214,8 @@ export default function AdminSettings() {
       <FeatureFlagsSection />
 
       <EmailTemplatesSection />
+
+      <SlaBusinessHoursSection />
 
       <ImapSection />
 
@@ -1068,6 +1071,162 @@ function SSOSection() {
           {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
           {t('common.save')}
         </Button>
+      </CardContent>
+    </Card>
+  )
+}
+
+const WEEK_DAYS = [
+  { value: 0, key: 'slaSun' },
+  { value: 1, key: 'slaMon' },
+  { value: 2, key: 'slaTue' },
+  { value: 3, key: 'slaWed' },
+  { value: 4, key: 'slaThu' },
+  { value: 5, key: 'slaFri' },
+  { value: 6, key: 'slaSat' },
+]
+
+// Этап 65 (подзадача 4): SLA business hours — рабочие дни/часы + таймзона. sla.js читает эти ключи
+// из admin_settings (BUSINESS_WORKING_DAYS/BUSINESS_HOURS_START/BUSINESS_HOURS_END/TIMEZONE).
+function SlaBusinessHoursSection() {
+  const { t } = useTranslation()
+  const [days, setDays] = useState<number[]>([1, 2, 3, 4, 5])
+  const [startHour, setStartHour] = useState('9')
+  const [endHour, setEndHour] = useState('18')
+  const [timezone, setTimezone] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    api
+      .get('/admin/settings')
+      .then((data: Record<string, string>) => {
+        try {
+          const parsed = data?.BUSINESS_WORKING_DAYS ? JSON.parse(data.BUSINESS_WORKING_DAYS) : null
+          if (Array.isArray(parsed) && parsed.length > 0) setDays(parsed.map(Number))
+        } catch {
+          /* keep default */
+        }
+        if (data?.BUSINESS_HOURS_START) setStartHour(String(Number(data.BUSINESS_HOURS_START)))
+        if (data?.BUSINESS_HOURS_END) setEndHour(String(Number(data.BUSINESS_HOURS_END)))
+        if (data?.TIMEZONE) setTimezone(data.TIMEZONE)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const toggleDay = (d: number) => setDays((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]))
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      await api.put('/admin/settings', {
+        BUSINESS_WORKING_DAYS: JSON.stringify(days),
+        BUSINESS_HOURS_START: String(startHour),
+        BUSINESS_HOURS_END: String(endHour),
+        TIMEZONE: timezone,
+      })
+      toast.success(t('admin.saveSuccess'))
+    } catch {
+      /* toast handled by api client */
+    }
+    setSaving(false)
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Gauge className="w-4 h-4" />
+          {t('admin.slaHours')}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {loading ? (
+          <div className="flex justify-center py-6">
+            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <>
+            <p className="text-xs text-muted-foreground">{t('admin.slaHoursDesc')}</p>
+
+            <div>
+              <Label className="text-xs font-bold">{t('admin.slaDays')}</Label>
+              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                {WEEK_DAYS.map((d) => (
+                  <button
+                    key={d.value}
+                    type="button"
+                    onClick={() => toggleDay(d.value)}
+                    className={cn(
+                      'h-8 min-w-9 px-1.5 rounded-lg text-xs font-semibold border transition-colors',
+                      days.includes(d.value)
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-card text-muted-foreground hover:bg-muted',
+                    )}
+                  >
+                    {t(`admin.${d.key}`)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="sla-start" className="text-xs font-bold">
+                  {t('admin.slaStart')}
+                </Label>
+                <select
+                  id="sla-start"
+                  value={startHour}
+                  onChange={(e) => setStartHour(e.target.value)}
+                  className="mt-1 w-full h-10 rounded-lg border bg-card px-3 text-sm"
+                >
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <option key={i} value={i}>
+                      {String(i).padStart(2, '0')}:00
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="sla-end" className="text-xs font-bold">
+                  {t('admin.slaEnd')}
+                </Label>
+                <select
+                  id="sla-end"
+                  value={endHour}
+                  onChange={(e) => setEndHour(e.target.value)}
+                  className="mt-1 w-full h-10 rounded-lg border bg-card px-3 text-sm"
+                >
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <option key={i} value={i}>
+                      {String(i).padStart(2, '0')}:00
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="sla-tz" className="text-xs font-bold">
+                {t('admin.slaTimezone')}
+              </Label>
+              <Input
+                id="sla-tz"
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                placeholder="Europe/Moscow"
+                className="mt-1"
+              />
+            </div>
+
+            <Button onClick={save} disabled={saving} className="gap-2" data-testid="sla-save">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {saving ? t('common.loading') : t('common.save')}
+            </Button>
+          </>
+        )}
       </CardContent>
     </Card>
   )

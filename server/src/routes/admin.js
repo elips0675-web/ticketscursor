@@ -64,6 +64,8 @@ const ALLOWED_SETTINGS = [
   'IMAP_HOST', 'IMAP_PORT', 'IMAP_USER', 'IMAP_PASS',
   'SSO_ENABLED', 'SSO_ISSUER_URL', 'SSO_CLIENT_ID', 'SSO_CLIENT_SECRET',
   'SSO_REDIRECT_URI', 'SSO_DEFAULT_ROLE', 'SSO_PROVIDER',
+  // Этап 65 (подзадача 4): SLA business hours — рабочие дни и часы + таймзона (читает sla.js)
+  'BUSINESS_WORKING_DAYS', 'BUSINESS_HOURS_START', 'BUSINESS_HOURS_END',
 ]
 
 router.get('/settings', async (req, res) => {

@@ -8,7 +8,15 @@ import { authenticateToken, requireRole } from '../middleware.js'
 import { createWikiValidation } from '../validate.js'
 import logger from '../logger.js'
 import { validateUpload } from '../middleware/validateUpload.js'
-import { listArticles, getArticleById, createArticle } from '../services/wiki.service.js'
+import {
+  listArticles,
+  getArticleById,
+  createArticle,
+  updateArticle,
+  listRevisions,
+  getRevision,
+  rollbackArticle,
+} from '../services/wiki.service.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const wikiUploads = path.join(__dirname, '..', '..', 'uploads', 'wiki')
@@ -70,6 +78,60 @@ router.post('/', requireRole('admin', 'senior_agent'), createWikiValidation, asy
   } catch (err) {
     logger.error('Create article error:', err)
     res.status(500).json({ message: 'Failed to create article' })
+  }
+})
+
+// — Версионирование Wiki (Этап 65): PUT /:id сразу делает снимок-revision,
+// история/дифф/откат доступны всегда (данные не секретны), UI — под флагом wiki_versioning.
+router.put('/:id', requireRole('admin', 'senior_agent'), createWikiValidation, async (req, res) => {
+  const { title, content, category, tags } = req.body
+  try {
+    const article = await updateArticle({
+      id: Number(req.params.id), title, content, category, tags,
+      userId: req.user.userId,
+      userName: req.user.name,
+    })
+    if (!article) return res.status(404).json({ message: 'Article not found' })
+    res.json({ success: true, data: article })
+  } catch (err) {
+    logger.error('Update article error:', err)
+    res.status(500).json({ message: 'Failed to update article' })
+  }
+})
+
+router.get('/:id/revisions', async (req, res) => {
+  try {
+    const revisions = await listRevisions(Number(req.params.id))
+    res.json({ success: true, data: revisions })
+  } catch (err) {
+    logger.error('List revisions error:', err)
+    res.status(500).json({ message: 'Failed to fetch revisions' })
+  }
+})
+
+router.get('/:id/revisions/:revId', async (req, res) => {
+  try {
+    const revision = await getRevision(Number(req.params.revId), Number(req.params.id))
+    if (!revision) return res.status(404).json({ message: 'Revision not found' })
+    res.json({ success: true, data: revision })
+  } catch {
+    res.status(500).json({ message: 'Failed to fetch revision' })
+  }
+})
+
+router.post('/:id/rollback/:revId', requireRole('admin', 'senior_agent'), async (req, res) => {
+  try {
+    const result = await rollbackArticle({
+      id: Number(req.params.id),
+      revisionId: Number(req.params.revId),
+      userId: req.user.userId,
+      userName: req.user.name,
+    })
+    if (!result) return res.status(404).json({ message: 'Revision not found' })
+    res.json({ success: true, data: result.article })
+  } catch (err) {
+    logger.error('Rollback article error:', err)
+    res.status(500).json({ message: 'Failed to rollback article' })
   }
 })
 

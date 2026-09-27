@@ -290,16 +290,20 @@ model chat_rooms {
 }
 
 model chat_messages {
-  id          Int       @id @default(autoincrement())
-  chat_id     Int
-  sender_id   Int
-  sender_name String    @db.VarChar(255)
-  text        String    @db.Text
-  created_at  DateTime? @default(now())
-  deleted_at  DateTime?
+  id                  Int       @id @default(autoincrement())
+  chat_id             Int
+  sender_id           Int
+  sender_name         String    @db.VarChar(255)
+  text                String    @db.Text
+  created_at          DateTime? @default(now())
+  edited_at           DateTime?
+  reply_to_message_id Int?
+  deleted_at          DateTime?
 
-  chat   chat_rooms? @relation(fields: [chat_id], references: [id], onDelete: Cascade)
-  sender employees?  @relation(fields: [sender_id], references: [id], onDelete: Cascade)
+  chat      chat_rooms?    @relation(fields: [chat_id], references: [id], onDelete: Cascade)
+  sender    employees?     @relation(fields: [sender_id], references: [id], onDelete: Cascade)
+  reply_to  chat_messages? @relation("ReplyTo", fields: [reply_to_message_id], references: [id], onDelete: SetNull)
+  replies   chat_messages[] @relation("ReplyTo")
 }
 
 model chat_read_receipts {
@@ -323,7 +327,25 @@ model wiki_articles {
   created_at  DateTime? @default(now())
   updated_at  DateTime? @default(now())
 
-  author employees? @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  author    employees?        @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  revisions wiki_revisions[]
+}
+
+model wiki_revisions {
+  id          Int       @id @default(autoincrement())
+  article_id  Int
+  revision    Int
+  title       String    @db.VarChar(300)
+  content     String    @db.Text
+  category    String?   @default("Другое") @db.VarChar(100)
+  tags        Json?
+  author_id   Int?
+  author_name String?   @db.VarChar(255)
+  created_at  DateTime? @default(now())
+
+  article wiki_articles? @relation(fields: [article_id], references: [id], onDelete: Cascade)
+
+  @@unique([article_id, revision])
 }
 
 model news_posts {
