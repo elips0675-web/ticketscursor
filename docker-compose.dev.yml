@@ -1,0 +1,46 @@
+# Dev-окружение: только инфраструктура (MySQL + Redis), без сборки контейнеров API/фронта.
+# Для локальной разработки: сервер и фронт запускаются через npm run dev на хосте.
+#
+#   docker compose -f docker-compose.dev.yml up -d
+#   docker compose -f docker-compose.dev.yml down
+#
+# MySQL доступен на localhost:3306 (учётка как в server/.env), Redis — localhost:6379.
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: sd-dev-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-servicedesk}
+      MYSQL_USER: ${DB_USER:-sduser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-sdpassword}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+      - ./server/seed.sql:/docker-entrypoint-initdb.d/seed.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: sd-dev-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_dev_data:
+  redis_dev_data:

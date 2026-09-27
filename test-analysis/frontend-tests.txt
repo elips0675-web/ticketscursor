@@ -1,13 +1,13 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 73 файлов / 173 suite / 646 тестов (все PASS, vitest --reporter=json от 26.09.2026)
-Coverage (All files): 74.02 stmts / 64.86 branches / 66.54 funcs / 76.33 lines (пороги 71/62/63/73 — буфер ~3 п.п.)
+Реальный результат: 77 файлов / 182 suite / 670 тестов (все PASS, vitest --reporter=json от 26.09.2026)
+Coverage (All files): 77.51 stmts / 67.35 branches / 69.63 funcs / 80.08 lines (пороги 75/65/67/78 — буфер ~2 п.п.)
 
-===== ФАЙЛЫ (73 шт, все реальные, сгенерировано скриптом) =====
+===== ФАЙЛЫ (77 шт, все реальные, сгенерировано скриптом) =====
 
 # Файлы | Тестов | Описание
-src/test/TicketDetail.test.tsx | 31 | TicketDetail: сообщения, статус, приоритет, назначение, RBAC, virtual scroll, XSS, История (timeline, PDF, флаг off)
+src/test/TicketDetail.test.tsx | 32 | TicketDetail: сообщения, статус, приоритет, назначение, RBAC, virtual scroll (150 и 1000 — не падает), XSS, История (timeline, PDF, флаг off)
 src/test/Files.expanded.test.tsx | 27 | Files: empty, search, view, category, upload, drag-drop, keyboard, folder switch, list view, drag overlay
 src/test/Tickets.expanded.test.tsx | 25 | Tickets: фильтры, пагинация, пустое, socket, export CSV/PDF
 src/test/Admin.expanded.test.tsx | 22 | Admin: stat cards, employee list, role stats, SLA stats, refresh, API errors
@@ -26,7 +26,7 @@ src/test/Csatisfaction.test.tsx | 13 |
 src/test/Employees.expanded.test.tsx | 13 | Employees: list, search, filter, role, cards/table toggle
 src/test/SSO.test.tsx | 13 | SSO: вход через SSO, обмен кода, ошибки, i18n
 src/test/AdminLayout.test.tsx | 11 | AdminLayout: sidebar, navigation, RBAC
-src/test/ChatDetail.test.tsx | 14 | ChatDetail: messages, send, loading, empty, virtual scroll, delete, typing
+src/test/ChatDetail.test.tsx | 15 | ChatDetail: messages, send, loading, empty, virtual scroll (300 — подмножество через FakeResizeObserver), delete, typing
 src/test/TicketContext.optimistic.test.tsx | 14 | ticket-context: optimistic-мутации (status/priority/assign/tags/bulk/messages/createTicket, rollback, 401)
 src/test/Login.expanded.test.tsx | 13 | Login: form, submit, validation, error, loading, SSO button, 2fa-verify (step 2fa → код → token)
 src/test/News.expanded.test.tsx | 11 | News: search, filter, create, CSV, empty, pagination
@@ -39,10 +39,12 @@ src/test/MarkdownEditor.test.tsx | 11 | MarkdownEditor: редактирован
 src/test/ResetPassword.expanded.test.tsx | 8 | ResetPassword: form, validation, API error, loading, success
 src/test/SocketContext.test.tsx | 8 | SocketContext: connect, disconnect, events, reconnection
 src/test/Calculator.test.tsx | 7 | Calculator: renders, operations, keyboard
+src/test/AdminCustomFields.test.tsx | 7 | AdminCustomFields (Этап 68): список, create/edit/delete, confirm, RBAC; a11y-подписи icon-only кнопок
 src/test/PortalTrack.test.tsx | 7 | PortalTrack: поиск обращения, статус, события
 src/test/PublicKB.test.tsx | 7 | PublicKB: статьи, категории, поиск
 src/test/Register.test.tsx | 7 | Register: form, validation, submit, error
 src/test/AdminQueues.test.tsx | 6 | AdminQueues: очередь BullMQ, jobs, retry, очистка, пусто
+src/test/KeyboardShortcuts.test.tsx | 6 | KeyboardShortcuts (Этап 68): диалог 8 сочетаний, trigger/uncontrolled+controlled, aria-label «Горячие клавиши»
 src/test/AdminRbac.test.tsx | 6 | AdminRbac: RBAC-матрица, роли, назначение, ошибки
 src/test/api.test.ts | 6 | api.ts: handleResponse, authFetch, error handling
 src/test/AuthContext.test.tsx | 6 | AuthContext: login, logout, token refresh
@@ -55,12 +57,14 @@ src/test/PublicKBArticle.test.tsx | 6 | PublicKBArticle: рендер стать
 src/test/SessionsSection.test.tsx | 6 | SessionsSection: список сессий (флаг user_sessions), Badge «Текущая сессия», revoke одной, revoke-all, ошибки загрузки/отзыва
 src/test/utils.test.ts | 6 | utils: formatDate, formatNumber, debounce
 src/test/AdminUsers.test.tsx | 5 | AdminUsers: renders, list
+src/test/AdminCannedResponses.test.tsx | 5 | AdminCannedResponses (Этап 68): список с API, edit/delete через aria-labels, создание
 src/test/Dashboard.test.tsx | 5 | Dashboard: renders, stat cards
 src/test/i18n.parity.test.ts | 5 | i18n parity: симметричность ключей ru.json ↔ en.json, дубли ключей, непустые namespace
 src/test/ProtectedRoute.test.tsx | 5 | ProtectedRoute: redirect, adminOnly, loading
 src/test/PwaInstallPrompt.test.tsx | 5 | PwaInstallPrompt: beforeinstallprompt, install, dismiss
 src/test/TwoFactorSection.test.tsx | 5 | TwoFactorSection: 2FA в Profile (флаг two_fa), setup/QR-секрет, enable/disable, status
 src/test/Calendar.test.tsx | 4 | Calendar: renders, events
+src/test/a11y.test.tsx | 4 | a11y (Этап 68): axe-core на 4 страницах (Login, CannedResponses, CustomFields, Shortcuts) — whitelist правил, цветовой контраст вне jsdom
 src/test/Employees.test.tsx | 4 | Employees: renders, list
 src/test/Files.test.tsx | 4 | Files: renders, folders
 src/test/NotificationsPage.test.tsx | 4 | Notifications: renders, mark read
@@ -80,9 +84,9 @@ src/test/Tickets.test.tsx | 1 | Tickets: renders
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона `npx vitest run --config vitest.client.config.ts --reporter=json` (vitest-*.json).
-Фактический запуск: 73 файлов / 646 тестов / 646 passed / 0 failures.
-Coverage (26.09.2026, перемерено --coverage): stmts 74.02 / branches 64.86 / functions 66.54 / lines 76.33 (пороги: stmts 71 / branches 62 / functions 63 / lines 73 — буфер ~3 п.п.).
-Данные актуальны на: 26.09.2026. Прирост к Этапу 63: +21 тест — Этап 64 в работе (TicketWatchersCard 8, TicketRelationsCard 7, TicketMergeDialog 6).
+Фактический запуск: 77 файлов / 670 тестов / 670 passed / 0 failures.
+Coverage (26.09.2026, перемерено --coverage): stmts 77.51 / branches 67.35 / functions 69.63 / lines 80.08 (пороги: stmts 75 / branches 65 / functions 67 / lines 78 — буфер ~2 п.п.).
+Данные актуальны на: 26.09.2026. Прирост к Этапу 64: +24 теста — Этап 68 (a11y + дыры 0%): AdminCustomFields 7, KeyboardShortcuts 6, AdminCannedResponses 5, a11y (axe-core) 4, ChatDetail virtual 300 +1, TicketDetail virtual 1000 +1.
 Прочие правки прогона 26.09: src/test/Calendar.test.tsx — хрупкий ассерт «shows day headers» заменён на await screen.findByText('Пн') (Calendar.tsx:168 гейтит рендер по isLoading, синхронный getBy падал до ответа MSW).
 
 Новые файлы Этапа 64 (покрытие флагов ticket_watchers / ticket_relations / ticket_merge):

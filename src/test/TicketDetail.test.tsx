@@ -447,6 +447,22 @@ describe('TicketDetail XSS-инвариант и virtual scroll (Этап 61)', 
     expect(screen.getByText('Сообщения (150)')).toBeInTheDocument()
     expect(screen.getByText('Сообщение 1')).toBeInTheDocument()
   })
+
+  it('рендерит тикет с 1000 сообщениями — virtual scroll в jsdom не падает (Этап 68)', async () => {
+    const messages = Array.from({ length: 1000 }, (_, i) => ({
+      id: i + 1,
+      ticket_id: 1,
+      sender_id: 1,
+      sender_name: 'Admin',
+      text: `Сообщение ${i + 1}`,
+      created_at: '2026-07-01T10:00:00Z',
+    }))
+    server.use(http.get(`${API}/tickets/:id`, () => ticketWithMessages(messages)))
+    render(<TicketDetail />, { wrapper: TestProviders })
+    await screen.findByText('Проблема с доступом')
+    expect(screen.getByText('Сообщения (1000)')).toBeInTheDocument()
+    expect(screen.getByText('Сообщение 1')).toBeInTheDocument()
+  })
 })
 
 describe('TicketDetail История (Этап 62)', () => {

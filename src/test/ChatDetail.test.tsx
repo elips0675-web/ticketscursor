@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor, act } from '@testing-library/react'
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
+import { server } from './setup'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -218,6 +220,76 @@ describe('ChatDetail', () => {
       expect(screen.queryByText('Кто-то печатает...')).not.toBeInTheDocument()
     } finally {
       vi.useRealTimers()
+    }
+  })
+})
+
+// ── Этап 68: virtual scroll на больших списках ──
+describe('ChatDetail virtual scroll (Этап 68)', () => {
+  const API = 'http://localhost:4000/api'
+
+  it('300 сообщений: виртуализация рендерит подмножество, а не все строки', async () => {
+    // В jsdom нет ResizeObserver → @tanstack/react-virtual берёт initialRect {0,0}
+    // и отрисовывает ВСЕ элементы. Подменяем RO, чтобы «честно» проверить
+    // виртуализацию: viewport 300px при estimateSize 80px → рендерятся только
+    // видимые + overscan (5), т.е. немного строк, а не все 300.
+    class FakeResizeObserver {
+      private cb: (entries: Array<{ borderBoxSize: Array<{ blockSize: number; inlineSize: number }> }>) => void
+      constructor(cb: (entries: Array<{ borderBoxSize: Array<{ blockSize: number; inlineSize: number }> }>) => void) {
+        this.cb = cb
+      }
+      observe() {
+        this.cb([{ borderBoxSize: [{ blockSize: 300, inlineSize: 800 }] }])
+      }
+      unobserve() {}
+      disconnect() {}
+    }
+    vi.stubGlobal('ResizeObserver', FakeResizeObserver)
+
+    const messages = Array.from({ length: 300 }, (_, i) => ({
+      id: i + 1,
+      chat_id: 1,
+      sender_id: (i % 2) + 1,
+      sender_name: i % 2 === 0 ? 'Admin' : 'Иван',
+      text: `Сообщение ${i + 1}`,
+      created_at: '2026-07-09T09:00:00Z',
+    }))
+    server.use(
+      http.get(`${API}/chats/:id`, () =>
+        HttpResponse.json({
+          id: 1,
+          name: 'Общий чат',
+          type: 'group',
+          unread: 0,
+          created_at: '2026-07-01T10:00:00Z',
+          readers: [],
+          messages,
+        }),
+      ),
+    )
+
+    try {
+      render(<ChatDetail />, { wrapper: TestProviders })
+
+      // виртуализация: показывается только начало списка (вьюпорт 300px / estimateSize 80px)
+      await screen.findByText('Сообщение 1')
+      const before = screen.getAllByText(/^Сообщение \d+$/).length
+      expect(before).toBeGreaterThan(0)
+      expect(before).toBeLessThan(300)
+
+      // jsdom: scrollToIndex во внутреннем эффекте гоняется с апдейтом virtualizer,
+      // поэтому прокручиваем контейнер вручную через событие scroll
+      const scrollEl = document.querySelector('.overflow-y-auto') as HTMLElement
+      scrollEl.scrollTop = 24000
+      fireEvent.scroll(scrollEl)
+
+      // после скролла в конец видны последние сообщения, первое — вне вьюпорта
+      expect(await screen.findByText('Сообщение 300')).toBeInTheDocument()
+      expect(screen.queryByText('Сообщение 1')).not.toBeInTheDocument()
+      const after = screen.getAllByText(/^Сообщение \d+$/).length
+      expect(after).toBeLessThan(300)
+    } finally {
+      vi.unstubAllGlobals()
     }
   })
 })

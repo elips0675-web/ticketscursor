@@ -44,7 +44,7 @@ export function KeyboardShortcuts({ open: controlledOpen, onOpenChange }: Keyboa
     <Dialog open={isOpen} onOpenChange={setOpen}>
       {!controlledOpen && (
         <DialogTrigger asChild>
-          <Button variant="ghost" size="sm" className="gap-1.5">
+          <Button variant="ghost" size="sm" className="gap-1.5" aria-label="Горячие клавиши">
             <Keyboard className="w-4 h-4" />
           </Button>
         </DialogTrigger>

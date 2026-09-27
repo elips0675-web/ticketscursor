@@ -151,13 +151,20 @@ export default function AdminCannedResponses() {
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.text}</p>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => startEdit(item)}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      aria-label={t('common.edit')}
+                      onClick={() => startEdit(item)}
+                    >
                       <Plus className="w-3 h-3" />
                     </Button>
                     <Button
                       size="icon"
                       variant="ghost"
                       className="h-7 w-7 text-destructive"
+                      aria-label={t('common.delete')}
                       onClick={() => remove(item.id)}
                     >
                       <Trash2 className="w-3 h-3" />

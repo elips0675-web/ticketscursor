@@ -110,7 +110,7 @@ export default function AdminCustomFields() {
   const remove = async (id: number) => {
     if (!confirm('Delete this field? Existing ticket values will be lost.')) return
     try {
-      await api.del(`/admin/custom-fields/${id}`)
+      await api.delete(`/admin/custom-fields/${id}`)
       toast.success('Field deleted')
       await load()
     } catch {
@@ -149,6 +149,7 @@ export default function AdminCustomFields() {
                           value={editField.type}
                           onChange={(e) => setEditField((p) => ({ ...p, type: e.target.value }))}
                           className="border rounded px-2 py-1 text-sm"
+                          aria-label="Field type"
                         >
                           {FIELD_TYPES.map((t) => (
                             <option key={t} value={t}>
@@ -160,6 +161,7 @@ export default function AdminCustomFields() {
                           value={editField.category}
                           onChange={(e) => setEditField((p) => ({ ...p, category: e.target.value }))}
                           className="border rounded px-2 py-1 text-sm"
+                          aria-label="Field category"
                         >
                           {CATEGORIES.map((c) => (
                             <option key={c} value={c}>
@@ -221,7 +223,7 @@ export default function AdminCustomFields() {
                       <Button size="sm" variant="ghost" onClick={() => startEdit(f)}>
                         Edit
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => remove(f.id)}>
+                      <Button size="sm" variant="ghost" onClick={() => remove(f.id)} aria-label="Delete field">
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
@@ -255,6 +257,7 @@ export default function AdminCustomFields() {
               value={newField.type}
               onChange={(e) => setNewField((p) => ({ ...p, type: e.target.value }))}
               className="border rounded px-2 py-1 text-sm"
+              aria-label="Field type"
             >
               {FIELD_TYPES.map((t) => (
                 <option key={t} value={t}>
@@ -266,6 +269,7 @@ export default function AdminCustomFields() {
               value={newField.category}
               onChange={(e) => setNewField((p) => ({ ...p, category: e.target.value }))}
               className="border rounded px-2 py-1 text-sm"
+              aria-label="Field category"
             >
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>
