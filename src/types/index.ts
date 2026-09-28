@@ -74,6 +74,12 @@ export interface Ticket {
   tags: string[]
   computerName?: string
   userAccount?: string
+  formData?: {
+    category_id: number
+    category_name: string
+    fields: Record<string, string>
+    submitted_at: string
+  }
   dueAt?: string
   escalationLevel?: number
   escalatedAt?: string

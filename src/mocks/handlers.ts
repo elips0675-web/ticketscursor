@@ -302,6 +302,48 @@ export const handlers = [
     return HttpResponse.json({ total: 10, open: 4, inProgress: 3, resolved: 2, critical: 1 })
   }),
 
+  // ── Team (Org chart) ──
+  http.get(`${API}/team/org-chart`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: [
+        {
+          id: 1,
+          name: 'Admin User',
+          email: 'admin@test.com',
+          role: 'admin',
+          department: 'IT',
+          title: '',
+          avatar: '',
+          online: true,
+          manager_id: null,
+        },
+        {
+          id: 2,
+          name: 'Иван Иванов',
+          email: 'ivan@example.com',
+          role: 'senior_agent',
+          department: 'Support',
+          title: 'Lead',
+          avatar: '',
+          online: true,
+          manager_id: 1,
+        },
+        {
+          id: 3,
+          name: 'Пётр Петров',
+          email: 'petr@example.com',
+          role: 'agent',
+          department: 'Support',
+          title: '',
+          avatar: '',
+          online: false,
+          manager_id: 2,
+        },
+      ],
+    })
+  }),
+
   // ── Wiki ──
   http.get(`${API}/wiki`, () => {
     return HttpResponse.json({
@@ -783,6 +825,24 @@ export const handlers = [
     })
   }),
 
+  http.get(`${API}/tickets/categories`, () => {
+    return HttpResponse.json({
+      data: [
+        {
+          id: 1,
+          name: 'incident',
+          description: 'Инциденты',
+          enabled: true,
+          sort_order: 0,
+          schema: [
+            { name: 'location', label: 'Локация', type: 'select', required: true, options: ['Москва', 'СПб'] },
+            { name: 'impact', label: 'Влияние', type: 'text', required: false, options: [] },
+          ],
+        },
+      ],
+    })
+  }),
+
   http.post(`${API}/tickets`, () => {
     return HttpResponse.json({
       data: {
@@ -807,6 +867,36 @@ export const handlers = [
   }),
 
   // ── Admin ──
+  http.get(`${API}/admin/ticket-categories`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: [
+        {
+          id: 1,
+          name: 'incident',
+          description: 'Инциденты',
+          enabled: true,
+          sort_order: 0,
+          schema: [{ name: 'location', label: 'Локация', type: 'select', required: true, options: ['Москва', 'СПб'] }],
+        },
+      ],
+    })
+  }),
+
+  http.post(`${API}/admin/ticket-categories`, async ({ request }) => {
+    const body = await request.json()
+    return HttpResponse.json({ success: true, data: { id: 10, ...body } })
+  }),
+
+  http.put(`${API}/admin/ticket-categories/:id`, async ({ request }) => {
+    const body = await request.json()
+    return HttpResponse.json({ success: true, data: body })
+  }),
+
+  http.delete(`${API}/admin/ticket-categories/:id`, () => {
+    return HttpResponse.json({ success: true, data: { deleted: true } })
+  }),
+
   http.get(`${API}/admin/stats`, () => {
     return HttpResponse.json({
       totalUsers: 5,
@@ -844,6 +934,24 @@ export const handlers = [
           key: 'chat_message_edit',
           enabled: false,
           description: 'Edit chat messages (edited_at + WS message:edited)',
+          rollout_percent: 100,
+        },
+        {
+          key: 'gdpr_export',
+          enabled: false,
+          description: 'GDPR data export (Profile)',
+          rollout_percent: 100,
+        },
+        {
+          key: 'org_chart',
+          enabled: false,
+          description: 'Org chart: Team page with manager tree',
+          rollout_percent: 100,
+        },
+        {
+          key: 'ticket_forms',
+          enabled: false,
+          description: 'Ticket forms: categories with JSON field schema',
           rollout_percent: 100,
         },
       ],

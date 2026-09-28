@@ -15,7 +15,8 @@
     "admin": "Admin",
     "notifications": "Notifications",
     "calculator": "Calculator",
-    "more": "More"
+    "more": "More",
+    "team": "Team"
   },
   "common": {
     "search": "Search",
@@ -508,7 +509,18 @@
         "ticket_sla_overdue": "SLA breach",
         "ticket_sla_escalated": "SLA escalation"
       }
-    }
+    },
+    "gdprTitle": "Data export (GDPR)",
+    "gdprDesc": "Download all your data in a single JSON file",
+    "gdprHint": "Profile, tickets, messages, chats, files, wiki, polls, notifications and audit log",
+    "gdprDownload": "Download",
+    "gdprDone": "Export generated and downloaded"
+  },
+  "team": {
+    "title": "Team",
+    "subtitle": "Organizational structure: employees and their reports",
+    "disabled": "The Team module is disabled. Enable the org_chart flag in the admin settings.",
+    "empty": "No data to display. Assign managers in employee profiles."
   },
   "admin": {
     "title": "Admin Panel",
@@ -588,6 +600,23 @@
     "slaEscalationHours": "Escalation Step (hours)",
     "slaHours": "SLA: Business Hours",
     "slaHoursDesc": "Working days and hours are used for SLA calculations (idle in \"Waiting for customer\" and due dates). Timezone is IANA (e.g. Europe/Moscow), empty = server timezone.",
+    "ticketForms": "Ticket Forms",
+    "ticketFormsSubtitle": "Categories with a set of fields for the ticket creation form. Category name must match the ticket category (bug/feature/support/incident/other).",
+    "ticketFormsName": "Category name",
+    "ticketFormsDescription": "Description",
+    "ticketFormsEnabled": "Enabled",
+    "ticketFormsSort": "Sort order",
+    "ticketFormsSchema": "Form fields (JSON schema)",
+    "ticketFormsAddField": "Add field",
+    "ticketFormsNoFields": "No fields — the category form is not shown.",
+    "ticketFormsFieldName": "Key (name)",
+    "ticketFormsFieldLabel": "Label",
+    "ticketFormsFieldType": "Type",
+    "ticketFormsFieldOptions": "Options (comma separated)",
+    "ticketFormsRequired": "Required",
+    "ticketFormsAddCategory": "Add category",
+    "ticketFormsDeleted": "Category deleted",
+    "ticketFormsNameRequired": "Category name is required",
     "slaDays": "Working days",
     "slaMon": "Mo",
     "slaTue": "Tu",
@@ -700,6 +729,9 @@
     "portalSubtitle": "Clients can view tickets and create requests without an account via /portal",
     "template": "Template",
     "selectTemplate": "— Select template —",
+    "formFields": "Form fields",
+    "selectPlaceholder": "Select...",
+    "formData": "Form data",
     "templates": "Ticket Templates",
     "templatesSubtitle": "Quick templates for common request types",
     "templateName": "Template name",

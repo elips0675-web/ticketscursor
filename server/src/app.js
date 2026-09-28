@@ -55,6 +55,8 @@ import recurrencesRouter from './routes/recurrences.js'
 import rulesRouter from './routes/rules.js'
 import publicPortalRouter from './routes/public-portal.js'
 import publicKbRouter from './routes/public-kb.js'
+import gdprRouter from './routes/gdpr.js'
+import teamRouter from './routes/team.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './swagger.js'
 import path from 'path'
@@ -157,6 +159,8 @@ mount('/recurrences', recurrencesRouter, adminLimiter)
 mount('/rules', rulesRouter, adminLimiter)
 mount('/portal', publicPortalRouter, apiLimiter)
 mount('/kb', publicKbRouter, apiLimiter)
+mount('/gdpr', gdprRouter, apiLimiter)
+mount('/team', teamRouter, apiLimiter)
 
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customCss: '.swagger-ui .topbar { display: none }' }))
 

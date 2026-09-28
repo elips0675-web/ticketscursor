@@ -19,6 +19,8 @@ export const createTicketSchema = z.object({
   priority: z.enum(['low', 'medium', 'high', 'critical']),
   category: z.string().trim().min(1, 'Category required'),
   tags: z.array(z.string().trim().min(1, 'Tag required').max(50)).max(20).optional(),
+  // Ticket forms (Этап 66, подфича 3): значения динамических полей формы категории.
+  formData: z.array(z.object({ name: z.string(), value: z.string().optional() })).optional(),
 })
 
 export const updateStatusSchema = z.object({

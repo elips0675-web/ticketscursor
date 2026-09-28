@@ -28,6 +28,7 @@ import NewsPage from '@/pages/News'
 import CalculatorPage from '@/pages/Calculator'
 import KanbanPage from '@/pages/Kanban'
 import NotificationsPage from '@/pages/NotificationsPage'
+import TeamPage from '@/pages/Team'
 import Login from '@/pages/Login'
 import ForgotPassword from '@/pages/ForgotPassword'
 import ResetPassword from '@/pages/ResetPassword'
@@ -277,6 +278,14 @@ export default function App() {
                         element={
                           <Page>
                             <Employees />
+                          </Page>
+                        }
+                      />
+                      <Route
+                        path="team"
+                        element={
+                          <Page>
+                            <TeamPage />
                           </Page>
                         }
                       />

@@ -15,7 +15,8 @@
     "admin": "Админ",
     "notifications": "Уведомления",
     "calculator": "Калькулятор",
-    "more": "Ещё"
+    "more": "Ещё",
+    "team": "Команда"
   },
   "common": {
     "search": "Поиск",
@@ -509,7 +510,18 @@
         "ticket_sla_overdue": "Нарушение SLA",
         "ticket_sla_escalated": "Эскалация SLA"
       }
-    }
+    },
+    "gdprTitle": "Экспорт данных (GDPR)",
+    "gdprDesc": "Скачайте все свои данные в одном JSON-файле",
+    "gdprHint": "Профиль, тикеты, сообщения, чаты, файлы, wiki, опросы, уведомления и журнал действий",
+    "gdprDownload": "Скачать",
+    "gdprDone": "Экспорт сформирован и скачан"
+  },
+  "team": {
+    "title": "Команда",
+    "subtitle": "Организационная структура: сотрудники и подчинённые",
+    "disabled": "Модуль «Команда» выключен. Включите флаг org_chart в настройках администратора.",
+    "empty": "Нет данных для отображения. Назначьте руководителей в профилях сотрудников."
   },
   "admin": {
     "title": "Админ-панель",
@@ -594,6 +606,23 @@
     "slaEscalationHours": "Шаг эскалации (часы)",
     "slaHours": "SLA: рабочие часы",
     "slaHoursDesc": "Рабочие дни и часы учитываются при расчёте SLA (айдле периода «Ожидает ответа» и дедлайнов). Таймзона — IANA (например Europe/Moscow), пусто = таймзона сервера.",
+    "ticketForms": "Формы тикетов",
+    "ticketFormsSubtitle": "Категории с набором полей для формы создания тикета. Имя категории должно совпадать с категорией тикета (bug/feature/support/incident/other).",
+    "ticketFormsName": "Имя категории",
+    "ticketFormsDescription": "Описание",
+    "ticketFormsEnabled": "Включена",
+    "ticketFormsSort": "Порядок",
+    "ticketFormsSchema": "Поля формы (JSON-схема)",
+    "ticketFormsAddField": "Добавить поле",
+    "ticketFormsNoFields": "Полей нет — форма категории не показывается.",
+    "ticketFormsFieldName": "Ключ (name)",
+    "ticketFormsFieldLabel": "Подпись (label)",
+    "ticketFormsFieldType": "Тип",
+    "ticketFormsFieldOptions": "Варианты (через запятую)",
+    "ticketFormsRequired": "Обязательное",
+    "ticketFormsAddCategory": "Добавить категорию",
+    "ticketFormsDeleted": "Категория удалена",
+    "ticketFormsNameRequired": "Имя категории обязательно",
     "slaDays": "Рабочие дни",
     "slaMon": "Пн",
     "slaTue": "Вт",
@@ -701,6 +730,9 @@
     "portalSubtitle": "Клиент без учётки видит тикеты, создаёт заявки через /portal",
     "template": "Шаблон",
     "selectTemplate": "— Выбрать шаблон —",
+    "formFields": "Поля формы",
+    "selectPlaceholder": "Выберите...",
+    "formData": "Данные формы",
     "templates": "Шаблоны тикетов",
     "templatesSubtitle": "Быстрые шаблоны для частых типов обращений",
     "templateName": "Название шаблона",

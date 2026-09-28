@@ -12,6 +12,7 @@ import { useAuth } from '@/context/AuthContext'
 import TwoFactorSection from '@/components/TwoFactorSection'
 import SessionsSection from '@/components/SessionsSection'
 import NotificationPreferencesSection from '@/components/NotificationPreferencesSection'
+import GdprExportSection from '@/components/GdprExportSection'
 import type { EmployeeProfile } from '@/types'
 import { API_URL } from '@/lib/api'
 
@@ -297,6 +298,7 @@ export default function ProfilePage() {
             <TwoFactorSection />
             <SessionsSection />
             <NotificationPreferencesSection />
+            <GdprExportSection />
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm">{t('profile.settings')}</CardTitle>

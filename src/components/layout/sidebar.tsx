@@ -16,11 +16,13 @@ import {
   Shield,
   Columns3,
   Calculator,
+  Network,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { useFeature } from '@/hooks/useFeature'
 
 const navItems = [
   {
@@ -54,6 +56,13 @@ const navItems = [
     icon: Users,
     labelKey: 'nav.employees',
     roles: ['super_admin', 'admin', 'senior_agent', 'agent'],
+  },
+  {
+    to: '/team',
+    icon: Network,
+    labelKey: 'nav.team',
+    roles: ['super_admin', 'admin', 'senior_agent', 'agent'],
+    feature: 'org_chart',
   },
   {
     to: '/calendar',
@@ -101,8 +110,10 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { user, logout } = useAuth()
   const { t } = useTranslation()
   const userRole = user?.role || 'agent'
+  const orgChartOn = useFeature('org_chart')
 
-  const filterByRole = (items: typeof navItems) => items.filter((i) => i.roles.includes(userRole))
+  const filterByRole = (items: typeof navItems) =>
+    items.filter((i) => i.roles.includes(userRole) && (!('feature' in i) || (i.feature === 'org_chart' && orgChartOn)))
   return (
     <>
       <div className="p-5 border-b border-sidebar-border">

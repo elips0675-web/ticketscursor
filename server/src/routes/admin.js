@@ -575,6 +575,57 @@ router.delete('/custom-fields/:id', async (req, res) => {
   }
 })
 
+// Ticket forms (Этап 66, подфича 3): категории с JSON-схемой полей.
+router.get('/ticket-categories', async (req, res) => {
+  try {
+    const { listCategories } = await import('../services/ticket-categories.service.js')
+    const data = await listCategories()
+    res.json({ success: true, data })
+  } catch (err) {
+    logger.error('Ticket categories list error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch ticket categories' })
+  }
+})
+
+router.post('/ticket-categories', async (req, res) => {
+  try {
+    const { createCategory } = await import('../services/ticket-categories.service.js')
+    const { name, description, schema, enabled, sortOrder } = req.body
+    if (!name) return res.status(400).json({ success: false, message: 'name is required' })
+    const cat = await createCategory({ name, description, schema, enabled, sortOrder })
+    res.status(201).json({ success: true, data: cat })
+  } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ success: false, message: err.message })
+    logger.error('Ticket category create error:', err)
+    res.status(500).json({ success: false, message: 'Failed to create ticket category' })
+  }
+})
+
+router.put('/ticket-categories/:id', async (req, res) => {
+  try {
+    const { updateCategory } = await import('../services/ticket-categories.service.js')
+    const cat = await updateCategory(Number(req.params.id), req.body)
+    if (!cat) return res.status(404).json({ success: false, message: 'Category not found' })
+    res.json({ success: true, data: cat })
+  } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ success: false, message: err.message })
+    logger.error('Ticket category update error:', err)
+    res.status(500).json({ success: false, message: 'Failed to update ticket category' })
+  }
+})
+
+router.delete('/ticket-categories/:id', async (req, res) => {
+  try {
+    const { deleteCategory } = await import('../services/ticket-categories.service.js')
+    const deleted = await deleteCategory(Number(req.params.id))
+    if (!deleted) return res.status(404).json({ success: false, message: 'Category not found' })
+    res.json({ success: true, data: { deleted: true } })
+  } catch (err) {
+    logger.error('Ticket category delete error:', err)
+    res.status(500).json({ success: false, message: 'Failed to delete ticket category' })
+  }
+})
+
 router.get('/csat/stats', async (req, res) => {
   try {
     const { getCsatStats } = await import('../services/csat.service.js')

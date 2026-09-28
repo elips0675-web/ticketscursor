@@ -56,6 +56,7 @@ import {
 } from '../services/time.service.js'
 import { generateAssistantSuggestion } from '../services/assistant.service.js'
 import { listFieldDefinitions, getTicketCustomFields, setTicketCustomFields } from '../services/custom-fields.service.js'
+import { listCategories as listTicketCategories, getCategory as getTicketCategory, getCategoryByName as getTicketCategoryByName, validateTicketForm } from '../services/ticket-categories.service.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ticketUploads = path.join(__dirname, '..', '..', 'uploads', 'tickets')
@@ -113,6 +114,16 @@ router.get('/sla/stats', requireRole('admin', 'senior_agent'), async (req, res) 
   } catch (err) {
     logger.error('SLA stats error:', err)
     res.status(500).json({ success: false, message: 'Failed to fetch SLA stats' })
+  }
+})
+
+router.get('/categories', async (req, res) => {
+  try {
+    const data = await listTicketCategories({ enabledOnly: true })
+    res.json({ success: true, data })
+  } catch (err) {
+    logger.error('Ticket categories list error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch ticket categories' })
   }
 })
 
@@ -186,8 +197,23 @@ router.get('/:id/history', async (req, res) => {
 })
 
 router.post('/', idempotent, createTicketValidation, async (req, res) => {
-  const { title, description, priority, category, tags } = req.body
+  const { title, description, priority, category, tags, formData } = req.body
   try {
+    // Ticket forms (Этап 66, подфича 3): если категория существует в ticket_categories
+    // и массив formData передан — валидируем по JSON-схеме и сохраняем в tickets.form_data.
+    let savedFormData = null
+    if (category && Array.isArray(formData)) {
+      const cat = await getTicketCategoryByName(category)
+      if (cat && Array.isArray(cat.schema) && cat.schema.length > 0) {
+        const values = {}
+        for (const item of formData) {
+          if (item && item.name !== undefined) values[item.name] = item.value ?? ''
+        }
+        const { ok, error } = validateTicketForm(cat, values)
+        if (!ok) return res.status(400).json({ success: false, message: error })
+        savedFormData = { category_id: cat.id, category_name: cat.name, fields: values, submitted_at: new Date().toISOString() }
+      }
+    }
     const { ticket, dueAt, autoAssignedTo } = await createTicket({
       title,
       description,
@@ -195,6 +221,7 @@ router.post('/', idempotent, createTicketValidation, async (req, res) => {
       category,
       tags,
       createdBy: req.user.userId,
+      formData: savedFormData,
     })
     await prisma.ticket_messages.create({
       data: {

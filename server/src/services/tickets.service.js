@@ -193,7 +193,7 @@ export async function getTicketMessages(id, page = 1, limit = 50) {
   return { data: rows, total, page, totalPages: Math.ceil(total / limit) }
 }
 
-export async function createTicket({ title, description, priority, category, createdBy, tags, customFields }) {
+export async function createTicket({ title, description, priority, category, createdBy, tags, customFields, formData }) {
   const settings = await getSettings().catch(() => ({}))
   const normalizedPriority = priority || 'medium'
   const slaHours = getSlaHours(normalizedPriority, category, settings)
@@ -211,6 +211,7 @@ export async function createTicket({ title, description, priority, category, cre
     due_at: dueAt,
   }
   if (tags && tags.length > 0) data.tags = tags
+  if (formData) data.form_data = formData
   const ticket = await prisma.tickets.create({ data })
   if (customFields && customFields.length > 0) {
     await setTicketCustomFields(ticket.id, customFields).catch(() => {})

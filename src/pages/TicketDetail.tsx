@@ -36,6 +36,7 @@ import {
   Loader2,
   AlertTriangle,
   Sparkles,
+  ClipboardList,
 } from 'lucide-react'
 import type { TicketMessage, TicketStatus, TicketPriority, AssistantSuggestion } from '@/types'
 import { API_URL } from '@/lib/api'
@@ -81,6 +82,7 @@ function mapTicketDetail(raw: Record<string, unknown>): Ticket {
     tags: Array.isArray(raw.tags) ? (raw.tags as string[]) : [],
     computerName: raw.computer_name,
     userAccount: raw.user_account,
+    formData: raw.form_data && typeof raw.form_data === 'object' ? (raw.form_data as Ticket['formData']) : undefined,
     createdBy: { id: raw.created_by, name: raw.created_by_name || 'User', email: '', avatar: '' },
     assignedTo: raw.assigned_to
       ? {
@@ -926,6 +928,19 @@ export default function TicketDetail() {
                       <p className="text-sm font-mono text-xs">{ticket.userAccount}</p>
                     </div>
                   )}
+                </div>
+              )}
+              {ticket.formData && Object.keys(ticket.formData.fields).length > 0 && (
+                <div className="pt-3 border-t space-y-2">
+                  <p className="text-xs font-bold text-muted-foreground flex items-center gap-1">
+                    <ClipboardList className="w-3 h-3" /> {t('tickets.formData')} · {ticket.formData.category_name}
+                  </p>
+                  {Object.entries(ticket.formData.fields).map(([k, v]) => (
+                    <div key={k} className="flex items-start gap-2">
+                      <p className="text-xs text-muted-foreground min-w-[120px]">{k}:</p>
+                      <p className="text-sm break-all">{String(v)}</p>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>

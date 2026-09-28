@@ -36,6 +36,7 @@ interface TicketContextType {
     computerName?: string
     userAccount?: string
     customFields?: { fieldId: number; value: string }[]
+    formData?: { name: string; value: string }[]
   }) => Promise<void>
 }
 
@@ -52,6 +53,7 @@ function mapTicket(raw: Record<string, unknown>): Ticket {
     tags: Array.isArray(raw.tags) ? (raw.tags as string[]) : [],
     computerName: raw.computer_name,
     userAccount: raw.user_account,
+    formData: raw.form_data && typeof raw.form_data === 'object' ? (raw.form_data as Ticket['formData']) : undefined,
     createdBy: { id: raw.created_by, name: raw.created_by_name || 'User', email: '', avatar: '' },
     assignedTo: raw.assigned_to
       ? {
@@ -400,6 +402,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       computerName?: string
       userAccount?: string
       customFields?: { fieldId: number; value: string }[]
+      formData?: { name: string; value: string }[]
     }) =>
       authFetch(`${API_URL}/tickets`, token, {
         method: 'POST',

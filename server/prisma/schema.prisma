@@ -24,6 +24,10 @@ model employees {
   is_active      Boolean?  @default(true)
   created_at     DateTime? @default(now())
   last_active    DateTime?
+  manager_id     Int?
+
+  manager    employees?  @relation("EmployeeManager", fields: [manager_id], references: [id], onDelete: SetNull)
+  subordinates employees[] @relation("EmployeeManager")
 
   tickets_created_by  tickets[]          @relation("tickets_created_by")
   tickets_assigned_to tickets[]          @relation("tickets_assigned_to")
@@ -75,6 +79,7 @@ model tickets {
   created_at  DateTime? @default(now())
   updated_at  DateTime? @default(now())
   deleted_at  DateTime?
+  form_data   Json?
 
   created_by_employee  employees?      @relation("tickets_created_by", fields: [created_by], references: [id], onDelete: Restrict)
   assigned_to_employee employees?      @relation("tickets_assigned_to", fields: [assigned_to], references: [id], onDelete: SetNull)
@@ -578,4 +583,18 @@ model automation_rules {
 
   @@index([is_active, trigger_event])
   @@map("automation_rules")
+}
+
+model ticket_categories {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(100)
+  description String?  @default("") @db.VarChar(500)
+  schema      Json?
+  enabled     Boolean? @default(true)
+  sort_order  Int?     @default(0)
+  created_at  DateTime? @default(now())
+  updated_at  DateTime? @default(now())
+
+  @@index([enabled])
+  @@map("ticket_categories")
 }

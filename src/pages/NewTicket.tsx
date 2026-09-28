@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useTickets } from '@/context/ticket-context'
 import { ArrowLeft, Monitor, Send } from 'lucide-react'
 import { api } from '@/lib/api'
+import { useFeature } from '@/hooks/useFeature'
 import type { TicketPriority } from '@/types'
 
 interface CustomFieldDef {
@@ -17,6 +18,22 @@ interface CustomFieldDef {
   type: string
   options: string[] | null
   required: boolean
+}
+
+interface FormFieldDef {
+  name: string
+  label: string
+  type: string
+  required: boolean
+  options: string[]
+}
+
+interface TicketCatDef {
+  id: number
+  name: string
+  description: string
+  schema: FormFieldDef[] | null
+  enabled: boolean
 }
 
 export default function NewTicket() {
@@ -32,6 +49,9 @@ export default function NewTicket() {
   const [userAccount, setUserAccount] = useState('')
   const [customFieldDefs, setCustomFieldDefs] = useState<CustomFieldDef[]>([])
   const [customFieldValues, setCustomFieldValues] = useState<Record<number, string>>({})
+  const [ticketCats, setTicketCats] = useState<TicketCatDef[]>([])
+  const [formValues, setFormValues] = useState<Record<string, string>>({})
+  const formsEnabled = useFeature('ticket_forms')
   const [templates, setTemplates] = useState<
     { name: string; title: string; description: string; priority: string; category: string }[]
   >([])
@@ -56,9 +76,26 @@ export default function NewTicket() {
       .catch(() => {})
   }, [])
 
+  useEffect(() => {
+    if (!formsEnabled) return
+    api
+      .get('/tickets/categories')
+      .then((data) => setTicketCats(data || []))
+      .catch(() => {})
+  }, [formsEnabled])
+
+  const activeForm = formsEnabled
+    ? ticketCats.find((c) => c.name === category && Array.isArray(c.schema) && c.schema.length > 0)
+    : undefined
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim() || !description.trim()) return
+    if (activeForm) {
+      for (const f of activeForm.schema || []) {
+        if (f.required && !String(formValues[f.name] ?? '').trim()) return
+      }
+    }
     const tags = tagsText
       .split(',')
       .map((s) => s.trim())
@@ -67,6 +104,11 @@ export default function NewTicket() {
     const cfPayload = Object.entries(customFieldValues)
       .filter(([, v]) => v !== '')
       .map(([fieldId, value]) => ({ fieldId: Number(fieldId), value }))
+    const formPayload = activeForm
+      ? (activeForm.schema || [])
+          .filter((f) => String(formValues[f.name] ?? '').trim() !== '')
+          .map((f) => ({ name: f.name, value: String(formValues[f.name] ?? '') }))
+      : undefined
     createTicket({
       title,
       description,
@@ -76,6 +118,7 @@ export default function NewTicket() {
       computerName: computerName || undefined,
       userAccount: userAccount || undefined,
       customFields: cfPayload.length > 0 ? cfPayload : undefined,
+      formData: formPayload && formPayload.length > 0 ? formPayload : undefined,
     })
     navigate('/tickets')
   }
@@ -159,7 +202,13 @@ export default function NewTicket() {
 
               <div className="space-y-1.5">
                 <label className="text-sm font-bold">{t('tickets.categorySelect')}</label>
-                <Select value={category} onValueChange={setCategory}>
+                <Select
+                  value={category}
+                  onValueChange={(v) => {
+                    setCategory(v)
+                    setFormValues({})
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -228,6 +277,52 @@ export default function NewTicket() {
                         type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}
                         value={customFieldValues[f.id] || ''}
                         onChange={(e) => setCustomFieldValues((p) => ({ ...p, [f.id]: e.target.value }))}
+                        required={f.required}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {activeForm && (
+              <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
+                <label className="text-sm font-bold">
+                  {t('tickets.formFields')} · {activeForm.description || activeForm.name}
+                </label>
+                {activeForm.schema!.map((f) => (
+                  <div key={f.name} className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      {f.label} {f.required && <span className="text-destructive">*</span>}
+                    </label>
+                    {f.type === 'select' ? (
+                      <Select
+                        value={formValues[f.name] || ''}
+                        onValueChange={(v) => setFormValues((p) => ({ ...p, [f.name]: v }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('tickets.selectPlaceholder')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {f.options.map((opt) => (
+                            <SelectItem key={opt} value={opt}>
+                              {opt}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : f.type === 'textarea' ? (
+                      <Textarea
+                        value={formValues[f.name] || ''}
+                        onChange={(e) => setFormValues((p) => ({ ...p, [f.name]: e.target.value }))}
+                        required={f.required}
+                      />
+                    ) : (
+                      <Input
+                        type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}
+                        value={formValues[f.name] || ''}
+                        onChange={(e) => setFormValues((p) => ({ ...p, [f.name]: e.target.value }))}
+                        placeholder={f.label}
                         required={f.required}
                       />
                     )}

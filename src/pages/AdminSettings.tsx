@@ -29,6 +29,7 @@ import {
   LogOut,
   Gauge,
   X,
+  ClipboardList,
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
@@ -220,6 +221,8 @@ export default function AdminSettings() {
       <ImapSection />
 
       <SSOSection />
+
+      <TicketCategoriesSection />
 
       <ApiTokensSection />
 
@@ -1433,5 +1436,283 @@ function ActionButton({
       {state === 'running' && <Loader2 className="w-3 h-3 animate-spin" />}
       {state === 'running' ? runningLabel : label}
     </Button>
+  )
+}
+
+interface TicketFormField {
+  name: string
+  label: string
+  type: string
+  required: boolean
+  options: string[]
+}
+
+interface TicketCategoryRow {
+  id?: number
+  name: string
+  description: string
+  schema: TicketFormField[]
+  enabled: boolean
+  sortOrder: number
+  isNew?: boolean
+}
+
+const TICKET_FIELD_TYPES = ['text', 'number', 'date', 'select', 'textarea', 'checkbox']
+
+function emptyTicketField(): TicketFormField {
+  return { name: '', label: '', type: 'text', required: false, options: [] }
+}
+
+function emptyTicketCategory(): TicketCategoryRow {
+  return { name: '', description: '', schema: [], enabled: true, sortOrder: 0, isNew: true }
+}
+
+function TicketCategoriesSection() {
+  const { t } = useTranslation()
+  const [rows, setRows] = useState<TicketCategoryRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    api
+      .get('/admin/ticket-categories')
+      .then((data: any) => {
+        if (Array.isArray(data)) {
+          setRows(
+            data.map((c: any) => ({
+              id: c.id,
+              name: c.name,
+              description: c.description || '',
+              schema: Array.isArray(c.schema) ? c.schema : [],
+              enabled: !!c.enabled,
+              sortOrder: c.sort_order ?? 0,
+            })),
+          )
+        }
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const patch = (r: TicketCategoryRow, upd: Partial<TicketCategoryRow>) =>
+    setRows((prev) => prev.map((x) => (x === r ? { ...x, ...upd } : x)))
+
+  const addRow = () => setRows((prev) => [...prev, emptyTicketCategory()])
+
+  const removeRow = async (r: TicketCategoryRow) => {
+    if (!r.id) {
+      setRows((prev) => prev.filter((x) => x !== r))
+      return
+    }
+    try {
+      await api.delete(`/admin/ticket-categories/${r.id}`)
+      setRows((prev) => prev.filter((x) => x.id !== r.id))
+      toast.success(t('admin.ticketFormsDeleted'))
+    } catch {
+      /* handled */
+    }
+  }
+
+  const addField = (r: TicketCategoryRow) => patch(r, { schema: [...r.schema, emptyTicketField()] })
+
+  const patchField = (r: TicketCategoryRow, fieldIndex: number, upd: Partial<TicketFormField>) =>
+    patch(r, { schema: r.schema.map((f, i) => (i === fieldIndex ? { ...f, ...upd } : f)) })
+
+  const removeField = (r: TicketCategoryRow, fieldIndex: number) =>
+    patch(r, { schema: r.schema.filter((_, i) => i !== fieldIndex) })
+
+  const saveRow = async (r: TicketCategoryRow) => {
+    if (!r.name.trim()) {
+      toast.error(t('admin.ticketFormsNameRequired'))
+      return
+    }
+    setSaving(true)
+    try {
+      const payload = {
+        name: r.name,
+        description: r.description,
+        enabled: r.enabled,
+        sortOrder: r.sortOrder,
+        schema: r.schema.map((f) => ({
+          name: f.name.trim(),
+          label: f.label.trim(),
+          type: f.type,
+          required: f.required,
+          options: f.options,
+        })),
+      }
+      if (r.isNew || !r.id) {
+        const created = await api.post('/admin/ticket-categories', payload)
+        setRows((prev) => prev.map((x) => (x === r ? { ...x, id: created.id, isNew: false } : x)))
+      } else {
+        await api.put(`/admin/ticket-categories/${r.id}`, payload)
+      }
+      toast.success(t('admin.saveSuccess'))
+    } catch {
+      /* handled */
+    }
+    setSaving(false)
+  }
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2">
+            <ClipboardList className="w-4 h-4 text-primary" />
+            {t('admin.ticketForms')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-center py-4">
+            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm flex items-center gap-2">
+          <ClipboardList className="w-4 h-4 text-primary" />
+          {t('admin.ticketForms')}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-xs text-muted-foreground">{t('admin.ticketFormsSubtitle')}</p>
+        {rows.map((r) => (
+          <div key={r.id ?? `new-${rows.indexOf(r)}`} className="space-y-3 rounded-lg border p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">{t('admin.ticketFormsName')}</label>
+                <Input
+                  value={r.name}
+                  onChange={(e) => patch(r, { name: e.target.value })}
+                  data-testid={`ticket-cat-name-${r.id ?? 'new'}`}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">{t('admin.ticketFormsDescription')}</label>
+                <Input value={r.description} onChange={(e) => patch(r, { description: e.target.value })} />
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={r.enabled} onChange={(e) => patch(r, { enabled: e.target.checked })} />
+                {t('admin.ticketFormsEnabled')}
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                {t('admin.ticketFormsSort')}
+                <Input
+                  type="number"
+                  value={r.sortOrder}
+                  onChange={(e) => patch(r, { sortOrder: Number(e.target.value) })}
+                  className="w-20"
+                />
+              </label>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-muted-foreground">{t('admin.ticketFormsSchema')}</p>
+                <Button type="button" size="sm" variant="outline" onClick={() => addField(r)}>
+                  + {t('admin.ticketFormsAddField')}
+                </Button>
+              </div>
+              {r.schema.length === 0 && (
+                <p className="text-xs text-muted-foreground">{t('admin.ticketFormsNoFields')}</p>
+              )}
+              {r.schema.map((f, fi) => (
+                <div key={fi} className="grid grid-cols-2 sm:grid-cols-6 gap-2 items-end rounded-md border p-2">
+                  <div className="space-y-0.5 col-span-2 sm:col-span-1">
+                    <label className="text-[10px] text-muted-foreground">{t('admin.ticketFormsFieldName')}</label>
+                    <Input value={f.name} onChange={(e) => patchField(r, fi, { name: e.target.value })} />
+                  </div>
+                  <div className="space-y-0.5 col-span-2 sm:col-span-1">
+                    <label className="text-[10px] text-muted-foreground">{t('admin.ticketFormsFieldLabel')}</label>
+                    <Input value={f.label} onChange={(e) => patchField(r, fi, { label: e.target.value })} />
+                  </div>
+                  <div className="space-y-0.5 col-span-2 sm:col-span-2">
+                    <label className="text-[10px] text-muted-foreground">{t('admin.ticketFormsFieldType')}</label>
+                    <select
+                      value={f.type}
+                      onChange={(e) => patchField(r, fi, { type: e.target.value })}
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                      {TICKET_FIELD_TYPES.map((tp) => (
+                        <option key={tp} value={tp}>
+                          {tp}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-0.5 col-span-2 sm:col-span-1">
+                    <label className="text-[10px] text-muted-foreground">{t('admin.ticketFormsFieldOptions')}</label>
+                    <Input
+                      value={f.options.join(', ')}
+                      onChange={(e) =>
+                        patchField(r, fi, {
+                          options: e.target.value
+                            .split(',')
+                            .map((s) => s.trim())
+                            .filter(Boolean),
+                        })
+                      }
+                      disabled={f.type !== 'select'}
+                    />
+                  </div>
+                  <div className="col-span-2 sm:col-span-1 flex items-center gap-2">
+                    <label className="flex items-center gap-1 text-xs">
+                      <input
+                        type="checkbox"
+                        checked={f.required}
+                        onChange={(e) => patchField(r, fi, { required: e.target.checked })}
+                      />
+                      {t('admin.ticketFormsRequired')}
+                    </label>
+                    <button
+                      type="button"
+                      aria-label="Удалить поле"
+                      onClick={() => removeField(r, fi)}
+                      className="ml-auto text-destructive hover:opacity-70"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => saveRow(r)}
+                disabled={saving}
+                data-testid={`ticket-cat-save-${r.id ?? 'new'}`}
+              >
+                {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                {t('common.save')}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => removeRow(r)}
+                data-testid={`ticket-cat-delete-${r.id ?? 'new'}`}
+              >
+                {t('common.delete')}
+              </Button>
+            </div>
+          </div>
+        ))}
+        <Button type="button" variant="outline" size="sm" onClick={addRow} className="gap-1.5">
+          <ClipboardList className="w-4 h-4" />
+          {t('admin.ticketFormsAddCategory')}
+        </Button>
+      </CardContent>
+    </Card>
   )
 }
