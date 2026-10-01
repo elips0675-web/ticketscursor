@@ -1,27 +1,27 @@
 {
-  "generated": "2026-09-27T18:18:41.929Z",
+  "generated": "2026-10-01T09:00:50.376Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 82,
-    "suites": 195,
-    "tests": 699,
+    "files": 86,
+    "suites": 203,
+    "tests": 715,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 83,
-    "suites": 435,
-    "tests": 1098,
+    "files": 86,
+    "suites": 443,
+    "tests": 1118,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 165,
-    "suites": 630,
-    "tests": 1797,
+    "files": 172,
+    "suites": 646,
+    "tests": 1833,
     "all_passing": true
   },
   "e2e": {
@@ -301,6 +301,10 @@
       "tests": 5
     },
     {
+      "file": "src/test/Team.expanded.test.tsx",
+      "tests": 5
+    },
+    {
       "file": "src/test/TwoFactorSection.test.tsx",
       "tests": 5
     },
@@ -321,6 +325,14 @@
       "tests": 4
     },
     {
+      "file": "src/test/GdprExportSection.test.tsx",
+      "tests": 4
+    },
+    {
+      "file": "src/test/NewTicket.forms.test.tsx",
+      "tests": 4
+    },
+    {
       "file": "src/test/NotificationsPage.test.tsx",
       "tests": 4
     },
@@ -334,6 +346,10 @@
     },
     {
       "file": "src/test/AdminSettings.sla.test.tsx",
+      "tests": 3
+    },
+    {
+      "file": "src/test/AdminSettings.ticketforms.test.tsx",
       "tests": 3
     },
     {
@@ -527,6 +543,10 @@
       "tests": 11
     },
     {
+      "file": "server/src/__tests__/ticket-categories.test.js",
+      "tests": 11
+    },
+    {
       "file": "server/src/__tests__/ticket-relations.test.js",
       "tests": 11
     },
@@ -635,6 +655,10 @@
       "tests": 5
     },
     {
+      "file": "server/src/__tests__/gdpr-export.test.js",
+      "tests": 5
+    },
+    {
       "file": "server/src/__tests__/index.test.js",
       "tests": 5
     },
@@ -668,6 +692,10 @@
     },
     {
       "file": "server/src/__tests__/clamav.test.js",
+      "tests": 4
+    },
+    {
+      "file": "server/src/__tests__/org-chart.test.js",
       "tests": 4
     },
     {

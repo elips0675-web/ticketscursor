@@ -15,37 +15,44 @@
 
 ## Ключевые файлы
 
-### Сервер (server/src/)
+### Сервер (server/src/) — факт 01.10.2026 (lcov: lines / branches)
 | Файл | Coverage | Статус |
 |------|----------|--------|
-| routes/tickets.js | ~75% | ✅ |
-| routes/auth.js | ~73% | ✅ |
-| routes/admin.js | ~79% | ✅ |
-| routes/notifications.js | ~73% | ✅ |
-| routes/push.js | ~66% | ✅ |
-| routes/search.js | 100% | ✅ |
-| routes/calendar.js | ~66% | ⚠️ |
-| services/tickets.service.js | ~91% | ✅ |
-| socket.js | ~22% | ❌ (низкий приоритет — outbox паттерн снижает риски) |
-| background.js | ~50% | ✅ DLQ реализован (BullMQ + in-memory fallback) |
-| api.test.js | n/a | 163 интеграционных (71 describe) |
+| routes/tickets.js | 77.6% / 72.2% | ✅ |
+| routes/auth.js | 65.9% / 59.5% | ⚠️ кандидат добора |
+| routes/admin.js | 52.9% / 48.0% | ⚠️ P1 №13 (упал из-за расширения роутов) |
+| routes/notifications.js | 72.3% / 75.0% | ✅ |
+| routes/push.js | 84.6% / 90.9% | ✅ |
+| routes/search.js | 100% / 87.5% | ✅ |
+| routes/calendar.js | 65.6% | ⚠️ |
+| routes/gdpr.js | 100% / 100% | ✅ Этап 66 |
+| routes/team.js | 100% / 100% | ✅ Этап 66 |
+| services/tickets.service.js | 95.8% / 85.4% | ✅ |
+| services/ticket-categories.service.js | ✅ | тесты есть (Этап 66) |
+| socket.js | 81.2% / 55.3% | ✅ (было 22%, закрыто) |
+| background.js | 89.4% / 82.1% | ✅ DLQ реализован (BullMQ + in-memory fallback) |
+| email.js | 62.2% / 70.3% | ⚠️ кандидат добора |
+| notify.js | 86.5% / 63.7% | ✅ |
+| api.test.js | n/a | ~163+ интеграционных (71 describe) |
 
-### Клиент (src/)
+### Клиент (src/) — факт 01.10.2026 (lcov: lines / branches)
 | Файл | Coverage | Статус |
 |------|----------|--------|
-| Dashboard.tsx | 100% | ✅ |
-| Admin.tsx | 98% | ✅ |
-| Tickets.tsx | 90% | ✅ |
-| Calendar.tsx | 84% | ✅ |
-| Files.tsx | 84% | ✅ |
-| News.tsx | 80% | ✅ |
-| Polls.tsx | 74% | ✅ |
-| Employees.tsx | 56% | ⚠️ |
-| ChatDetail.tsx | 51% | ⚠️ |
-| TicketDetail.tsx | 51% | ⚠️ |
-| Kanban.tsx | 47% | ⚠️ |
-| ticket-context.tsx | 35% | ❌ |
-| Search.tsx | ~60% | ⚠️ |
+| Dashboard.tsx | 100% / 68.8% | ✅ |
+| Admin.tsx | 100% / 86.8% | ✅ |
+| Tickets.tsx | 75.9% / 68.6% | ✅ |
+| Calendar.tsx | 86.0% / 79.1% | ✅ |
+| Files.tsx | 100% / 75.0% | ✅ |
+| News.tsx | 82.6% / 78.7% | ✅ |
+| Polls.tsx | 75.5% / 82.4% | ✅ |
+| Employees.tsx | 54.9% / 50.0% | ⚠️ P1 №14 (не вырос с 56%) |
+| ChatDetail.tsx | 79.5% / 68.7% | ✅ (было 51%) |
+| TicketDetail.tsx | 65.6% / 58.4% | ⚠️ P1 №15 |
+| Kanban.tsx | 100% / 72.7% | ✅ (было 47%) |
+| ticket-context.tsx | 87.2% / 69.0% | ✅ (было 35%) |
+| Search.tsx | 86.0% / 72.7% | ✅ (было ~60%) |
+| NewTicket.tsx | 64.1% / 51.5% | ⚠️ кандидат добора |
+| AdminSettings.tsx | 67.8% / 65.0% | ⚠️ много секций |
 
 ## Проблемы (решённые)
 

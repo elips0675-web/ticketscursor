@@ -1,12 +1,12 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 83 файлов / 435 suite / 1098 тестов (все PASS, vitest --reporter=json от 27.09.2026)
+Реальный результат: 86 файлов / 443 suite / 1118 тестов (все PASS, vitest --reporter=json от 01.10.2026)
 Этап 68 закрыт 26.09: дыры 0% (injection 15, fileCheck 9, ldap 10, index 5, api-tokens.routes 10, canned-responses.routes 15, telegram.expanded 27) — все файлы с 0% покрытия закрыты.
-Coverage (All files): 80.42 stmts / 74.25 branches / 81.65 funcs / 82.04 lines (пороги 78/72/79/80 — факт − 2п.п., перемерено 27.09 в Этапе 65)
+Coverage (All files): 80.46 stmts / 74.35 branches / 82.06 funcs / 82.11 lines (пороги 78/72/79/80 — факт − 2п.п., перемерено 01.10 в Этапе 66)
 ВАЖНО: имя тестовой БД переопределяется через TEST_DB_NAME (server/vitest.global-setup.js:6) — иначе параллельные прогоны дропают общий servicedesk_test друг другу.
 
-===== ФАЙЛЫ (83 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (86 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 server/src/api.test.js | 183 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk, feature rollout)
@@ -14,73 +14,82 @@ server/src/__tests__/rbac-matrix.test.js | 41 | RBAC: матрица 5×5, requi
 server/src/services/__tests__/tickets.service.sla.test.js | 40 | SLA: calculation, pause, business hours, breach detection, priority changes
 server/src/services/__tests__/email-ingestion.service.test.js | 28 | IMAP: extractTicketReference, stripTicketReference, getImapConfig, testImapConnection, pollOnce, reply/add, новый тикет, empty skip, errors
 server/src/__tests__/socket.test.js | 27 | WebSocket (реальный сервер на порту 0): JWT handshake, rate-limit, комнаты, typing, chat:read, disconnect, offline flush, delete, notify, getIO
+server/src/__tests__/telegram.expanded.test.js | 27 | Telegram (Этап 68): init, /start, /link, /new, /tickets, /reply, notifications, /status → число тикетов, createTicketFromTelegram, forwardMessageToTicket
 server/src/__tests__/admin-stage58.test.js | 24 | Этап 58: admin-ops (backup/seed/redis-status), RBAC-эндпоинты, rate-limit admin
+server/src/services/__tests__/notify.test.js | 24 | Notifications: create, in-app, email, telegram, push (webpush fire-and-forget, 404/410 → cleanup подписки), dedup, фильтры каналов email/push/in_app через notification_preferences, серверная нормализация prefs
 server/src/__tests__/public-portal.test.js | 22 | Public portal: POST /tickets (новый/существующий employee), 400-валидация, track, 500, upload
 server/src/services/__tests__/rules.service.test.js | 20 | Rules: правила и цепочки, условия, действия
 server/src/__tests__/middleware.test.js | 19 | Rate limiter, CORS, helmet, auth middleware, RBAC
 server/src/__tests__/public-kb.test.js | 18 | Public KB: статьи, пагинация, фильтры, категории (distinct), голосование, поиск
 server/src/__tests__/recurrences.route.test.js | 17 | Recurrences routes: list, get, create (cron валидация), update, delete, RBAC
 server/src/services/__tests__/custom-fields.service.test.js | 17 | Custom fields: CRUD, validation, types, required
-server/src/services/__tests__/notify.test.js | 22 | Notifications: create, in-app, email, telegram, push (webpush fire-and-forget, 404/410 → cleanup подписки), dedup, фильтры каналов email/push/in_app через notification_preferences, серверная нормализация prefs
 server/src/__tests__/rules.route.test.js | 16 | Rules routes: CRUD, цепочки, включение/выключение
-server/src/__tests__/injection.test.js | 15 | Injection (Этап 68): SQL-injection/NoSQL/XSS/header-injection на search, tickets, employees, wiki — защита подтверждена (FULLTEXT→LIKE, orderBy whitelist, отказ на подозрительные payload)
 server/src/services/__tests__/collision.service.test.js | 16 | Collision: конфликты событий календаря
-server/src/services/__tests__/api-tokens.service.test.js | 15 | API-токены: create, validate, revoke
 server/src/__tests__/canned-responses.routes.test.js | 15 | Canned responses (Этап 68): CRUD — список, create, update, delete, RBAC (admin+ запрет requester), схемы-валидация
+server/src/__tests__/injection.test.js | 15 | Injection (Этап 68): SQL-injection/NoSQL/XSS/header-injection на search, tickets, employees, wiki — защита подтверждена (FULLTEXT→LIKE, orderBy whitelist, отказ на подозрительные payload)
+server/src/services/__tests__/api-tokens.service.test.js | 15 | API-токены: create, validate, revoke
 server/src/services/__tests__/assistant.service.test.js | 15 | AI assistant: RAG, wiki search, suggestions
 server/src/services/__tests__/csat.service.test.js | 15 | CSAT: survey creation, response recording, metrics
+server/src/services/__tests__/wiki.service.test.js | 15 | Wiki: CRUD, categories, search, soft delete, updateArticle→ревизия, listRevisions, rollback
+server/src/__tests__/auth-2fa.test.js | 14 | 2FA/TOTP: login step=2fa + tempToken, /2fa/verify (верный/неверный/подделанный tempToken), setup/enable/disable, status required, require2FA middleware (403 при флаге on без TOTP, off → проход, pass, /features не блокируется); изоляция — vi.mock флага + выделенный админ id 600
 server/src/__tests__/search-sync.expanded.test.js | 14 | Search: Meilisearch sync, FULLTEXT fallback, LIKE fallback
 server/src/__tests__/webhooks.route.test.js | 14 | Webhooks routes: подписки, доставка, retry
+server/src/services/__tests__/chats.service.test.js | 14 | Chats: create, message, unread count, pagination, updateMessage (редактирование — edited_at), reply_to include
 server/src/services/__tests__/recurrence.service.test.js | 14 | Recurrence: создание, апдейт, soft-delete, list, processRecurrences
 server/src/services/__tests__/time.service.test.js | 14 | Time tracking: start, stop, manual entry, total calculation
 server/src/services/__tests__/webhooks.service.test.js | 14 | Webhooks: подписки, доставка, retry
-server/src/__tests__/auth-2fa.test.js | 14 | 2FA/TOTP: login step=2fa + tempToken, /2fa/verify (верный/неверный/подделанный tempToken), setup/enable/disable, status required, require2FA middleware (403 при флаге on без TOTP, off → проход, pass, /features не блокируется); изоляция — vi.mock флага + выделенный админ id 600
-server/src/services/__tests__/tickets.service.mentions.test.js | 13 | Mentions: @name parsing, notification creation, dedup
 server/src/__tests__/oidc.test.js | 13 | SSO OIDC: discovery, authorization URL (state/nonce), callback + auto-provisioning, disabled, no email, initOIDCClient null/error
+server/src/services/__tests__/tickets.service.mentions.test.js | 13 | Mentions: @name parsing, notification creation, dedup
 server/src/__tests__/limiters.test.js | 12 | Rate limiters: auth 10/мин, api 100/мин, admin 30/мин
+server/src/__tests__/ticket-watchers.test.js | 12 | POST/GET/DELETE watchers; 🔴 2 падения: DELETE отдаёт 403 вместо 200 (отписка себя) и 403 вместо 404 (нет подписки)
 server/src/__tests__/idor.test.js | 11 | IDOR: requester только свои тикеты (GET, messages, lock), agent свои+неназначенные, senior_agent полный доступ
-server/src/__tests__/sla.test.js | 11 | SLA: timer logic, escalation levels, breach alerts
 server/src/__tests__/notification-prefs.test.js | 11 | Настройки уведомлений (флаг notification_prefs): GET/PUT /notifications/preferences — дефолты (все каналы включены), мёрж/нормализация prefs, невалидный payload → 400, RBAC (не-авторизован 401, не-владелец 403), без флага — API всё равно работает; изоляция — выделенные id 603/604
+server/src/__tests__/sla.test.js | 11 | SLA: timer logic, escalation levels, breach alerts
+server/src/__tests__/ticket-categories.test.js | 11 | Ticket forms (Этап 66): CRUD категорий и полей, валидация, RBAC admin, флаг ticket_forms
+server/src/__tests__/ticket-relations.test.js | 11 | Relations CRUD: parent/child, blocked-by, duplicates, валидация
+server/src/__tests__/wiki-versioning.routes.test.js | 11 | Wiki versioning routes (флаг wiki_versioning): PUT /:id → ревизия + дифф, GET /:id/revisions, GET /:id/revisions/:revId, POST /:id/rollback/:revId, 404/403/400, RBAC
 server/src/services/__tests__/polls.service.test.js | 11 | Polls: CRUD, vote, close, expire
-server/src/__tests__/auth-sessions.test.js | 10 | Сессии (флаг user_sessions): GET /auth/sessions — список своих (token не утекает), POST /auth/sessions/:id/revoke — своя/чужая/текущая (400)/несуществующая (400), санитизация id; unit: parseUserAgent (Chrome/Firefox/Safari/Edge/Opera × Windows/macOS/Android/iOS/Linux, isMobile)
 server/src/__tests__/api-tokens.routes.test.js | 10 | API-токены routes (Этап 68): CRUD + RBAC, мидлварь apiKey/токен в Authorization, невалидный токен → 401
-server/src/__tests__/ldap.test.js | 10 | LDAP (Этап 68): ldapjs-client мок — auth ok/no-such-object/wrong password, auto-provisioning, отключённый LDAP → 501, email-fallback
+server/src/__tests__/auth-sessions.test.js | 10 | Сессии (флаг user_sessions): GET /auth/sessions — список своих (token не утекает), POST /auth/sessions/:id/revoke — своя/чужая/текущая (400)/несуществующая (400), санитизация id; unit: parseUserAgent (Chrome/Firefox/Safari/Edge/Opera × Windows/macOS/Android/iOS/Linux, isMobile)
 server/src/__tests__/background.expanded.test.js | 10 | Background: BullMQ setup, queues, workers, schedulers, DLQ
+server/src/__tests__/ldap.test.js | 10 | LDAP (Этап 68): ldapjs-client мок — auth ok/no-such-object/wrong password, auto-provisioning, отключённый LDAP → 501, email-fallback
 server/src/__tests__/push.test.js | 10 | Push: VAPID keys, subscribe, send, unsubscribe
-server/src/__tests__/storage.test.js | 9 | Storage: file upload, delete, MIME validation
+server/src/__tests__/chats-edit.routes.test.js | 9 | PUT /chats/:chatId/messages/:id — правка сообщения (edited_at), 400 (пустой/короче), 403 (чужое), 404 (нет чата/сообщения), эмит через WS
 server/src/__tests__/fileCheck.test.js | 9 | fileCheck middleware (Этап 68): MIME/size/magic-bytes — валидный файл, неверный MIME → 415, слишком большой → 413, пустой файл
-server/src/__tests__/telegram.expanded.test.js | 27 | Telegram (Этап 68): init, /start, /link, /new, /tickets, /reply, notifications, /status → число тикетов, createTicketFromTelegram, forwardMessageToTicket
-server/src/services/__tests__/chats.service.test.js | 14 | Chats: create, message, unread count, pagination, updateMessage (редактирование — edited_at), reply_to include
-server/src/__tests__/clamav.expanded.test.js | 8 | ClamAV: scan, clean file, infected file, timeout
+server/src/__tests__/storage.test.js | 9 | Storage: file upload, delete, MIME validation
 server/src/__tests__/background.sub.test.js | 8 | Background (sub-процессы): эскалация по интервалам, cleanup >90 дней, DLQ >10 → email, stopImapPolling без запуска
+server/src/__tests__/clamav.expanded.test.js | 8 | ClamAV: scan, clean file, infected file, timeout
+server/src/__tests__/ticket-merge.test.js | 8 | Merge: перенос сообщений, RBAC на merge
+server/src/__tests__/sla.timezone.test.js | 7 | SLA: TIMEZONE из настроек — дедлайны в верном TZ, DST (Vladivostok/London/NY), невалидный TZ → fallback
 server/src/__tests__/soft-delete.test.js | 7 | 
-server/src/__tests__/sla.timezone.test.js | 7 | SLA: TIMEZONE из настроек — дедлайны в верном TZ, DST (Vladivostok/London/NY), невалидный TZ → fallback 
 server/src/__tests__/validateUpload.test.js | 7 | Upload validation: MIME, size, magic bytes
 server/src/services/__tests__/roleUtils.test.js | 7 | Role utils: hasRole, canManage, hierarchy checks
-server/src/services/__tests__/wiki.service.test.js | 15 | Wiki: CRUD, categories, search, soft delete, updateArticle→ревизия, listRevisions, rollback
 server/src/__tests__/cache.test.js | 6 | Cache: Redis fallback, invalidate, TTL
 server/src/__tests__/csat.route.test.js | 6 | CSAT routes: GET survey, POST response, metrics
+server/src/__tests__/idempotency.test.js | 6 | Idempotency: dual-store Redis+in-memory, TTL 24ч, повторный запрос из-под res.json, fallback при недоступном Redis, коллизия ключа (не 409, первый ответ)
 server/src/services/__tests__/calendar.service.test.js | 6 | Calendar: CRUD, recurring events, conflicts
 server/src/services/__tests__/files.service.test.js | 6 | Files: upload, list, folder structure
+server/src/__tests__/admin-import.test.js | 5 | CSV-импорт сотрудников: создание из rows + email-транслитерация, дубликат → skipped, пустое ФИО → skipped, пустой массив → 400, не-админ → 403
 server/src/__tests__/contract.api.test.js | 5 | Contract (zod): ответы /tickets, /employees, /chats, /wiki, /news — конверт success:true + элементы с id
-server/src/__tests__/query-guards.test.js | 5 | Query guards: клампинг limit (9999→500, 0→50 default, -5→1, abc→50), N+1 — один findMany на список
 server/src/__tests__/email.test.js | 5 | Email: SMTP transport, template rendering
 server/src/__tests__/files.route.test.js | 5 | Files routes: GET list, POST upload, DELETE
+server/src/__tests__/gdpr-export.test.js | 5 | GDPR export (Этап 66, флаг gdpr_export): создание экспорта, скачивание/архив, RBAC
 server/src/__tests__/index.test.js | 5 | index.js (Этап 68): запуск сервера на 4000 (mocked listen), graceful shutdown — stopBackgroundJobs, слушатели SIGINT/SIGTERM
+server/src/__tests__/query-guards.test.js | 5 | Query guards: клампинг limit (9999→500, 0→50 default, -5→1, abc→50), N+1 — один findMany на список
+server/src/__tests__/refresh-family.test.js | 5 | Refresh-token family: family_id, reuse-detection (отзыв семьи), revoke-all, повторный /refresh
+server/src/__tests__/ticket-history.test.js | 5 | Timeline: GET /tickets/:id/history — события (created/status/priority/assign) + details, RBAC, пустая история, 404/400; учёт cacheMiddleware(120) + fire-and-forget logAudit (сброс кэша + опрос до сходимости)
 server/src/middleware/__tests__/metrics.test.js | 5 | Metrics: request counting, response time
 server/src/services/__tests__/employees.service.test.js | 5 | Employees: list, search, role filter
-server/src/__tests__/ticket-history.test.js | 5 | Timeline: GET /tickets/:id/history — события (created/status/priority/assign) + details, RBAC, пустая история, 404/400; учёт cacheMiddleware(120) + fire-and-forget logAudit (сброс кэша + опрос до сходимости)
-server/src/__tests__/admin-import.test.js | 5 | CSV-импорт сотрудников: создание из rows + email-транслитерация, дубликат → skipped, пустое ФИО → skipped, пустой массив → 400, не-админ → 403
 server/src/services/__tests__/news.service.test.js | 5 | News: CRUD, publish, archive
-server/src/__tests__/idempotency.test.js | 6 | Idempotency: dual-store Redis+in-memory, TTL 24ч, повторный запрос из-под res.json, fallback при недоступном Redis, коллизия ключа (не 409, первый ответ)
-server/src/__tests__/refresh-family.test.js | 5 | Refresh-token family: family_id, reuse-detection (отзыв семьи), revoke-all, повторный /refresh
 server/src/__tests__/background.test.js | 4 | Background: setup, stop, warnAdminRedisMissing
 server/src/__tests__/clamav.test.js | 4 | ClamAV: basic scan, not installed fallback
+server/src/__tests__/org-chart.test.js | 4 | Org chart (Этап 66, флаг org_chart): дерево team, директора/подчинённые, RBAC
 server/src/__tests__/outbox.delivery.test.js | 4 | 
 server/src/__tests__/process-guards.test.js | 4 | Process guards: CSP script-src self (без unsafe-inline/eval), connect-src localhost, 413 при теле >100kb
 server/src/__tests__/search.test.js | 4 | Search: fulltext, LIKE fallback, empty query
 server/src/__tests__/secrets-rotation.test.js | 4 | Secrets rotation: JWT_SECRET="new,old" — подпись новым, verify старым/новым, отклонение неизвестного, export JWT_SECRET
 server/src/__tests__/trust-proxy.test.js | 4 | Trust proxy: TRUST_PROXY=1|true → 1, off по умолчанию, спуфинг X-Forwarded-For при off/on
+server/src/__tests__/admin-sla-settings.test.js | 3 | AdminSettings SLA (порт 4003, изоляция id): BUSINESS_WORKING_DAYS/HOURS_START/HOURS_END в ALLOWED_SETTINGS, PUT валидирует, GET отдаёт бизнес-часы
 server/src/__tests__/migration.idempotency.test.js | 2 | Migration idempotency: knex migrate:latest дважды no-op, fk_cascades up() повторно без дублей FK
 server/src/__tests__/notify-failure.test.js | 2 | Notify-регресс: падение email/webhook-уведомлений → тикет всё равно создаётся (201)
 server/src/__tests__/ticket-lock.race.test.js | 2 | 
@@ -88,19 +97,7 @@ server/src/__tests__/ticket-status.race.test.js | 2 |
 server/src/__tests__/time-timer.race.test.js | 2 | 
 
 ===== ИСТОЧНИК ДАННЫХ =====
-Список файлов и количество тестов — из фактического прогона `cd server && npx vitest run --reporter=json` (vitest-*.json).
-Фактический запуск: 83 файлов / 1098 тестов / 1098 passed / 0 failures.
-Coverage (26.09.2026, перемерено --coverage): stmts 80.36 / branches 74.36 / functions 81.47 / lines 82.00 (пороги: stmts 78 / branches 72 / functions 79 / lines 80 — факт − 2п.п.).
-Данные актуальны на: 27.09.2026. Прирост к Этапу 68: +36 тестов — Этап 65 (qwen P1 #1): wiki-versioning.routes 11, chats-edit.routes 9, admin-sla-settings 3, чаts.service 9→14, wiki.service 7→15.
-
-Новые файлы Этапа 65 (qwen P1, часть 1):
-server/src/__tests__/wiki-versioning.routes.test.js | 11 | Wiki versioning routes (флаг wiki_versioning): PUT /:id → ревизия + дифф, GET /:id/revisions, GET /:id/revisions/:revId, POST /:id/rollback/:revId, 404/403/400, RBAC
-server/src/__tests__/chats-edit.routes.test.js | 9 | PUT /chats/:chatId/messages/:id — правка сообщения (edited_at), 400 (пустой/короче), 403 (чужое), 404 (нет чата/сообщения), эмит через WS
-server/src/__tests__/admin-sla-settings.test.js | 3 | AdminSettings SLA (порт 4003, изоляция id): BUSINESS_WORKING_DAYS/HOURS_START/HOURS_END в ALLOWED_SETTINGS, PUT валидирует, GET отдаёт бизнес-часы
-
-Новые файлы Этапа 64 (фичи watchers/relations/merge за флагами, дефолт off):
-server/src/__tests__/ticket-watchers.test.js | 12 | POST/GET/DELETE watchers; 🔴 2 падения: DELETE отдаёт 403 вместо 200 (отписка себя) и 403 вместо 404 (нет подписки)
-server/src/__tests__/ticket-relations.test.js | 11 | Relations CRUD: parent/child, blocked-by, duplicates, валидация
-server/src/__tests__/ticket-merge.test.js | 8 | Merge: перенос сообщений, RBAC на merge
-
-Инфраструктурный фикс 26.09: server/vitest.global-setup.js — имя тестовой БД вынесено в `process.env.TEST_DB_NAME || 'servicedesk_test'` (строка 6). Раньше setup/teardown дропали общий servicedesk_test, и два параллельных `vitest run` уничтожали БД друг друга («Unknown database 'servicedesk_test'», 15 файлов / 49 тестов падали). CI не затронут (ci.yml:39,62 использует servicedesk_test).
+Список файлов и количество тестов — из фактического прогона (cd server && npx vitest run --no-file-parallelism --reporter=json, 01.10.2026).
+Фактический запуск: 86 файлов / 1118 тестов / 1118 passed / 0 failures.
+Coverage (01.10.2026, перемерено --coverage): 80.46 stmts / 74.35 branches / 82.06 funcs / 82.11 lines. Пороги 78/72/79/80 (факт − 2п.п.).
+Прирост к Этапу 68: 1098 → 1118 (+20): Этап 66 (qwen P1 #2, подфичи 1-3): ticket-categories.test.js 11, gdpr-export.test.js 5, org-chart.test.js 4. Плюс ротация внутри существующих: notify.test.js 22→24, wiki.service 7→15, chats.service 9→14, telegram.expanded 22→27.
