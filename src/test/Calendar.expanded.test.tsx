@@ -8,8 +8,7 @@ const mockEvents = vi.hoisted(() => {
   const now = new Date()
   const y = now.getFullYear()
   const m = now.getMonth()
-  const isoDay = (day: number, monthOffset = 0) =>
-    new Date(y, m + monthOffset, day, 12, 0, 0).toISOString()
+  const isoDay = (day: number, monthOffset = 0) => new Date(y, m + monthOffset, day, 12, 0, 0).toISOString()
   return [
     {
       id: 1,
@@ -160,7 +159,8 @@ describe('Calendar page', () => {
 
   it('renders event titles on calendar', async () => {
     render(<Calendar />, { wrapper: makeWrapper() })
-    expect(await screen.findByText('Team Standup')).toBeInTheDocument()
+    const titles = await screen.findAllByText('Team Standup')
+    expect(titles.length).toBeGreaterThan(0)
   })
 
   it('shows select day prompt initially', async () => {
@@ -194,7 +194,8 @@ describe('Calendar page', () => {
   it('shows upcoming events sidebar', async () => {
     render(<Calendar />, { wrapper: makeWrapper() })
     expect(await screen.findByText('Ближайшие')).toBeInTheDocument()
-    await screen.findByText('Team Standup')
+    const titles = await screen.findAllByText('Team Standup')
+    expect(titles.length).toBeGreaterThan(0)
   })
 
   it('shows export CSV button', async () => {

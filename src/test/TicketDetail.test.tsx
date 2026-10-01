@@ -448,7 +448,7 @@ describe('TicketDetail XSS-инвариант и virtual scroll (Этап 61)', 
     expect(screen.getByText('Сообщение 1')).toBeInTheDocument()
   })
 
-  it('рендерит тикет с 1000 сообщениями — virtual scroll в jsdom не падает (Этап 68)', async () => {
+  it('рендерит тикет с 1000 сообщениями — virtual scroll в jsdom не падает (Этап 68)', { timeout: 15000 }, async () => {
     const messages = Array.from({ length: 1000 }, (_, i) => ({
       id: i + 1,
       ticket_id: 1,

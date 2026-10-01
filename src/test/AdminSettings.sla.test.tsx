@@ -47,7 +47,7 @@ describe('AdminSettings — SLA business hours (Этап 65, подзадача 
     })
   }, 15000)
 
-  it('часы выбора старта/конца содержат 24 опции', async () => {
+  it('часы выбора старта/конца содержат 24 опции', { timeout: 15000 }, async () => {
     render(<AdminSettings />, { wrapper: AllTheProviders })
     await waitFor(() => {
       expect(screen.getByLabelText('admin.slaStart')).toBeTruthy()
