@@ -1,11 +1,11 @@
-# Service Desk — технический долг (22.09.2026)
+# Service Desk — технический долг (01.10.2026)
 
 ## Текущее состояние
 
-- **Фронт**: 507 тестов (61 файл)
-- **Сервер**: 791 тестов (48 файлов)
-- **Итого**: 1298 теста, 0 failures
-- **E2E**: 19 spec'ов / 57 тест (Playwright) + 17/17 страниц ALL OK (check-console.mjs)
+- **Фронт**: 715 тестов (86 файлов)
+- **Сервер**: 1118 тестов (86 файлов)
+- **Итого**: 1833 теста, 0 failures
+- **E2E**: 19 spec'ов / 61 тест (Playwright) + 17/17 страниц ALL OK (check-console.mjs)
 - **Prisma моделей**: 32 (включая event_outbox)
 - **API endpoints**: 60+ (Swagger + Health probes + k6 metrics)
 - **ESLint**: 0 errors, 56 warnings (порог лимита 100 в CI)
