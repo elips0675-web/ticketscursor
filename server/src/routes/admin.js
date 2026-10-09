@@ -68,11 +68,16 @@ const ALLOWED_SETTINGS = [
   'BUSINESS_WORKING_DAYS', 'BUSINESS_HOURS_START', 'BUSINESS_HOURS_END',
 ]
 
+// P1 №9: GET не отдаёт секреты — маска для *PASS*/*SECRET*/*CREDENTIALS*/*TOKEN*.
+const SECRET_KEY_RE = /(PASS|SECRET|CREDENTIALS|TOKEN)/i
+const SECRET_MASK = '********'
+const isSecretKey = (key) => SECRET_KEY_RE.test(key)
+
 router.get('/settings', async (req, res) => {
   try {
     const rows = await prisma.admin_settings.findMany({ select: { key: true, value: true } })
     const settings = {}
-    for (const r of rows) settings[r.key] = r.value
+    for (const r of rows) settings[r.key] = isSecretKey(r.key) && r.value ? SECRET_MASK : r.value
     res.json({ success: true, data: settings })
   } catch (err) {
     logger.error('Settings get error:', err)
@@ -91,6 +96,8 @@ router.put('/settings', async (req, res) => {
   try {
     for (const [key, value] of Object.entries(req.body)) {
       if (!ALLOWED_SETTINGS.includes(key)) continue
+      // Маска из GET означает «значение не меняли» — не затираем реальный секрет.
+      if (isSecretKey(key) && String(value) === SECRET_MASK) continue
       if (key === 'EMAIL_TEMPLATES') {
         try {
           const parsed = JSON.parse(String(value))

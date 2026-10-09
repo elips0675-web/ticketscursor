@@ -1,12 +1,12 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 87 файлов / 447 suite / 1133 тестов (все PASS, vitest --reporter=json от 09.10.2026)
+Реальный результат: 88 файлов / 449 suite / 1139 тестов (все PASS, vitest --reporter=json от 09.10.2026)
 Этап 68 закрыт 26.09: дыры 0% (injection 15, fileCheck 9, ldap 10, index 5, api-tokens.routes 10, canned-responses.routes 15, telegram.expanded 27) — все файлы с 0% покрытия закрыты.
 Coverage (All files): 80.46 stmts / 74.35 branches / 82.06 funcs / 82.11 lines (пороги 78/72/79/80 — факт − 2п.п., перемерено 01.10 в Этапе 66)
 ВАЖНО: имя тестовой БД переопределяется через TEST_DB_NAME (server/vitest.global-setup.js:6) — иначе параллельные прогоны дропают общий servicedesk_test друг другу.
 
-===== ФАЙЛЫ (87 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (88 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 server/src/api.test.js | 183 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk, feature rollout)
@@ -70,6 +70,7 @@ server/src/__tests__/csat.route.test.js | 6 | CSAT routes: GET survey, POST resp
 server/src/__tests__/idempotency.test.js | 6 | Idempotency: dual-store Redis+in-memory, TTL 24ч, повторный запрос из-под res.json, fallback при недоступном Redis, коллизия ключа (не 409, первый ответ)
 server/src/services/__tests__/calendar.service.test.js | 6 | Calendar: CRUD, recurring events, conflicts
 server/src/services/__tests__/files.service.test.js | 6 | Files: upload, list, folder structure
+server/src/__tests__/admin-settings-secrets.test.js | 6 | P1 №9: GET /api/admin/settings маскирует секреты (*PASS*/*SECRET*/*CREDENTIALS*/*TOKEN*), PUT с маской не затирает реальное значение
 server/src/__tests__/admin-import.test.js | 5 | CSV-импорт сотрудников: создание из rows + email-транслитерация, дубликат → skipped, пустое ФИО → skipped, пустой массив → 400, не-админ → 403
 server/src/__tests__/contract.api.test.js | 5 | Contract (zod): ответы /tickets, /employees, /chats, /wiki, /news — конверт success:true + элементы с id
 server/src/__tests__/email.test.js | 5 | Email: SMTP transport, template rendering
@@ -99,6 +100,6 @@ server/src/__tests__/time-timer.race.test.js | 2 |
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона (cd server && npx vitest run --no-file-parallelism --reporter=json, 01.10.2026).
-Фактический запуск: 87 файлов / 1133 тестов / 1133 passed / 0 failures.
+Фактический запуск: 88 файлов / 1139 тестов / 1139 passed / 0 failures.
 Coverage (01.10.2026, перемерено --coverage): 80.46 stmts / 74.35 branches / 82.06 funcs / 82.11 lines. Пороги 78/72/79/80 (факт − 2п.п.).
 Прирост к Этапу 68: 1098 → 1118 (+20): Этап 66 (qwen P1 #2, подфичи 1-3): ticket-categories.test.js 11, gdpr-export.test.js 5, org-chart.test.js 4. Плюс ротация внутри существующих: notify.test.js 22→24, wiki.service 7→15, chats.service 9→14, telegram.expanded 22→27. +15 (Этап 66, подфича 4): scheduled-reports.test.js 14 + migration.idempotency +1 (scheduled_reports up()). Плюс попутно закрыт дрейф схемы: миграция 20260928_csat_surveys.js.
