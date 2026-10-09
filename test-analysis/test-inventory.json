@@ -1,27 +1,27 @@
 {
-  "generated": "2026-10-09T10:13:26.116Z",
+  "generated": "2026-10-09T12:43:13.374Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 87,
-    "suites": 212,
-    "tests": 761,
+    "files": 88,
+    "suites": 214,
+    "tests": 765,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 86,
-    "suites": 443,
-    "tests": 1118,
+    "files": 87,
+    "suites": 447,
+    "tests": 1133,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 173,
-    "suites": 655,
-    "tests": 1879,
+    "files": 175,
+    "suites": 661,
+    "tests": 1898,
     "all_passing": true
   },
   "e2e": {
@@ -317,6 +317,10 @@
       "tests": 4
     },
     {
+      "file": "src/test/AdminSettings.scheduledreports.test.tsx",
+      "tests": 4
+    },
+    {
       "file": "src/test/Calendar.test.tsx",
       "tests": 4
     },
@@ -492,6 +496,10 @@
     },
     {
       "file": "server/src/__tests__/auth-2fa.test.js",
+      "tests": 14
+    },
+    {
+      "file": "server/src/__tests__/scheduled-reports.test.js",
       "tests": 14
     },
     {
@@ -728,7 +736,7 @@
     },
     {
       "file": "server/src/__tests__/migration.idempotency.test.js",
-      "tests": 2
+      "tests": 3
     },
     {
       "file": "server/src/__tests__/notify-failure.test.js",

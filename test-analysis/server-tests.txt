@@ -1,12 +1,12 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 86 файлов / 443 suite / 1118 тестов (все PASS, vitest --reporter=json от 01.10.2026)
+Реальный результат: 87 файлов / 447 suite / 1133 тестов (все PASS, vitest --reporter=json от 09.10.2026)
 Этап 68 закрыт 26.09: дыры 0% (injection 15, fileCheck 9, ldap 10, index 5, api-tokens.routes 10, canned-responses.routes 15, telegram.expanded 27) — все файлы с 0% покрытия закрыты.
 Coverage (All files): 80.46 stmts / 74.35 branches / 82.06 funcs / 82.11 lines (пороги 78/72/79/80 — факт − 2п.п., перемерено 01.10 в Этапе 66)
 ВАЖНО: имя тестовой БД переопределяется через TEST_DB_NAME (server/vitest.global-setup.js:6) — иначе параллельные прогоны дропают общий servicedesk_test друг другу.
 
-===== ФАЙЛЫ (86 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (87 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 server/src/api.test.js | 183 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk, feature rollout)
@@ -38,6 +38,7 @@ server/src/services/__tests__/chats.service.test.js | 14 | Chats: create, messag
 server/src/services/__tests__/recurrence.service.test.js | 14 | Recurrence: создание, апдейт, soft-delete, list, processRecurrences
 server/src/services/__tests__/time.service.test.js | 14 | Time tracking: start, stop, manual entry, total calculation
 server/src/services/__tests__/webhooks.service.test.js | 14 | Webhooks: подписки, доставка, retry
+server/src/__tests__/scheduled-reports.test.js | 14 | Scheduled reports (Этап 66, подфича 4, флаг scheduled_reports): чистые функции (isValidCron/normalizeRecipients/formatReportText/buildReportData), admin CRUD (401/403/404-флаг, 400-валидация, create/list/update/delete/run-now), processScheduledReports (доставка + пересчёт next_run_at, 0 при флаге off)
 server/src/__tests__/oidc.test.js | 13 | SSO OIDC: discovery, authorization URL (state/nonce), callback + auto-provisioning, disabled, no email, initOIDCClient null/error
 server/src/services/__tests__/tickets.service.mentions.test.js | 13 | Mentions: @name parsing, notification creation, dedup
 server/src/__tests__/limiters.test.js | 12 | Rate limiters: auth 10/мин, api 100/мин, admin 30/мин
@@ -90,7 +91,7 @@ server/src/__tests__/search.test.js | 4 | Search: fulltext, LIKE fallback, empty
 server/src/__tests__/secrets-rotation.test.js | 4 | Secrets rotation: JWT_SECRET="new,old" — подпись новым, verify старым/новым, отклонение неизвестного, export JWT_SECRET
 server/src/__tests__/trust-proxy.test.js | 4 | Trust proxy: TRUST_PROXY=1|true → 1, off по умолчанию, спуфинг X-Forwarded-For при off/on
 server/src/__tests__/admin-sla-settings.test.js | 3 | AdminSettings SLA (порт 4003, изоляция id): BUSINESS_WORKING_DAYS/HOURS_START/HOURS_END в ALLOWED_SETTINGS, PUT валидирует, GET отдаёт бизнес-часы
-server/src/__tests__/migration.idempotency.test.js | 2 | Migration idempotency: knex migrate:latest дважды no-op, fk_cascades up() повторно без дублей FK
+server/src/__tests__/migration.idempotency.test.js | 3 | Migration idempotency: knex migrate:latest дважды no-op, fk_cascades up() повторно без дублей FK, scheduled_reports up() повторно (таблица + флаг не дублируются)
 server/src/__tests__/notify-failure.test.js | 2 | Notify-регресс: падение email/webhook-уведомлений → тикет всё равно создаётся (201)
 server/src/__tests__/ticket-lock.race.test.js | 2 | 
 server/src/__tests__/ticket-status.race.test.js | 2 | 
@@ -98,6 +99,6 @@ server/src/__tests__/time-timer.race.test.js | 2 |
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона (cd server && npx vitest run --no-file-parallelism --reporter=json, 01.10.2026).
-Фактический запуск: 86 файлов / 1118 тестов / 1118 passed / 0 failures.
+Фактический запуск: 87 файлов / 1133 тестов / 1133 passed / 0 failures.
 Coverage (01.10.2026, перемерено --coverage): 80.46 stmts / 74.35 branches / 82.06 funcs / 82.11 lines. Пороги 78/72/79/80 (факт − 2п.п.).
-Прирост к Этапу 68: 1098 → 1118 (+20): Этап 66 (qwen P1 #2, подфичи 1-3): ticket-categories.test.js 11, gdpr-export.test.js 5, org-chart.test.js 4. Плюс ротация внутри существующих: notify.test.js 22→24, wiki.service 7→15, chats.service 9→14, telegram.expanded 22→27.
+Прирост к Этапу 68: 1098 → 1118 (+20): Этап 66 (qwen P1 #2, подфичи 1-3): ticket-categories.test.js 11, gdpr-export.test.js 5, org-chart.test.js 4. Плюс ротация внутри существующих: notify.test.js 22→24, wiki.service 7→15, chats.service 9→14, telegram.expanded 22→27. +15 (Этап 66, подфича 4): scheduled-reports.test.js 14 + migration.idempotency +1 (scheduled_reports up()). Плюс попутно закрыт дрейф схемы: миграция 20260928_csat_surveys.js.

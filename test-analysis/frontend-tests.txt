@@ -1,10 +1,10 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 87 файлов / 212 suite / 761 тестов (все PASS, vitest --reporter=json от 09.10.2026)
+Реальный результат: 88 файлов / 214 suite / 765 тестов (все PASS, vitest --reporter=json от 09.10.2026)
 Coverage (All files): 78.58 stmts / 69.6 branches / 70.28 funcs / 81.21 lines (пороги 76/67/68/78 — факт − 2п.п., перемерено 01.10 в Этапе 66)
 
-===== ФАЙЛЫ (87 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (88 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 scripts/check-security-headers.test.mjs | 46 | Гейт периметра (P0): заголовки в nginx.conf/vercel.json, наследование add_header, helmet раньше express.static, Dockerfile копирует проверяемый конфиг
@@ -81,6 +81,7 @@ src/test/NewTicket.forms.test.tsx | 4 | NewTicket динамические по�
 src/test/NotificationsPage.test.tsx | 4 | Notifications: renders, mark read
 src/test/use-push.test.ts | 4 | usePush: subscribe, unsubscribe, permission
 src/test/Wiki.test.tsx | 4 | Wiki: renders, categories
+src/test/AdminSettings.scheduledreports.test.tsx | 4 | Scheduled reports (флаг scheduled_reports): секция, добавление→POST, удаление→DELETE, запуск→POST /run
 src/test/AdminSettings.sla.test.tsx | 3 | AdminSettings SLA business hours: секция, дни/часы/таймзона, Save→PUT
 src/test/AdminSettings.ticketforms.test.tsx | 3 | AdminSettings Ticket Categories (флаг ticket_forms): CRUD категорий, поля, Save
 src/test/Chats.test.tsx | 3 | Chats: renders, list
@@ -97,7 +98,8 @@ src/test/Tickets.test.tsx | 1 | Tickets: renders
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона npx vitest run --config vitest.client.config.ts --reporter=json (01.10.2026).
-Фактический запуск: 86 файлов / 715 тестов / 715 passed / 0 failures.
+Фактический запуск: 88 файлов / 765 тестов / 765 passed / 0 failures.
 Coverage (01.10.2026, перемерено --coverage): 78.58 stmts / 69.6 branches / 70.28 funcs / 81.21 lines. Пороги 76/67/68/78 (факт − 2п.п.).
-Прирост к Этапу 68: 699 → 715 (+16): Этап 66 (qwen P1 #2, подфичи 1-3): Team.expanded 5 (org chart), GdprExportSection 4 (GDPR), NewTicket.forms 4 (ticket forms), AdminSettings.ticketforms 3 (ticket forms admin).
+Прирост к Этапу 68: 699 → 715 (+16): Этап 66 (qwen P1 #2, подфичи 1-3): Team.expanded 5 (org chart), GdprExportSection 4 (GDPR), NewTicket.forms 4 (ticket forms), AdminSettings.ticketforms 3 (ticket forms admin). +46 (P0 «Периметр»): scripts/check-security-headers.test.mjs. +4 (Этап 66, подфича 4): AdminSettings.scheduledreports.
 Прочие фиксы 01.10: Calendar.expanded — 2 теста переведены на findAllByText (были date-sensitive: «Team Standup» дублируется в сайдбаре после 6-го числа месяца); AdminSettings.sla и TicketDetail (1000 сообщений) — таймаут 5000→15000 под coverage-нагрузкой.
+Текущий факт 09.10.2026: 88 файлов / 765 тестов (сюда входят 46 тестов гейта scripts/check-security-headers.test.mjs и 4 теста подфичи 4 Этапа 66).
