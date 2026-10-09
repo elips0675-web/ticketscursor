@@ -598,3 +598,20 @@ model ticket_categories {
   @@index([enabled])
   @@map("ticket_categories")
 }
+
+model scheduled_reports {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(200)
+  report_type String    @default("tickets_summary") @db.VarChar(50)
+  recipients  Json?
+  cron_expr   String    @default("0 9 * * 1-5") @db.VarChar(100)
+  enabled     Boolean?  @default(false)
+  last_run_at DateTime?
+  next_run_at DateTime?
+  created_by  Int?
+  created_at  DateTime? @default(now())
+  updated_at  DateTime? @default(now())
+
+  @@index([enabled])
+  @@map("scheduled_reports")
+}
