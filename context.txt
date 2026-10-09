@@ -76,7 +76,7 @@ npm run build                 # production сборка
 node check-console.mjs        # E2E проверка (требует MySQL + оба dev-сервера)
 ```
 
-## Аудит по Промты.txt
+## Аудит по аудит-промтам (ранее «Промты.txt», перенесено в `prompts.md`)
 
 Внедрено:
 - ✅ Outbox Pattern — `event_outbox` таблица + Worker
