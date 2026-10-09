@@ -188,6 +188,55 @@
 
 ---
 
+## Перенос из SwiftMatch — кандидаты в бэклог («Перенос…qwen.rtf» + «…дипсик.rtf», 09.10.2026)
+
+> Сводка «что взять из SwiftMatch в Service Desk»; дубли qwen↔дипсик устранены. Сверка grep 09.10 по `server/src/**` + `src/**`: `lockout|sanitize|schema-validate|sql-explain|check-ports|analytics_event|useExperiment|banned-words` = **0** — ничего из перечисленного в коде нет. Новые фичи — только по правилу 13 (флаг `useFeature()`, идемпотентные миграции); инфра/доки — бэклог.
+
+### Инфраструктура и гейты (P2)
+
+| # | Задача | Доказательство отсутствия | Предложение |
+|---|--------|---------------------------|-------------|
+| 1 | **Account Lockout per-account** (сейчас только per-IP `authLimiter`) | `lockout` = 0 | `server/src/lockout.js` (Redis/Map `lockout:<email>` + TTL 15 мин), проверка в `POST /auth/login` до `bcrypt.compare`, env `AUTH_LOCKOUT_MAX_ATTEMPTS`; тесты: 5×401→429, сброс при успехе, истечение TTL (~4 ч) |
+| 2 | **Schema-validate/drift в CI** | `schema-drift` = 0 (idempotent-миграции уже есть, Этап 60) | offline-скрипт сверки `schema.prisma` ↔ миграции ↔ колонки кода + джоба CI |
+| 3 | **SQL EXPLAIN-аудит в CI** | `sql-explain` = 0 | план запросов топ-эндпоинтов прогоном, падение на full-scan |
+| 4 | **check:ports** | `check-ports` = 0 | предстартовая проверка занятости портов (3002/8081) |
+| 5 | **check-keys + runbook-keys + rollback-plan** | нет | гейт наличия env-ключей + короткие runbook/rollback-доки |
+| 6 | **multi-user storageState E2E** (несколько ролей в одном прогоне) | нет | auth-проект Playwright под роли admin/agent/user |
+| 7 | **cross-browser E2E** (WebKit/Firefox) | нет | отдельный проект в `playwright.config.ts` |
+| 8 | check-doc-sync в CI/pre-commit | скрипт есть, не подключён (процесс-№2 выше) | — дубль, чинить там |
+
+### Продуктовые фичи (P3 / бэклог)
+
+| # | Идея (SwiftMatch) | Аналог в Service Desk | Предложение |
+|---|-------------------|-----------------------|-------------|
+| 1 | AI First-Response Assistant | `assistant.service.js` уже есть | расширить: ответ из Wiki + похожих тикетов + контекст клиента, кнопка «Вставить в ответ» в `ChatDetail` (P2, ~2 дня) |
+| 2 | Agent Performance Score | дубль «Agent performance FRT/TTR/CSAT» (блок №9 выше) | рейтинг 0–100 + виджет Dashboard/профиль агента |
+| 3 | Ephemeral internal notes | внутренние заметки есть | TTL на заметку |
+| 4 | Pinned KB / Recommended KB | KB есть | закрепление статей в списке тикетов |
+| 5 | Ticket Collaborators | `watchers` есть (Этап 64) | наблюдатели-участники в тикете |
+| 6 | AI Ticket-Router | SLA auto-assign есть | подбор исполнителя по типу/истории |
+| 7 | Ticket VIP boost / SLA-package фильтр | — | фильтр/приоритет по пакету поддержки |
+| 8 | A/B-фреймворк (`useExperiment`/`useTrackEvent`) | `useExperiment` = 0 | флаги + события |
+| 9 | Product Analytics | `analytics_event` = 0 | событийная аналитика (privacy — оговорить) |
+| 10 | AI-модерация + `sanitize.js` | `sanitize` = 0 | санитайз пользовательского контента |
+| 11 | banned-words | `banned-words` = 0 | фильтр лексики |
+| 12 | `__Host-` cookie для refresh | `__Host-` = 0 | усиление cookie |
+| 13 | Image pipeline (Sharp → WebP) | Sharp нет | оптимизация загрузок |
+| 14 | Upload security-тесты | частично | mime/размер/двойное расширение |
+| 15 | Виртуализация списков + IntersectionObserver-мок jsdom | — | производительность + тест |
+| 16 | Deep Links | — | deeplink в web-приложение |
+| 17 | CSAT Reviews | CSAT есть | развёрнутые отзывы |
+| 18 | Map View / field check-in | дубль «выездное обслуживание» (P3) | карта/маршрут |
+| 19 | FCM + Capacitor (моб. приложение) | — | **конфликт с антипаттерном**: mobile/Tauri вне скоупа (см. ниже) — не планировать |
+
+### Процесс (из «Оценка доделать5.txt»)
+
+- Журналы `Что сделано`/`Что-доделать` патчить только node-скриптом (не PowerShell) — снижает рассинхрон (связь с процесс-№2/№5).
+- Распространить гейт счётчиков на шапки журналов (процесс-№5).
+- Разделить `AGENTS.md` (правила vs хроника) — дубль процесс-№6.
+
+---
+
 ## Низкий приоритет (не блокирует)
 
 - MySQL read replica — вернуть только при реальной нагрузке (удалена осознанно, Этап 13)
