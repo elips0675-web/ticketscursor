@@ -1,11 +1,11 @@
 {
-  "generated": "2026-10-07T07:37:20.087Z",
+  "generated": "2026-10-09T10:13:26.116Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 86,
-    "suites": 203,
-    "tests": 715,
+    "files": 87,
+    "suites": 212,
+    "tests": 761,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
@@ -19,9 +19,9 @@
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 172,
-    "suites": 646,
-    "tests": 1833,
+    "files": 173,
+    "suites": 655,
+    "tests": 1879,
     "all_passing": true
   },
   "e2e": {
@@ -52,6 +52,10 @@
     ]
   },
   "frontend_files": [
+    {
+      "file": "scripts/check-security-headers.test.mjs",
+      "tests": 46
+    },
     {
       "file": "src/test/TicketDetail.test.tsx",
       "tests": 32

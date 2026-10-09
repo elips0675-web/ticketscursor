@@ -63,6 +63,20 @@ jobs:
           JWT_SECRET: test-secret
       - run: node --check src/index.js
 
+  security-headers:
+    # Гейт «заголовки безопасности на периметре» (P0 «Что-доделать.txt»).
+    # Статический: доказывает, что заголовки объявлены в nginx.conf и vercel.json
+    # (в оба location, потому что свой add_header обнуляет наследование),
+    # что helmet смонтирован раньше express.static, что Dockerfile копирует
+    # именно проверяемый конфиг. Зависимости не нужны: гейт только читает файлы.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run check:headers
+
   backup-verify:
     # Ежедневная проверка, что mysqldump реально разворачивается (Промт 4 «Доделать.rtf»).
     # В CI валидируем seed.sql (содержит CREATE TABLE + INSERT — те же проверки COUNT>0);

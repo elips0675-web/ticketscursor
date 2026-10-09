@@ -1,12 +1,13 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 86 файлов / 203 suite / 715 тестов (все PASS, vitest --reporter=json от 01.10.2026)
+Реальный результат: 87 файлов / 212 suite / 761 тестов (все PASS, vitest --reporter=json от 09.10.2026)
 Coverage (All files): 78.58 stmts / 69.6 branches / 70.28 funcs / 81.21 lines (пороги 76/67/68/78 — факт − 2п.п., перемерено 01.10 в Этапе 66)
 
-===== ФАЙЛЫ (86 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (87 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
+scripts/check-security-headers.test.mjs | 46 | Гейт периметра (P0): заголовки в nginx.conf/vercel.json, наследование add_header, helmet раньше express.static, Dockerfile копирует проверяемый конфиг
 src/test/TicketDetail.test.tsx | 32 | TicketDetail: сообщения, статус, приоритет, назначение, RBAC, virtual scroll (150 и 1000 — не падает), XSS, История (timeline, PDF, флаг off)
 src/test/Files.expanded.test.tsx | 27 | Files: empty, search, view, category, upload, drag-drop, keyboard, folder switch, list view, drag overlay
 src/test/Tickets.expanded.test.tsx | 25 | Tickets: фильтры, пагинация, пустое, socket, export CSV/PDF

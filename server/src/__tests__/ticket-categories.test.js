@@ -10,11 +10,11 @@ import { invalidateCache } from '../cache.js'
 //  - GET  /api/tickets/categories — включённые категории с JSON-схемой (для формы создания тикета);
 //  - POST /api/tickets с formData — валидация по схеме + сохранение в tickets.form_data;
 //  - admin CRUD /api/admin/ticket-categories (GET/POST/PUT/DELETE, 409 на дубликат, 400 на пустое имя);
-//  - изоляция: выделенные id 608 (admin-categories) / 609 (agent-categories).
+//  - изоляция: выделенные id 612 (admin-categories) / 613 (agent-categories).
 const PASSWORD_HASH = '$2a$10$nC7/hzotFOk5Qn8OLCoErut65ybvbbovuxrTRr9MG7EGWs8Tindgy' // bcrypt('123456')
 
-const adminToken = jwt.sign({ userId: 608, role: 'admin', name: 'Forms Admin' }, JWT_SECRET, { expiresIn: '1h' })
-const agentToken = jwt.sign({ userId: 609, role: 'agent', name: 'Forms Agent' }, JWT_SECRET, { expiresIn: '1h' })
+const adminToken = jwt.sign({ userId: 612, role: 'admin', name: 'Forms Admin' }, JWT_SECRET, { expiresIn: '1h' })
+const agentToken = jwt.sign({ userId: 613, role: 'agent', name: 'Forms Agent' }, JWT_SECRET, { expiresIn: '1h' })
 
 const createdTicketIds = []
 const createdCategoryIds = []
@@ -50,8 +50,8 @@ function clearTicketsCache() {
 }
 
 beforeAll(async () => {
-  await seedEmployee(608, 'forms-admin@example.com', 'admin', 'Forms Admin')
-  await seedEmployee(609, 'forms-agent@example.com', 'agent', 'Forms Agent')
+  await seedEmployee(612, 'forms-admin@example.com', 'admin', 'Forms Admin')
+  await seedEmployee(613, 'forms-agent@example.com', 'agent', 'Forms Agent')
 })
 
 afterAll(async () => {
@@ -63,10 +63,10 @@ afterAll(async () => {
   if (createdCategoryIds.length) {
     await prisma.ticket_categories.deleteMany({ where: { id: { in: createdCategoryIds } } })
   }
-  await prisma.audit_log.deleteMany({ where: { user_id: { in: [608, 609] } } })
-  await prisma.notifications.deleteMany({ where: { user_id: { in: [608, 609] } } })
-  await prisma.refresh_tokens.deleteMany({ where: { user_id: { in: [608, 609] } } })
-  await prisma.employees.deleteMany({ where: { id: { in: [608, 609] } } })
+  await prisma.audit_log.deleteMany({ where: { user_id: { in: [612, 613] } } })
+  await prisma.notifications.deleteMany({ where: { user_id: { in: [612, 613] } } })
+  await prisma.refresh_tokens.deleteMany({ where: { user_id: { in: [612, 613] } } })
+  await prisma.employees.deleteMany({ where: { id: { in: [612, 613] } } })
 })
 
 describe('GET /api/tickets/categories (публичный список для формы)', () => {

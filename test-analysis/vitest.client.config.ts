@@ -10,7 +10,7 @@ export default defineConfig({
         url: 'http://localhost',
       },
     },
-    include: ['src/test/**/*.test.{ts,tsx}'],
+    include: ['src/test/**/*.test.{ts,tsx}', 'scripts/**/*.test.mjs'],
     setupFiles: ['src/test/setup.ts'],
     css: false,
     coverage: {
