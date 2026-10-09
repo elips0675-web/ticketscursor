@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import knexLib from 'knex'
 import knexConfig from '../../knexfile.js'
 import { up as fkCascadesUp } from '../../migrations/20260924_fk_cascades.js'
+import { up as scheduledReportsUp } from '../../migrations/20260927_scheduled_reports.js'
 
 // Migration idempotency (Этап 60): повторный накат не должен ронять деплой
 // и не должен дублировать объекты (FK). Прогон идёт по тестовой БД
@@ -39,5 +40,15 @@ describe('Migration idempotency — повторный накат безопас
     await fkCascadesUp(knex) // уже применена global-setup'ом — повторно должна быть no-op
     const after = await countFks()
     expect(after).toBe(before)
+  })
+
+  it('scheduled_reports up() повторно — таблица и флаг не дублируются', async () => {
+    expect(await knex.schema.hasTable('scheduled_reports')).toBe(true)
+
+    await scheduledReportsUp(knex)
+
+    const rows = await knex('feature_flags').where({ key: 'scheduled_reports' }).count({ c: '*' })
+    expect(Number(rows[0].c)).toBe(1)
+    expect(await knex.schema.hasTable('scheduled_reports')).toBe(true)
   })
 })

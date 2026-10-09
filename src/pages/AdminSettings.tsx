@@ -35,6 +35,7 @@ import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { ApiTokensSection, WebhooksSection } from './AdminIntegrations'
 import { RulesSection } from './AdminRules'
+import ScheduledReportsSection from '@/components/ScheduledReportsSection'
 
 const FIELDS = [
   { key: 'COMPANY_NAME', label: 'companyName', type: 'text', section: 'companySettings' },
@@ -223,6 +224,8 @@ export default function AdminSettings() {
       <SSOSection />
 
       <TicketCategoriesSection />
+
+      <ScheduledReportsSection />
 
       <ApiTokensSection />
 

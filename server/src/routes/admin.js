@@ -626,6 +626,85 @@ router.delete('/ticket-categories/:id', async (req, res) => {
   }
 })
 
+// Scheduled reports (Этап 66, подфича 4): cron-расписание + email-доставка сводок.
+const requireScheduledReports = async (req, res, next) => {
+  if (!(await isFeatureEnabled('scheduled_reports'))) {
+    return res.status(404).json({ success: false, message: 'Not found' })
+  }
+  next()
+}
+
+router.get('/scheduled-reports', requireScheduledReports, async (req, res) => {
+  try {
+    const { listReports } = await import('../services/scheduled-reports.service.js')
+    res.json({ success: true, data: await listReports() })
+  } catch (err) {
+    logger.error('Scheduled reports list error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch scheduled reports' })
+  }
+})
+
+router.post('/scheduled-reports', requireScheduledReports, async (req, res) => {
+  try {
+    const { createReport, isValidCron, normalizeRecipients } = await import('../services/scheduled-reports.service.js')
+    const { name, reportType, recipients, cronExpr, enabled } = req.body
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ success: false, message: 'name is required' })
+    }
+    if (normalizeRecipients(recipients).length === 0) {
+      return res.status(400).json({ success: false, message: 'At least one valid recipient is required' })
+    }
+    if (cronExpr !== undefined && !isValidCron(cronExpr)) {
+      return res.status(400).json({ success: false, message: 'Invalid cron expression' })
+    }
+    const report = await createReport({ name, reportType, recipients, cronExpr, enabled, createdBy: req.user.userId })
+    res.status(201).json({ success: true, data: report })
+  } catch (err) {
+    logger.error('Scheduled report create error:', err)
+    res.status(500).json({ success: false, message: 'Failed to create scheduled report' })
+  }
+})
+
+router.put('/scheduled-reports/:id', requireScheduledReports, async (req, res) => {
+  try {
+    const { updateReport, isValidCron } = await import('../services/scheduled-reports.service.js')
+    if (req.body.cronExpr !== undefined && !isValidCron(req.body.cronExpr)) {
+      return res.status(400).json({ success: false, message: 'Invalid cron expression' })
+    }
+    const report = await updateReport(Number(req.params.id), req.body)
+    if (!report) return res.status(404).json({ success: false, message: 'Scheduled report not found' })
+    res.json({ success: true, data: report })
+  } catch (err) {
+    logger.error('Scheduled report update error:', err)
+    res.status(500).json({ success: false, message: 'Failed to update scheduled report' })
+  }
+})
+
+router.delete('/scheduled-reports/:id', requireScheduledReports, async (req, res) => {
+  try {
+    const { deleteReport } = await import('../services/scheduled-reports.service.js')
+    const deleted = await deleteReport(Number(req.params.id))
+    if (!deleted) return res.status(404).json({ success: false, message: 'Scheduled report not found' })
+    res.json({ success: true, data: { deleted: true } })
+  } catch (err) {
+    logger.error('Scheduled report delete error:', err)
+    res.status(500).json({ success: false, message: 'Failed to delete scheduled report' })
+  }
+})
+
+router.post('/scheduled-reports/:id/run', requireScheduledReports, async (req, res) => {
+  try {
+    const { getReport, runReport } = await import('../services/scheduled-reports.service.js')
+    const report = await getReport(Number(req.params.id))
+    if (!report) return res.status(404).json({ success: false, message: 'Scheduled report not found' })
+    const result = await runReport(report)
+    res.json({ success: true, data: result })
+  } catch (err) {
+    logger.error('Scheduled report run error:', err)
+    res.status(500).json({ success: false, message: 'Failed to run scheduled report' })
+  }
+})
+
 router.get('/csat/stats', async (req, res) => {
   try {
     const { getCsatStats } = await import('../services/csat.service.js')

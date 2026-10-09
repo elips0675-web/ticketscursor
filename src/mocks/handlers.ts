@@ -897,6 +897,42 @@ export const handlers = [
     return HttpResponse.json({ success: true, data: { deleted: true } })
   }),
 
+  http.get(`${API}/admin/scheduled-reports`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: [
+        {
+          id: 1,
+          name: 'Ежедневная сводка',
+          report_type: 'tickets_summary',
+          recipients: ['ops@test.com'],
+          cron_expr: '0 9 * * 1-5',
+          enabled: true,
+          last_run_at: null,
+          next_run_at: '2026-10-10T09:00:00.000Z',
+        },
+      ],
+    })
+  }),
+
+  http.post(`${API}/admin/scheduled-reports`, async ({ request }) => {
+    const body = await request.json()
+    return HttpResponse.json({ success: true, data: { id: 10, ...body } })
+  }),
+
+  http.put(`${API}/admin/scheduled-reports/:id`, async ({ request }) => {
+    const body = await request.json()
+    return HttpResponse.json({ success: true, data: body })
+  }),
+
+  http.delete(`${API}/admin/scheduled-reports/:id`, () => {
+    return HttpResponse.json({ success: true, data: { deleted: true } })
+  }),
+
+  http.post(`${API}/admin/scheduled-reports/:id/run`, () => {
+    return HttpResponse.json({ success: true, data: { recipients: 1, reportType: 'tickets_summary' } })
+  }),
+
   http.get(`${API}/admin/stats`, () => {
     return HttpResponse.json({
       totalUsers: 5,
@@ -952,6 +988,12 @@ export const handlers = [
           key: 'ticket_forms',
           enabled: false,
           description: 'Ticket forms: categories with JSON field schema',
+          rollout_percent: 100,
+        },
+        {
+          key: 'scheduled_reports',
+          enabled: false,
+          description: 'Scheduled reports: cron + email delivery',
           rollout_percent: 100,
         },
       ],

@@ -4,10 +4,12 @@ import { notifySlaBreached, notifySlaEscalated } from './notify.js'
 import { getSettings } from './settings.js'
 import { startImapPolling, stopImapPolling } from './services/email-ingestion.service.js'
 import { processRecurrences } from './services/recurrence.service.js'
+import { processScheduledReports } from './services/scheduled-reports.service.js'
 
 const CLEANUP_INTERVAL = 6 * 60 * 60 * 1000
 const SLA_CHECK_INTERVAL = 15 * 60 * 1000
 const RECURRENCE_INTERVAL = 60 * 60 * 1000
+const SCHEDULED_REPORTS_INTERVAL = 15 * 60 * 1000
 const MAX_RETRIES = 3
 const DLQ_ALERT_THRESHOLD = 10
 
@@ -95,14 +97,23 @@ async function warnAdminRedisMissing(prisma) {
   }
 }
 
-let cleanupTimer, slaTimer, dlqAlertTimer, recurrenceTimer
+let cleanupTimer, slaTimer, dlqAlertTimer, recurrenceTimer, scheduledReportTimer
 
 export function stopBackgroundJobs() {
   if (cleanupTimer) clearInterval(cleanupTimer)
   if (slaTimer) clearInterval(slaTimer)
   if (dlqAlertTimer) clearInterval(dlqAlertTimer)
   if (recurrenceTimer) clearInterval(recurrenceTimer)
+  if (scheduledReportTimer) clearInterval(scheduledReportTimer)
   stopImapPolling()
+}
+
+async function runScheduledReports() {
+  try {
+    await processScheduledReports()
+  } catch (err) {
+    logger.error('scheduled-reports failed:', err.message)
+  }
 }
 
 export async function setupBackgroundJobs(prisma) {
@@ -163,6 +174,20 @@ export async function setupBackgroundJobs(prisma) {
     }, { connection, concurrency: 1 })
     await recurrenceQueue.upsertJobScheduler('default', { every: RECURRENCE_INTERVAL })
 
+    const scheduledReportsQueue = new Queue('scheduled-reports', {
+      connection,
+      defaultJobOptions: {
+        attempts: MAX_RETRIES,
+        backoff: { type: 'exponential', delay: 2000 },
+        removeOnComplete: false,
+        removeOnFail: false,
+      },
+    })
+    new Worker('scheduled-reports', async () => {
+      return processScheduledReports()
+    }, { connection, concurrency: 1 })
+    await scheduledReportsQueue.upsertJobScheduler('default', { every: SCHEDULED_REPORTS_INTERVAL })
+
     new Worker('service-desk-dlq', async (job) => {
       logger.error('DLQ job received:', { jobId: job.id, data: job.data })
       dlqAlertTimer = setInterval(() => checkDlqAlert(prisma), 60 * 60 * 1000)
@@ -182,6 +207,8 @@ export async function setupBackgroundJobs(prisma) {
     slaTimer = setInterval(() => withRetry(runSlaCheck, 'sla-overdue-check', prisma), SLA_CHECK_INTERVAL)
     recurrenceTimer = setInterval(() => withRetry(() => processRecurrences(), 'recurrence-check', prisma), RECURRENCE_INTERVAL)
     dlqAlertTimer = setInterval(() => withRetry(async () => checkDlqAlert(prisma), 'dlq-check', prisma), 60 * 60 * 1000)
+    scheduledReportTimer = setInterval(() => runScheduledReports(), SCHEDULED_REPORTS_INTERVAL)
+    setTimeout(() => runScheduledReports(), 15000)
     logger.warn('Redis not configured — background jobs using setInterval with in-memory retry + DLQ')
     warnAdminRedisMissing(prisma)
   }
