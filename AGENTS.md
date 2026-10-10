@@ -49,15 +49,17 @@
 | **При коммите** | Husky → lint-staged | `eslint --fix` + `prettier --write` на изменённых файлах |
 | **В CI (GitHub Actions)** | `tsc --noEmit` | TypeScript strict type-check |
 | | `eslint . --max-warnings 100` | Синтаксис, неисп. переменные, импорты |
-| | `vitest run` | Юнит-тесты (670 клиентских + 1062 серверных) |
+| | `vitest run` | Юнит-тесты (765 клиентских + 1144 серверных) |
 | | `vite build` | Сборка production |
-| **Тестовая БД** | `vitest.global-setup.js` | Создаёт `servicedesk_test`, мигрирует, сидит, фиксит колонки |
+| | `playwright test` (джоба `e2e`, P1 №11) | E2E (19 spec / 61 тест) на MySQL-контейнере `mysql:8.4`, сервер:4000 + vite:5173 через webServer `playwright.config.ts:23-34`; БД готовит `scripts/e2e-db-setup.mjs` (общий модуль `server/test-db-setup.js`) |
+| | `check-console` (шаг джобы `e2e`, P1 №11) | 17 страниц через `scripts/ci-check-console.mjs` (поднимает server+vite, ждёт `/api/health`, гоняет `check-console.mjs`) |
+| **Тестовая БД** | `server/test-db-setup.js` | `prepareTestDatabase()`: создаёт `servicedesk_test` (или `TEST_DB_NAME`), мигрирует, фиксит колонки, сидит; параметры из `DB_*` env, дефолты локально `localhost/root/''`; используется и `vitest.global-setup.js`, и CI-e2e |
 | **Rate limiter** | `app.js` | Отключён при `NODE_ENV=test` через `skip` |
 | **Ручной запуск** | `npm run lint` | ESLint (warnings: `no-explicit-any`, `no-unused-vars`) |
 | | `npm run type-check` | `tsc --noEmit` |
 | | `npm test` | Vitest (клиент) |
 | | `cd server && npm test` | Vitest (сервер) |
-| **После каждого изменения** | `node check-console.mjs` | Playwright проверяет 17 страниц (`/`, `/wiki`, `/chats`, `/tickets`, `/employees`, `/search` и др.) на: `errors: []`, `hasRussianText: true` |
+| **После каждого изменения** | `node check-console.mjs` | Playwright проверяет 17 страниц (`/`, `/wiki`, `/chats`, `/tickets`, `/employees`, `/search` и др.) на: `errors: []`, `hasRussianText: true`; в CI — шаг джобы `e2e` |
 | **Синхронность доков** | `node scripts/check-doc-sync.mjs` | MD5-сверка копий `Что-доделать/Что сделано/AGENTS.md` (root ↔ test-analysis) + наличие актуального `test-inventory.json` и `frontend/server-tests.txt` |
 | **Pre-commit hook** | `.husky/pre-commit` | `npx lint-staged` — автофикс и форматирование |
 

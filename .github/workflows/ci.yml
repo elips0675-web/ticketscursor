@@ -63,6 +63,57 @@ jobs:
           JWT_SECRET: test-secret
       - run: node --check src/index.js
 
+  e2e:
+    # P1 №11 (Что-доделать.txt): E2E (Playwright, 19 spec / 61 тест) + check-console
+    # (17 страниц) на MySQL-контейнере. Раньше E2E гонялось только локально
+    # (Laragon + dev-серверы) — PR не гейтились. БД готовится тем же путём, что и
+    # серверные vitest-тесты: scripts/e2e-db-setup.mjs → server/test-db-setup.js
+    # (migrate + фиксы колонок + seed — search.spec.ts:21 ждёт seed-тикет,
+    # SLA/lock-роуты ждут колонки из фиксов). check-console запускается отдельным
+    # шагом через scripts/ci-check-console.mjs (сам поднимает server:4000 + vite:5173
+    # и использует auth.json, созданный playwright global-setup'ом).
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: servicedesk_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: servicedesk_test
+      TEST_DB_NAME: servicedesk_test
+      JWT_SECRET: test-secret
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/servicedesk_test
+      DIRECT_DATABASE_URL: mysql://root:root@127.0.0.1:3306/servicedesk_test
+      VAPID_PUBLIC_KEY: BKvM9b1p0vP3Q8j5tL7mW9nC4rX6yZ2aB8dE0gI3kO5sU7wY1cF4hJ6lN8pR2tV
+      VAPID_PRIVATE_KEY: z9x8c7v6b5n4m3l2k1j0h9g8f7d6s5a4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+        working-directory: server
+      - run: node scripts/e2e-db-setup.mjs
+      - run: npx playwright install --with-deps chromium chrome
+      - run: npx playwright test
+      - run: node scripts/ci-check-console.mjs
+
   security-headers:
     # Гейт «заголовки безопасности на периметре» (P0 «Что-доделать.txt»).
     # Статический: доказывает, что заголовки объявлены в nginx.conf и vercel.json
