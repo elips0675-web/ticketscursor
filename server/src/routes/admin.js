@@ -73,6 +73,13 @@ const SECRET_KEY_RE = /(PASS|SECRET|CREDENTIALS|TOKEN)/i
 const SECRET_MASK = '********'
 const isSecretKey = (key) => SECRET_KEY_RE.test(key)
 
+// P1 №12: деструктивные ops-действия (seed/backup/geo/restore) недоступны в проде — защита от случайного запуска.
+function adminOpsDisabled(res) {
+  if (process.env.NODE_ENV !== 'production') return false
+  res.status(403).json({ success: false, code: 'DISABLED_IN_PRODUCTION', message: 'Operation disabled in production' })
+  return true
+}
+
 router.get('/settings', async (req, res) => {
   try {
     const rows = await prisma.admin_settings.findMany({ select: { key: true, value: true } })
@@ -237,6 +244,7 @@ router.get('/audit', async (req, res) => {
 })
 
 router.post('/settings/backup', async (req, res) => {
+  if (adminOpsDisabled(res)) return
   try {
     const script = path.join(projectRoot, 'scripts', 'backup-mysql.ps1')
     exec(`"${process.env.ComSpec || 'cmd.exe'}" /c powershell -File "${script}"`, { timeout: 60000 }, (err, stdout, stderr) => {
@@ -253,6 +261,7 @@ router.post('/settings/backup', async (req, res) => {
 })
 
 router.post('/settings/seed', async (req, res) => {
+  if (adminOpsDisabled(res)) return
   try {
     const serverDir = path.join(projectRoot, 'server')
     exec('npm.cmd run seed', { cwd: serverDir, timeout: 120000, shell: process.env.ComSpec || 'cmd.exe' }, (err, stdout, stderr) => {
@@ -269,6 +278,7 @@ router.post('/settings/seed', async (req, res) => {
 })
 
 router.post('/settings/geo', async (_req, res) => {
+  if (adminOpsDisabled(res)) return
   try {
     await prisma.$executeRawUnsafe('ALTER TABLE tickets ADD FULLTEXT INDEX ft_tickets_search (title, description)')
     res.json({ success: true, data: { message: 'Fulltext index created' } })
@@ -824,6 +834,7 @@ router.post('/sessions/revoke/:userId', async (req, res) => {
 })
 
 router.post('/settings/restore', async (req, res) => {
+  if (adminOpsDisabled(res)) return
   try {
     const { content } = req.body || {}
     const result = await restoreBackup(content)

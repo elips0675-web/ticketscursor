@@ -186,6 +186,7 @@ export default function AdminSettings() {
               label={t('admin.seedBtn')}
               runningLabel={t('admin.seedRunning')}
               doneLabel={t('admin.seedDone')}
+              destructive
             />
           </div>
 
@@ -202,6 +203,7 @@ export default function AdminSettings() {
               label={t('admin.geoBtn')}
               runningLabel={t('admin.geoRunning')}
               doneLabel={t('admin.geoDone')}
+              destructive
             />
           </div>
 
@@ -1414,15 +1416,18 @@ function ActionButton({
   label,
   runningLabel,
   doneLabel,
+  destructive,
 }: {
   action: string
   label: string
   runningLabel: string
   doneLabel: string
+  destructive?: boolean
 }) {
   const [state, setState] = useState<'idle' | 'running' | 'done'>('idle')
 
   const run = async () => {
+    if (destructive && !window.confirm(label)) return
     setState('running')
     try {
       await api.post(`/admin/settings/${action}`)

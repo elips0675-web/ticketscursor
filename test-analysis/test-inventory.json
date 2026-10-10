@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-09T13:45:46.750Z",
+  "generated": "2026-10-10T07:08:30.311Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
@@ -11,17 +11,17 @@
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 88,
-    "suites": 449,
-    "tests": 1139,
+    "files": 89,
+    "suites": 451,
+    "tests": 1144,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 176,
-    "suites": 663,
-    "tests": 1904,
+    "files": 177,
+    "suites": 665,
+    "tests": 1909,
     "all_passing": true
   },
   "e2e": {
@@ -656,6 +656,10 @@
     },
     {
       "file": "server/src/__tests__/admin-import.test.js",
+      "tests": 5
+    },
+    {
+      "file": "server/src/__tests__/admin-settings-ops-guard.test.js",
       "tests": 5
     },
     {

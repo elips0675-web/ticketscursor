@@ -1,12 +1,12 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 88 файлов / 449 suite / 1139 тестов (все PASS, vitest --reporter=json от 09.10.2026)
+Реальный результат: 89 файлов / 451 suite / 1144 тестов (все PASS, vitest --reporter=json от 10.10.2026)
 Этап 68 закрыт 26.09: дыры 0% (injection 15, fileCheck 9, ldap 10, index 5, api-tokens.routes 10, canned-responses.routes 15, telegram.expanded 27) — все файлы с 0% покрытия закрыты.
 Coverage (All files): 80.46 stmts / 74.35 branches / 82.06 funcs / 82.11 lines (пороги 78/72/79/80 — факт − 2п.п., перемерено 01.10 в Этапе 66)
 ВАЖНО: имя тестовой БД переопределяется через TEST_DB_NAME (server/vitest.global-setup.js:6) — иначе параллельные прогоны дропают общий servicedesk_test друг другу.
 
-===== ФАЙЛЫ (88 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (89 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 server/src/api.test.js | 183 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk, feature rollout)
@@ -83,6 +83,7 @@ server/src/__tests__/ticket-history.test.js | 5 | Timeline: GET /tickets/:id/his
 server/src/middleware/__tests__/metrics.test.js | 5 | Metrics: request counting, response time
 server/src/services/__tests__/employees.service.test.js | 5 | Employees: list, search, role filter
 server/src/services/__tests__/news.service.test.js | 5 | News: CRUD, publish, archive
+server/src/__tests__/admin-settings-ops-guard.test.js | 5 | P1 №12: seed/backup/geo/restore при NODE_ENV=production → 403 DISABLED_IN_PRODUCTION (гарантированно не запускаются), 401 без токена
 server/src/__tests__/background.test.js | 4 | Background: setup, stop, warnAdminRedisMissing
 server/src/__tests__/clamav.test.js | 4 | ClamAV: basic scan, not installed fallback
 server/src/__tests__/org-chart.test.js | 4 | Org chart (Этап 66, флаг org_chart): дерево team, директора/подчинённые, RBAC
@@ -100,6 +101,6 @@ server/src/__tests__/time-timer.race.test.js | 2 |
 
 ===== ИСТОЧНИК ДАННЫХ =====
 Список файлов и количество тестов — из фактического прогона (cd server && npx vitest run --no-file-parallelism --reporter=json, 01.10.2026).
-Фактический запуск: 88 файлов / 1139 тестов / 1139 passed / 0 failures.
+Фактический запуск: 89 файлов / 1144 тестов / 1144 passed / 0 failures.
 Coverage (01.10.2026, перемерено --coverage): 80.46 stmts / 74.35 branches / 82.06 funcs / 82.11 lines. Пороги 78/72/79/80 (факт − 2п.п.).
 Прирост к Этапу 68: 1098 → 1118 (+20): Этап 66 (qwen P1 #2, подфичи 1-3): ticket-categories.test.js 11, gdpr-export.test.js 5, org-chart.test.js 4. Плюс ротация внутри существующих: notify.test.js 22→24, wiki.service 7→15, chats.service 9→14, telegram.expanded 22→27. +15 (Этап 66, подфича 4): scheduled-reports.test.js 14 + migration.idempotency +1 (scheduled_reports up()). Плюс попутно закрыт дрейф схемы: миграция 20260928_csat_surveys.js.
