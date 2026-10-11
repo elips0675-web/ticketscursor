@@ -167,9 +167,9 @@ async function shutdown(signal) {
 
 ### 42. Testing Pyramid
 ```
-Unit (business logic):    520 frontend + 808 backend = 1328 tests (0 failures)
+Unit (business logic):    791 frontend + 1144 backend = 1935 tests (0 failures)
 Integration (API routes): покрыто в api.test.js (163 it / 71 describe)
-E2E (critical flows):     19 Playwright spec'ов / 57 тестов
+E2E (critical flows):     19 Playwright spec'ов / 61 тест
 ```
 ✅ Пороги coverage: frontend 67.62% stmts, backend 71.55% stmts (замер 23.09.2026)
 
