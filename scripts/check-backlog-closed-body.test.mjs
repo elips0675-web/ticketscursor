@@ -22,7 +22,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { auditLines, auditFile } from './check-backlog-closed-body.mjs'
+import { auditLines, auditFile, auditClosureDates, CLOSURE_DATE_RE } from './check-backlog-closed-body.mjs'
 import { buildClosedLine, buildOpenSection, stage } from './stage-section.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -91,12 +91,39 @@ describe('гейт backlog-closed-body: ловит «надгробие»', () =
 
   it('несколько тел под одним заголовком — все находки, а не одна', () => {
     const text = [
-      '## ✅ X — ЗАКРЫТО 01.10',
+      '## ✅ X — ЗАКРЫТО 01.10.2026',
       'aaa',
       'bbb',
     ].join('\n')
     const { problems } = auditLines(text.split(/\r?\n/))
     expect(problems).toHaveLength(2)
+  })
+
+  it('✅ в начале заголовка, не в конце — секция-маркер, а не закрытие: тело под ней допустимо (ложная сработка закреплена)', () => {
+    const text = [
+      '## ✅ Принятые решения (не пересматривать без владельца)',
+      '',
+      'Обсуждали и решили не менять.',
+    ].join('\n')
+    expect(auditLines(text.split(/\r?\n/)).problems).toEqual([])
+  })
+
+  it('ЗАКРЫТО без даты в конце заголовка — не маркер закрытия (дата обязательна)', () => {
+    const text = [
+      '## Этап 7 — ЗАКРЫТО',
+      '',
+      'Содержимое секции с упоминанием слова ЗАКРЫТО — не закрытая запись.',
+    ].join('\n')
+    expect(auditLines(text.split(/\r?\n/)).problems).toEqual([])
+  })
+
+  it('маркер не в конце: ЗАКРЫТО с датой, но после неё текст — не закрытая секция (ссылка до маркера)', () => {
+    const text = [
+      '## ✅ P0: ПЕРИМЕТР — ЗАКРЫТО 09.10.2026 — см. «Что сделано.txt»',
+      '',
+      'тело-которое-не-должно-считаться-надгробием',
+    ].join('\n')
+    expect(auditLines(text.split(/\r?\n/)).problems).toEqual([])
   })
 })
 
@@ -109,7 +136,7 @@ describe('гейт backlog-closed-body: пропускает легальные 
       '',
       '---',
       '',
-      '## ✅ P0: ПЕРИМЕТР — ЗАКРЫТО 09.10.2026 — см. «Что сделано.txt»',
+      '## ✅ P0: ПЕРИМЕТР (см. «Что сделано.txt») — ЗАКРЫТО 09.10.2026',
       '',
       '---',
       '',
@@ -120,7 +147,7 @@ describe('гейт backlog-closed-body: пропускает легальные 
 
   it('форма B: закрытая запись последняя в файле (без следующего заголовка) — OK', () => {
     const text = [
-      '## ✅ X — ЗАКРЫТО 01.10',
+      '## ✅ X — ЗАКРЫТО 01.10.2026',
       '',
       '---',
     ].join('\n')
@@ -194,11 +221,70 @@ describe('гейт на настоящем репозитории', () => {
 
 /* ------------------------------------------------------------------ */
 
+describe('сверка с хроникой (backlog-closure-unchronicled)', () => {
+  const backlog = [
+    '# Бэклог',
+    '',
+    '---',
+    '',
+    '## ✅ P0: ПЕРИМЕТР — ЗАКРЫТО 09.10.2026',
+    '',
+    '| 9 | секреты | ✅ 09.10.2026 |',
+    '| 11 | E2E | ЗАКРЫТО 10.10.2026 |',
+  ]
+
+  it('дата «ЗАКРЫТО» есть в хронике — находок нет', () => {
+    const doneLines = [
+      '# Что сделано',
+      '',
+      '### P0 — закрыт (09.10.2026)',
+      '',
+      '### P1 №11 — закрыт (10.10.2026)',
+    ]
+    expect(auditClosureDates(backlog, doneLines)).toEqual([])
+  })
+
+  it('дата «ЗАКРЫТО» отсутствует в хронике — находка с id и датой', () => {
+    const doneLines = [
+      '# Что сделано',
+      '',
+      '### P0 — закрыт (09.10.2026)',
+    ]
+    const findings = auditClosureDates(backlog, doneLines, 'Что-доделать.txt')
+    expect(findings).toHaveLength(1)
+    expect(findings[0].id).toBe('backlog-closure-unchronicled')
+    expect(findings[0].date).toBe('10.10.2026')
+    expect(findings[0].text).toContain('10.10.2026')
+  })
+
+  it('нет ни одной даты ЗАКРЫТО в бэклоге — сверка пустая (не падает)', () => {
+    const plain = ['# Бэклог', '', '| 9 | секреты | ✅ 09.10.2026 |']
+    expect(auditClosureDates(plain, ['# Что сделано'])).toEqual([])
+  })
+
+  it('CLOSURE_DATE_RE извлекает дату после слова ЗАКРЫТО (не после ✅)', () => {
+    const text = '| 9 | секреты | ✅ 09.10.2026 | ЗАКРЫТО 10.10.2026 |'
+    const dates = []
+    let m
+    CLOSURE_DATE_RE.lastIndex = 0
+    while ((m = CLOSURE_DATE_RE.exec(text)) !== null) dates.push(m[1])
+    expect(dates).toEqual(['10.10.2026'])
+  })
+})
+
+/* ------------------------------------------------------------------ */
+
 describe('инструмент stage-section.mjs', () => {
   it('buildClosedLine — всегда одна компактная строка с ✅, ЗАКРЫТО и ссылкой', () => {
     const line = buildClosedLine({ title: 'P1 №13: routes/admin.js', date: '11.10.2026', ref: 'раздел «P1 №13»' })
-    expect(line).toBe('## ✅ P1 №13: routes/admin.js — ЗАКРЫТО 11.10.2026 — см. «Что сделано.txt»: раздел «P1 №13»')
+    expect(line).toBe('## ✅ P1 №13: routes/admin.js (см. «Что сделано.txt»: раздел «P1 №13») — ЗАКРЫТО 11.10.2026')
     expect(line.split('\n')).toHaveLength(1)
+  })
+
+  it('buildClosedLine — результат распознаётся гейтом как закрытая секция (маркер в конце)', () => {
+    const line = buildClosedLine({ title: 'P1 №13: routes/admin.js', date: '11.10.2026', ref: 'раздел «P1 №13»' })
+    const { facts } = auditLines(['# Бэклог', '', '---', '', line, '', '---'].join('\n').split(/\r?\n/))
+    expect(facts.closedHeadings).toBe(1)
   })
 
   it('close с телом — ОТКАЗ (надгробие), файл не трогается', () => {
@@ -213,7 +299,7 @@ describe('инструмент stage-section.mjs', () => {
   it('close без тела — пишет компактную строку в зону после первого ---', () => {
     const file = writeFixture('Что-доделать.txt', '# Бэклог\n\n---\n\n## 🟡 ВАЖНО (P1)\n')
     const out = stage([{ mode: 'close', title: 'P1 №13: routes/admin.js', date: '11.10.2026', ref: 'раздел «P1 №13»' }], file)
-    expect(out).toContain('## ✅ P1 №13: routes/admin.js — ЗАКРЫТО 11.10.2026 — см. «Что сделано.txt»: раздел «P1 №13»')
+    expect(out).toContain('## ✅ P1 №13: routes/admin.js (см. «Что сделано.txt»: раздел «P1 №13») — ЗАКРЫТО 11.10.2026')
     // результат проходит тот же гейт
     expect(auditLines(out.split(/\r?\n/), file).problems).toEqual([])
   })
@@ -228,14 +314,14 @@ describe('инструмент stage-section.mjs', () => {
 
   it('заголовок с ✅ + тело — ОТКАЗ даже в режиме open', () => {
     const file = writeFixture('Что-доделать.txt', '# Бэклог\n\n---\n')
-    expect(() => stage([{ mode: 'open', title: '✅ Что-то — ЗАКРЫТО 01.01', body: 'тело' }], file)).toThrow()
+    expect(() => stage([{ mode: 'open', title: '✅ Что-то — ЗАКРЫТО 01.01.2026', body: 'тело' }], file)).toThrow()
   })
 
   it('Побочный эффект stage(): даже валидные записи проверяются итоговым гейтом на всем файле', () => {
     // Если бы в файле уже было «надгробие», stage не должен молча добавить свою запись.
     const file = writeFixture(
       'Что-доделать.txt',
-      '# Бэклог\n\n---\n\n## ✅ X — ЗАКРЫТО 01.01\n\nтело-нарушение\n',
+      '# Бэклог\n\n---\n\n## ✅ X — ЗАКРЫТО 01.01.2026\n\nтело-нарушение\n',
     )
     expect(() => stage([{ mode: 'close', title: 'Новый пункт', date: '11.10.2026' }], file)).toThrow(/нарушает канон/)
   })
