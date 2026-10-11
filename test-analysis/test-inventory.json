@@ -1,11 +1,11 @@
 {
-  "generated": "2026-10-11T07:31:02.363Z",
+  "generated": "2026-10-11T08:20:48.049Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 89,
-    "suites": 220,
-    "tests": 791,
+    "files": 90,
+    "suites": 224,
+    "tests": 802,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
@@ -19,9 +19,9 @@
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 178,
-    "suites": 671,
-    "tests": 1935,
+    "files": 179,
+    "suites": 675,
+    "tests": 1946,
     "all_passing": true
   },
   "e2e": {
@@ -143,6 +143,10 @@
     {
       "file": "src/test/SSO.test.tsx",
       "tests": 13
+    },
+    {
+      "file": "scripts/check-doc-counters.test.mjs",
+      "tests": 11
     },
     {
       "file": "src/test/AdminLayout.test.tsx",

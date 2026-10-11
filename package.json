@@ -20,7 +20,8 @@
     "test:e2e:ui": "playwright test --ui",
     "check:console": "node check-console.mjs",
     "check:headers": "node scripts/check-security-headers.mjs",
-    "check:docs": "node scripts/check-doc-sync.mjs && node scripts/check-backlog-closed-body.mjs",
+    "check:counters": "node scripts/check-doc-counters.mjs",
+    "check:docs": "node scripts/check-doc-sync.mjs && node scripts/check-backlog-closed-body.mjs && node scripts/check-doc-counters.mjs",
     "prepare": "husky"
   },
   "lint-staged": {
