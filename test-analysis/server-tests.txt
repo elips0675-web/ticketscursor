@@ -1,7 +1,7 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 89 файлов / 451 suite / 1144 тестов (все PASS, vitest --reporter=json от 10.10.2026)
+Реальный результат: 89 файлов / 451 suite / 1144 тестов (все PASS, vitest --reporter=json от 11.10.2026)
 Этап 68 закрыт 26.09: дыры 0% (injection 15, fileCheck 9, ldap 10, index 5, api-tokens.routes 10, canned-responses.routes 15, telegram.expanded 27) — все файлы с 0% покрытия закрыты.
 Coverage (All files): 80.46 stmts / 74.35 branches / 82.06 funcs / 82.11 lines (пороги 78/72/79/80 — факт − 2п.п., перемерено 01.10 в Этапе 66)
 ВАЖНО: имя тестовой БД переопределяется через TEST_DB_NAME (server/vitest.global-setup.js:6) — иначе параллельные прогоны дропают общий servicedesk_test друг другу.

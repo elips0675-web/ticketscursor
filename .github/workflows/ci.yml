@@ -128,6 +128,22 @@ jobs:
           node-version: 22
       - run: npm run check:headers
 
+  docs-canon:
+    # Гейт канона доков («Что-доделать.txt», правило 20):
+    #   1. check-doc-sync — журналы и AGENTS.md побайтово синхронны с test-analysis/,
+    #      инвентарь тестов не старше прогонов (правило 19 — «правка .txt журналов»);
+    #   2. check-backlog-closed-body — закрытая запись в бэклоге = ОДНА компактная
+    #      строка ✅ + ссылка на «Что сделано.txt»; секция с ЗАКРЫТО/✅ и любым телом
+    #      под ней («надгробие») = FAIL. Детали закрытого — только в «Что сделано.txt».
+    # Зависимости не нужны: обе проверки только читают файлы.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run check:docs
+
   backup-verify:
     # Ежедневная проверка, что mysqldump реально разворачивается (Промт 4 «Доделать.rtf»).
     # В CI валидируем seed.sql (содержит CREATE TABLE + INSERT — те же проверки COUNT>0);
