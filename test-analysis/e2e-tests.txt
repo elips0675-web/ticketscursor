@@ -1,6 +1,6 @@
 ===== E2E ТЕСТЫ (Playwright, 19 файлов, 61 тест) =====
 Стек: Playwright + TypeScript, базовый URL http://localhost:5173
-Запуск: npx playwright test (зелёный прогон 24.09.2026, 61/61)
+Запуск: npx playwright test (зелёный прогон 24.09.2026, 61/61; актуально — 19 spec / 61 тест, с 11.10.2026 гоняется и в CI, см. test-inventory.json)
 Файлы: admin, admin-audit, calculator, chats, crud-lifecycle, file-upload, files, kanban,
         ldap-login, login, notifications, profile, rbac-matrix, search, sla-autoassign-export,
         sla-escalation, tickets-lifecycle, user-flow, websocket-chat
