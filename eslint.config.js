@@ -12,7 +12,6 @@ export default tseslint.config(
       '*.config.*',
       'public/sw.js',
       'check-console.mjs',
-      'fix-i18n.mjs',
     ],
   },
   eslint.configs.recommended,
