@@ -1,12 +1,12 @@
 {
-  "generated": "2026-10-11T08:20:48.049Z",
+  "generated": "2026-10-15T07:09:27.388Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 90,
-    "suites": 224,
-    "tests": 802,
-    "all_passing": true,
+    "files": 91,
+    "suites": 228,
+    "tests": 819,
+    "all_passing": false,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
@@ -19,10 +19,10 @@
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 179,
-    "suites": 675,
-    "tests": 1946,
-    "all_passing": true
+    "files": 180,
+    "suites": 679,
+    "tests": 1963,
+    "all_passing": false
   },
   "e2e": {
     "files": 19,
@@ -91,6 +91,10 @@
     {
       "file": "src/test/Kanban.test.tsx",
       "tests": 18
+    },
+    {
+      "file": "scripts/check-menu-inventory.test.mjs",
+      "tests": 17
     },
     {
       "file": "src/test/AdminSettings.test.tsx",

@@ -65,7 +65,8 @@ jobs:
 
   e2e:
     # P1 №11 (Что-доделать.txt): E2E (Playwright, 19 spec / 61 тест) + check-console
-    # (17 страниц) на MySQL-контейнере. Раньше E2E гонялось только локально
+    # (26 страниц: 22 OK + 4 в TRACKED_ISSUES — подтверждённые дефекты, заведены
+    # в «Что-доделать.txt», раздел «Вскрыто расширением check-console») на MySQL-контейнере. Раньше E2E гонялось только локально
     # (Laragon + dev-серверы) — PR не гейтились. БД готовится тем же путём, что и
     # серверные vitest-тесты: scripts/e2e-db-setup.mjs → server/test-db-setup.js
     # (migrate + фиксы колонок + seed — search.spec.ts:21 ждёт seed-тикет,
@@ -127,6 +128,21 @@ jobs:
         with:
           node-version: 22
       - run: npm run check:headers
+
+  menu-inventory:
+    # Гейт «инвентарь меню» (пункт 1 разбора внешних аудитов): каждый пункт
+    # sidebar.tsx/admin-layout.tsx обязан иметь (а) объявленный маршрут в App.tsx,
+    # (б) ключ перевода и в ru, и в en, (в) роли из типа EmployeeRole,
+    # (г) объявленный в миграциях флаг фичи, читаемый файлом меню через useFeature.
+    # Список пунктов читается из самих TSX — хардкода в гейте нет. Статический:
+    # только чтение файлов, зависимости не нужны. Раньше инвентарь протухал молча.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run check:menu
 
   docs-canon:
     # Гейт канона доков («Что-доделать.txt», правило 20):
