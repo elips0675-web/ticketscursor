@@ -1,0 +1,230 @@
+Оценка: что нужно для «полного функционала кнопок меню и т.д.»
+Разобрал по слоям. Ниже — что уже закрыто, где дыры и что конкретно добавить, чтобы каждая кнопка меню, каждая кнопка на странице и каждый роут были гарантированно рабочими и покрытыми.
+
+0. Что уже есть (база)
+Слой	Состояние
+Тесты	1946 (802 клиент + 1144 сервер) + 61 E2E, 0 failures
+Гейты	check:docs (doc-sync + backlog-body + counters), check:headers, docs-canon в CI
+Периметр	nginx/vercel/helmet — заголовки закрыты гейтом (46 тестов)
+Фичи	под флагами useFeature(), миграции идемпотентные
+Этапы 66	подфичи 1–4 закрыты, подфича 5 (custom roles) — нет
+Этапы 67, 69, 70, 71	не начаты
+1. Меню и кнопки (UI-поверхность)
+Где дыра: нет машинно-читаемого инвентаря «пункт меню → роут → страница → роль/флаг», и E2E в основном дымовые (page.locator('h1,h2,h3').first()).
+
+Что нужно:
+
+Инвентарь меню (Что-доделать.txt, процесс №15): таблица «Sidebar/AdminLayout/мобильное меню → путь → страница → requireRole/useFeature → есть ли E2E».
+
+Сейчас: grep по src/components/layout/sidebar.tsx, AppLayout.tsx, admin-layout.tsx и сверка с App.tsx роутами — вручную.
+
+E2E «клик по каждой Primary-кнопке» — уже в бэклоге (Что-доделать.txt, E2E-реализм №2: admin-chains.spec.ts → page.waitForRequest). Покрыть:
+
+Админка: users CRUD, rules CRUD, settings save, features toggle, backup/seed/geo (с подтверждением), IMAP test, SSO save, email-templates save.
+
+Тикеты: bulk actions, tags, watchers, relations, merge, time-tracker, assistant, history/PDF.
+
+Чаты/Wiki/Calendar/Polls/News/Employees: create/edit/delete/export.
+
+Замена дымовых h1,h2,h3-проверок (P1 №10, ~30 мест в 12 spec) на getByRole('heading', { name })/getByTestId. Список файлов — в Что-доделать.txt:23.
+
+Мобильная навигация E2E (viewport 375px) — P1 №9 в E2E-таблице.
+
+RBAC по кнопкам: матрица «роль × кнопка видима/disabled». Сейчас есть rbac-matrix.test.js (5×5, 41 тест) на сервере и rbac-matrix.spec.ts (2 теста) в E2E — покрыто частично, нет сверки «data-testid кнопки ↔ requireRole роута».
+
+2. Роуты (API ↔ Swagger ↔ тесты)
+Где дыра: нет инвентаря router.METHOD ↔ Swagger ↔ api.test.js. Часть роутов админки не покрыта (routes/admin.js 52.9%/48.0% — P1 №13).
+
+Что нужно:
+
+Инвентарь роутов (Что-доделать.txt, E2E/инвентарь №1): таблица по server/src/routes/*.js — метод, путь, requireRole, флаг, есть ли Swagger, есть ли тест. Сгенерировать скриптом (иначе устареет).
+
+Добить coverage routes/admin.js (P1 №13) — settings PUT-валидация, users CRUD-ошибки, features, imap/status+test, recovery/restore, ticket-categories, scheduled-reports.
+
+routes/auth.js 65.9%/59.5% и routes/calendar.js 65.6% — кандидаты добора (context.txt).
+
+API_CONTRACTS.md (бэклог, Что-доделать.txt, E2E/инвентарь №6): формат ошибок {error:{code,message,details}}, пагинация, rate-limit заголовки. Сейчас есть contract.api.test.js (5 endpoints) — мало.
+
+Deprecation/versioning policy (semver, /api/v1/) — бэклог.
+
+3. Цепочки (state machines / workflows)
+Где дыра: часть цепочек закрыта, но не все прослеживаются E2E от UI до БД.
+
+Что нужно (по Что-доделать.txt, E2E/инвентарь №1):
+
+Цепочка	Состояние	Что добавить
+VALID_TRANSITIONS (статусы тикета)	unit есть (tickets.service.sla.test.js), E2E частично (tickets-lifecycle.spec.ts)	полная матрица статусов × роли × reopen
+Rules (9 операторов × 5 действий)	unit 20 тестов	E2E «правило срабатывает» (admin-rules.spec.ts — P0 qwen, №4)
+Recurrence (cron-parser v5)	unit 14	E2E создания повторяющегося
+SLA-эскалация	unit + E2E (sla-escalation.spec.ts)	+ бизнес-часы/TZ в E2E
+Outbox (delivered/retry/DLQ)	unit 4 + background 10	E2E «рестарт → доставка»
+Webhooks (HMAC, retry 3x)	unit 14	E2E с реальным приёмником
+Email-ingestion (IMAP → тикет)	unit 28, нет E2E и доки (P2 №15)	E2E с фейковым IMAP
+Watchers/Relations/Merge	unit 12/11/8, E2E нет	E2E на все три (P0 qwen №5, №3)
+Approval chains (Stage 67)	нет	реализовать + тесты
+Auto-close chain, duplicate detection (backlog №10)	нет	реализовать
+4. База данных
+Где дыра: схема сверяется вручную; есть риск дрейфа (уже ловили: csat_surveys не создавалась ни одной миграцией — поправлено в подфиче 4 Этапа 66).
+
+Что нужно:
+
+Schema-drift check в CI (Что-доделать.txt, Перенос из SwiftMatch №2): offline-скрипт «schema.prisma ↔ миграции ↔ колонки, которые реально читает код».
+
+FULLTEXT/индексы — проверить фактически (backlog, Тесты/БД №3): grep @@index в schema.prisma + EXPLAIN по топ-эндпоинтам.
+
+ANALYZE TABLE раз в сутки для FULLTEXT (backlog, Тесты/БД №6).
+
+Soft-delete целостность (backlog, Тесты/БД №5) — есть soft-delete.test.js (7), но проверить именно «нельзя вернуть удалённого».
+
+knex migrate:latest в CI перед тестами (backlog, Тесты/БД №4) — сейчас vitest.global-setup.js мигрирует сам, но CI-джоба backend гоняет seed.sql.
+
+Load-тесты: setup() с авторизацией (backlog, Тесты/БД №7).
+
+Границы: 10k тикетов, файл 51MB, JWT expired (backlog, Тесты/БД №8).
+
+5. Админка
+Где дыра: routes/admin.js — 52.9% / 48.0% (P1 №13); часть UI-секций без E2E.
+
+Что нужно:
+
+Добить routes/admin.js (см. §2).
+
+E2E на каждую секцию админки: users (создание + роль + блокировка — P0 qwen №3), rules (P0 qwen №4), integrations (webhooks + API-токены), health, queues, rbac, audit, settings (все подсекции: SMTP, IMAP, SSO, LDAP, features + rollout, email-templates, SLA business hours, ticket-categories, scheduled-reports, proxies).
+
+Feature flag lifecycle (backlog, процесс №13): удаление флага после 100% rollout на 2 недели — сейчас флаги копятся.
+
+Расписание rollout («включить завтра в 9:00») — backlog, Тесты/БД №1: есть percentage, нет rollout_at.
+
+Cache flush, Migrations status UI, Backup/restore UI, preview-as-role, rules/settings export-import JSON — backlog №13.
+
+6. Тесты — что именно добавить
+По слоям
+Слой	Что добавить	Откуда
+Клиент	Employees.tsx 54.9%/50.0% → +тесты поиск/фильтр/карточки/RBAC/skeleton	P1 №14
+TicketDetail.tsx 65.6%/58.4% → +статус/приоритет/назначение/socket/error/loading/virtual-scroll edge	P1 №15
+NewTicket.tsx 64.1%/51.5%, AdminSettings.tsx 67.8%/65.0%	context.txt
+Сервер	routes/admin.js 52.9%/48.0%	P1 №13
+routes/auth.js 65.9%/59.5%, routes/calendar.js 65.6%, email.js 62.2%/70.3%	context.txt
+E2E	Заменить ~30 дымовых h1,h2,h3	P1 №10
+admin-users.spec.ts (создание+роль+блокировка)	P0 qwen №3
+admin-rules.spec.ts (создание + срабатывание)	P0 qwen №4
+ticket-attachments.spec.ts (lifecycle с вложениями)	P0 qwen №5
+chat-read-receipts.spec.ts (2 пользователя)	P1 qwen №6
+wiki-lifecycle.spec.ts, calendar-lifecycle.spec.ts, mobile-navigation.spec.ts, offline-queue.spec.ts, error-boundary.spec.ts, a11y-ticket.spec.ts	E2E-таблица
+admin-chains.spec.ts (клик по каждой Primary-кнопке → assert запроса)	E2E-таблица №2
+Multi-user storageState (admin/agent/user)	Перенос из SwiftMatch №6
+Cross-browser (WebKit/Firefox)	Перенос из SwiftMatch №7
+Реальный download (waitForEvent('download') + BOM + непустой файл)	E2E-таблица №1
+Coverage второй волны	Клиент: error boundaries, offline/network, двойной submit, keyboard nav, toast lifecycle, WS reconnect UI, large data/virtualization, form validation edge, i18n fallback, lazy/Suspense. Сервер: catch-ветки сервисов, env-условия, seed validation, full integration (create→…→close + аудит + WS), outbox после рестарта, Redis invalidation, BullMQ DLQ, rate-limiter edge (10-й ок / 11-й 429)	Что-доделать.txt, E2E/инвентарь №3
+Метрики-ориентиры (из «Итоговый ориентир»)
+client branches 67.35 → 68+
+
+server branches 74.36 → 72+ (уже перевыполнено, но пороги перемерить перед закрытием)
+
+E2E 61 → ~80
+
+тесты ~1950 → ~2050 после Этапа 67
+
+7. Что-то ещё (безопасность / инфра / процесс)
+Безопасность
+Secrets manager (Vault/SOPS) — P1 №8 / инфра.
+
+Account Lockout per-account (сейчас только per-IP) — Перенос из SwiftMatch №1.
+
+__Host- cookie для refresh — Перенос из SwiftMatch №12.
+
+sanitize.js (санитайз пользовательского контента) — Перенос из SwiftMatch №10.
+
+banned-words — Перенос из SwiftMatch №11.
+
+SQL EXPLAIN-аудит в CI — Перенос из SwiftMatch №3.
+
+Trivy в CI (scan Docker-образов + trivy fs) — бэклог (инфра).
+
+Upload security-тесты (mime/размер/двойное расширение) — Перенос из SwiftMatch №14.
+
+Image pipeline Sharp → WebP — Перенос из SwiftMatch №13.
+
+Инфраструктура
+Distributed tracing (OpenTelemetry) — P2 №5.
+
+CDN (CloudFlare/CloudFront) — P2 №6.
+
+SPF/DKIM/DMARC — P2 №7.
+
+SLO/SLI + alerting — бэклог (инфра).
+
+Log aggregation (Loki/ELK) — бэклог (инфра).
+
+Read replica — только при реальной нагрузке (P3).
+
+Доки / процесс
+ARCHITECTURE.md (Data Flow Diagram × 5 сценариев) — бэклог (дока).
+
+API_CONTRACTS.md — бэклог (дока).
+
+ADR — P2 №4.
+
+Runbooks (восстановление из бэкапа, ротация JWT, DLQ, IMAP, Redis) — бэклог (дока).
+
+Commit convention + auto-changelog — бэклог (процесс).
+
+Rollback/canary/smoke-after-deploy — бэклог (процесс).
+
+AGENTS.md разобрать (правила vs хроника) — процесс №6.
+
+Валидация ссылок file:line в .txt-журналах — процесс №7(а).
+
+Новый функционал (Этапы 67, 69–71)
+Этап 67: Approval chains, Team/Group scope, Field-level permissions, SLA policies per category, Webhooks journal + replay, Impersonation, Macros (Z1), Checklist (Z2), outbound proxy.
+
+Этап 69: CMDB/assets + лицензии (G1) + контракты (G2) + QR (G4).
+
+Этап 70: Service catalog.
+
+Этап 71: Entity/Organizations (G3 + Z3).
+
+8. Приоритетный порядок (совпадает с «Порядок работ»)
+Подфича 5 Этапа 66 — custom roles (роли + permissions + конструктор).
+
+Coverage-пуш — P1 №13–15 (routes/admin.js, Employees.tsx, TicketDetail.tsx).
+
+E2E-реализм — P1 №10 (замена дымовых), P0 qwen №3–5 (users, rules, attachments), admin-chains.
+
+Инвентари — меню, роуты, цепочки, фичи (по одному, автогенерация).
+
+Этап 67 — P1 + Macros + Checklist + proxy.
+
+Инфра-минимум — schema-drift, account lockout, __Host-, sanitize, Trivy.
+
+Этапы 69–71 — только после закрытия 66–67 (правило Что-доделать.txt:59).
+
+9. Антипаттерны (чего НЕ делать)
+Из Что-доделать.txt:
+
+Snapshot-тесты, visual regression, mutation testing.
+
+Тесты на shadcn/ui примитивы.
+
+Покрытие до 90% — закон убывающей доходности.
+
+12 «ролей» AI, промты > 1500 токенов, «оцени проект целиком».
+
+Tauri/mobile app.
+
+MySQL read replica без нагрузки.
+
+Итог
+«Полный функционал кнопок меню» упирается не в код, а в три отсутствующих инвентаря (меню, роуты, цепочки) и E2E-реализм: сейчас 61 E2E, из них ~30 — дымовые h1,h2,h3. Чтобы каждая кнопка была гарантированно рабочей, нужно:
+
+Сгенерировать инвентарь «меню → роут → страница → роль/флаг → E2E».
+
+Заменить дымовые проверки на смысловые (getByRole/getByTestId) + waitForRequest.
+
+Добить coverage admin.js/Employees.tsx/TicketDetail.tsx (P1 №13–15).
+
+Добавить E2E на P0-цепочки (users, rules, attachments — qwen).
+
+Закрыть подфичу 5 Этапа 66 (custom roles) и Этап 67 — иначе часть меню/кнопок просто не существует.
+
+Всё остальное (инфра, доки, новые фичи 69–71) — важно, но не блокирует «полный функционал текущих кнопок».
