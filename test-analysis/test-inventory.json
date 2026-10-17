@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-17T16:52:14.935Z",
+  "generated": "2026-10-17T17:55:51.790Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {

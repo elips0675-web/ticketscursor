@@ -1,59 +1,61 @@
-# Service Desk — технический долг (11.10.2026)
+# Service Desk — технический долг (17.10.2026)
 
-## Текущее состояние
+## Текущее состояние (замер 17.10.2026)
 
-- **Фронт**: 802 теста (90 файлов)
-- **Сервер**: 1144 теста (89 файлов)
-- **Итого**: 1946 тестов, 0 failures
-- **E2E**: 19 spec'ов / 61 тест (Playwright) + 17/17 страниц ALL OK (check-console.mjs)
-- **Prisma моделей**: 32 (включая event_outbox)
-- **API endpoints**: 60+ (Swagger + Health probes + k6 metrics)
-- **ESLint**: 0 errors, 56 warnings (порог лимита 100 в CI)
-- **MySQL**: запущен (Laragon), БД servicedesk
+- **Фронт**: 890 тестов (94 файла, 250 suite) — все PASS (`npx vitest run --config vitest.client.config.ts --reporter=json`)
+- **Сервер**: 1149 тестов (90 файлов, 456 suite) — все PASS (`cd server && npx vitest run --reporter=json`)
+- **Итого**: 2039 тестов, 0 failures (машинный инвентарь — `test-analysis/test-inventory.json`)
+- **E2E**: 19 spec'ов / 61 тест (Playwright; последний полный прогон 24.09 — 61/61; список — `test-analysis/e2e-tests.txt`)
+- **check-console**: обходит 26 страниц (17 базовых + пункты меню из `scripts/menu-inventory.mjs`); ожидаемо 22 `[OK/RU]` + 4 страницы в реестре `TRACKED_ISSUES` (`/team`, `/tickets/new`, `/admin/settings`, `/admin/custom-fields` — открытые дефекты CON-01…CON-04 в «Что-доделать.txt», раздел «Вскрыто расширением check-console»)
+- **Coverage (All files, замер 17.10.2026)**: клиент 78.53 stmts / 69.74 branches / 70.34 funcs / 81.17 lines (пороги 76/67/68/78); сервер 80.99 / 74.65 / 81.48 / 82.67 (пороги 78/72/79/80) — `coverage/lcov-report/index.html` и `server/coverage/lcov-report/index.html`, конфиги `vitest.client.config.ts` и `server/vitest.config.js`
+- **Prisma моделей**: 39 (`server/prisma/schema.prisma`)
+- **API**: 175 определений `router.(get|post|put|patch|delete)` в `server/src/routes/*.js`; Swagger описывает 28 путей (`server/src/swagger.js`) + Health probes + метрики для k6/Grafana
+- **ESLint**: 0 errors, 62 warnings (гейт CI — `npx eslint . --max-warnings 100`, `.github/workflows/ci.yml:27`)
+- **MySQL**: запущен (Laragon), рабочие БД `servicedesk` и тестовая `servicedesk_test`
 - **API**: порт 4000, Vite proxy 5173
-- **check-console**: пройден — 17 страниц без console.error, русский текст есть
+- **Гейты**: `npm run check:docs` (doc-sync + закрытые записи бэклога + счётчики + схема бэклога), `check:menu`, `check:headers`, `check:alerts`, `check:migrations-lag`, `check:console`, `check:bundle`
 - **Конкурентный бенчмарк (06–07.10, док-фаза, код не менялся)**: изучены «Аналоги1.txt» + README GLPI и Zammad → план дорос до **Этапов 66–71** (66 — qwen P1 ч.2: GDPR/org chart/ticket forms ✅ подфичи 1–3, в работе подфичи 4–5 + финальный аудит; 67 — P1 + Macros Z1 + Checklist Z2 + outbound proxy Web-UI (фидбек 07.10, P2); 69 — CMDB/ITAM: активы + лицензии G1 + контракты G2 + QR G4; 70 — каталог услуг; 71 — Entity/Organizations G3+Z3); коммиты `7065d33`/`633b197`/`78fb701`/`cb95e83`/`b1e4168`/`8ca41c1`; детали — «Что-доделать.txt» секция «Конкурентный бенчмарк»
 
 ## Ключевые файлы
 
-### Сервер (server/src/) — факт 01.10.2026 (lcov: lines / branches)
+### Сервер (server/src/) — факт 17.10.2026 (lcov: lines / branches)
 | Файл | Coverage | Статус |
 |------|----------|--------|
-| routes/tickets.js | 77.6% / 72.2% | ✅ |
+| routes/tickets.js | 78.0% / 72.9% | ✅ |
 | routes/auth.js | 65.9% / 59.5% | ⚠️ кандидат добора |
-| routes/admin.js | 52.9% / 48.0% | ⚠️ P1 №13 (упал из-за расширения роутов) |
+| routes/admin.js | 56.8% / 55.3% | ⚠️ P1-13 (было 52.9/48.0) |
 | routes/notifications.js | 72.3% / 75.0% | ✅ |
 | routes/push.js | 84.6% / 90.9% | ✅ |
 | routes/search.js | 100% / 87.5% | ✅ |
-| routes/calendar.js | 65.6% | ⚠️ |
+| routes/calendar.js | 65.6% / 100% | ⚠️ кандидат добора |
 | routes/gdpr.js | 100% / 100% | ✅ Этап 66 |
 | routes/team.js | 100% / 100% | ✅ Этап 66 |
 | services/tickets.service.js | 95.8% / 85.4% | ✅ |
-| services/ticket-categories.service.js | ✅ | тесты есть (Этап 66) |
+| services/ticket-categories.service.js | 86.8% / 76.1% | ✅ Этап 66 |
 | socket.js | 81.2% / 55.3% | ✅ (было 22%, закрыто) |
-| background.js | 89.4% / 82.1% | ✅ DLQ реализован (BullMQ + in-memory fallback) |
-| email.js | 62.2% / 70.3% | ⚠️ кандидат добора |
-| notify.js | 86.5% / 63.7% | ✅ |
-| api.test.js | n/a | ~163+ интеграционных (71 describe) |
+| background.js | 89.6% / 82.9% | ✅ DLQ реализован (BullMQ + in-memory fallback) |
+| email.js | 86.5% / 78.4% | ✅ (было 62.2% / 70.3%) |
+| notify.js | 86.5% / 65.2% | ✅ |
+| api.test.js | n/a | 183 интеграционных теста (см. `test-analysis/server-tests.txt`) |
 
-### Клиент (src/) — факт 01.10.2026 (lcov: lines / branches)
+### Клиент (src/) — факт 17.10.2026 (lcov: lines / branches)
 | Файл | Coverage | Статус |
 |------|----------|--------|
 | Dashboard.tsx | 100% / 68.8% | ✅ |
-| Admin.tsx | 100% / 86.8% | ✅ |
+| Admin.tsx | 100% / 94.7% | ✅ |
 | Tickets.tsx | 75.9% / 68.6% | ✅ |
-| Calendar.tsx | 86.0% / 79.1% | ✅ |
+| Calendar.tsx | 84.9% / 79.1% | ✅ |
 | Files.tsx | 100% / 75.0% | ✅ |
 | News.tsx | 82.6% / 78.7% | ✅ |
 | Polls.tsx | 75.5% / 82.4% | ✅ |
-| Employees.tsx | 54.9% / 50.0% | ⚠️ P1 №14 (не вырос с 56%) |
+| Employees.tsx | 54.9% / 50.0% | ⚠️ P1-14 (не вырос с 01.10) |
 | ChatDetail.tsx | 79.5% / 68.7% | ✅ (было 51%) |
-| TicketDetail.tsx | 65.6% / 58.4% | ⚠️ P1 №15 |
+| TicketDetail.tsx | 65.6% / 58.4% | ⚠️ P1-15 |
 | Kanban.tsx | 100% / 72.7% | ✅ (было 47%) |
 | ticket-context.tsx | 87.2% / 69.0% | ✅ (было 35%) |
 | Search.tsx | 86.0% / 72.7% | ✅ (было ~60%) |
 | NewTicket.tsx | 64.1% / 51.5% | ⚠️ кандидат добора |
-| AdminSettings.tsx | 67.8% / 65.0% | ⚠️ много секций |
+| AdminSettings.tsx | 67.6% / 64.0% | ⚠️ много секций |
 
 ## Проблемы (решённые)
 
@@ -68,13 +70,18 @@
 
 ## Команды
 ```bash
-cd E:\Tickets cursor\ticketscursor
+cd "D:\Tickets Cursor nout\repo"
 npm run test                  # фронт
 npx vitest run --coverage     # coverage фронт
 cd server && npm test         # сервер
 npx vitest run --coverage     # coverage сервер
 npm run build                 # production сборка
 node check-console.mjs        # E2E проверка (требует MySQL + оба dev-сервера)
+npm run check:docs            # гейт синхронности доков (doc-sync + закрытые записи + счётчики + схема бэклога)
+# перегенерация инвентаря тестов после добавления/удаления тестов:
+npx vitest run --config vitest.client.config.ts --reporter=json --outputFile=vitest-client.json
+cd server && npx vitest run --reporter=json --outputFile=vitest-server.json && cd ..
+node scripts/regenerate-test-inventory.js vitest-client.json server/vitest-server.json
 ```
 
 ## Аудит по аудит-промтам (ранее «Промты.txt», перенесено в `prompts.md`)
@@ -158,7 +165,7 @@ node check-console.mjs        # E2E проверка (требует MySQL + о�
 **Тесты:**
 - Сервер: 5 тестов (GET defaults, PUT update, GET after update, non-admin rejection, invalid body)
 - Клиент: 3 теста (useFeature, useAllFeatures) + 2 теста (feature section rendering, toggle)
-- Фронт: 52 файла / 372 теста, сервер: 25 файлов / 352 теста
+- Фронт/сервер на момент Этапа 29 (историческая цифра): фронт 52 файла / 372 теста, сервер 25 файлов / 352 теста
 
 ## SLA Escalation — реализация (v1.5.0)
 

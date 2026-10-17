@@ -2,7 +2,7 @@
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
 Реальный результат: 94 файла / 250 suite / 890 тестов (все PASS, vitest --reporter=json от 17.10.2026)
-Coverage (All files): 78.58 stmts / 69.6 branches / 70.28 funcs / 81.21 lines (пороги 76/67/68/78 — факт − 2п.п., перемерено 01.10 в Этапе 66)
+Coverage (All files): 78.53 stmts / 69.74 branches / 70.34 funcs / 81.17 lines (пороги 76/67/68/78 — замер 17.10.2026, `npx vitest run --coverage`, отчёт `coverage/lcov-report/index.html`)
 
 ===== ФАЙЛЫ (94 шт, все реальные, из vitest --reporter=json) =====
 

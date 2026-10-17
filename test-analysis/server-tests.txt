@@ -3,7 +3,7 @@
 Запуск: cd server && npx vitest run
 Реальный результат: 90 файлов / 456 suite / 1149 тестов (все PASS, vitest --reporter=json от 17.10.2026)
 Этап 68 закрыт 26.09: дыры 0% (injection 15, fileCheck 9, ldap 10, index 5, api-tokens.routes 10, canned-responses.routes 15, telegram.expanded 27) — все файлы с 0% покрытия закрыты.
-Coverage (All files): 80.46 stmts / 74.35 branches / 82.06 funcs / 82.11 lines (пороги 78/72/79/80 — факт − 2п.п., перемерено 01.10 в Этапе 66)
+Coverage (All files): 80.99 stmts / 74.65 branches / 81.48 funcs / 82.67 lines (пороги 78/72/79/80 — замер 17.10.2026, `cd server && npx vitest run --coverage`, отчёт `server/coverage/lcov-report/index.html`)
 ВАЖНО: имя тестовой БД переопределяется через TEST_DB_NAME (server/vitest.global-setup.js:6) — иначе параллельные прогоны дропают общий servicedesk_test друг другу.
 
 ===== ФАЙЛЫ (90 шт, все реальные, из vitest --reporter=json) =====
