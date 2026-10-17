@@ -9,7 +9,7 @@ import * as Sentry from '@sentry/node'
 import logger from './logger.js'
 import prisma from './prisma.js'
 import { requestId } from './middleware/requestId.js'
-import { trackRequest, getMetricsLines } from './middleware/metrics.js'
+import { trackRequest, getMetricsLines, cpuSeconds, eventLoopLagSeconds } from './middleware/metrics.js'
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -183,14 +183,13 @@ app.get('/api/health/ready', async (req, res) => {
 
 app.get('/api/metrics', (req, res) => {
   const mem = process.memoryUsage()
-  const uptime = process.uptime()
   const timingLines = getMetricsLines()
   res.set('Content-Type', 'text/plain; charset=utf-8')
   res.send([
     ...timingLines,
-    `# HELP process_cpu_seconds_total Total user CPU time`,
+    `# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds`,
     `# TYPE process_cpu_seconds_total counter`,
-    `process_cpu_seconds_total ${uptime}`,
+    `process_cpu_seconds_total ${cpuSeconds()}`,
     `# HELP process_resident_memory_bytes Resident memory size`,
     `# TYPE process_resident_memory_bytes gauge`,
     `process_resident_memory_bytes ${mem.rss}`,
@@ -199,7 +198,7 @@ app.get('/api/metrics', (req, res) => {
     `process_heap_bytes ${mem.heapUsed}`,
     `# HELP nodejs_eventloop_lag_seconds Event loop lag`,
     `# TYPE nodejs_eventloop_lag_seconds gauge`,
-    `nodejs_eventloop_lag_seconds 0.01`,
+    `nodejs_eventloop_lag_seconds ${eventLoopLagSeconds()}`,
   ].join('\n'))
 })
 

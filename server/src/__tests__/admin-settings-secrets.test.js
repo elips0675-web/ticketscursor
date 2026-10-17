@@ -3,19 +3,33 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import request from 'supertest'
 import { app, server } from '../app.js'
+import prisma from '../prisma.js'
+import { invalidateCache } from '../settings.js'
 
 const SECRET_KEYS = ['SMTP_PASS', 'IMAP_PASS', 'SSO_CLIENT_SECRET', 'LDAP_BIND_CREDENTIALS', 'TELEGRAM_BOT_TOKEN']
 const SECRET_MASK = '********'
 const REAL_SECRET = 'real-secret-value-42'
+const TOUCHED_KEYS = [...SECRET_KEYS, 'SMTP_HOST']
 let token
+const snapshot = new Map()
 
 beforeAll(async () => {
   server.listen(4008)
   const res = await request(app).post('/api/auth/dev-login')
   token = res.body?.data?.token || res.body?.token
+  const rows = await prisma.admin_settings.findMany({ where: { key: { in: TOUCHED_KEYS } } })
+  for (const row of rows) snapshot.set(row.key, row.value)
 })
 
-afterAll(() => {
+afterAll(async () => {
+  for (const key of TOUCHED_KEYS) {
+    if (snapshot.has(key)) {
+      await prisma.admin_settings.update({ where: { key }, data: { value: snapshot.get(key) } })
+    } else {
+      await prisma.admin_settings.deleteMany({ where: { key } })
+    }
+  }
+  invalidateCache()
   server.close()
 })
 

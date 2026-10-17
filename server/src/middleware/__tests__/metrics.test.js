@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { trackRequest, getMetricsLines } from '../metrics.js'
+import { trackRequest, getMetricsLines, cpuSeconds, eventLoopLagSeconds } from '../metrics.js'
 
 const SEEN = new Set()
 
@@ -74,5 +74,44 @@ describe('trackRequest', () => {
     trackRequest(req, res, vi.fn())
     const lines = getMetricsLines()
     expect(lines.some(l => l.includes('/raw'))).toBe(true)
+  })
+})
+
+describe('http_requests_total', () => {
+  it('counts requests by status class with method and route labels', () => {
+    const r = routeName('/counter-ok')
+    for (let i = 0; i < 3; i++) {
+      const { req, res } = mockReqRes(r, 'GET', 200)
+      trackRequest(req, res, vi.fn())
+    }
+    const { req, res } = mockReqRes(r, 'GET', 500)
+    trackRequest(req, res, vi.fn())
+    const lines = getMetricsLines()
+    const ok = lines.find(l => l.startsWith('http_requests_total') && l.includes(`route="${r}"`) && l.includes('status="2xx"'))
+    const err = lines.find(l => l.startsWith('http_requests_total') && l.includes(`route="${r}"`) && l.includes('status="5xx"'))
+    expect(ok).toBeDefined()
+    expect(err).toBeDefined()
+    expect(ok.endsWith(' 3')).toBe(true)
+    expect(err.endsWith(' 1')).toBe(true)
+    expect(lines).toContain('# TYPE http_requests_total counter')
+  })
+})
+
+describe('cpuSeconds', () => {
+  it('returns a finite positive number of CPU seconds', () => {
+    let sum = 0
+    for (let i = 0; i < 200000; i++) sum += i
+    const value = cpuSeconds()
+    expect(Number.isFinite(value)).toBe(true)
+    expect(value).toBeGreaterThan(0)
+    expect(sum).toBeGreaterThan(0)
+  })
+})
+
+describe('eventLoopLagSeconds', () => {
+  it('returns a finite non-negative number', () => {
+    const value = eventLoopLagSeconds()
+    expect(Number.isFinite(value)).toBe(true)
+    expect(value).toBeGreaterThanOrEqual(0)
   })
 })

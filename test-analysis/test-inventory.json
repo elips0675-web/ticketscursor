@@ -1,28 +1,28 @@
 {
-  "generated": "2026-10-15T07:09:27.388Z",
+  "generated": "2026-10-17T07:27:04.890Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
     "files": 91,
     "suites": 228,
     "tests": 819,
-    "all_passing": false,
+    "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
     "files": 89,
-    "suites": 451,
-    "tests": 1144,
+    "suites": 454,
+    "tests": 1147,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
     "files": 180,
-    "suites": 679,
-    "tests": 1963,
-    "all_passing": false
+    "suites": 682,
+    "tests": 1966,
+    "all_passing": true
   },
   "e2e": {
     "files": 19,
@@ -627,6 +627,10 @@
       "tests": 8
     },
     {
+      "file": "server/src/middleware/__tests__/metrics.test.js",
+      "tests": 8
+    },
+    {
       "file": "server/src/__tests__/sla.timezone.test.js",
       "tests": 7
     },
@@ -704,10 +708,6 @@
     },
     {
       "file": "server/src/__tests__/ticket-history.test.js",
-      "tests": 5
-    },
-    {
-      "file": "server/src/middleware/__tests__/metrics.test.js",
       "tests": 5
     },
     {
