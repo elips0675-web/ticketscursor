@@ -1,11 +1,11 @@
 {
-  "generated": "2026-10-17T07:44:47.020Z",
+  "generated": "2026-10-17T15:12:49.223Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 92,
-    "suites": 234,
-    "tests": 850,
+    "files": 93,
+    "suites": 240,
+    "tests": 868,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
@@ -19,9 +19,9 @@
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 182,
-    "suites": 690,
-    "tests": 1999,
+    "files": 183,
+    "suites": 696,
+    "tests": 2017,
     "all_passing": true
   },
   "e2e": {
@@ -83,6 +83,10 @@
     {
       "file": "src/test/useFeature.test.tsx",
       "tests": 21
+    },
+    {
+      "file": "scripts/migrations-lag-audit.test.mjs",
+      "tests": 18
     },
     {
       "file": "src/test/Calendar.expanded.test.tsx",
