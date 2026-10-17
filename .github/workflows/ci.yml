@@ -163,6 +163,9 @@ jobs:
     #   3. check-doc-counters — числа тестов в шапках (Что-доделать/Что сделано/README/
     #      TECHNICAL/PLAYBOOK/AGENTS) сверяются с test-analysis/test-inventory.json
     #      (процесс №5); расхождение = FAIL, починка — `--fix`.
+    #   4. check-backlog-schema — схема «Что-доделать.txt» (Этап 4): лимит 450 строк/
+    #      90 000 байт, колонка ID (PREFIX-NN, legacy G1/Z8) без дублей, число ячеек
+    #      строки = шапке, статусный префикс ⏳/✅/—, дата проверки у открытых P1.
     # Зависимости не нужны: все проверки только читают файлы.
     runs-on: ubuntu-latest
     steps:
