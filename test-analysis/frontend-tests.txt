@@ -1,22 +1,25 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 91 файл / 228 suite / 819 тестов (все PASS, vitest --reporter=json от 15.10.2026)
+Реальный результат: 94 файла / 250 suite / 890 тестов (все PASS, vitest --reporter=json от 17.10.2026)
 Coverage (All files): 78.58 stmts / 69.6 branches / 70.28 funcs / 81.21 lines (пороги 76/67/68/78 — факт − 2п.п., перемерено 01.10 в Этапе 66)
 
-===== ФАЙЛЫ (91 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (94 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 scripts/check-security-headers.test.mjs | 46 | Гейт периметра (P0): заголовки в nginx.conf/vercel.json, наследование add_header, helmet раньше express.static, Dockerfile копирует проверяемый конфиг
+scripts/check-alerts.test.mjs | 31 | Гейт правил алертинга (RLS-02): каждая метрика в `monitoring/alerts.yml` объявлена в коде (`# HELP`), у правила есть `for`/`severity`/`summary`/`description`, файл подключён в `rule_files` и смонтирован в compose; зелёный на репозитории и красный на каждом способе поломки
 src/test/TicketDetail.test.tsx | 32 | TicketDetail: сообщения, статус, приоритет, назначение, RBAC, virtual scroll (150 и 1000 — не падает), XSS, История (timeline, PDF, флаг off)
 src/test/Files.expanded.test.tsx | 27 | Files: empty, search, view, category, upload, drag-drop, keyboard, folder switch, list view, drag overlay
 src/test/Tickets.expanded.test.tsx | 25 | Tickets: фильтры, пагинация, пустое, socket, export CSV/PDF
 src/test/Admin.expanded.test.tsx | 22 | Admin: stat cards, employee list, role stats, SLA stats, refresh, API errors
+scripts/check-backlog-schema.test.mjs | 22 | Гейт схемы бэклога (Этап 4): лимит 450 строк/90 000 байт, ID-формат `PREFIX-NN` без дублей во всём файле, число ячеек строки = шапке, статусный префикс ⏳/✅/—, дата у открытых/закрытых строк секции «ВАЖНО (P1)»; CLI exit 0/1
 src/test/useFeature.test.tsx | 21 | useFeature: enabled, disabled, rollout buckets, user bucket 50%, loading
 scripts/check-backlog-closed-body.test.mjs | 26 | Гейт канона формы (правило 20): закрытая запись = одна строка ✅ + ссылка на «Что сделано.txt», маркер закрытия строго в конце заголовка; секция с ЗАКРЫТО/✅ и телом = FAIL; обе легальные формы; ложная сработка ✅-в-середине; сверка ЗАКРЫТО-дата → хроника; инструмент stage-section
 src/test/Calendar.expanded.test.tsx | 18 | Calendar: клик по дню, события, create/edit/delete, RBAC, CSV export, навигация
 src/test/Dashboard.expanded.test.tsx | 18 | Dashboard: stat cards, charts, employees, onClick/onKeyDown handlers
 src/test/Kanban.test.tsx | 18 | Kanban: rendering, DnD, column counts, ticket cards, empty state, optimis
+scripts/migrations-lag-audit.test.mjs | 18 | Гейт отставания миграций (RLS-03): knex `migrations.extension`, `.sql` рядом с `.js`, неприменяемые таблицы/колонки; зелёный на репозитории и красный на каждом способе потери миграции
 scripts/check-menu-inventory.test.mjs | 17 | Гейт инвентаря меню (пункты 1–2 разбора внешних аудитов): маршрут в App.tsx, ключ ru+en, роли из EmployeeRole, флаг+useFeature, дубликаты; «переименованный массив = FAIL»; парсер (collectRoutes, resolveKey, extractArrayBody, parseMenuObject)tic drop
 src/test/AdminSettings.test.tsx | 17 | AdminSettings: renders, toggles, rollout percent, Save, clamp
 src/test/ChatDetail.test.tsx | 15 | ChatDetail: messages, send, loading, empty, virtual scroll (300 — подмножество через FakeResizeObserver), delete, typing
@@ -107,3 +110,5 @@ Coverage (01.10.2026, перемерено --coverage): 78.58 stmts / 69.6 branc
 Прочие фиксы 01.10: Calendar.expanded — 2 теста переведены на findAllByText (были date-sensitive: «Team Standup» дублируется в сайдбаре после 6-го числа месяца); AdminSettings.sla и TicketDetail (1000 сообщений) — таймаут 5000→15000 под coverage-нагрузкой.
 Текущий факт 11.10.2026: 90 файлов / 802 теста (сюда входят 46 тестов гейта scripts/check-security-headers.test.mjs, 26 тестов гейта scripts/check-backlog-closed-body.test.mjs, 11 тестов гейта scripts/check-doc-counters.test.mjs и 4 теста подфичи 4 Этапа 66).
 Текущий факт 15.10.2026: 91 файл / 228 suite / 819 тестов (регенерировано из vitest --reporter=json: `node scripts/regenerate-test-inventory.js vitest-client.json server/vitest-server.json`; добавлен scripts/check-menu-inventory.test.mjs — 17 тестов гейта инвентаря меню, пункты 1–2 разбора внешних аудитов). Сервер: 89 файлов / 451 suite / 1144 теста (0 failures). В полном клиентском прогоне флакует src/test/Wiki.versioning.test.tsx (в изоляции 6/6 зелёные) — кандидат в бэклог.
+
+Текущий факт 17.10.2026: 94 файла / 250 suite / 890 тестов (регенерировано из vitest --reporter=json: `node scripts/regenerate-test-inventory.js vitest-client.json vitest-server.json`). Прирост к 15.10: +3 файла / +71 тест — `scripts/check-alerts.test.mjs` (31, гейт правил алертинга), `scripts/check-backlog-schema.test.mjs` (22, гейт схемы бэклога), `scripts/migrations-lag-audit.test.mjs` (18, гейт отставания миграций). Сервер: 90 файлов / 456 suite / 1149 тестов (0 failures).

@@ -24,7 +24,8 @@
     "check:alerts": "node scripts/check-alerts.mjs",
     "check:migrations-lag": "node scripts/migrations-lag-audit.mjs",
     "check:counters": "node scripts/check-doc-counters.mjs",
-    "check:docs": "node scripts/check-doc-sync.mjs && node scripts/check-backlog-closed-body.mjs && node scripts/check-doc-counters.mjs",
+    "check:backlog": "node scripts/check-backlog-schema.mjs",
+    "check:docs": "node scripts/check-doc-sync.mjs && node scripts/check-backlog-closed-body.mjs && node scripts/check-doc-counters.mjs && node scripts/check-backlog-schema.mjs",
     "prepare": "husky"
   },
   "lint-staged": {
