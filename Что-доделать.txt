@@ -258,6 +258,53 @@
 - Распространить гейт счётчиков на шапки журналов (процесс-№5).
 - Разделить `AGENTS.md` (правила vs хроника) — дубль процесс-№6.
 
+### Дополнение 17.10.2026 — гейты SwiftMatch после 09.10 (сверено по файлам обоих репозиториев)
+
+> Метод: прочитаны `package.json`, `scripts/`, `.github/workflows/`, `monitoring/`, `playwright.config.ts` и `docker-compose.yml` обоих репозиториев. Ниже — только то, чего в Service Desk нет на 17.10.2026. Пункты 1–7 раздела выше (09.10) по-прежнему открыты; из восьми закрыт только пункт 8 (гейт доков подключён в CI — `.github/workflows/ci.yml:164`, джоба `docs-canon` → `npm run check:docs`).
+
+#### P2 — прод-риск (брать первыми)
+
+| # | Задача | Источник в SwiftMatch (file:line) | Доказательство отсутствия в Service Desk (file:line) |
+|---|--------|-----------------------------------|------------------------------------------------------|
+| 1 | Health-gated выкладка + авто-откат | `.github/workflows/deploy.yml:598-604` (снимок `:rollback` до сборки), `:613` (`--wait`), `:636-641` (`if: failure()`), `:650-659` (откат `--no-build --wait`); гейт `scripts/deploy-rollout-audit.mjs` (`package.json:22`) | `.github/workflows/` содержит только `ci.yml` — `deploy.yml` нет; база уже есть: healthcheck у сервисов в `docker-compose.yml` (`api` → `GET /api/health`, mysql, redis) |
+| 2 | Alert-rules + гейт алертов | `monitoring/alerts.yml`, `monitoring/prometheus.yml` (`rule_files`), `scripts/check-alerts.mjs` (`package.json:40`), джоба `alerts` в `.github/workflows/ci.yml` | `monitoring/` = только `prometheus.yml` + `grafana/`; файла `alerts.yml` нет, в `monitoring/prometheus.yml` нет `rule_files`/`alerting` |
+| 3 | Аудит отставания миграций (живая БД vs миграции) | `scripts/migrations-lag-audit.mjs` (`package.json:46`) | knex-миграции есть (`server/knexfile.js`, `server/migrations/`, script `migrate` в `server/package.json`), живой сверки нет |
+| 4 | Schema-drift офлайн + **live** (закрывает пункт 2 от 09.10) | `scripts/schema-drift-audit.mjs` (+ `.test.mjs`) | `server/prisma/schema.prisma` + knex-миграции есть, скрипта нет |
+| 5 | Аудит «данные ↔ `volumes:`» перед деплоем | `scripts/deploy-persistence-audit.mjs` | тома объявлены (`mysql_data`, `uploads_data`, `redis_data`, `mysql_backup`), проверки «куда пишет код ↔ что примонтировано» нет |
+
+#### P2 — второй эшелон
+
+| # | Задача | Источник в SwiftMatch (file:line) | Доказательство отсутствия в Service Desk (file:line) |
+|---|--------|-----------------------------------|------------------------------------------------------|
+| 6 | Секреты в трекаемых файлах (не только `.env`) | `scripts/secrets-leak-audit.mjs` | проверки секретов в трекаемом содержимом нет |
+| 7 | Уязвимости зависимостей с allowlist (причина + срок) | `scripts/dependency-audit.mjs` + `scripts/dependency-audit.allow.json` (`package.json:21`) | `ci.yml:25`, `ci.yml:54` — только `npm audit --audit-level=high --omit=dev` |
+| 8 | Паритет `.env` ↔ `.env.example` | `scripts/check-env-parity.mjs` (`package.json:27`), `scripts/env-consistency-audit.mjs` (`package.json:26`) | `.env.example` есть только в `server/`; в корне отсутствует |
+| 9 | Белый список кода не шире ENUM схемы | `scripts/check-enum-constraints.mjs` (`package.json:25`) | ENUM в миграциях есть (`server/migrations/*.js`, 3 вхождения) |
+| 10 | Уборка E2E-мусора + роли/браузеры в E2E | `scripts/e2e-cleanup.mjs`; отдельный шаг `if: always()` | `e2e/global-teardown.ts` отсутствует; `playwright.config.ts:9` — только `globalSetup`; `:13` — один `auth.json`; `:19` — единственный проект `chromium` (объединяет пункты 6–7 от 09.10) |
+
+#### P3 — статические аудиты (дёшево, стек совпадает)
+
+- `scripts/n-plus-one-audit.mjs` (`package.json:24`) — N+1 в цикле.
+- `scripts/order-by-audit.mjs` (`package.json:19`) — `ORDER BY` по несуществующей колонке.
+- `scripts/query-param-audit.mjs` (`package.json:45`) — мёртвые query-параметры.
+- `scripts/sql-explain-audit.mjs` — дубль пункта 3 от 09.10 (EXPLAIN топ-запросов).
+- `scripts/mysql-race-gate.mjs` (`package.json:30`) и `scripts/queue-smoke-gate.mjs` (`package.json:31`) — Redis используется (`server/src/middleware/idempotency.js`, `server/src/services/admin-ops.js`), есть тесты `server/src/__tests__/background.*`.
+- `scripts/swagger-coverage-audit.mjs` (`package.json:28`) — доля роутов с `@openapi`; в Service Desk есть `server/src/swagger.js`.
+- `scripts/typecheck-gate-audit.mjs` (`package.json:12`) и `scripts/e2e-gate-audit.mjs` (`package.json:20`) — мета-гейты «гейт не зелёный по построению».
+- `scripts/test-counter-audit.mjs` — инвентарь тестов + запрет заглушки «требует описания»; в Service Desk есть `scripts/regenerate-test-inventory.js` и `scripts/count-tests.js`.
+- `scripts/scan-mojibake.mjs` — битая кодировка в исходниках.
+- `scripts/check-ports.mjs` (`package.json:17`) и `scripts/check-keys.ps1` — дубли пунктов 4–5 от 09.10.
+- `scripts/wait-for-url.mjs`, `scripts/seed-migrations.mjs`, `scripts/schema-validate.mjs` — помощники запуска/выкладки; каталог `k6/` — нагрузочный прогон.
+
+#### Доки и процесс
+
+- `docs/rollback-plan.md` (forward-only миграции, RTO), `docs/runbook-keys.md`, `docs/vps-deploy-checklist.md` — дубль пункта 5 от 09.10, файлов нет.
+- Модульные `docs/AGENTS-*.md` и свод граблей `docs/AGENTS-pitfalls.md`: универсальные грабли (ASI-склейка `const f = …` + `[[x]] = …`, `DATE` уезжает на сутки, `|| 0` ломает CHECK, `ORDER BY` по несуществующему столбцу) переносятся без изменений кода.
+
+#### Не брать (контур отсутствует в Service Desk)
+
+Capacitor/Android/AdMob/RevenueCat, Supabase/S3/Rekognition, геолокация, антифрод, `blocks-coverage-audit` (блок-листы), `prod-mock-audit` (нет платных стоков), `check-native-config` (нет мобильного CI).
+
 ---
 
 ## Низкий приоритет (не блокирует)
