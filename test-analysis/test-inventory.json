@@ -1,27 +1,27 @@
 {
-  "generated": "2026-10-17T07:27:04.890Z",
+  "generated": "2026-10-17T07:44:47.020Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 91,
-    "suites": 228,
-    "tests": 819,
+    "files": 92,
+    "suites": 234,
+    "tests": 850,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 89,
-    "suites": 454,
-    "tests": 1147,
+    "files": 90,
+    "suites": 456,
+    "tests": 1149,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 180,
-    "suites": 682,
-    "tests": 1966,
+    "files": 182,
+    "suites": 690,
+    "tests": 1999,
     "all_passing": true
   },
   "e2e": {
@@ -59,6 +59,10 @@
     {
       "file": "src/test/TicketDetail.test.tsx",
       "tests": 32
+    },
+    {
+      "file": "scripts/check-alerts.test.mjs",
+      "tests": 31
     },
     {
       "file": "src/test/Files.expanded.test.tsx",
@@ -757,6 +761,10 @@
     {
       "file": "server/src/__tests__/migration.idempotency.test.js",
       "tests": 3
+    },
+    {
+      "file": "server/src/__tests__/metrics-endpoint.test.js",
+      "tests": 2
     },
     {
       "file": "server/src/__tests__/notify-failure.test.js",

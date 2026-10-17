@@ -163,6 +163,22 @@ jobs:
           node-version: 22
       - run: npm run check:docs
 
+  alerts:
+    # Гейт «правила алертинга» (пункт 2 «Перенос из SwiftMatch»): monitoring/alerts.yml
+    # разбирается без зависимостей (подмножество YAML), каждая метрика из expr обязана
+    # быть объявлена (# HELP/# TYPE) в server/src/middleware/metrics.js или
+    # server/src/app.js (или быть встроенной — up/ALERTS), каждое правило обязано
+    # иметь for/severity/summary/description, а файл — подключаться в monitoring/prometheus.yml
+    # (rule_files) и монтироваться в docker-compose.yml. Иначе алерт живёт в списке
+    # и никогда не срабатывает. Только чтение файлов, зависимости не нужны.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run check:alerts
+
   backup-verify:
     # Ежедневная проверка, что mysqldump реально разворачивается (Промт 4 «Доделать.rtf»).
     # В CI валидируем seed.sql (содержит CREATE TABLE + INSERT — те же проверки COUNT>0);

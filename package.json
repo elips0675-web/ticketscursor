@@ -21,6 +21,7 @@
     "check:console": "node check-console.mjs",
     "check:menu": "node scripts/check-menu-inventory.mjs",
     "check:headers": "node scripts/check-security-headers.mjs",
+    "check:alerts": "node scripts/check-alerts.mjs",
     "check:counters": "node scripts/check-doc-counters.mjs",
     "check:docs": "node scripts/check-doc-sync.mjs && node scripts/check-backlog-closed-body.mjs && node scripts/check-doc-counters.mjs",
     "prepare": "husky"

@@ -1,0 +1,98 @@
+# Правила алертинга Service Desk API.
+#
+# Все метрики в expr объявлены в server/src/middleware/metrics.js или
+# server/src/app.js (либо это встроенные метрики Prometheus: up, ALERTS, ...).
+# Файл читает Prometheus — он подключён в monitoring/prometheus.yml (rule_files)
+# и смонтирован в docker-compose.yml. Структуру и имена метрик проверяет
+# scripts/check-alerts.mjs (npm run check:alerts, джоба alerts в ci.yml).
+#
+# Пороги — не догма: они отражают сегодняшний single-instance прод
+# (одна реплика API, node_exporter на хосте). После появления Alertmanager
+# (доставка в Telegram/Slack) те же правила получат маршруты; сейчас Prometheus
+# показывает их в разделе Alerts, этого достаточно, чтобы дефект не жил молча.
+
+groups:
+  - name: servicedesk-api
+    rules:
+      - alert: ServiceDeskApiDown
+        expr: 'up{job="api"} == 0'
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'API Service Desk не отвечает на скрейп /api/metrics'
+          description: 'Метрика up для job=api держится в нуле дольше двух минут: контейнер api упал, не поднялся или не проходит healthcheck. Смотреть docker compose ps, логи контейнера api и GET /api/health.'
+
+      - alert: ServiceDeskApiErrorRate
+        expr: 'sum(rate(http_requests_total{status="5xx"}[5m])) / clamp_min(sum(rate(http_requests_total[5m])), 1) > 0.05'
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Больше пяти процентов ответов API — ошибки 5xx'
+          description: 'Доля ответов 5xx держится выше пяти процентов дольше пяти минут. Разложить http_requests_total по route и status, затем читать логи сервера по этим маршрутам.'
+
+      - alert: ServiceDeskApiLatencyP95
+        expr: 'histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket[5m])) by (le)) > 1000'
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: '95-й перцентиль ответа API выше секунды'
+          description: 'Ответы API медленнее секунды дольше десяти минут (гистограмма в миллисекундах). Разложить http_request_duration_ms по route и искать медленные запросы MySQL.'
+
+      - alert: ServiceDeskApiEventLoopLag
+        expr: 'nodejs_eventloop_lag_seconds > 0.5'
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Событийный цикл API задерживается больше чем на полсекунды'
+          description: 'nodejs_eventloop_lag_seconds выше половины секунды дольше десяти минут: синхронная работа в обработчике, тяжёлый JSON или блокирующий вызов. Искать синхронные циклы по большим выборкам и тяжёлые регулярные выражения.'
+
+      - alert: ServiceDeskApiHighMemory
+        expr: 'process_resident_memory_bytes > 1500000000'
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Процесс API держит больше полутора гигабайт резидентной памяти'
+          description: 'process_resident_memory_bytes выше 1.5 ГБ дольше пятнадцати минут — риск OOM-килла контейнера. Сравнить process_heap_bytes с process_resident_memory_bytes и проверить утечки в фоновых очередях.'
+
+      - alert: ServiceDeskApiCpuHigh
+        expr: 'rate(process_cpu_seconds_total[5m]) > 0.8'
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'API жжёт больше 80 процентов одного ядра'
+          description: 'Скорость роста process_cpu_seconds_total выше 0.8 дольше пятнадцати минут. Проверить фоновые задачи (retention, отчёты, IMAP) и медленные запросы.'
+
+      - alert: ServiceDeskApiRestarts
+        expr: 'resets(process_cpu_seconds_total[1h]) > 2'
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Процесс API перезапускался больше двух раз за час'
+          description: 'process_cpu_seconds_total сбрасывается при перезапуске процесса: больше двух сбросов за час — контейнер циклически падает. Смотреть docker compose ps, healthcheck и логи api перед рестартом.'
+
+  - name: servicedesk-targets
+    rules:
+      - alert: ServiceDeskNodeExporterDown
+        expr: 'up{job="node"} == 0'
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'node_exporter хоста недоступен для Prometheus'
+          description: 'Метрика up для job=node держится в нуле дольше пяти минут. Правила про память и CPU выше не сработают без этой цели — поднять node_exporter или починить адрес host.docker.internal:9100.'
+
+      - alert: ServiceDeskApiNoTraffic
+        expr: 'sum(rate(http_requests_total[15m])) == 0 and on() up{job="api"} == 1'
+        for: 30m
+        labels:
+          severity: info
+        annotations:
+          summary: 'API жив, но не получает запросов'
+          description: 'up равен единице, а трафика нет полчаса: похоже, сломан балансировщик, домен или прокси, а не само приложение. Проверить доступность снаружи.'
