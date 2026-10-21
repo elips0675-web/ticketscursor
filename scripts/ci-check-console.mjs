@@ -11,10 +11,11 @@
 //   5. запускает node check-console.mjs;
 //   6. гасит детей и выходит с кодом check-console.
 import { spawn, execSync } from 'node:child_process'
-import { writeFileSync } from 'node:fs'
 import net from 'node:net'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+
+import { refreshAuthJson } from './refresh-auth-json.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SERVER_DIR = path.join(ROOT, 'server')
@@ -74,40 +75,6 @@ async function ensurePortsFree(ports) {
   }
 }
 
-// JWT от dev-login живёт ~15 минут: протухший токен в auth.json даёт 401 на
-// всех публичных страницах (дефект 21.10.2026 — check-console FAILED на 14
-// страницах при исправном коде). Обновляем токен перед каждым обходом.
-async function refreshAuthJson() {
-  const res = await fetch(`${API_URL}/api/auth/dev-login`, { method: 'POST' })
-  const body = await res.json()
-  const token = body?.data?.token || body?.token
-  if (!res.ok || !token) throw new Error(`dev-login не дал токен: HTTP ${res.status}`)
-  writeFileSync(
-    path.join(ROOT, 'auth.json'),
-    JSON.stringify({
-      cookies: [],
-      origins: [
-        {
-          origin: 'http://localhost:5173',
-          localStorage: [
-            { name: 'token', value: token },
-            {
-              name: 'user',
-              value: JSON.stringify({
-                id: 1,
-                name: 'Алексей Петров',
-                email: 'alexey@example.com',
-                role: 'super_admin',
-              }),
-            },
-          ],
-        },
-      ],
-    }),
-  )
-  console.log('[runner] auth.json обновлён через dev-login')
-}
-
 async function main() {
   await ensurePortsFree([4000, 5173])
   const api = spawn('node', ['src/index.js'], { cwd: SERVER_DIR, stdio: 'inherit' })
@@ -121,7 +88,13 @@ async function main() {
   try {
     await waitForHttp(`${API_URL}/api/health`)
     await waitForHttp(BASE_URL)
-    await refreshAuthJson()
+    await refreshAuthJson({
+      apiUrl: API_URL,
+      authPath: path.join(ROOT, 'auth.json'),
+      origin: BASE_URL,
+      strict: true,
+    })
+    console.log('[runner] auth.json обновлён через dev-login')
 
     const code = await new Promise((resolve, reject) => {
       const check = spawn('node', ['check-console.mjs'], { cwd: ROOT, stdio: 'inherit' })

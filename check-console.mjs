@@ -1,5 +1,12 @@
 import { chromium } from 'playwright'
+import { existsSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { collectMenu } from './scripts/menu-inventory.mjs'
+import { refreshAuthJson } from './scripts/refresh-auth-json.mjs'
+
+const ROOT = dirname(fileURLToPath(import.meta.url))
+const API_URL = process.env.API_URL || 'http://localhost:4000'
 
 // Базовый список (страницы, которых нет в меню: уведомления, вложенные админ-разделы).
 const BASE_PAGES = [
@@ -30,6 +37,21 @@ const TRACKED_ISSUES = {
 }
 
 async function main() {
+  const authPath = join(ROOT, 'auth.json')
+  // JWT от dev-login живёт ~15 минут: протухший токен в auth.json даёт 401 на всех
+  // публичных страницах. Обновляем его перед обходом — механизм общий с CI-раннером
+  // (scripts/refresh-auth-json.mjs), здесь в мягком режиме: обновление не удалось →
+  // идём со старым токеном, но если auth.json нет вообще — падаем внятно.
+  const { refreshed, error } = await refreshAuthJson({
+    apiUrl: API_URL,
+    authPath,
+    origin: BASE,
+  })
+  if (refreshed) {
+    console.log('[check-console] auth.json обновлён через dev-login')
+  } else if (!existsSync(authPath)) {
+    throw new Error(`auth.json отсутствует и обновить его не удалось: ${error?.message || error}`)
+  }
   const browser = await chromium.launch({ headless: true })
   const context = await browser.newContext({ storageState: 'auth.json' })
   let allOk = true
