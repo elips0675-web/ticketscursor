@@ -1,11 +1,11 @@
 {
-  "generated": "2026-10-21T07:48:00.848Z",
+  "generated": "2026-10-21T17:30:39.165Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 94,
-    "suites": 251,
-    "tests": 894,
+    "files": 95,
+    "suites": 254,
+    "tests": 902,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
@@ -19,9 +19,9 @@
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 184,
-    "suites": 707,
-    "tests": 2043,
+    "files": 185,
+    "suites": 710,
+    "tests": 2051,
     "all_passing": true
   },
   "e2e": {
@@ -187,6 +187,10 @@
     {
       "file": "src/test/Search.expanded.test.tsx",
       "tests": 9
+    },
+    {
+      "file": "scripts/refresh-auth-json.test.mjs",
+      "tests": 8
     },
     {
       "file": "src/test/AdminHealth.test.tsx",

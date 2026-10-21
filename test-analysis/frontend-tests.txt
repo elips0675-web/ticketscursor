@@ -1,10 +1,10 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 94 файла / 251 suite / 894 тестов (все PASS, vitest --reporter=json от 21.10.2026)
+Реальный результат: 95 файла / 254 suite / 902 тестов (все PASS, vitest --reporter=json от 21.10.2026)
 Coverage (All files): 78.53 stmts / 69.74 branches / 70.34 funcs / 81.17 lines (пороги 76/67/68/78 — замер 17.10.2026, `npx vitest run --coverage`, отчёт `coverage/lcov-report/index.html`)
 
-===== ФАЙЛЫ (94 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (95 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 scripts/check-security-headers.test.mjs | 46 | Гейт периметра (P0): заголовки в nginx.conf/vercel.json, наследование add_header, helmet раньше express.static, Dockerfile копирует проверяемый конфиг
@@ -47,6 +47,7 @@ src/test/Login.test.tsx | 8 | Login: renders, submit, redirect, validation
 src/test/ResetPassword.expanded.test.tsx | 8 | ResetPassword: form, validation, API error, loading, success
 src/test/SocketContext.test.tsx | 8 | SocketContext: connect, disconnect, events, reconnection
 src/test/TicketWatchersCard.test.tsx | 8 | Watchers: подписка/отписка, бейдж, RBAC (флаг ticket_watchers)
+scripts/refresh-auth-json.test.mjs | 8 | Общий механизм обновления `auth.json` через dev-login: форма storageState для Playwright, origin по умолчанию и подставляемый, приём токена из `data.token` и из корня ответа, жёсткий режим падает на HTTP 500, мягкий не падает и отдаёт `refreshed: false`, вызов без `authPath` отвергается до обращения к сети
 src/test/AdminCustomFields.test.tsx | 7 | AdminCustomFields (Этап 68): список, create/edit/delete, confirm, RBAC; a11y-подписи icon-only кнопок
 src/test/Calculator.test.tsx | 7 | Calculator: renders, operations, keyboard
 src/test/PortalTrack.test.tsx | 7 | PortalTrack: поиск обращения, статус, события
@@ -113,4 +114,4 @@ Coverage (01.10.2026, перемерено --coverage): 78.58 stmts / 69.6 branc
 
 Текущий факт 17.10.2026: 94 файла / 250 suite / 890 тестов (регенерировано из vitest --reporter=json: `node scripts/regenerate-test-inventory.js vitest-client.json vitest-server.json`). Прирост к 15.10: +3 файла / +71 тест — `scripts/check-alerts.test.mjs` (31, гейт правил алертинга), `scripts/check-backlog-schema.test.mjs` (22, гейт схемы бэклога), `scripts/migrations-lag-audit.test.mjs` (18, гейт отставания миграций). Сервер: 90 файлов / 456 suite / 1149 тестов (0 failures).
 
-Текущий факт 21.10.2026: 94 файла / 251 suite / 894 тестов (регенерировано из vitest --reporter=json: `node scripts/regenerate-test-inventory.js vitest-client.json server/vitest-server.json`). Прирост к 17.10: +4 теста — `scripts/check-backlog-schema.test.mjs` 22→26 (проверка уникальности заголовков бэклога по базе до «(» — перенос находки 1.5 «ЗАДАНИЕ АГЕНТУ.txt» SwiftMatch). Сервер: 90 файлов / 456 suite / 1149 тестов (0 failures, перепрогон 21.10 подтвердил цифры 17.10).
+Текущий факт 21.10.2026: 95 файла / 254 suite / 902 тестов (регенерировано из vitest --reporter=json: `node scripts/regenerate-test-inventory.js vitest-client.json server/vitest-server.json`). Прирост к 17.10: +4 теста — `scripts/check-backlog-schema.test.mjs` 22→26 (проверка уникальности заголовков бэклога по базе до «(» — перенос находки 1.5 «ЗАДАНИЕ АГЕНТУ.txt» SwiftMatch). Сервер: 90 файлов / 456 suite / 1149 тестов (0 failures, перепрогон 21.10 подтвердил цифры 17.10). Позже того же дня: +1 файл / +8 тестов — `scripts/refresh-auth-json.test.mjs` (8 тестов общего механизма обновления `auth.json` через dev-login; до него механизм был продублирован в двух скриптах).
