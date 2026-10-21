@@ -51,7 +51,7 @@
 | **При коммите** | Husky → lint-staged | `eslint --fix` + `prettier --write` на изменённых файлах |
 | **В CI (GitHub Actions)** | `tsc --noEmit` | TypeScript strict type-check |
 | | `eslint . --max-warnings 100` | Синтаксис, неисп. переменные, импорты |
-| | `vitest run` | Юнит-тесты (890 клиентских + 1149 серверных) |
+| | `vitest run` | Юнит-тесты (894 клиентских + 1149 серверных) |
 | | `vite build` | Сборка production |
 | | `playwright test` (джоба `e2e`, P1 №11) | E2E (19 spec / 61 тест) на MySQL-контейнере `mysql:8.4`, сервер:4000 + vite:5173 через webServer `playwright.config.ts:23-34`; БД готовит `scripts/e2e-db-setup.mjs` (общий модуль `server/test-db-setup.js`) |
 | | `check-console` (шаг джобы `e2e`, P1 №11) | 17 страниц через `scripts/ci-check-console.mjs` (поднимает server+vite, ждёт `/api/health`, гоняет `check-console.mjs`) |
@@ -64,7 +64,8 @@
 | **После каждого изменения** | `node check-console.mjs` | Playwright обходит 26 страниц (`BASE_PAGES` + пункты меню из `scripts/menu-inventory.mjs`: `/`, `/wiki`, `/chats`, `/tickets`, `/employees`, `/search`, админ-разделы и др.) на: `[OK/RU]` (нет console.error/pageerror + есть кириллица); подтверждённые дефекты — в `TRACKED_ISSUES`, гейт напоминает убрать протухшую запись; в CI — шаг джобы `e2e` |
 | **Синхронность доков** | `node scripts/check-doc-sync.mjs` | MD5-сверка копий `Что-доделать/Что сделано/AGENTS.md` (root ↔ test-analysis) + наличие актуального `test-inventory.json` и `frontend/server-tests.txt` |
 | **Канон формы бэклога** (джоба `docs-canon`, правило 20) | `npm run check:docs` = `check-doc-sync` + `check-backlog-closed-body.mjs` + `check-doc-counters.mjs` + `check-backlog-schema.mjs` | Закрытая запись = одна строка ✅ + ссылка на «Что сделано.txt»; маркер закрытия строго в конце заголовка; секция с ЗАКРЫТО/✅ и телом = FAIL; ЗАКРЫТО-дата обязана быть в «Что сделано.txt»; инструмент `stage-section.mjs` не пишет надгробие |
-| **Схема бэклога** (`npm run check:backlog`) | `scripts/check-backlog-schema.mjs` (+22 теста) | Лимит 450 строк/90 000 байт; колонка ID — формат `PREFIX-NN` (legacy `G1`/`Z8`) без дублей во всём файле; число ячеек строки = числу ячеек шапки (сдвиг колонок прячет статус); в таблицах со столбцом «Статус» ячейка начинается с ⏳/✅/—; у открытых строк секции «ВАЖНО (P1)» — «(проверено ДД.ММ.ГГГГ)», у закрытых — «✅ ДД.ММ.ГГГГ» |
+| **Схема бэклога** (`npm run check:backlog`) | `scripts/check-backlog-schema.mjs` (+26 тестов) | Лимит 450 строк/90 000 байт; колонка ID — формат `PREFIX-NN` (legacy `G1`/`Z8`) без дублей во всём файле; число ячеек строки = числу ячеек шапки (сдвиг колонок прячет статус); в таблицах со столбцом «Статус» ячейка начинается с ⏳/✅/—; у открытых строк секции «ВАЖНО (P1)» — «(проверено ДД.ММ.ГГГГ)», у закрытых — «✅ ДД.ММ.ГГГГ» |
+| **Быстрый старт сессии** (перенос «ЗАДАНИЕ АГЕНТУ.txt» SwiftMatch 21.10) | `npm run stage:context` / `stage:preflight` / `stage:gates` | `scripts/stage-context.mjs` — git status/log, счётчики `test-inventory.json`, открытые этапы «ПЛАН ДОРАБОТКИ», хвост «Что сделано.txt» одной командой; `scripts/stage-preflight.mjs` — быстрые гейты ДО правок (check:docs, lint, type-check), exit 1 при красных; `scripts/stage-gates.mjs` — карта «изменённые файлы → обязательные гейты» (`server/src/**` → серверные тесты, `server/migrations/**` → `check:migrations-lag`, `*.md/*.txt` → `check:docs`, `nginx.conf`/`vercel.json`/docker → `check:headers`) |
 | **Pre-commit hook** | `.husky/pre-commit` | `npx lint-staged` — автофикс и форматирование |
 
 ## Сделано

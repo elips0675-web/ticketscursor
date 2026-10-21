@@ -1,7 +1,7 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 94 файла / 250 suite / 890 тестов (все PASS, vitest --reporter=json от 17.10.2026)
+Реальный результат: 94 файла / 251 suite / 894 тестов (все PASS, vitest --reporter=json от 21.10.2026)
 Coverage (All files): 78.53 stmts / 69.74 branches / 70.34 funcs / 81.17 lines (пороги 76/67/68/78 — замер 17.10.2026, `npx vitest run --coverage`, отчёт `coverage/lcov-report/index.html`)
 
 ===== ФАЙЛЫ (94 шт, все реальные, из vitest --reporter=json) =====
@@ -112,3 +112,5 @@ Coverage (01.10.2026, перемерено --coverage): 78.58 stmts / 69.6 branc
 Текущий факт 15.10.2026: 91 файл / 228 suite / 819 тестов (регенерировано из vitest --reporter=json: `node scripts/regenerate-test-inventory.js vitest-client.json server/vitest-server.json`; добавлен scripts/check-menu-inventory.test.mjs — 17 тестов гейта инвентаря меню, пункты 1–2 разбора внешних аудитов). Сервер: 89 файлов / 451 suite / 1144 теста (0 failures). В полном клиентском прогоне флакует src/test/Wiki.versioning.test.tsx (в изоляции 6/6 зелёные) — кандидат в бэклог.
 
 Текущий факт 17.10.2026: 94 файла / 250 suite / 890 тестов (регенерировано из vitest --reporter=json: `node scripts/regenerate-test-inventory.js vitest-client.json vitest-server.json`). Прирост к 15.10: +3 файла / +71 тест — `scripts/check-alerts.test.mjs` (31, гейт правил алертинга), `scripts/check-backlog-schema.test.mjs` (22, гейт схемы бэклога), `scripts/migrations-lag-audit.test.mjs` (18, гейт отставания миграций). Сервер: 90 файлов / 456 suite / 1149 тестов (0 failures).
+
+Текущий факт 21.10.2026: 94 файла / 251 suite / 894 тестов (регенерировано из vitest --reporter=json: `node scripts/regenerate-test-inventory.js vitest-client.json server/vitest-server.json`). Прирост к 17.10: +4 теста — `scripts/check-backlog-schema.test.mjs` 22→26 (проверка уникальности заголовков бэклога по базе до «(» — перенос находки 1.5 «ЗАДАНИЕ АГЕНТУ.txt» SwiftMatch). Сервер: 90 файлов / 456 suite / 1149 тестов (0 failures, перепрогон 21.10 подтвердил цифры 17.10).

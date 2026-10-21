@@ -26,6 +26,9 @@
     "check:counters": "node scripts/check-doc-counters.mjs",
     "check:backlog": "node scripts/check-backlog-schema.mjs",
     "check:docs": "node scripts/check-doc-sync.mjs && node scripts/check-backlog-closed-body.mjs && node scripts/check-doc-counters.mjs && node scripts/check-backlog-schema.mjs",
+    "stage:context": "node scripts/stage-context.mjs",
+    "stage:preflight": "node scripts/stage-preflight.mjs",
+    "stage:gates": "node scripts/stage-gates.mjs",
     "prepare": "husky"
   },
   "lint-staged": {
