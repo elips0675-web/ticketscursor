@@ -194,6 +194,8 @@
 | NEW-07 | Встроенный ИИ-ассистент (LibreDesk, FreeITSM) | LLM-интеграций = 0 | **P3, за рамками** (privacy) |
 | NEW-08 | Управление проектами (Redmine) | `project` в `server/src/**` = только пути `projectRoot` | **P3, бэклог**; Kerberos-SSO — экзотика, не планировать |
 
+**Итерация «Аналоги.txt» (23.10.2026)** — проверено по внешним источникам (5 самых рискованных имён): Peppermint архивирован ровно 17.07.2026; GoatFlow и Qisutu — реальные проекты (Qisutu на Perl, есть CMDB); **Salamandr в community-сборке ограничен 5 агентами**, **Tiqora — 0 звёзд и «production use is not yet recommended»**. Новых пунктов итерация не дала: CMDB/каталог услуг/entities — уже 69–71. Сверка критериев с кодом и источники — раздел 13 в «Service Desk против аналогов рынка.md».
+
 **Полезное из GLPI (README 07.10)** — детали/цитаты grep в `CHANGELOG-archive.md`:
 
 | ID | Фича | Предложение |
