@@ -59,26 +59,9 @@ export async function prepareTestDatabase() {
   await addColumnIfNotExists(fix, dbName, 'tickets', 'escalated_at', 'DATETIME NULL')
   await addColumnIfNotExists(fix, dbName, 'tickets', 'escalation_level', 'INT NOT NULL DEFAULT 0')
 
-  // Create custom field tables if not exist
-  await fix.execute(`CREATE TABLE IF NOT EXISTS custom_field_definitions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    field_type VARCHAR(50) NOT NULL DEFAULT 'text',
-    options JSON,
-    required TINYINT(1) NOT NULL DEFAULT 0,
-    sort_order INT NOT NULL DEFAULT 0,
-    enabled TINYINT(1) NOT NULL DEFAULT 1,
-    created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
-    updated_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3)
-  )`)
-  await fix.execute(`CREATE TABLE IF NOT EXISTS custom_field_values (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    ticket_id INT NOT NULL,
-    field_id INT NOT NULL,
-    value TEXT,
-    created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
-    updated_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3)
-  )`)
+  // custom_field_definitions/custom_field_values создаются миграцией
+  // server/migrations/20261023_custom_field_definitions.js — харнесс их больше
+  // не дублирует (здесь жила колонка field_type вместо type и без UNIQUE-ключа).
 
   await fix.end()
 

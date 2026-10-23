@@ -1,8 +1,8 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 95 файла / 254 suite / 902 тестов (все PASS, vitest --reporter=json от 21.10.2026)
-Coverage (All files): 78.53 stmts / 69.74 branches / 70.34 funcs / 81.17 lines (пороги 76/67/68/78 — замер 17.10.2026, `npx vitest run --coverage`, отчёт `coverage/lcov-report/index.html`)
+Реальный результат: 95 файлов / 255 suite / 908 тестов (все PASS, vitest --reporter=json от 23.10.2026)
+Coverage (All files): 78.53 stmts / 69.74 branches / 70.34 funcs / 81.17 lines (пороги 76/67/68/78 — замер 23.10.2026, `npx vitest run --coverage`, отчёт `coverage/lcov-report/index.html`)
 
 ===== ФАЙЛЫ (95 шт, все реальные, из vitest --reporter=json) =====
 
@@ -19,7 +19,7 @@ scripts/check-backlog-closed-body.test.mjs | 26 | Гейт канона форм
 src/test/Calendar.expanded.test.tsx | 18 | Calendar: клик по дню, события, create/edit/delete, RBAC, CSV export, навигация
 src/test/Dashboard.expanded.test.tsx | 18 | Dashboard: stat cards, charts, employees, onClick/onKeyDown handlers
 src/test/Kanban.test.tsx | 18 | Kanban: rendering, DnD, column counts, ticket cards, empty state, optimis
-scripts/migrations-lag-audit.test.mjs | 18 | Гейт отставания миграций (RLS-03): knex `migrations.extension`, `.sql` рядом с `.js`, неприменяемые таблицы/колонки; зелёный на репозитории и красный на каждом способе потери миграции
+scripts/migrations-lag-audit.test.mjs | 24 | Гейт отставания миграций (RLS-03): knex `migrations.extension`, `.sql` рядом с `.js`, неприменяемые таблицы/колонки, покрытие моделей prisma таблицами (CON-02); зелёный на репозитории и красный на каждом способе потери миграции
 scripts/check-menu-inventory.test.mjs | 17 | Гейт инвентаря меню (пункты 1–2 разбора внешних аудитов): маршрут в App.tsx, ключ ru+en, роли из EmployeeRole, флаг+useFeature, дубликаты; «переименованный массив = FAIL»; парсер (collectRoutes, resolveKey, extractArrayBody, parseMenuObject)tic drop
 src/test/AdminSettings.test.tsx | 17 | AdminSettings: renders, toggles, rollout percent, Save, clamp
 src/test/ChatDetail.test.tsx | 15 | ChatDetail: messages, send, loading, empty, virtual scroll (300 — подмножество через FakeResizeObserver), delete, typing
@@ -115,3 +115,5 @@ Coverage (01.10.2026, перемерено --coverage): 78.58 stmts / 69.6 branc
 Текущий факт 17.10.2026: 94 файла / 250 suite / 890 тестов (регенерировано из vitest --reporter=json: `node scripts/regenerate-test-inventory.js vitest-client.json vitest-server.json`). Прирост к 15.10: +3 файла / +71 тест — `scripts/check-alerts.test.mjs` (31, гейт правил алертинга), `scripts/check-backlog-schema.test.mjs` (22, гейт схемы бэклога), `scripts/migrations-lag-audit.test.mjs` (18, гейт отставания миграций). Сервер: 90 файлов / 456 suite / 1149 тестов (0 failures).
 
 Текущий факт 21.10.2026: 95 файла / 254 suite / 902 тестов (регенерировано из vitest --reporter=json: `node scripts/regenerate-test-inventory.js vitest-client.json server/vitest-server.json`). Прирост к 17.10: +4 теста — `scripts/check-backlog-schema.test.mjs` 22→26 (проверка уникальности заголовков бэклога по базе до «(» — перенос находки 1.5 «ЗАДАНИЕ АГЕНТУ.txt» SwiftMatch). Сервер: 90 файлов / 456 suite / 1149 тестов (0 failures, перепрогон 21.10 подтвердил цифры 17.10). Позже того же дня: +1 файл / +8 тестов — `scripts/refresh-auth-json.test.mjs` (8 тестов общего механизма обновления `auth.json` через dev-login; до него механизм был продублирован в двух скриптах).
+
+Текущий факт 23.10.2026: 95 файлов / 255 suite / 908 тестов (регенерировано из vitest --reporter=json: `node scripts/regenerate-test-inventory.js vitest-client.json server/vitest-server.json`). Прирост к 21.10: +6 тестов — `scripts/migrations-lag-audit.test.mjs` 18→24 (гейт теперь сверяет модели prisma с таблицами после `migrate:latest`: так поймали CON-02; плюс защита от схемы кастомных полей вне миграций). Сервер: 90 файлов / 456 suite / 1149 тестов (0 failures).

@@ -18,7 +18,10 @@ import {
   MIGRATIONS_DIR,
   KNEXFILE,
   SETUP_DB_NAME,
+  PRISMA_SCHEMA,
   parseKnexExtensions,
+  parsePrismaModels,
+  auditModelCoverage,
   migrationName,
   migrationExtension,
   auditMigrationFiles,
@@ -185,5 +188,55 @@ describe('гейт migrations-lag: имя БД для --setup', () => {
     expect(SETUP_DB_NAME).toBe('servicedesk_migrations_check')
     expect(MIGRATIONS_DIR).toBe('server/migrations')
     expect(KNEXFILE).toBe('server/knexfile.js')
+  })
+})
+
+describe('гейт migrations-lag: покрытие моделей prisma таблицами (CON-02)', () => {
+  const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+  const read = (rel) => readFileSync(path.join(root, rel), 'utf8')
+
+  it('разбирает модели и не считает моделью строку-комментарий', () => {
+    const models = parsePrismaModels(
+      ['// model commented {', '/// model doc {', 'model real_one {', '  id Int', '}', 'model real_two {', '}'].join('\n'),
+    )
+    expect(models).toEqual(['real_one', 'real_two'])
+  })
+
+  it('на настоящей схеме находит модели кастомных полей (иначе гейту нечего сверять)', () => {
+    const models = parsePrismaModels(read(PRISMA_SCHEMA))
+    expect(models.length).toBeGreaterThan(30)
+    expect(models).toContain('custom_field_definitions')
+    expect(models).toContain('custom_field_values')
+  })
+
+  it('модель без таблицы — находка missing-table с именем модели', () => {
+    const { findings, stats } = auditModelCoverage({
+      models: ['tickets', 'custom_field_definitions'],
+      tables: ['tickets', 'knex_migrations', 'knex_migrations_lock'],
+    })
+    expect(kinds(findings)).toEqual(['missing-table'])
+    expect(findings[0].msg).toContain('custom_field_definitions')
+    expect(stats.missing).toBe(1)
+  })
+
+  it('все модели покрыты — находок нет', () => {
+    const { findings, stats } = auditModelCoverage({ models: ['a', 'b'], tables: ['a', 'b', 'knex_migrations'] })
+    expect(findings).toEqual([])
+    expect(stats.models).toBe(2)
+    expect(stats.missing).toBe(0)
+  })
+
+  it('пустой разбор моделей — находка vacuous, а не «всё сошлось»', () => {
+    const { findings } = auditModelCoverage({ models: [], tables: ['tickets'] })
+    expect(kinds(findings)).toEqual(['vacuous'])
+  })
+
+  it('схема кастомных полей объявлена только миграцией, а не харнессом', () => {
+    const migration = listMigrationFiles().find((file) => file.includes('custom_field_definitions'))
+    expect(migration).toBeDefined()
+    expect(read(path.join(MIGRATIONS_DIR, migration))).toContain("createTable('custom_field_definitions'")
+
+    const harness = readFileSync(path.join(root, 'server/test-db-setup.js'), 'utf8')
+    expect(harness).not.toContain('CREATE TABLE IF NOT EXISTS custom_field')
   })
 })

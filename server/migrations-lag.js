@@ -1,4 +1,4 @@
-// Серверная часть гейта «migrations-lag» (scripts/migrations-lag-audit.mjs).
+﻿// Серверная часть гейта «migrations-lag» (scripts/migrations-lag-audit.mjs).
 //
 // Лежит в server/, потому что knex и mysql2 установлены только здесь
 // (корневой package.json их не содержит). Гейт импортирует этот модуль
@@ -8,6 +8,11 @@
 // Все параметры подключения берутся из того же knexfile.js и тех же env, что и
 // `npm run migrate`: гейт не держит собственную копию конфига (иначе он сверял
 // бы реальность со своей константой).
+//
+// Список таблиц читается ТЕМ ЖЕ пулом, что и применённые миграции (one pool):
+// отдельный knex для information_schema падал на временной БД с ER_BAD_DB_ERROR
+// (1 отказ из 3–6 прогонов `--setup`) — лишнее соединение к только что
+// созданной схеме не успевало её увидеть.
 import { createConnection } from 'mysql2/promise'
 import knexFactory from 'knex'
 import path from 'node:path'
@@ -36,15 +41,26 @@ export function defaultDatabaseName() {
   return process.env.DB_NAME || 'servicedesk'
 }
 
-/** Имя последней применённой миграции и число применённых строк в knex_migrations. */
-export async function readAppliedMigrations(dbName, { migrate = false } = {}) {
+async function readTableNames(knex, dbName) {
+  const rows = await knex('information_schema.tables')
+    .where({ table_schema: dbName, table_type: 'BASE TABLE' })
+    .select('table_name as name')
+  return rows.map((row) => row.name)
+}
+
+/**
+ * Применённые миграции (и, при `withTables`, список базовых таблиц — тем же
+ * соединением, что и `migrate:latest`, без второго пула).
+ */
+export async function readAppliedMigrations(dbName, { migrate = false, withTables = false } = {}) {
   const knex = knexFactory(configFor(dbName))
   try {
     if (migrate) await knex.migrate.latest()
-    const exists = await knex.schema.hasTable(MIGRATION_TABLE)
-    if (!exists) return { applied: [], tableExists: false }
+    const tableExists = await knex.schema.hasTable(MIGRATION_TABLE)
+    const tables = withTables ? await readTableNames(knex, dbName) : []
+    if (!tableExists) return { applied: [], tableExists, tables }
     const rows = await knex(MIGRATION_TABLE).select('name').orderBy('id', 'asc')
-    return { applied: rows.map((row) => row.name), tableExists: true }
+    return { applied: rows.map((row) => row.name), tableExists, tables }
   } finally {
     await knex.destroy()
   }

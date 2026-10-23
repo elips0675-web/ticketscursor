@@ -23,6 +23,13 @@
 //   3. **Режим `--setup`.** Поднимает временную БД, прогоняет `knex.migrate:latest`
 //      на пустой базе и сверяет результат — то есть проверяет, что свежая выкладка
 //      действительно получает все объекты (это и есть «живой» сценарий деплоя).
+//   4. **Покрытие моделей prisma (на живой БД).** Каждая модель из
+//      `server/prisma/schema.prisma` обязана иметь одноимённую таблицу после
+//      применения миграций. Ровно этого не хватало CON-02: таблицы
+//      `custom_field_definitions`/`custom_field_values` создавал только
+//      standalone-скрипт и тест-харнесс, поэтому свежая БД их не получала, а
+//      `GET /api/admin/custom-fields` отвечал 500. Пустой список моделей — тоже
+//      FAIL (разбор сломался — значит проверять нечего, а не «всё хорошо»).
 //
 // Режимы:
 //   node scripts/migrations-lag-audit.mjs              — статика + живая БД из env (DB_NAME)
@@ -43,6 +50,7 @@ export const MIGRATIONS_DIR = 'server/migrations'
 export const KNEXFILE = 'server/knexfile.js'
 export const MIGRATION_TABLE = 'knex_migrations'
 export const SETUP_DB_NAME = 'servicedesk_migrations_check'
+export const PRISMA_SCHEMA = 'server/prisma/schema.prisma'
 
 /** Расширения, которые knex подхватывает по `server/knexfile.js`. */
 export function parseKnexExtensions(knexfileText) {
@@ -55,6 +63,47 @@ export function parseKnexExtensions(knexfileText) {
   if (extMatch) extensions.add(extMatch[1].startsWith('.') ? extMatch[1] : `.${extMatch[1]}`)
   if (extensions.size === 0) extensions.add('.js')
   return [...extensions]
+}
+
+/**
+ * Модели prisma: строка `model Имя {`. Строки-комментарии (`// model …`) не
+ * считаются — иначе гейт был бы зелёным от упоминания таблицы в комментарии.
+ */
+export function parsePrismaModels(prismaText) {
+  const models = []
+  for (const rawLine of prismaText.split(/\r?\n/)) {
+    const line = rawLine.trim()
+    if (line.startsWith('//') || line.startsWith('///')) continue
+    const m = /^model\s+([A-Za-z_]\w*)\s*\{/.exec(line)
+    if (m) models.push(m[1])
+  }
+  return models
+}
+
+/**
+ * Покрытие моделей таблицами. Принимает данные, а не читает их: тест гоняет
+ * функцию без БД. Пустой список моделей — находка `vacuous`, а не «всё сошлось».
+ */
+export function auditModelCoverage({ models, tables, source = PRISMA_SCHEMA }) {
+  const findings = []
+  if (!models || models.length === 0) {
+    findings.push({
+      kind: 'vacuous',
+      msg: `${source}: не разобрано ни одной модели — проверять покрытие нечем (сломался разбор, а не схема)`,
+    })
+    return { findings, stats: { models: 0, tables: tables ? tables.length : 0, missing: 0 } }
+  }
+
+  const present = new Set(tables || [])
+  const missing = models.filter((model) => !present.has(model))
+  for (const model of missing) {
+    findings.push({
+      kind: 'missing-table',
+      msg: `${source}: модель ${model} не создаётся ни одной миграцией — таблицы ${model} нет в БД (первый запрос к ней даёт 500)`,
+    })
+  }
+
+  return { findings, stats: { models: models.length, tables: present.size, missing: missing.length } }
 }
 
 /** Имя миграции для knex — имя файла без расширения. */
@@ -153,6 +202,7 @@ export function listMigrationFiles() {
 function readSources() {
   return {
     knexfileText: readFileSync(path.join(ROOT, KNEXFILE), 'utf8'),
+    prismaText: readFileSync(path.join(ROOT, PRISMA_SCHEMA), 'utf8'),
     files: listMigrationFiles(),
   }
 }
@@ -161,22 +211,39 @@ async function runLive({ setup, dbName }) {
   const { readAppliedMigrations, createDatabase, dropDatabase, defaultDatabaseName } = await import(
     pathToFileURL(path.join(ROOT, 'server/migrations-lag.js')).href
   )
-  const extensions = parseKnexExtensions(readSources().knexfileText)
+  const { knexfileText, prismaText } = readSources()
+  const extensions = parseKnexExtensions(knexfileText)
   const files = listMigrationFiles()
+  const models = parsePrismaModels(prismaText)
+
+  const withCoverage = (state, tables, label) => {
+    if (!state.stats || state.stats.applied === 0) {
+      return { findings: state.findings, stats: { ...state.stats }, target: label }
+    }
+    const coverage = auditModelCoverage({ models, tables })
+    return {
+      findings: [...state.findings, ...coverage.findings],
+      stats: { ...state.stats, ...coverage.stats },
+      target: label,
+    }
+  }
 
   if (!setup) {
     const target = dbName || defaultDatabaseName()
-    const { applied, tableExists } = await readAppliedMigrations(target)
+    const { applied, tableExists, tables } = await readAppliedMigrations(target, { withTables: true })
     const state = auditMigrationState({ files, applied, extensions, tableExists })
-    return { ...state, target }
+    if (!tableExists) return { ...state, target }
+    return withCoverage(state, tables, target)
   }
 
   const scratch = dbName || SETUP_DB_NAME
   await createDatabase(scratch)
   try {
-    const { applied, tableExists } = await readAppliedMigrations(scratch, { migrate: true })
+    const { applied, tableExists, tables } = await readAppliedMigrations(scratch, { migrate: true, withTables: true })
     const state = auditMigrationState({ files, applied, extensions, tableExists })
-    return { ...state, target: `${scratch} (свежая БД, migrate:latest)` }
+    const label = `${scratch} (свежая БД, migrate:latest)`
+    if (!tableExists) return { ...state, target: label }
+    return withCoverage(state, tables, label)
   } finally {
     await dropDatabase(scratch)
   }
@@ -218,8 +285,13 @@ async function main() {
     console.log(
       `• БД ${live.target}: применено ${live.stats.applied} из ${live.stats.files} файлов (lag ${live.stats.lag}, drift ${live.stats.drift})`,
     )
+    if (live.stats.models) {
+      console.log(
+        `• покрытие моделей prisma: ${live.stats.models} моделей, ${live.stats.tables} таблиц, без таблицы ${live.stats.missing}`,
+      )
+    }
   } else if (offline) {
-    console.log('• статический режим (--offline): применённое состояние БД НЕ проверено')
+    console.log('• статический режим (--offline): применённое состояние БД и покрытие моделей prisma НЕ проверены')
   }
 
   if (findings.length > 0) {
@@ -228,7 +300,10 @@ async function main() {
     process.exit(1)
   }
 
-  console.log(`\nИтог: миграции целостны (${files.length} файлов, все применимы${live ? ' и применены' : ''}) ✓`)
+  const coverageNote = live && live.stats.models ? `, модели prisma покрыты таблицами (${live.stats.models})` : ''
+  console.log(
+    `\nИтог: миграции целостны (${files.length} файлов, все применимы${live ? ' и применены' : ''}${coverageNote}) ✓`,
+  )
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
