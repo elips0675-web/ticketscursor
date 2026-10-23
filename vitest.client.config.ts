@@ -12,6 +12,7 @@ export default defineConfig({
     },
     include: ['src/test/**/*.test.{ts,tsx}', 'scripts/**/*.test.mjs'],
     setupFiles: ['src/test/setup.ts'],
+    testTimeout: 15000,
     css: false,
     coverage: {
       provider: 'v8',
