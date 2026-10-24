@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-24T08:09:37.685Z",
+  "generated": "2026-10-24T12:33:11.641Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
@@ -11,17 +11,17 @@
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 94,
-    "suites": 479,
-    "tests": 1249,
+    "files": 95,
+    "suites": 481,
+    "tests": 1264,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 193,
-    "suites": 742,
-    "tests": 2183,
+    "files": 194,
+    "suites": 744,
+    "tests": 2198,
     "all_passing": true
   },
   "e2e": {
@@ -595,6 +595,10 @@
       "tests": 12
     },
     {
+      "file": "server/src/__tests__/clamav.expanded.test.js",
+      "tests": 11
+    },
+    {
       "file": "server/src/__tests__/idor.test.js",
       "tests": 11
     },
@@ -616,6 +620,10 @@
     },
     {
       "file": "server/src/__tests__/ticket-relations.test.js",
+      "tests": 11
+    },
+    {
+      "file": "server/src/__tests__/validate-upload.test.js",
       "tests": 11
     },
     {
@@ -667,16 +675,16 @@
       "tests": 8
     },
     {
-      "file": "server/src/__tests__/clamav.expanded.test.js",
-      "tests": 8
-    },
-    {
       "file": "server/src/__tests__/ticket-merge.test.js",
       "tests": 8
     },
     {
       "file": "server/src/middleware/__tests__/metrics.test.js",
       "tests": 8
+    },
+    {
+      "file": "server/src/__tests__/health-ready.test.js",
+      "tests": 7
     },
     {
       "file": "server/src/__tests__/sla.timezone.test.js",
@@ -704,10 +712,6 @@
     },
     {
       "file": "server/src/__tests__/csat.route.test.js",
-      "tests": 6
-    },
-    {
-      "file": "server/src/__tests__/health-ready.test.js",
       "tests": 6
     },
     {

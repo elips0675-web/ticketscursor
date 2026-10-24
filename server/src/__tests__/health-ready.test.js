@@ -25,6 +25,7 @@ describe('buildReadiness — CHW-03', () => {
       queue: { mode: 'bullmq', ok: true },
       degraded: false,
     })
+    expect(body.clamav).toMatchObject({ required: false, ok: true })
     expect(typeof body.timestamp).toBe('string')
   })
 
@@ -75,5 +76,19 @@ describe('buildReadiness — CHW-03', () => {
   it('проверка БД идёт через SELECT 1 без интерполяции', async () => {
     await buildReadiness()
     expect(prismaMock.$queryRawUnsafe).toHaveBeenCalledWith('SELECT 1')
+  })
+
+  it('production без CLAMAV_ENABLED → 200 degraded, clamav not ok', async () => {
+    const saved = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+    try {
+      const { status, body } = await buildReadiness()
+      expect(status).toBe(200)
+      expect(body.status).toBe('degraded')
+      expect(body.clamav).toMatchObject({ enabled: false, required: true, ok: false })
+      expect(body.degraded).toBe(true)
+    } finally {
+      process.env.NODE_ENV = saved
+    }
   })
 })

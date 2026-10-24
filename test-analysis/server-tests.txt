@@ -1,12 +1,12 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 94 файлов / 479 suite / 1249 теста (все PASS, vitest --reporter=json от 24.10.2026)
+Реальный результат: 95 файлов / 481 suite / 1264 теста (все PASS, vitest --reporter=json от 24.10.2026)
 Этап 68 закрыт 26.09: дыры 0% (injection 15, fileCheck 9, ldap 10, index 5, api-tokens.routes 10, canned-responses.routes 15, telegram.expanded 27) — все файлы с 0% покрытия закрыты.
 Coverage (All files): 80.99 stmts / 74.65 branches / 81.48 funcs / 82.67 lines (пороги 78/72/79/80 — замер 17.10.2026, `cd server && npx vitest run --coverage`, отчёт `server/coverage/lcov-report/index.html`)
 ВАЖНО: имя тестовой БД переопределяется через TEST_DB_NAME (server/vitest.global-setup.js:6) — иначе параллельные прогоны дропают общий servicedesk_test друг другу.
 
-===== ФАЙЛЫ (94 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (95 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 server/src/api.test.js | 184 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk, feature rollout)
@@ -62,16 +62,17 @@ server/src/__tests__/chats-edit.routes.test.js | 9 | PUT /chats/:chatId/messages
 server/src/__tests__/fileCheck.test.js | 9 | fileCheck middleware (Этап 68): MIME/size/magic-bytes — валидный файл, неверный MIME → 415, слишком большой → 413, пустой файл
 server/src/__tests__/storage.test.js | 9 | Storage: file upload, delete, MIME validation
 server/src/__tests__/background.sub.test.js | 8 | Background (sub-процессы): эскалация по интервалам, cleanup >90 дней, DLQ >10 → email, stopImapPolling без запуска
-server/src/__tests__/clamav.expanded.test.js | 8 | ClamAV: scan, clean file, infected file, timeout
+server/src/__tests__/clamav.expanded.test.js | 11 | ClamAV (CHW-05): clean file, infected file, timeout, fail-closed на error exit/spawn error/отсутствующий файл, clamavStatus dev/prod/со сканером
 server/src/__tests__/ticket-merge.test.js | 8 | Merge: перенос сообщений, RBAC на merge
 server/src/__tests__/sla.timezone.test.js | 7 | SLA: TIMEZONE из настроек — дедлайны в верном TZ, DST (Vladivostok/London/NY), невалидный TZ → fallback
 server/src/__tests__/soft-delete.test.js | 7 | 
-server/src/__tests__/validateUpload.test.js | 7 | Upload validation: MIME, size, magic bytes
+server/src/__tests__/validateUpload.test.js | 7 | Upload validation: MIME, size, magic bytes, 400 с кодом INVALID_FILE_TYPE
+server/src/__tests__/validate-upload.test.js | 11 | Upload + ClamAV (CHW-05): production без сканера → 503 CLAMAV_UNAVAILABLE и удаление temp, dev-пропуск, чистый файл, вирус → 400 VIRUS_DETECTED, сканер не отвечает → 503, недопустимый/неизвестный тип → 400, ошибка определения типа, несколько файлов (удаляются все), multer.fields, нет файлов
 server/src/services/__tests__/roleUtils.test.js | 7 | Role utils: hasRole, canManage, hierarchy checks
 server/src/__tests__/cache.test.js | 6 | Cache: Redis fallback, invalidate, TTL
 server/src/__tests__/csat.route.test.js | 6 | CSAT routes: GET survey, POST response, metrics
 server/src/__tests__/idempotency.test.js | 6 | Idempotency: dual-store Redis+in-memory, TTL 24ч, повторный запрос из-под res.json, fallback при недоступном Redis, коллизия ключа (не 409, первый ответ)
-server/src/__tests__/health-ready.test.js | 6 | Readiness (CHW-03): БД+Redis живы → 200 ok; Redis не настроен → 200 degraded + очередь in-memory; Redis настроен и лежит → degraded + очередь не ok; БД недоступна → 503 и Redis не проверяется; исключение checkRedis → 200 degraded; SELECT 1 без интерполяции
+server/src/__tests__/health-ready.test.js | 7 | Readiness (CHW-03/05): БД+Redis живы → 200 ok; Redis не настроен → 200 degraded + очередь in-memory; Redis настроен и лежит → degraded + очередь не ok; БД недоступна → 503 и Redis не проверяется; исключение checkRedis → 200 degraded; production без ClamAV → degraded; SELECT 1 без интерполяции
 server/src/services/__tests__/calendar.service.test.js | 6 | Calendar: CRUD, recurring events, conflicts
 server/src/services/__tests__/files.service.test.js | 6 | Files: upload, list, folder structure
 server/src/__tests__/admin-settings-secrets.test.js | 6 | P1 №9: GET /api/admin/settings маскирует секреты (*PASS*/*SECRET*/*CREDENTIALS*/*TOKEN*), PUT с маской не затирает реальное значение
@@ -89,7 +90,7 @@ server/src/services/__tests__/employees.service.test.js | 5 | Employees: list, s
 server/src/services/__tests__/news.service.test.js | 5 | News: CRUD, publish, archive
 server/src/__tests__/admin-settings-ops-guard.test.js | 5 | P1 №12: seed/backup/geo/restore при NODE_ENV=production → 403 DISABLED_IN_PRODUCTION (гарантированно не запускаются), 401 без токена
 server/src/__tests__/background.test.js | 4 | Background: setup, stop, warnAdminRedisMissing
-server/src/__tests__/clamav.test.js | 4 | ClamAV: basic scan, not installed fallback
+server/src/__tests__/clamav.test.js | 4 | ClamAV: basic scan, выключенный сканер → пропуск, отсутствующий файл → fail-closed
 server/src/__tests__/org-chart.test.js | 4 | Org chart (Этап 66, флаг org_chart): дерево team, директора/подчинённые, RBAC
 server/src/__tests__/outbox.delivery.test.js | 10 | Outbox delivery (CHW-04): enqueue, успешная доставка → sent, ошибка → retrying с backoff 1м/5м/15м, третья ошибка → failed + письмо админам, падение алерта не мешает failed, флаг outbox_retry off → legacy-лог, выборка по status/next_attempt_at, Socket.IO null, retryDelayMs
 server/src/__tests__/process-guards.test.js | 4 | Process guards: CSP script-src self (без unsafe-inline/eval), connect-src localhost, 413 при теле >100kb
@@ -112,4 +113,4 @@ Coverage (01.10.2026, перемерено --coverage): 80.46 stmts / 74.35 bran
 
 Текущий факт 17.10.2026: 90 файлов / 456 suite / 1149 тестов (регенерировано из vitest --reporter=json). Прирост к 11.10: +1 файл / +5 тестов — `server/src/__tests__/metrics-endpoint.test.js` (2, метрики эндпоинта), `metrics.test.js` 5→8 (честные CPU/event-loop + счётчик `http_requests_total`).
 
-Текущий факт 24.10.2026: 94 файла / 479 suite / 1249 тестов (регенерировано из vitest --reporter=json). Прирост к 17.10: +3 файла / +85 тестов — CHW-06 (виджет чата): `public-widget.test.js` 21 и `widget-inbox.test.js` 22; `socket.test.js` 27→28 (комната `agents`: agent и senior_agent получают `widget:message`); CHW-02 (Telegram-контакт): `telegram.expanded.test.js` 27→35 и `migration.idempotency.test.js` 3→4; `limiters.test.js` 12 без изменений (в описании добавлен `widgetLimiter` 600/мин). CHW-01 (Telegram webhook): `telegram-webhook.test.js` 11 (новый файл), `telegram.expanded.test.js` 35→49, `notify.test.js` 24→26, `migration.idempotency.test.js` 4→5. CHW-03 (readiness): `health-ready.test.js` 6 (новый файл), `api.test.js` 183→184, `injection.test.js` 15→16. CHW-04 (outbox retry): `outbox.delivery.test.js` 4→10, `migration.idempotency.test.js` 5→6.
+Текущий факт 24.10.2026: 95 файлов / 481 suite / 1264 теста (регенерировано из vitest --reporter=json). Прирост к 17.10: +3 файла / +85 тестов — CHW-06 (виджет чата): `public-widget.test.js` 21 и `widget-inbox.test.js` 22; `socket.test.js` 27→28 (комната `agents`: agent и senior_agent получают `widget:message`); CHW-02 (Telegram-контакт): `telegram.expanded.test.js` 27→35 и `migration.idempotency.test.js` 3→4; `limiters.test.js` 12 без изменений (в описании добавлен `widgetLimiter` 600/мин). CHW-01 (Telegram webhook): `telegram-webhook.test.js` 11 (новый файл), `telegram.expanded.test.js` 35→49, `notify.test.js` 24→26, `migration.idempotency.test.js` 4→5. CHW-03 (readiness): `health-ready.test.js` 6 (новый файл), `api.test.js` 183→184, `injection.test.js` 15→16. CHW-04 (outbox retry): `outbox.delivery.test.js` 4→10, `migration.idempotency.test.js` 5→6. CHW-05 (ClamAV): `clamav.expanded.test.js` 8→11, `health-ready.test.js` 6→7, `validate-upload.test.js` 11 (новый файл).

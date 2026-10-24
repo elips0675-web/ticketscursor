@@ -18,11 +18,11 @@ describe('clamav.js', () => {
     expect(result).toEqual({ ok: true })
   })
 
-  it('skips scan when file does not exist', async () => {
+  it('fails closed when file does not exist', async () => {
     process.env.CLAMAV_ENABLED = 'true'
     const { scanFile } = await import('../clamav.js')
     const result = await scanFile('/nonexistent/file.pdf')
-    expect(result).toEqual({ ok: true })
+    expect(result).toEqual({ ok: false, reason: 'Scanner unavailable' })
   })
 
   it('exports CLAMAV_ENABLED as false by default', async () => {

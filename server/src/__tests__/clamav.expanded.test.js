@@ -37,13 +37,14 @@ describe('clamav.js', () => {
     expect(result).toEqual({ ok: true })
   })
 
-  it('skips scan when file does not exist', async () => {
+  it('fails closed when file does not exist', async () => {
     process.env.CLAMAV_ENABLED = 'true'
     const fsMod = await import('fs')
     fsMod.default.existsSync.mockReturnValueOnce(false)
     const { scanFile } = await import('../clamav.js')
     const result = await scanFile('/nonexistent/file.pdf')
-    expect(result).toEqual({ ok: true })
+    expect(result).toEqual({ ok: false, reason: 'Scanner unavailable' })
+    expect(mockLogger.error).toHaveBeenCalled()
   })
 
   it('returns ok when clamdscan exits with code 0', async () => {
@@ -63,22 +64,52 @@ describe('clamav.js', () => {
     expect(mockLogger.warn).toHaveBeenCalled()
   })
 
-  it('returns ok on clamdscan error exit code', async () => {
+  it('fails closed on clamdscan error exit code', async () => {
     process.env.CLAMAV_ENABLED = 'true'
     mockSpawn.mockReturnValue(makeMockProcess({ exitCode: 2, stderr: 'error msg' }))
     const { scanFile } = await import('../clamav.js')
     const result = await scanFile('/error/file.pdf')
-    expect(result).toEqual({ ok: true })
+    expect(result).toEqual({ ok: false, reason: 'Scanner unavailable' })
     expect(mockLogger.error).toHaveBeenCalled()
   })
 
-  it('returns ok on spawn error', async () => {
+  it('fails closed on spawn error', async () => {
     process.env.CLAMAV_ENABLED = 'true'
     mockSpawn.mockReturnValue(makeMockProcess({ spawnError: new Error('spawn failed') }))
     const { scanFile } = await import('../clamav.js')
     const result = await scanFile('/spawn-error/file.pdf')
-    expect(result).toEqual({ ok: true })
+    expect(result).toEqual({ ok: false, reason: 'Scanner unavailable' })
     expect(mockLogger.error).toHaveBeenCalled()
+  })
+
+  it('clamavStatus: dev/test без CLAMAV_ENABLED — ok, но не обязателен', async () => {
+    const { clamavStatus } = await import('../clamav.js')
+    expect(clamavStatus()).toEqual({ enabled: false, required: false, ok: true })
+    expect(mockLogger.warn).toHaveBeenCalled()
+  })
+
+  it('clamavStatus: production без CLAMAV_ENABLED — not ok', async () => {
+    const saved = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+    try {
+      const { clamavStatus } = await import('../clamav.js')
+      expect(clamavStatus()).toEqual({ enabled: false, required: true, ok: false })
+      expect(mockLogger.error).toHaveBeenCalled()
+    } finally {
+      process.env.NODE_ENV = saved
+    }
+  })
+
+  it('clamavStatus: production с CLAMAV_ENABLED — ok', async () => {
+    const saved = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+    process.env.CLAMAV_ENABLED = 'true'
+    try {
+      const { clamavStatus } = await import('../clamav.js')
+      expect(clamavStatus()).toEqual({ enabled: true, required: true, ok: true })
+    } finally {
+      process.env.NODE_ENV = saved
+    }
   })
 
   it('exports CLAMAV_ENABLED as false by default', async () => {

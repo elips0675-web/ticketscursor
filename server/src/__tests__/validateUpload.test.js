@@ -4,6 +4,7 @@ vi.mock('../logger.js', () => ({ default: { warn: vi.fn() } }))
 
 vi.mock('../clamav.js', () => ({
   scanFile: vi.fn().mockResolvedValue({ ok: true }),
+  clamavStatus: vi.fn().mockReturnValue({ enabled: false, required: false, ok: true }),
   CLAMAV_ENABLED: false,
 }))
 
@@ -52,7 +53,10 @@ describe('validateUpload middleware', () => {
     validateUpload(req, res, next)
     await new Promise(r => setTimeout(r, 10))
     expect(res.status).toHaveBeenCalledWith(400)
-    expect(res.json).toHaveBeenCalledWith({ message: expect.stringContaining('virus.exe') })
+    expect(res.json).toHaveBeenCalledWith({
+      code: 'INVALID_FILE_TYPE',
+      message: expect.stringContaining('virus.exe'),
+    })
   })
 
   it('handles files array', async () => {

@@ -51,7 +51,7 @@
 | **При коммите** | Husky → lint-staged | `eslint --fix` + `prettier --write` на изменённых файлах |
 | **В CI (GitHub Actions)** | `tsc --noEmit` | TypeScript strict type-check |
 | | `eslint . --max-warnings 100` | Синтаксис, неисп. переменные, импорты |
-| | `vitest run` | Юнит-тесты (934 клиентских + 1249 серверных) |
+| | `vitest run` | Юнит-тесты (934 клиентских + 1264 серверных) |
 | | `vite build` | Сборка production |
 | | `playwright test` (джоба `e2e`, P1 №11) | E2E (19 spec / 61 тест) на MySQL-контейнере `mysql:8.4`, сервер:4000 + vite:5173 через webServer `playwright.config.ts:23-34`; БД готовит `scripts/e2e-db-setup.mjs` (общий модуль `server/test-db-setup.js`) |
 | | `check-console` (шаг джобы `e2e`, P1 №11) | 17 страниц через `scripts/ci-check-console.mjs` (поднимает server+vite, ждёт `/api/health`, гоняет `check-console.mjs`) |

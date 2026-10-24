@@ -34,7 +34,10 @@ describe('GET /api/health/ready (CHW-03)', () => {
     expect(res.body).toHaveProperty('redis')
     expect(res.body.queue).toHaveProperty('mode')
     expect(res.body.queue).toHaveProperty('ok')
-    expect(res.body.degraded).toBe(res.body.redis === false || res.body.queue.ok === false)
+    expect(res.body.degraded).toBe(
+      res.body.redis === false || res.body.queue.ok === false || res.body.clamav.ok === false,
+    )
+    expect(res.body.clamav).toHaveProperty('enabled')
     expect(res.body.status).toBe(res.body.degraded ? 'degraded' : 'ok')
   })
 })
