@@ -465,7 +465,7 @@ router.post('/:id/messages', idempotent, addMessageValidation, async (req, res) 
     await invalidateCache('cache:*:/api/tickets*')
     enqueueEvent('ticket:message', null, { ticketId, message: msg })
     try {
-      await notifyTicketMessage(ticketId, req.user.userId, req.user.name, text)
+      await notifyTicketMessage(ticketId, req.user.userId, req.user.name, text, { isInternal: Boolean(isInternal) })
       if (mentionedUserIds.length > 0) {
         await notifyTicketMention(ticketId, mentionedUserIds, req.user.userId, req.user.name)
       }

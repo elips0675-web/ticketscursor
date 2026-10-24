@@ -32,13 +32,16 @@ vi.mock('web-push', () => ({
 }))
 
 vi.mock('../../email.js', () => ({ sendTicketNotification: vi.fn().mockResolvedValue() }))
-vi.mock('../../telegram.js', () => ({ sendTelegramNotification: vi.fn() }))
+vi.mock('../../telegram.js', () => ({
+  sendTelegramNotification: vi.fn(),
+  notifyTelegramRequester: vi.fn().mockResolvedValue(true),
+}))
 vi.mock('../../routes/notifications.js', () => ({ createNotification: vi.fn().mockResolvedValue() }))
 vi.mock('../../logger.js', () => ({ default: { warn: vi.fn(), error: vi.fn() } }))
 
 import prisma from '../../prisma.js'
 import { sendTicketNotification } from '../../email.js'
-import { sendTelegramNotification } from '../../telegram.js'
+import { sendTelegramNotification, notifyTelegramRequester } from '../../telegram.js'
 import { createNotification } from '../../routes/notifications.js'
 import { invalidateNotificationPrefsCache } from '../../notification-prefs.js'
 import {
@@ -165,6 +168,18 @@ describe('notifyTicketMessage', () => {
     expect(createNotification).toHaveBeenCalled()
     const calledFor = createNotification.mock.calls.map(c => c[0].userId)
     expect(calledFor).not.toContain(10)
+  })
+
+  it('sends the message to the Telegram requester (CHW-01)', async () => {
+    await notifyTicketMessage(1, 20, 'Assignee', 'Ответ оператора')
+    expect(notifyTelegramRequester).toHaveBeenCalledWith(1, 'Ответ оператора', 20)
+    expect(sendTelegramNotification).toHaveBeenCalled()
+  })
+
+  it('внутренняя заметка не уходит ни в Telegram, ни заявителю', async () => {
+    await notifyTicketMessage(1, 20, 'Assignee', 'Скрытая заметка', { isInternal: true })
+    expect(notifyTelegramRequester).not.toHaveBeenCalled()
+    expect(sendTelegramNotification).not.toHaveBeenCalled()
   })
 })
 

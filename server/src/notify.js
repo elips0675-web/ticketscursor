@@ -1,6 +1,6 @@
 import prisma from './prisma.js'
 import { sendTicketNotification } from './email.js'
-import { sendTelegramNotification } from './telegram.js'
+import { sendTelegramNotification, notifyTelegramRequester } from './telegram.js'
 import { createNotification } from './routes/notifications.js'
 import { getSettings } from './settings.js'
 import logger from './logger.js'
@@ -308,7 +308,7 @@ export async function notifyTicketAssigned(ticketId, assigneeId, assignedByName)
 const MESSAGE_SUBJECT_TEMPLATE = 'Новое сообщение в тикете #{{ticketId}}: {{ticketTitle}}'
 const MESSAGE_BODY_TEMPLATE = '{{senderName}} написал в тикете "{{ticketTitle}}" (#{{ticketId}}):\n\n{{messageText}}\n\n{{companyName}}'
 
-export async function notifyTicketMessage(ticketId, senderId, senderName, text) {
+export async function notifyTicketMessage(ticketId, senderId, senderName, text, { isInternal = false } = {}) {
   const t = await getTicketWithUsers(ticketId)
   if (!t) return
 
@@ -333,7 +333,10 @@ export async function notifyTicketMessage(ticketId, senderId, senderName, text) 
     }))
   }
 
-  sendTelegramNotification(`💬 Новое сообщение в тикете #${ticketId}: ${t.title}\n${senderName}: ${text.slice(0, 200)}`)
+  if (!isInternal) {
+    sendTelegramNotification(`💬 Новое сообщение в тикете #${ticketId}: ${t.title}\n${senderName}: ${text.slice(0, 200)}`)
+    notifyTelegramRequester(ticketId, text, senderId).catch(() => {})
+  }
 
   const emailRecipients = []
   if (t.creatorEmail && t.creatorId !== senderId && emailIds.has(t.creatorId)) {

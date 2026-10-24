@@ -133,3 +133,25 @@ export const addRelationSchema = z.object({
 export const mergeTicketSchema = z.object({
   targetTicketId: z.number().int().positive(),
 })
+
+export const telegramUpdateSchema = z
+  .looseObject({
+    update_id: z.number().int().nonnegative(),
+    message: z
+      .looseObject({
+        chat: z.looseObject({ id: z.number().int() }),
+        from: z.looseObject({ id: z.number().int() }).optional(),
+        text: z.string().optional(),
+      })
+      .optional(),
+    callback_query: z
+      .looseObject({
+        id: z.string(),
+        data: z.string().optional(),
+        message: z.looseObject({ chat: z.looseObject({ id: z.number().int() }) }).optional(),
+      })
+      .optional(),
+  })
+  .refine((update) => Boolean(update.message || update.callback_query), {
+    message: 'message or callback_query required',
+  })

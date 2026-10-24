@@ -51,6 +51,7 @@ import cannedResponsesRouter from './routes/canned-responses.js'
 import csatRouter from './routes/csat.js'
 import apiTokensRouter from './routes/api-tokens.js'
 import webhooksRouter from './routes/webhooks.js'
+import telegramWebhookRouter from './routes/telegram-webhook.js'
 import recurrencesRouter from './routes/recurrences.js'
 import rulesRouter from './routes/rules.js'
 import publicPortalRouter from './routes/public-portal.js'
@@ -156,6 +157,7 @@ mount('/admin', adminRouter, adminLimiter)
 mount('/canned-responses', cannedResponsesRouter, apiLimiter)
 mount('/csat', csatRouter)
 mount('/api-tokens', apiTokensRouter, apiLimiter)
+mount('/webhooks/telegram', telegramWebhookRouter, apiLimiter)
 mount('/webhooks', webhooksRouter, adminLimiter)
 mount('/recurrences', recurrencesRouter, adminLimiter)
 mount('/rules', rulesRouter, adminLimiter)

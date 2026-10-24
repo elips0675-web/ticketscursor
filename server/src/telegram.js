@@ -22,89 +22,115 @@ export function initTelegram() {
     logger.warn('Telegram: TELEGRAM_BOT_TOKEN not set, skipping')
     return
   }
+
+  const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL
+  const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET
+
+  if (webhookUrl && webhookSecret) {
+    bot = new TelegramBot(token, { polling: false })
+    bot.setWebhook(webhookUrl, { secret_token: webhookSecret })
+      .then(() => logger.info(`Telegram webhook set: ${webhookUrl}`))
+      .catch(err => logger.error('Telegram setWebhook error:', err))
+    return
+  }
+
   bot = new TelegramBot(token, { polling: true })
-
-  bot.on('message', async (msg) => {
-    const chatId = msg.chat.id
-    const text = msg.text || ''
-    const userId = msg.from?.id
-
-    if (text === '/start') {
-      chatIds.add(chatId)
-      if (userId) {
-        await linkTelegramUser(chatId, userId, msg.from).catch(() => {})
-      }
-      bot.sendMessage(chatId, '✅ Бот активирован. Вы будете получать уведомления о тикетах.\n\nКоманды:\n/link — привязать аккаунт\n/new — создать тикет\n/tickets — мои тикеты\n/reply <id> <текст> — ответить на тикет')
-      return
-    }
-
-    if (text === '/link') {
-      if (userId) {
-        await linkTelegramUser(chatId, userId, msg.from).catch(() => {})
-        bot.sendMessage(chatId, '✅ Аккаунт привязан. Теперь вы будете получать уведомления.')
-      }
-      return
-    }
-
-    if (text === '/new' || text.startsWith('/new ')) {
-      const title = text.replace('/new', '').trim() || 'Тикет из Telegram'
-      await createTicketFromTelegram(chatId, userId, title, msg.from).catch(err => {
-        logger.error('Create ticket from Telegram error:', err)
-        bot.sendMessage(chatId, '❌ Ошибка создания тикета')
-      })
-      return
-    }
-
-    if (text === '/tickets') {
-      await listUserTickets(chatId, userId).catch(err => {
-        logger.error('List tickets from Telegram error:', err)
-        bot.sendMessage(chatId, '❌ Ошибка получения тикетов')
-      })
-      return
-    }
-
-    if (text.startsWith('/reply ')) {
-      const parts = text.replace('/reply ', '').split(' ')
-      const ticketId = parseInt(parts[0])
-      const replyText = parts.slice(1).join(' ')
-      if (!ticketId || !replyText) {
-        bot.sendMessage(chatId, '❌ Использование: /reply <id> <текст>')
-        return
-      }
-      await replyToTicket(chatId, userId, ticketId, replyText).catch(err => {
-        logger.error('Reply from Telegram error:', err)
-        bot.sendMessage(chatId, '❌ Ошибка отправки ответа')
-      })
-      return
-    }
-
-    if (text.startsWith('/') || !userId) return
-
-    const ticketMatch = text.match(/^#(\d+)\s+(.*)/)
-    if (ticketMatch) {
-      const ticketId = parseInt(ticketMatch[1])
-      const replyText = ticketMatch[2]
-      await replyToTicket(chatId, userId, ticketId, replyText).catch(() => {})
-      return
-    }
-
-    await forwardMessageToTicket(chatId, userId, text).catch(err => {
-      logger.error('Forward message from Telegram error:', err)
-    })
-  })
-
-  bot.on('callback_query', async (query) => {
-    const data = query.data
-    const chatId = query.message?.chat.id
-    if (!chatId || !data) return
-
-    if (data.startsWith('ticket_')) {
-      const ticketId = parseInt(data.replace('ticket_', ''))
-      bot.answerCallbackQuery(query.id, { text: `Открываю тикет #${ticketId}` })
-    }
-  })
-
+  bot.on('message', (msg) => handleMessage(msg).catch(err => logger.error('Telegram message error:', err)))
+  bot.on('callback_query', (query) => handleCallbackQuery(query).catch(err => logger.error('Telegram callback error:', err)))
   logger.info('Telegram bot started with channel support')
+}
+
+export async function handleTelegramUpdate(update) {
+  if (!bot) return { ok: false, reason: 'bot_inactive' }
+  if (update.message) {
+    await handleMessage(update.message)
+    return { ok: true, kind: 'message' }
+  }
+  if (update.callback_query) {
+    await handleCallbackQuery(update.callback_query)
+    return { ok: true, kind: 'callback_query' }
+  }
+  return { ok: true, kind: 'ignored' }
+}
+
+async function handleMessage(msg) {
+  const chatId = msg.chat.id
+  const text = msg.text || ''
+  const userId = msg.from?.id
+
+  if (text === '/start') {
+    chatIds.add(chatId)
+    if (userId) {
+      await linkTelegramUser(chatId, userId, msg.from).catch(() => {})
+    }
+    bot.sendMessage(chatId, '✅ Бот активирован. Вы будете получать уведомления о тикетах.\n\nКоманды:\n/link — привязать аккаунт\n/new — создать тикет\n/tickets — мои тикеты\n/reply <id> <текст> — ответить на тикет')
+    return
+  }
+
+  if (text === '/link') {
+    if (userId) {
+      await linkTelegramUser(chatId, userId, msg.from).catch(() => {})
+      bot.sendMessage(chatId, '✅ Аккаунт привязан. Теперь вы будете получать уведомления.')
+    }
+    return
+  }
+
+  if (text === '/new' || text.startsWith('/new ')) {
+    const title = text.replace('/new', '').trim() || 'Тикет из Telegram'
+    await createTicketFromTelegram(chatId, userId, title, msg.from).catch(err => {
+      logger.error('Create ticket from Telegram error:', err)
+      bot.sendMessage(chatId, '❌ Ошибка создания тикета')
+    })
+    return
+  }
+
+  if (text === '/tickets') {
+    await listUserTickets(chatId, userId).catch(err => {
+      logger.error('List tickets from Telegram error:', err)
+      bot.sendMessage(chatId, '❌ Ошибка получения тикетов')
+    })
+    return
+  }
+
+  if (text.startsWith('/reply ')) {
+    const parts = text.replace('/reply ', '').split(' ')
+    const ticketId = parseInt(parts[0])
+    const replyText = parts.slice(1).join(' ')
+    if (!ticketId || !replyText) {
+      bot.sendMessage(chatId, '❌ Использование: /reply <id> <текст>')
+      return
+    }
+    await replyToTicket(chatId, userId, ticketId, replyText).catch(err => {
+      logger.error('Reply from Telegram error:', err)
+      bot.sendMessage(chatId, '❌ Ошибка отправки ответа')
+    })
+    return
+  }
+
+  if (text.startsWith('/') || !userId) return
+
+  const ticketMatch = text.match(/^#(\d+)\s+(.*)/)
+  if (ticketMatch) {
+    const ticketId = parseInt(ticketMatch[1])
+    const replyText = ticketMatch[2]
+    await replyToTicket(chatId, userId, ticketId, replyText).catch(() => {})
+    return
+  }
+
+  await forwardMessageToTicket(chatId, userId, text).catch(err => {
+    logger.error('Forward message from Telegram error:', err)
+  })
+}
+
+async function handleCallbackQuery(query) {
+  const data = query.data
+  const chatId = query.message?.chat.id
+  if (!chatId || !data) return
+
+  if (data.startsWith('ticket_')) {
+    const ticketId = parseInt(data.replace('ticket_', ''))
+    bot.answerCallbackQuery(query.id, { text: `Открываю тикет #${ticketId}` })
+  }
 }
 
 async function linkTelegramUser(chatId, telegramUserId, from) {
@@ -367,6 +393,38 @@ async function forwardMessageToTicket(chatId, userId, text) {
 
   const ticketId = tickets[0].id
   await replyToTicket(chatId, userId, ticketId, text)
+}
+
+export async function notifyTelegramRequester(ticketId, text, senderId) {
+  if (!bot) return false
+  if (!(await isFeatureEnabled('telegram_two_way'))) return false
+
+  const ticket = await prisma.tickets.findUnique({
+    where: { id: ticketId },
+    select: { created_by: true },
+  })
+  if (!ticket?.created_by || ticket.created_by === senderId) return false
+
+  let chatId = null
+  if (await contactsEnabled()) {
+    const contact = await prisma.telegram_contacts.findFirst({
+      where: { employee_id: ticket.created_by },
+      select: { chat_id: true, telegram_id: true },
+    })
+    if (!contact) return false
+    chatId = contact.chat_id ?? contact.telegram_id
+  } else {
+    const employee = await prisma.employees.findUnique({
+      where: { id: ticket.created_by },
+      select: { email: true },
+    })
+    if (!employee?.email?.endsWith(TELEGRAM_EMAIL_DOMAIN)) return false
+    chatId = employee.email.split('@')[0]
+  }
+
+  if (chatId == null) return false
+  sendTelegramToUser(String(chatId), `💬 Ответ по тикету #${ticketId}\n${text.slice(0, 500)}`)
+  return true
 }
 
 export function sendTelegramNotification(text) {

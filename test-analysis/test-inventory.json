@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-24T07:27:42.799Z",
+  "generated": "2026-10-24T07:45:14.145Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
@@ -11,17 +11,17 @@
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 92,
-    "suites": 472,
-    "tests": 1206,
+    "files": 93,
+    "suites": 476,
+    "tests": 1234,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 191,
-    "suites": 735,
-    "tests": 2140,
+    "files": 192,
+    "suites": 739,
+    "tests": 2168,
     "all_passing": true
   },
   "e2e": {
@@ -455,16 +455,16 @@
       "tests": 183
     },
     {
+      "file": "server/src/__tests__/telegram.expanded.test.js",
+      "tests": 49
+    },
+    {
       "file": "server/src/__tests__/rbac-matrix.test.js",
       "tests": 41
     },
     {
       "file": "server/src/services/__tests__/tickets.service.sla.test.js",
       "tests": 40
-    },
-    {
-      "file": "server/src/__tests__/telegram.expanded.test.js",
-      "tests": 35
     },
     {
       "file": "server/src/__tests__/socket.test.js",
@@ -475,11 +475,11 @@
       "tests": 28
     },
     {
-      "file": "server/src/__tests__/admin-stage58.test.js",
-      "tests": 24
+      "file": "server/src/services/__tests__/notify.test.js",
+      "tests": 26
     },
     {
-      "file": "server/src/services/__tests__/notify.test.js",
+      "file": "server/src/__tests__/admin-stage58.test.js",
       "tests": 24
     },
     {
@@ -604,6 +604,10 @@
     },
     {
       "file": "server/src/__tests__/sla.test.js",
+      "tests": 11
+    },
+    {
+      "file": "server/src/__tests__/telegram-webhook.test.js",
       "tests": 11
     },
     {
@@ -739,6 +743,10 @@
       "tests": 5
     },
     {
+      "file": "server/src/__tests__/migration.idempotency.test.js",
+      "tests": 5
+    },
+    {
       "file": "server/src/__tests__/query-guards.test.js",
       "tests": 5
     },
@@ -764,10 +772,6 @@
     },
     {
       "file": "server/src/__tests__/clamav.test.js",
-      "tests": 4
-    },
-    {
-      "file": "server/src/__tests__/migration.idempotency.test.js",
       "tests": 4
     },
     {

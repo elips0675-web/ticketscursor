@@ -386,6 +386,13 @@ model telegram_contacts {
   @@index([employee_id])
 }
 
+model telegram_updates {
+  id           Int      @id @default(autoincrement())
+  update_id    BigInt   @unique
+  kind         String?  @db.VarChar(32)
+  processed_at DateTime @default(now())
+}
+
 model wiki_articles {
   id          Int       @id @default(autoincrement())
   title       String    @db.VarChar(300)

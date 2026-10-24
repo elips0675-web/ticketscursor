@@ -4,6 +4,7 @@ import knexConfig from '../../knexfile.js'
 import { up as fkCascadesUp } from '../../migrations/20260924_fk_cascades.js'
 import { up as scheduledReportsUp } from '../../migrations/20260927_scheduled_reports.js'
 import { up as telegramContactsUp } from '../../migrations/20261024_telegram_contacts.js'
+import { up as telegramUpdatesUp } from '../../migrations/20261024_telegram_updates.js'
 
 // Migration idempotency (Этап 60): повторный накат не должен ронять деплой
 // и не должен дублировать объекты (FK). Прогон идёт по тестовой БД
@@ -84,5 +85,23 @@ describe('Migration idempotency — повторный накат безопас
 
     await knex('telegram_contacts').where({ telegram_id: telegramId }).del()
     await knex('employees').where({ id: employeeId }).del()
+  })
+
+  it('telegram_updates up() повторно — таблица и флаг не дублируются', async () => {
+    expect(await knex.schema.hasTable('telegram_updates')).toBe(true)
+
+    await telegramUpdatesUp(knex)
+    await telegramUpdatesUp(knex)
+
+    const columns = await knex.raw(
+      `SELECT COUNT(*) AS c FROM information_schema.STATISTICS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'telegram_updates'
+         AND COLUMN_NAME = 'update_id' AND NON_UNIQUE = 0`,
+    )
+    expect(Number(columns[0][0].c)).toBe(1)
+
+    const flags = await knex('feature_flags').where({ key: 'telegram_two_way' })
+    expect(flags).toHaveLength(1)
+    expect(Number(flags[0].enabled)).toBe(0)
   })
 })
