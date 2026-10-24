@@ -1,5 +1,7 @@
 import prisma from '../prisma.js'
 import logger from '../logger.js'
+import { getSettings } from '../settings.js'
+import { buildTemplateContext, resolveTemplateVariables } from './template-variables.js'
 
 export const AVAILABLE_TRIGGERS = [
   'ticket.created',
@@ -55,6 +57,34 @@ function evaluateConditions(conditions, data) {
   return results.every(Boolean)
 }
 
+async function renderRuleMessage(template, ticketId) {
+  try {
+    const ticket = await prisma.tickets.findUnique({
+      where: { id: ticketId },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        priority: true,
+        category: true,
+        created_by_employee: { select: { name: true, email: true } },
+        assigned_to_employee: { select: { name: true, email: true } },
+      },
+    })
+    const settings = await getSettings().catch(() => ({}))
+    const context = buildTemplateContext({
+      ticket,
+      customer: ticket?.created_by_employee,
+      agent: ticket?.assigned_to_employee,
+      company: { name: settings.COMPANY_NAME || 'Service Desk' },
+    })
+    return resolveTemplateVariables(template, context)
+  } catch (err) {
+    logger.warn(`Rule template resolve failed: ${err.message}`)
+    return resolveTemplateVariables(template, buildTemplateContext({ ticket: { id: ticketId } }))
+  }
+}
+
 async function executeAction(action, data, ticketId) {
   const { type, params } = action
 
@@ -106,11 +136,12 @@ async function executeAction(action, data, ticketId) {
 
     case 'send_notification':
       if (params?.message && data.userId) {
+        const message = await renderRuleMessage(params.message, ticketId)
         await prisma.notifications.create({
           data: {
             user_id: data.userId,
             title: 'Automation Rule',
-            message: params.message.replace('{{ticketId}}', String(ticketId)),
+            message,
             type: 'automation',
             link: `/tickets/${ticketId}`,
           },

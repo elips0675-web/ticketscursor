@@ -3,6 +3,7 @@ import { sendTicketNotification } from './email.js'
 import { sendTelegramNotification, notifyTelegramRequester } from './telegram.js'
 import { createNotification } from './routes/notifications.js'
 import { getSettings } from './settings.js'
+import { resolveTemplateVariables } from './services/template-variables.js'
 import logger from './logger.js'
 import webpush from 'web-push'
 import { allowedUserIds } from './notification-prefs.js'
@@ -37,11 +38,7 @@ const DEFAULT_TEMPLATES = {
 }
 
 function replaceVariables(template, vars) {
-  let result = template
-  for (const [key, val] of Object.entries(vars)) {
-    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), val ?? '')
-  }
-  return result
+  return resolveTemplateVariables(template, vars)
 }
 
 let templateCache = null

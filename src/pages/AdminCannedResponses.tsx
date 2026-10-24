@@ -118,6 +118,12 @@ export default function AdminCannedResponses() {
               onChange={(e) => setEditText(e.target.value)}
               rows={3}
             />
+            <p className="text-xs text-muted-foreground">
+              {t('admin.cannedVariables')}:{' '}
+              <code className="break-all">
+                {'{{ticket.id}} {{ticket.title}} {{customer.name}} {{customer.email}} {{agent.name}} {{company.name}}'}
+              </code>
+            </p>
             <Button
               size="sm"
               onClick={editing ? () => update(editing) : create}

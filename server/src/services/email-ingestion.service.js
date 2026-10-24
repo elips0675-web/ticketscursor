@@ -4,10 +4,30 @@ import prisma from '../prisma.js'
 import logger from '../logger.js'
 import { getSettings } from '../settings.js'
 import { sendTicketNotification } from '../email.js'
+import { buildTemplateContext, resolveTemplateVariables } from './template-variables.js'
 
 const POLL_INTERVAL = 2 * 60 * 1000
 let pollingTimer = null
 let isRunning = false
+
+const AUTO_REPLY_TEMPLATE = [
+  'Спасибо за обращение, {{customer.name}}!',
+  '',
+  'Ваш тикет создан: #{{ticket.id}}',
+  'Тема: {{ticket.title}}',
+  '',
+  'Для ответа на этот тикет просто ответьте на это письмо.',
+  '',
+  '— {{company.name}}',
+].join('\n')
+
+export function buildAutoReply({ ticket, customer, company }) {
+  const context = buildTemplateContext({ ticket, customer, company })
+  return {
+    subject: resolveTemplateVariables('[Ticket #{{ticket.id}}] {{ticket.title}}', context),
+    text: resolveTemplateVariables(AUTO_REPLY_TEMPLATE, context),
+  }
+}
 
 function getImapConfig(settings) {
   const host = settings.IMAP_HOST || process.env.IMAP_HOST
@@ -137,19 +157,15 @@ async function processEmail(parsed, client) {
   const companyName = db.COMPANY_NAME || 'Service Desk'
   const autoReplyTo = fromEmail
   if (autoReplyTo) {
+    const autoReply = buildAutoReply({
+      ticket: { id: ticket.id, title: stripTicketReference(subject) },
+      customer: { name: fromName || fromEmail, email: fromEmail },
+      company: { name: companyName },
+    })
     sendTicketNotification({
       to: autoReplyTo,
-      subject: `[Ticket #${ticket.id}] ${stripTicketReference(subject)}`,
-      text: [
-        `Спасибо за обращение!`,
-        ``,
-        `Ваш тикет создан: #${ticket.id}`,
-        `Тема: ${stripTicketReference(subject)}`,
-        ``,
-        `Для ответа на этот тикет просто ответьте на это письмо.`,
-        ``,
-        `— ${companyName}`,
-      ].join('\n'),
+      subject: autoReply.subject,
+      text: autoReply.text,
     }).catch(() => {})
   }
 

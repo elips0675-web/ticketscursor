@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useTickets } from '@/context/ticket-context'
 import { useAuth } from '@/context/AuthContext'
 import { useFeature } from '@/hooks/useFeature'
@@ -39,7 +40,14 @@ import {
   ClipboardList,
 } from 'lucide-react'
 import type { TicketMessage, TicketStatus, TicketPriority, AssistantSuggestion } from '@/types'
-import { API_URL } from '@/lib/api'
+import { API_URL, api } from '@/lib/api'
+
+interface CannedResponse {
+  id: number
+  title: string
+  category: string
+  text: string
+}
 
 function parseMentions(value: unknown): number[] {
   if (!value) return []
@@ -147,6 +155,8 @@ export default function TicketDetail() {
   const [isInternal, setIsInternal] = useState(false)
   const [attachments, setAttachments] = useState<{ url: string; name: string }[]>([])
   const [uploading, setUploading] = useState(false)
+  const [cannedResponses, setCannedResponses] = useState<CannedResponse[]>([])
+  const [cannedLoading, setCannedLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'messages' | 'history'>('messages')
   const historyEnabled = useFeature('ticket_history')
   const watchersEnabled = useFeature('ticket_watchers')
@@ -345,6 +355,34 @@ export default function TicketDetail() {
       const pos = atIdx + 1 + employeeName.length
       textareaRef.current?.setSelectionRange(pos, pos)
     })
+  }
+
+  const loadCannedResponses = async () => {
+    if (cannedLoading || cannedResponses.length > 0) return
+    setCannedLoading(true)
+    try {
+      const rows = await api.get<CannedResponse[]>('/canned-responses')
+      setCannedResponses(Array.isArray(rows) ? rows : [])
+    } catch {
+      setCannedResponses([])
+    } finally {
+      setCannedLoading(false)
+    }
+  }
+
+  const insertCannedResponse = async (cannedId: number) => {
+    if (!ticket) return
+    try {
+      const rendered = await api.post<{ text?: string }>(`/canned-responses/${cannedId}/render`, {
+        ticketId: ticket.id,
+      })
+      const text = rendered?.text
+      if (!text) return
+      setMessageText((prev) => (prev.trim() ? `${prev}\n${text}` : text))
+      requestAnimationFrame(() => textareaRef.current?.focus())
+    } catch {
+      // api уже показал ошибку тостом
+    }
   }
 
   const handleMessageTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -705,6 +743,33 @@ export default function TicketDetail() {
                       >
                         {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
                       </Button>
+                      <DropdownMenu
+                        onOpenChange={(open) => {
+                          if (open) void loadCannedResponses()
+                        }}
+                      >
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" type="button" aria-label={t('tickets.cannedResponses')}>
+                            <MessageSquare className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-72 max-h-72 overflow-y-auto">
+                          {cannedLoading && <DropdownMenuItem disabled>{t('common.loading')}</DropdownMenuItem>}
+                          {!cannedLoading && cannedResponses.length === 0 && (
+                            <DropdownMenuItem disabled>{t('tickets.cannedEmpty')}</DropdownMenuItem>
+                          )}
+                          {cannedResponses.map((item) => (
+                            <DropdownMenuItem key={item.id} onSelect={() => void insertCannedResponse(item.id)}>
+                              <div className="flex flex-col">
+                                <span className="text-sm">{item.title}</span>
+                                {item.category && (
+                                  <span className="text-xs text-muted-foreground">{item.category}</span>
+                                )}
+                              </div>
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                     <Button size="sm" onClick={handleSend} disabled={!messageText.trim() && attachments.length === 0}>
                       <Send className="w-4 h-4 mr-1.5" />

@@ -8,7 +8,12 @@ import jwt from 'jsonwebtoken'
 vi.mock('../prisma.js', () => ({
   default: {
     canned_responses: { findMany: vi.fn(), create: vi.fn(), findUnique: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    tickets: { findUnique: vi.fn() },
   },
+}))
+
+vi.mock('../settings.js', () => ({
+  getSettings: vi.fn().mockResolvedValue({ COMPANY_NAME: 'Acme' }),
 }))
 
 vi.mock('../logger.js', () => ({
@@ -120,6 +125,93 @@ describe('canned-responses routes (Этап 68)', () => {
         .set('Authorization', `Bearer ${ADMIN}`)
         .send({ title: 'X', text: 'Y' })
       expect(res.status).toBe(500)
+    })
+  })
+
+  describe('POST /:id/render', () => {
+    const TICKET = {
+      id: 5,
+      title: 'VPN не работает',
+      status: 'open',
+      priority: 'high',
+      category: 'network',
+      created_by_employee: { name: 'Иван', email: 'ivan@example.com' },
+      assigned_to_employee: { name: 'Мария', email: 'maria@example.com' },
+    }
+
+    it('401 без токена', async () => {
+      const res = await request(app).post('/api/canned-responses/1/render').send({ ticketId: 5 })
+      expect(res.status).toBe(401)
+    })
+
+    it('400 без ticketId', async () => {
+      const res = await request(app)
+        .post('/api/canned-responses/1/render')
+        .set('Authorization', `Bearer ${AGENT}`)
+        .send({})
+      expect(res.status).toBe(400)
+      expect(res.body.code).toBe('INVALID_TICKET_ID')
+    })
+
+    it('404 для несуществующего шаблона', async () => {
+      prisma.canned_responses.findUnique.mockResolvedValue(null)
+      const res = await request(app)
+        .post('/api/canned-responses/99/render')
+        .set('Authorization', `Bearer ${AGENT}`)
+        .send({ ticketId: 5 })
+      expect(res.status).toBe(404)
+      expect(prisma.tickets.findUnique).not.toHaveBeenCalled()
+    })
+
+    it('404 для несуществующего тикета', async () => {
+      prisma.canned_responses.findUnique.mockResolvedValue({
+        id: 1,
+        title: 'Привет',
+        category: '',
+        text: 'Здравствуйте',
+      })
+      prisma.tickets.findUnique.mockResolvedValue(null)
+      const res = await request(app)
+        .post('/api/canned-responses/1/render')
+        .set('Authorization', `Bearer ${AGENT}`)
+        .send({ ticketId: 999 })
+      expect(res.status).toBe(404)
+      expect(res.body.code).toBe('TICKET_NOT_FOUND')
+    })
+
+    it('200 подставляет merge fields и оставляет неизвестную переменную', async () => {
+      prisma.canned_responses.findUnique.mockResolvedValue({
+        id: 1,
+        title: 'Приветствие',
+        category: 'greetings',
+        text:
+          'Здравствуйте, {{customer.name}}! Тикет #{{ticket.id}} «{{ticket.title}}» ведёт {{agent.name}} ' +
+          '({{company.name}}). {{unknown.field}}',
+      })
+      prisma.tickets.findUnique.mockResolvedValue(TICKET)
+      const res = await request(app)
+        .post('/api/canned-responses/1/render')
+        .set('Authorization', `Bearer ${AGENT}`)
+        .send({ ticketId: 5 })
+      expect(res.status).toBe(200)
+      expect(res.body.data.text).toBe(
+        'Здравствуйте, Иван! Тикет #5 «VPN не работает» ведёт Мария (Acme). {{unknown.field}}',
+      )
+      expect(res.body.data.title).toBe('Приветствие')
+      expect(prisma.tickets.findUnique).toHaveBeenCalledWith({
+        where: { id: 5 },
+        select: expect.objectContaining({ id: true, created_by_employee: expect.any(Object) }),
+      })
+    })
+
+    it('500 при ошибке БД', async () => {
+      prisma.canned_responses.findUnique.mockRejectedValue(new Error('db down'))
+      const res = await request(app)
+        .post('/api/canned-responses/1/render')
+        .set('Authorization', `Bearer ${AGENT}`)
+        .send({ ticketId: 5 })
+      expect(res.status).toBe(500)
+      expect(res.body.success).toBe(false)
     })
   })
 

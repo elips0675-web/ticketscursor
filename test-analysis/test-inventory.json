@@ -1,27 +1,27 @@
 {
-  "generated": "2026-10-24T12:47:45.677Z",
+  "generated": "2026-10-24T13:53:29.392Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 100,
-    "suites": 265,
-    "tests": 938,
+    "files": 101,
+    "suites": 267,
+    "tests": 943,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 95,
-    "suites": 481,
-    "tests": 1264,
+    "files": 98,
+    "suites": 491,
+    "tests": 1291,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 195,
-    "suites": 746,
-    "tests": 2202,
+    "files": 199,
+    "suites": 758,
+    "tests": 2234,
     "all_passing": true
   },
   "e2e": {
@@ -345,6 +345,10 @@
       "tests": 5
     },
     {
+      "file": "src/test/TicketDetail.canned.test.tsx",
+      "tests": 5
+    },
+    {
       "file": "src/test/TwoFactorSection.test.tsx",
       "tests": 5
     },
@@ -499,6 +503,10 @@
       "tests": 22
     },
     {
+      "file": "server/src/__tests__/canned-responses.routes.test.js",
+      "tests": 21
+    },
+    {
       "file": "server/src/__tests__/public-widget.test.js",
       "tests": 21
     },
@@ -529,10 +537,6 @@
     {
       "file": "server/src/services/__tests__/collision.service.test.js",
       "tests": 16
-    },
-    {
-      "file": "server/src/__tests__/canned-responses.routes.test.js",
-      "tests": 15
     },
     {
       "file": "server/src/services/__tests__/api-tokens.service.test.js",
@@ -584,6 +588,10 @@
     },
     {
       "file": "server/src/__tests__/oidc.test.js",
+      "tests": 13
+    },
+    {
+      "file": "server/src/__tests__/template-variables.test.js",
       "tests": 13
     },
     {
@@ -771,6 +779,10 @@
       "tests": 5
     },
     {
+      "file": "server/src/__tests__/rules.service.test.js",
+      "tests": 5
+    },
+    {
       "file": "server/src/__tests__/ticket-history.test.js",
       "tests": 5
     },
@@ -812,6 +824,10 @@
     },
     {
       "file": "server/src/__tests__/admin-sla-settings.test.js",
+      "tests": 3
+    },
+    {
+      "file": "server/src/__tests__/email-auto-reply.test.js",
       "tests": 3
     },
     {

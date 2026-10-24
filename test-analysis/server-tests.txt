@@ -1,12 +1,12 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 95 файлов / 481 suite / 1264 теста (все PASS, vitest --reporter=json от 24.10.2026)
+Реальный результат: 98 файлов / 491 suite / 1291 теста (все PASS, vitest --reporter=json от 24.10.2026)
 Этап 68 закрыт 26.09: дыры 0% (injection 15, fileCheck 9, ldap 10, index 5, api-tokens.routes 10, canned-responses.routes 15, telegram.expanded 27) — все файлы с 0% покрытия закрыты.
 Coverage (All files): 80.99 stmts / 74.65 branches / 81.48 funcs / 82.67 lines (пороги 78/72/79/80 — замер 17.10.2026, `cd server && npx vitest run --coverage`, отчёт `server/coverage/lcov-report/index.html`)
 ВАЖНО: имя тестовой БД переопределяется через TEST_DB_NAME (server/vitest.global-setup.js:6) — иначе параллельные прогоны дропают общий servicedesk_test друг другу.
 
-===== ФАЙЛЫ (95 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (98 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 server/src/api.test.js | 184 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk, feature rollout)
@@ -26,8 +26,10 @@ server/src/__tests__/public-kb.test.js | 18 | Public KB: статьи, паги�
 server/src/__tests__/recurrences.route.test.js | 17 | Recurrences routes: list, get, create (cron валидация), update, delete, RBAC
 server/src/services/__tests__/custom-fields.service.test.js | 17 | Custom fields: CRUD, validation, types, required
 server/src/__tests__/rules.route.test.js | 16 | Rules routes: CRUD, цепочки, включение/выключение
+server/src/__tests__/rules.service.test.js | 5 | Правила (CHW-07): merge fields в send_notification, {{ticketId}}, fallback при ошибке БД, невыполненное условие, нет userId
 server/src/services/__tests__/collision.service.test.js | 16 | Collision: конфликты событий календаря
-server/src/__tests__/canned-responses.routes.test.js | 15 | Canned responses (Этап 68): CRUD — список, create, update, delete, RBAC (admin+ запрет requester), схемы-валидация
+server/src/__tests__/canned-responses.routes.test.js | 21 | Canned responses (Этап 68 + CHW-07): CRUD — список, create, update, delete, RBAC (admin+ запрет requester), render merge fields, схемы-валидация
+server/src/__tests__/template-variables.test.js | 13 | Merge fields (CHW-07): канонические и легаси переменные, неизвестная остаётся, null/undefined → '', без повторной подстановки, buildTemplateContext
 server/src/__tests__/injection.test.js | 16 | Injection (Этап 68): SQL-injection/NoSQL/XSS/header-injection на search, tickets, employees, wiki — защита подтверждена (FULLTEXT→LIKE, orderBy whitelist, отказ на подозрительные payload)
 server/src/services/__tests__/api-tokens.service.test.js | 15 | API-токены: create, validate, revoke
 server/src/services/__tests__/assistant.service.test.js | 15 | AI assistant: RAG, wiki search, suggestions
@@ -79,6 +81,7 @@ server/src/__tests__/admin-settings-secrets.test.js | 6 | P1 №9: GET /api/admi
 server/src/__tests__/admin-import.test.js | 5 | CSV-импорт сотрудников: создание из rows + email-транслитерация, дубликат → skipped, пустое ФИО → skipped, пустой массив → 400, не-админ → 403
 server/src/__tests__/contract.api.test.js | 5 | Contract (zod): ответы /tickets, /employees, /chats, /wiki, /news — конверт success:true + элементы с id
 server/src/__tests__/email.test.js | 5 | Email: SMTP transport, template rendering
+server/src/__tests__/email-auto-reply.test.js | 3 | Автоответ IMAP (CHW-07): merge fields в subject/text, нет известных плейсхолдеров, нет «undefined»
 server/src/__tests__/files.route.test.js | 5 | Files routes: GET list, POST upload, DELETE
 server/src/__tests__/gdpr-export.test.js | 5 | GDPR export (Этап 66, флаг gdpr_export): создание экспорта, скачивание/архив, RBAC
 server/src/__tests__/index.test.js | 5 | index.js (Этап 68): запуск сервера на 4000 (mocked listen), graceful shutdown — stopBackgroundJobs, слушатели SIGINT/SIGTERM
@@ -113,4 +116,4 @@ Coverage (01.10.2026, перемерено --coverage): 80.46 stmts / 74.35 bran
 
 Текущий факт 17.10.2026: 90 файлов / 456 suite / 1149 тестов (регенерировано из vitest --reporter=json). Прирост к 11.10: +1 файл / +5 тестов — `server/src/__tests__/metrics-endpoint.test.js` (2, метрики эндпоинта), `metrics.test.js` 5→8 (честные CPU/event-loop + счётчик `http_requests_total`).
 
-Текущий факт 24.10.2026: 95 файлов / 481 suite / 1264 теста (регенерировано из vitest --reporter=json). Прирост к 17.10: +3 файла / +85 тестов — CHW-06 (виджет чата): `public-widget.test.js` 21 и `widget-inbox.test.js` 22; `socket.test.js` 27→28 (комната `agents`: agent и senior_agent получают `widget:message`); CHW-02 (Telegram-контакт): `telegram.expanded.test.js` 27→35 и `migration.idempotency.test.js` 3→4; `limiters.test.js` 12 без изменений (в описании добавлен `widgetLimiter` 600/мин). CHW-01 (Telegram webhook): `telegram-webhook.test.js` 11 (новый файл), `telegram.expanded.test.js` 35→49, `notify.test.js` 24→26, `migration.idempotency.test.js` 4→5. CHW-03 (readiness): `health-ready.test.js` 6 (новый файл), `api.test.js` 183→184, `injection.test.js` 15→16. CHW-04 (outbox retry): `outbox.delivery.test.js` 4→10, `migration.idempotency.test.js` 5→6. CHW-05 (ClamAV): `clamav.expanded.test.js` 8→11, `health-ready.test.js` 6→7, `validate-upload.test.js` 11 (новый файл).
+Текущий факт 24.10.2026: 98 файлов / 491 suite / 1291 теста (регенерировано из vitest --reporter=json). Прирост к 17.10: +3 файла / +85 тестов — CHW-06 (виджет чата): `public-widget.test.js` 21 и `widget-inbox.test.js` 22; `socket.test.js` 27→28 (комната `agents`: agent и senior_agent получают `widget:message`); CHW-02 (Telegram-контакт): `telegram.expanded.test.js` 27→35 и `migration.idempotency.test.js` 3→4; `limiters.test.js` 12 без изменений (в описании добавлен `widgetLimiter` 600/мин). CHW-01 (Telegram webhook): `telegram-webhook.test.js` 11 (новый файл), `telegram.expanded.test.js` 35→49, `notify.test.js` 24→26, `migration.idempotency.test.js` 4→5. CHW-03 (readiness): `health-ready.test.js` 6 (новый файл), `api.test.js` 183→184, `injection.test.js` 15→16. CHW-04 (outbox retry): `outbox.delivery.test.js` 4→10, `migration.idempotency.test.js` 5→6. CHW-05 (ClamAV): `clamav.expanded.test.js` 8→11, `health-ready.test.js` 6→7, `validate-upload.test.js` 11 (новый файл). CHW-07 (merge fields): `template-variables.test.js` 13 (новый), `rules.service.test.js` 5 (новый), `email-auto-reply.test.js` 3 (новый), `canned-responses.routes.test.js` 15→21.
