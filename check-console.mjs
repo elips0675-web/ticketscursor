@@ -32,9 +32,7 @@ const BASE = process.env.BASE_URL || 'http://localhost:5173'
 // скрипт напомнит убрать её отсюда (реестр не должен протухать молча).
 const TRACKED_ISSUES = {
   '/team': 'org_chart off → GET /api/team/org-chart 404, но страница всё равно шлёт запрос',
-  '/tickets/new': 'GET /api/tickets/custom-fields 500 — дрейф custom_field_definitions',
-  '/admin/settings': 'GET /api/admin/scheduled-reports 404 (флаг off) + /api/api-tokens, /api/webhooks, /api/rules 500 (нет таблиц в тест-БД)',
-  '/admin/custom-fields': 'GET /api/admin/custom-fields 500 — дрейф custom_field_definitions',
+  '/admin/settings': 'scheduled_reports off → GET /api/admin/scheduled-reports 404, страница запрашивает его всегда',
 }
 
 async function main() {
