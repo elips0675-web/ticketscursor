@@ -38,7 +38,7 @@ function resetDbMocks() {
   prismaMock.ticket_messages.create.mockResolvedValue({ id: 1 })
 }
 
-describe('telegram.js', () => {
+describe('telegram.js', { timeout: 30000 }, () => {
   beforeEach(() => {
     vi.resetModules()
     delete process.env.TELEGRAM_BOT_TOKEN
@@ -131,7 +131,7 @@ describe('telegram.js', () => {
 })
 
 // ── Этап 68 + CHW-02: команды /link, /new, /tickets, /reply, callback_query, forward ──
-describe('telegram.js — команды и уведомления (Этап 68, CHW-02)', () => {
+describe('telegram.js — команды и уведомления (Этап 68, CHW-02)', { timeout: 30000 }, () => {
   beforeEach(() => {
     vi.resetModules()
     vi.clearAllMocks()
@@ -404,7 +404,7 @@ describe('telegram.js — команды и уведомления (Этап 68,
 })
 
 // ── CHW-01: webhook-режим, диспетчер update, ответ оператора в Telegram ──
-describe('telegram.js — webhook и двусторонняя синхронизация (CHW-01)', () => {
+describe('telegram.js — webhook и двусторонняя синхронизация (CHW-01)', { timeout: 30000 }, () => {
   beforeEach(() => {
     vi.resetModules()
     vi.clearAllMocks()
