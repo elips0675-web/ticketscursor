@@ -1,15 +1,15 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 93 файлов / 476 suite / 1234 теста (все PASS, vitest --reporter=json от 24.10.2026)
+Реальный результат: 94 файлов / 479 suite / 1242 теста (все PASS, vitest --reporter=json от 24.10.2026)
 Этап 68 закрыт 26.09: дыры 0% (injection 15, fileCheck 9, ldap 10, index 5, api-tokens.routes 10, canned-responses.routes 15, telegram.expanded 27) — все файлы с 0% покрытия закрыты.
 Coverage (All files): 80.99 stmts / 74.65 branches / 81.48 funcs / 82.67 lines (пороги 78/72/79/80 — замер 17.10.2026, `cd server && npx vitest run --coverage`, отчёт `server/coverage/lcov-report/index.html`)
 ВАЖНО: имя тестовой БД переопределяется через TEST_DB_NAME (server/vitest.global-setup.js:6) — иначе параллельные прогоны дропают общий servicedesk_test друг другу.
 
-===== ФАЙЛЫ (93 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (94 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
-server/src/api.test.js | 183 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk, feature rollout)
+server/src/api.test.js | 184 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk, feature rollout)
 server/src/__tests__/rbac-matrix.test.js | 41 | RBAC: матрица 5×5, requireRole, hasRole, JWT/API-токены
 server/src/services/__tests__/tickets.service.sla.test.js | 40 | SLA: calculation, pause, business hours, breach detection, priority changes
 server/src/services/__tests__/email-ingestion.service.test.js | 28 | IMAP: extractTicketReference, stripTicketReference, getImapConfig, testImapConnection, pollOnce, reply/add, новый тикет, empty skip, errors
@@ -28,7 +28,7 @@ server/src/services/__tests__/custom-fields.service.test.js | 17 | Custom fields
 server/src/__tests__/rules.route.test.js | 16 | Rules routes: CRUD, цепочки, включение/выключение
 server/src/services/__tests__/collision.service.test.js | 16 | Collision: конфликты событий календаря
 server/src/__tests__/canned-responses.routes.test.js | 15 | Canned responses (Этап 68): CRUD — список, create, update, delete, RBAC (admin+ запрет requester), схемы-валидация
-server/src/__tests__/injection.test.js | 15 | Injection (Этап 68): SQL-injection/NoSQL/XSS/header-injection на search, tickets, employees, wiki — защита подтверждена (FULLTEXT→LIKE, orderBy whitelist, отказ на подозрительные payload)
+server/src/__tests__/injection.test.js | 16 | Injection (Этап 68): SQL-injection/NoSQL/XSS/header-injection на search, tickets, employees, wiki — защита подтверждена (FULLTEXT→LIKE, orderBy whitelist, отказ на подозрительные payload)
 server/src/services/__tests__/api-tokens.service.test.js | 15 | API-токены: create, validate, revoke
 server/src/services/__tests__/assistant.service.test.js | 15 | AI assistant: RAG, wiki search, suggestions
 server/src/services/__tests__/csat.service.test.js | 15 | CSAT: survey creation, response recording, metrics
@@ -71,6 +71,7 @@ server/src/services/__tests__/roleUtils.test.js | 7 | Role utils: hasRole, canMa
 server/src/__tests__/cache.test.js | 6 | Cache: Redis fallback, invalidate, TTL
 server/src/__tests__/csat.route.test.js | 6 | CSAT routes: GET survey, POST response, metrics
 server/src/__tests__/idempotency.test.js | 6 | Idempotency: dual-store Redis+in-memory, TTL 24ч, повторный запрос из-под res.json, fallback при недоступном Redis, коллизия ключа (не 409, первый ответ)
+server/src/__tests__/health-ready.test.js | 6 | Readiness (CHW-03): БД+Redis живы → 200 ok; Redis не настроен → 200 degraded + очередь in-memory; Redis настроен и лежит → degraded + очередь не ok; БД недоступна → 503 и Redis не проверяется; исключение checkRedis → 200 degraded; SELECT 1 без интерполяции
 server/src/services/__tests__/calendar.service.test.js | 6 | Calendar: CRUD, recurring events, conflicts
 server/src/services/__tests__/files.service.test.js | 6 | Files: upload, list, folder structure
 server/src/__tests__/admin-settings-secrets.test.js | 6 | P1 №9: GET /api/admin/settings маскирует секреты (*PASS*/*SECRET*/*CREDENTIALS*/*TOKEN*), PUT с маской не затирает реальное значение
@@ -111,4 +112,4 @@ Coverage (01.10.2026, перемерено --coverage): 80.46 stmts / 74.35 bran
 
 Текущий факт 17.10.2026: 90 файлов / 456 suite / 1149 тестов (регенерировано из vitest --reporter=json). Прирост к 11.10: +1 файл / +5 тестов — `server/src/__tests__/metrics-endpoint.test.js` (2, метрики эндпоинта), `metrics.test.js` 5→8 (честные CPU/event-loop + счётчик `http_requests_total`).
 
-Текущий факт 24.10.2026: 93 файла / 476 suite / 1234 теста (регенерировано из vitest --reporter=json). Прирост к 17.10: +3 файла / +85 тестов — CHW-06 (виджет чата): `public-widget.test.js` 21 и `widget-inbox.test.js` 22; `socket.test.js` 27→28 (комната `agents`: agent и senior_agent получают `widget:message`); CHW-02 (Telegram-контакт): `telegram.expanded.test.js` 27→35 и `migration.idempotency.test.js` 3→4; `limiters.test.js` 12 без изменений (в описании добавлен `widgetLimiter` 600/мин). CHW-01 (Telegram webhook): `telegram-webhook.test.js` 11 (новый файл), `telegram.expanded.test.js` 35→49, `notify.test.js` 24→26, `migration.idempotency.test.js` 4→5.
+Текущий факт 24.10.2026: 94 файла / 479 suite / 1242 теста (регенерировано из vitest --reporter=json). Прирост к 17.10: +3 файла / +85 тестов — CHW-06 (виджет чата): `public-widget.test.js` 21 и `widget-inbox.test.js` 22; `socket.test.js` 27→28 (комната `agents`: agent и senior_agent получают `widget:message`); CHW-02 (Telegram-контакт): `telegram.expanded.test.js` 27→35 и `migration.idempotency.test.js` 3→4; `limiters.test.js` 12 без изменений (в описании добавлен `widgetLimiter` 600/мин). CHW-01 (Telegram webhook): `telegram-webhook.test.js` 11 (новый файл), `telegram.expanded.test.js` 35→49, `notify.test.js` 24→26, `migration.idempotency.test.js` 4→5. CHW-03 (readiness): `health-ready.test.js` 6 (новый файл), `api.test.js` 183→184, `injection.test.js` 15→16.

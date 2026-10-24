@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-24T07:45:14.145Z",
+  "generated": "2026-10-24T07:56:55.683Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
@@ -11,17 +11,17 @@
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 93,
-    "suites": 476,
-    "tests": 1234,
+    "files": 94,
+    "suites": 479,
+    "tests": 1242,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 192,
-    "suites": 739,
-    "tests": 2168,
+    "files": 193,
+    "suites": 742,
+    "tests": 2176,
     "all_passing": true
   },
   "e2e": {
@@ -452,7 +452,7 @@
   "server_files": [
     {
       "file": "server/src/api.test.js",
-      "tests": 183
+      "tests": 184
     },
     {
       "file": "server/src/__tests__/telegram.expanded.test.js",
@@ -515,6 +515,10 @@
       "tests": 17
     },
     {
+      "file": "server/src/__tests__/injection.test.js",
+      "tests": 16
+    },
+    {
       "file": "server/src/__tests__/rules.route.test.js",
       "tests": 16
     },
@@ -524,10 +528,6 @@
     },
     {
       "file": "server/src/__tests__/canned-responses.routes.test.js",
-      "tests": 15
-    },
-    {
-      "file": "server/src/__tests__/injection.test.js",
       "tests": 15
     },
     {
@@ -700,6 +700,10 @@
     },
     {
       "file": "server/src/__tests__/csat.route.test.js",
+      "tests": 6
+    },
+    {
+      "file": "server/src/__tests__/health-ready.test.js",
       "tests": 6
     },
     {

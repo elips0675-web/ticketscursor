@@ -28,7 +28,7 @@ export async function checkRedis() {
   const settings = await getSettings()
   const url = settings.REDIS_URL || process.env.REDIS_URL || ''
   if (!url) {
-    return { name: 'redis', label: 'Redis', ok: false, message: 'не настроен (REDIS_URL пуст)' }
+    return { name: 'redis', label: 'Redis', ok: false, configured: false, message: 'не настроен (REDIS_URL пуст)' }
   }
   const { default: Redis } = await import('ioredis')
   const client = new Redis(url, { lazyConnect: true, maxRetriesPerRequest: 1, retryStrategy: () => null })
@@ -36,9 +36,9 @@ export async function checkRedis() {
   try {
     await client.connect()
     await client.ping()
-    return { name: 'redis', label: 'Redis', ok: true, latency: Date.now() - start }
+    return { name: 'redis', label: 'Redis', ok: true, configured: true, latency: Date.now() - start }
   } catch (err) {
-    return { name: 'redis', label: 'Redis', ok: false, latency: Date.now() - start, message: err.message }
+    return { name: 'redis', label: 'Redis', ok: false, configured: true, latency: Date.now() - start, message: err.message }
   } finally {
     client.disconnect()
   }

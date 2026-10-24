@@ -52,6 +52,7 @@ import { searchMeilisearch } from '../search-sync.js'
 import { JWT_SECRET } from '../middleware.js'
 import searchRouter from '../routes/search.js'
 import * as adminOps from '../services/admin-ops.js'
+import { getSettings } from '../settings.js'
 
 // Классические SQL-injection payload'ы
 const MALICIOUS_QUERIES = [
@@ -193,6 +194,19 @@ describe('injection.test.js — SQL-injection защита (Этап 68)', () =>
       const result = await adminOps.checkDatabase()
       expect(result.ok).toBe(false)
       expect(result.message).toContain('connection refused')
+    })
+
+    it('checkRedis без REDIS_URL помечает configured:false (CHW-03)', async () => {
+      getSettings.mockResolvedValue({})
+      const saved = process.env.REDIS_URL
+      delete process.env.REDIS_URL
+      try {
+        const result = await adminOps.checkRedis()
+        expect(result.ok).toBe(false)
+        expect(result.configured).toBe(false)
+      } finally {
+        if (saved !== undefined) process.env.REDIS_URL = saved
+      }
     })
   })
 })

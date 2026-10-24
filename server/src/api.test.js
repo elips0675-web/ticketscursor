@@ -26,6 +26,19 @@ describe('GET /api/health', () => {
   })
 })
 
+describe('GET /api/health/ready (CHW-03)', () => {
+  it('отдаёт db, redis и queue; без Redis — degraded, но 200', async () => {
+    const res = await request(app).get('/api/health/ready')
+    expect(res.status).toBe(200)
+    expect(res.body.db).toBe(true)
+    expect(res.body).toHaveProperty('redis')
+    expect(res.body.queue).toHaveProperty('mode')
+    expect(res.body.queue).toHaveProperty('ok')
+    expect(res.body.degraded).toBe(res.body.redis === false || res.body.queue.ok === false)
+    expect(res.body.status).toBe(res.body.degraded ? 'degraded' : 'ok')
+  })
+})
+
 describe('API versioning — /api/v1/*', () => {
   it('GET /api/v1/health returns ok with X-API-Version header', async () => {
     const res = await request(app).get('/api/v1/health')
