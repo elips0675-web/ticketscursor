@@ -54,6 +54,7 @@ model employees {
   ticket_timers       ticket_timers[]
   api_tokens          api_tokens[]
   webhooks_created    webhooks[]           @relation("WebhookCreatedBy")
+  widget_messages     widget_messages[]
 }
 
 model tickets {
@@ -319,6 +320,54 @@ model chat_read_receipts {
   last_read_at         DateTime?  @default(now())
 
   @@unique([chat_id, user_id])
+}
+
+model widget_channels {
+  id              Int      @id @default(autoincrement())
+  name            String   @db.VarChar(120)
+  website_token   String   @unique @db.VarChar(64)
+  allowed_origins String?  @default("") @db.Text
+  welcome_message String?  @default("") @db.Text
+  offline_message String?  @default("") @db.Text
+  color           String?  @default("#1f93ff") @db.VarChar(20)
+  enabled         Boolean  @default(true)
+  created_at      DateTime @default(now())
+
+  widget_conversations widget_conversations[]
+}
+
+model widget_conversations {
+  id               Int      @id @default(autoincrement())
+  channel_id       Int
+  visitor_id       String   @db.VarChar(64)
+  visitor_token    String   @unique @db.VarChar(64)
+  visitor_name     String   @db.VarChar(255)
+  visitor_email    String?  @db.VarChar(255)
+  status           String   @default("open") @db.VarChar(20)
+  unread_for_agent Int      @default(0)
+  last_message_at  DateTime @default(now())
+  created_at       DateTime @default(now())
+
+  channel  widget_channels  @relation(fields: [channel_id], references: [id], onDelete: Cascade)
+  messages widget_messages[]
+
+  @@index([channel_id, status, last_message_at])
+  @@index([visitor_id])
+}
+
+model widget_messages {
+  id              Int      @id @default(autoincrement())
+  conversation_id Int
+  sender_type     String   @db.VarChar(20)
+  sender_name     String   @db.VarChar(255)
+  employee_id     Int?
+  text            String   @db.Text
+  created_at      DateTime @default(now())
+
+  conversation widget_conversations @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  employee     employees?           @relation(fields: [employee_id], references: [id], onDelete: SetNull)
+
+  @@index([conversation_id, created_at])
 }
 
 model wiki_articles {

@@ -42,6 +42,8 @@ const { mockApi } = vi.hoisted(() => ({
 
 vi.mock('@/lib/api', () => ({ api: mockApi }))
 
+vi.mock('@/components/widget/WidgetLauncher', () => ({ default: () => null }))
+
 describe('PublicPortal', () => {
   beforeEach(() => {
     mockApi.post.mockReset()

@@ -55,6 +55,8 @@ import recurrencesRouter from './routes/recurrences.js'
 import rulesRouter from './routes/rules.js'
 import publicPortalRouter from './routes/public-portal.js'
 import publicKbRouter from './routes/public-kb.js'
+import publicWidgetRouter from './routes/public-widget.js'
+import widgetInboxRouter from './routes/widget-inbox.js'
 import gdprRouter from './routes/gdpr.js'
 import teamRouter from './routes/team.js'
 import swaggerUi from 'swagger-ui-express'
@@ -72,7 +74,7 @@ app.set('trust proxy', getTrustProxySetting())
 const server = createServer(app)
 
 await loadRateLimitOverrides()
-const { authLimiter, apiLimiter, adminLimiter } = createLimiters()
+const { authLimiter, apiLimiter, adminLimiter, widgetLimiter } = createLimiters()
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
@@ -159,6 +161,8 @@ mount('/recurrences', recurrencesRouter, adminLimiter)
 mount('/rules', rulesRouter, adminLimiter)
 mount('/portal', publicPortalRouter, apiLimiter)
 mount('/kb', publicKbRouter, apiLimiter)
+mount('/widget', publicWidgetRouter, widgetLimiter)
+mount('/widget-inbox', widgetInboxRouter, apiLimiter)
 mount('/gdpr', gdprRouter, apiLimiter)
 mount('/team', teamRouter, apiLimiter)
 

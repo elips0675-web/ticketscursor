@@ -559,6 +559,21 @@ describe('setupSocket — реальный сервер (порт 0), клиен
     await Promise.all([closeSock(a), closeSock(c)])
   })
 
+  it('комната agents: agent и senior_agent получают widget:message (инбокс виджета доступен agent+)', async () => {
+    const a = connect(makeToken(empA.id, 'agent'))
+    const c = connect(makeToken(empC.id, 'senior_agent'))
+    await Promise.all([waitForConnect(a), waitForConnect(c)])
+    await delay(100)
+
+    const fromA = waitFor(a, 'widget:message')
+    const fromC = waitFor(c, 'widget:message')
+    io.to('agents').emit('widget:message', { conversationId: 1, text: 'ping' })
+
+    await expect(fromA).resolves.toEqual({ conversationId: 1, text: 'ping' })
+    await expect(fromC).resolves.toEqual({ conversationId: 1, text: 'ping' })
+    await Promise.all([closeSock(a), closeSock(c)])
+  })
+
   it('getIO() возвращает активный экземпляр сервера', () => {
     expect(socketModule.getIO()).toBe(io)
   })

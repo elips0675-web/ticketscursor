@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { Loader2, Send, CheckCircle2, ExternalLink, Copy } from 'lucide-react'
 import { api } from '@/lib/api'
+import WidgetLauncher from '@/components/widget/WidgetLauncher'
 
 export default function PublicPortal() {
   const { t } = useTranslation()
@@ -81,6 +82,7 @@ export default function PublicPortal() {
             </Button>
           </CardContent>
         </Card>
+        <WidgetLauncher />
       </div>
     )
   }
@@ -174,6 +176,7 @@ export default function PublicPortal() {
           </div>
         </CardContent>
       </Card>
+      <WidgetLauncher />
     </div>
   )
 }

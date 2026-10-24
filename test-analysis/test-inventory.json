@@ -1,27 +1,27 @@
 {
-  "generated": "2026-10-24T05:56:27.689Z",
+  "generated": "2026-10-24T06:58:32.372Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 95,
-    "suites": 255,
-    "tests": 908,
+    "files": 99,
+    "suites": 263,
+    "tests": 934,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 90,
-    "suites": 457,
-    "tests": 1153,
+    "files": 92,
+    "suites": 472,
+    "tests": 1197,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 185,
-    "suites": 712,
-    "tests": 2061,
+    "files": 191,
+    "suites": 735,
+    "tests": 2131,
     "all_passing": true
   },
   "e2e": {
@@ -161,6 +161,10 @@
       "tests": 13
     },
     {
+      "file": "src/test/WidgetPanel.test.tsx",
+      "tests": 12
+    },
+    {
       "file": "scripts/check-doc-counters.test.mjs",
       "tests": 11
     },
@@ -178,6 +182,10 @@
     },
     {
       "file": "src/test/CommandPalette.test.tsx",
+      "tests": 10
+    },
+    {
+      "file": "src/test/WidgetInbox.test.tsx",
       "tests": 10
     },
     {
@@ -353,6 +361,10 @@
       "tests": 4
     },
     {
+      "file": "src/test/Chats.test.tsx",
+      "tests": 4
+    },
+    {
       "file": "src/test/Employees.test.tsx",
       "tests": 4
     },
@@ -389,10 +401,6 @@
       "tests": 3
     },
     {
-      "file": "src/test/Chats.test.tsx",
-      "tests": 3
-    },
-    {
       "file": "src/test/ErrorBoundary.test.tsx",
       "tests": 3
     },
@@ -421,6 +429,10 @@
       "tests": 2
     },
     {
+      "file": "src/test/WidgetLauncher.test.tsx",
+      "tests": 2
+    },
+    {
       "file": "src/test/AdminPush.test.tsx",
       "tests": 1
     },
@@ -430,6 +442,10 @@
     },
     {
       "file": "src/test/Tickets.test.tsx",
+      "tests": 1
+    },
+    {
+      "file": "src/test/WidgetChat.test.tsx",
       "tests": 1
     }
   ],
@@ -447,12 +463,12 @@
       "tests": 40
     },
     {
-      "file": "server/src/services/__tests__/email-ingestion.service.test.js",
+      "file": "server/src/__tests__/socket.test.js",
       "tests": 28
     },
     {
-      "file": "server/src/__tests__/socket.test.js",
-      "tests": 27
+      "file": "server/src/services/__tests__/email-ingestion.service.test.js",
+      "tests": 28
     },
     {
       "file": "server/src/__tests__/telegram.expanded.test.js",
@@ -473,6 +489,14 @@
     {
       "file": "server/src/__tests__/public-portal.test.js",
       "tests": 22
+    },
+    {
+      "file": "server/src/__tests__/widget-inbox.test.js",
+      "tests": 22
+    },
+    {
+      "file": "server/src/__tests__/public-widget.test.js",
+      "tests": 21
     },
     {
       "file": "server/src/services/__tests__/rules.service.test.js",

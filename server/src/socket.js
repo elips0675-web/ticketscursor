@@ -93,6 +93,7 @@ export async function setupSocket(server) {
   io.on('connection', (socket) => {
     console.log(`WS user ${socket.userId} connected`)
     socket.join(`user:${socket.userId}`)
+    if (hasRole(socket.userRole, 'agent')) socket.join('agents')
 
     // Онлайн-статус
     prisma.employees.update({ where: { id: socket.userId }, data: { online: true } })

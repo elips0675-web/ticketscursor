@@ -65,5 +65,6 @@ export function createLimiters(skip = () => process.env.NODE_ENV === 'test') {
     authLimiter: create('auth', 'RATE_LIMIT_AUTH_MAX', 10, 'Too many auth requests'),
     apiLimiter: create('api', 'RATE_LIMIT_API_MAX', 100, 'Too many requests'),
     adminLimiter: create('admin', 'RATE_LIMIT_ADMIN_MAX', 30, 'Too many admin requests'),
+    widgetLimiter: create('widget', 'RATE_LIMIT_WIDGET_MAX', 600, 'Too many widget requests'),
   }
 }

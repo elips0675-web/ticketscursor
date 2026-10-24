@@ -1,22 +1,24 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 90 файлов / 456 suite / 1149 тестов (все PASS, vitest --reporter=json от 17.10.2026)
+Реальный результат: 92 файлов / 472 suite / 1197 тестов (все PASS, vitest --reporter=json от 24.10.2026)
 Этап 68 закрыт 26.09: дыры 0% (injection 15, fileCheck 9, ldap 10, index 5, api-tokens.routes 10, canned-responses.routes 15, telegram.expanded 27) — все файлы с 0% покрытия закрыты.
 Coverage (All files): 80.99 stmts / 74.65 branches / 81.48 funcs / 82.67 lines (пороги 78/72/79/80 — замер 17.10.2026, `cd server && npx vitest run --coverage`, отчёт `server/coverage/lcov-report/index.html`)
 ВАЖНО: имя тестовой БД переопределяется через TEST_DB_NAME (server/vitest.global-setup.js:6) — иначе параллельные прогоны дропают общий servicedesk_test друг другу.
 
-===== ФАЙЛЫ (90 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (92 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 server/src/api.test.js | 183 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk, feature rollout)
 server/src/__tests__/rbac-matrix.test.js | 41 | RBAC: матрица 5×5, requireRole, hasRole, JWT/API-токены
 server/src/services/__tests__/tickets.service.sla.test.js | 40 | SLA: calculation, pause, business hours, breach detection, priority changes
 server/src/services/__tests__/email-ingestion.service.test.js | 28 | IMAP: extractTicketReference, stripTicketReference, getImapConfig, testImapConnection, pollOnce, reply/add, новый тикет, empty skip, errors
-server/src/__tests__/socket.test.js | 27 | WebSocket (реальный сервер на порту 0): JWT handshake, rate-limit, комнаты, typing, chat:read, disconnect, offline flush, delete, notify, getIO
+server/src/__tests__/socket.test.js | 28 | WebSocket (реальный сервер на порту 0): JWT handshake, rate-limit, комнаты, typing, chat:read, disconnect, offline flush, delete, notify, getIO; комната `agents` — `agent` и `senior_agent` получают `widget:message` (CHW-06, инбокс виджета доступен agent+)
 server/src/__tests__/telegram.expanded.test.js | 27 | Telegram (Этап 68): init, /start, /link, /new, /tickets, /reply, notifications, /status → число тикетов, createTicketFromTelegram, forwardMessageToTicket
 server/src/__tests__/admin-stage58.test.js | 24 | Этап 58: admin-ops (backup/seed/redis-status), RBAC-эндпоинты, rate-limit admin
 server/src/services/__tests__/notify.test.js | 24 | Notifications: create, in-app, email, telegram, push (webpush fire-and-forget, 404/410 → cleanup подписки), dedup, фильтры каналов email/push/in_app через notification_preferences, серверная нормализация prefs
+server/src/__tests__/widget-inbox.test.js | 22 | Widget inbox (CHW-06): список open/closed + поиск, карточка, ответ оператора (имя из JWT/employees, переоткрытие закрытого, unread), read, close/reopen, RBAC, CRUD каналов и ротация токена, аудит, события в комнаты
+server/src/__tests__/public-widget.test.js | 21 | Public widget (CHW-06): /default, config, create conversation (visitor_token 48 hex), сообщения посетителя, 409 в закрытый диалог, валидация текста/имени/email, флаг chat_widget, disabled-канал, outbox-событие в комнату agents
 server/src/__tests__/public-portal.test.js | 22 | Public portal: POST /tickets (новый/существующий employee), 400-валидация, track, 500, upload
 server/src/services/__tests__/rules.service.test.js | 20 | Rules: правила и цепочки, условия, действия
 server/src/__tests__/middleware.test.js | 19 | Rate limiter, CORS, helmet, auth middleware, RBAC
@@ -41,7 +43,7 @@ server/src/services/__tests__/webhooks.service.test.js | 14 | Webhooks: подп
 server/src/__tests__/scheduled-reports.test.js | 14 | Scheduled reports (Этап 66, подфича 4, флаг scheduled_reports): чистые функции (isValidCron/normalizeRecipients/formatReportText/buildReportData), admin CRUD (401/403/404-флаг, 400-валидация, create/list/update/delete/run-now), processScheduledReports (доставка + пересчёт next_run_at, 0 при флаге off)
 server/src/__tests__/oidc.test.js | 13 | SSO OIDC: discovery, authorization URL (state/nonce), callback + auto-provisioning, disabled, no email, initOIDCClient null/error
 server/src/services/__tests__/tickets.service.mentions.test.js | 13 | Mentions: @name parsing, notification creation, dedup
-server/src/__tests__/limiters.test.js | 12 | Rate limiters: auth 10/мин, api 100/мин, admin 30/мин
+server/src/__tests__/limiters.test.js | 12 | Rate limiters: auth 10/мин, api 100/мин, admin 30/мин, widget 600/мин (CHW-06 — отдельный лимит, чтобы polling виджета не упирался в общий apiLimiter)
 server/src/__tests__/ticket-watchers.test.js | 12 | POST/GET/DELETE watchers; 🔴 2 падения: DELETE отдаёт 403 вместо 200 (отписка себя) и 403 вместо 404 (нет подписки)
 server/src/__tests__/idor.test.js | 11 | IDOR: requester только свои тикеты (GET, messages, lock), agent свои+неназначенные, senior_agent полный доступ
 server/src/__tests__/notification-prefs.test.js | 11 | Настройки уведомлений (флаг notification_prefs): GET/PUT /notifications/preferences — дефолты (все каналы включены), мёрж/нормализация prefs, невалидный payload → 400, RBAC (не-авторизован 401, не-владелец 403), без флага — API всё равно работает; изоляция — выделенные id 603/604
@@ -107,3 +109,5 @@ Coverage (01.10.2026, перемерено --coverage): 80.46 stmts / 74.35 bran
 Прирост к Этапу 68: 1098 → 1118 (+20): Этап 66 (qwen P1 #2, подфичи 1-3): ticket-categories.test.js 11, gdpr-export.test.js 5, org-chart.test.js 4. Плюс ротация внутри существующих: notify.test.js 22→24, wiki.service 7→15, chats.service 9→14, telegram.expanded 22→27. +15 (Этап 66, подфича 4): scheduled-reports.test.js 14 + migration.idempotency +1 (scheduled_reports up()). Плюс попутно закрыт дрейф схемы: миграция 20260928_csat_surveys.js.
 
 Текущий факт 17.10.2026: 90 файлов / 456 suite / 1149 тестов (регенерировано из vitest --reporter=json). Прирост к 11.10: +1 файл / +5 тестов — `server/src/__tests__/metrics-endpoint.test.js` (2, метрики эндпоинта), `metrics.test.js` 5→8 (честные CPU/event-loop + счётчик `http_requests_total`).
+
+Текущий факт 24.10.2026: 92 файла / 472 suite / 1197 тестов (регенерировано из vitest --reporter=json). Прирост к 17.10: +2 файла / +48 тестов — CHW-06 (виджет чата): `public-widget.test.js` 21 и `widget-inbox.test.js` 22; `socket.test.js` 27→28 (комната `agents`: agent и senior_agent получают `widget:message`); `limiters.test.js` 12 без изменений (в описании добавлен `widgetLimiter` 600/мин).

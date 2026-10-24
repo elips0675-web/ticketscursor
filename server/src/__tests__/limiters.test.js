@@ -5,7 +5,7 @@ import { createLimiters } from '../limits.js'
 import { app } from '../app.js'
 
 const ORIGINAL_NODE_ENV = process.env.NODE_ENV
-const RATE_LIMIT_ENV_KEYS = ['RATE_LIMIT_AUTH_MAX', 'RATE_LIMIT_API_MAX', 'RATE_LIMIT_ADMIN_MAX']
+const RATE_LIMIT_ENV_KEYS = ['RATE_LIMIT_AUTH_MAX', 'RATE_LIMIT_API_MAX', 'RATE_LIMIT_ADMIN_MAX', 'RATE_LIMIT_WIDGET_MAX']
 
 afterEach(() => {
   process.env.NODE_ENV = ORIGINAL_NODE_ENV

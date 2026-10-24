@@ -37,6 +37,7 @@ import PublicPortal from '@/pages/Portal'
 import PortalTrack from '@/pages/PortalTrack'
 import PublicKB from '@/pages/PublicKB'
 import PublicKBArticle from '@/pages/PublicKBArticle'
+import WidgetChat from '@/pages/WidgetChat'
 import Register from '@/pages/Register'
 import NotFound from '@/pages/NotFound'
 
@@ -147,6 +148,7 @@ export default function App() {
                     <Route path="/portal/track/:token" element={<PortalTrack />} />
                     <Route path="/kb" element={<PublicKB />} />
                     <Route path="/kb/:slug" element={<PublicKBArticle />} />
+                    <Route path="/widget/:token" element={<WidgetChat />} />
 
                     <Route
                       path="/admin"

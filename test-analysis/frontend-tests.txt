@@ -1,10 +1,10 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 95 файлов / 255 suite / 908 тестов (все PASS, vitest --reporter=json от 23.10.2026)
+Реальный результат: 99 файлов / 263 suite / 934 тестов (все PASS, vitest --reporter=json от 24.10.2026)
 Coverage (All files): 78.53 stmts / 69.74 branches / 70.34 funcs / 81.17 lines (пороги 76/67/68/78 — замер 23.10.2026, `npx vitest run --coverage`, отчёт `coverage/lcov-report/index.html`)
 
-===== ФАЙЛЫ (95 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (99 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 scripts/check-security-headers.test.mjs | 46 | Гейт периметра (P0): заголовки в nginx.conf/vercel.json, наследование add_header, helmet раньше express.static, Dockerfile копирует проверяемый конфиг
@@ -80,6 +80,8 @@ src/test/PwaInstallPrompt.test.tsx | 5 | PwaInstallPrompt: beforeinstallprompt, 
 src/test/Team.expanded.test.tsx | 5 | Team/Org chart (флаг org_chart): дерево оргструктуры, поиск, карточки сотрудников, пустое/ошибка
 src/test/TwoFactorSection.test.tsx | 5 | TwoFactorSection: 2FA в Profile (флаг two_fa), setup/QR-секрет, enable/disable, status
 src/test/a11y.test.tsx | 4 | a11y (Этап 68): axe-core на 4 страницах (Login, CannedResponses, CustomFields, Shortcuts) — whitelist правил, цветовой контраст вне jsdom
+src/test/WidgetPanel.test.tsx | 12 | WidgetPanel (CHW-06): pre-chat форма (имя/email, валидация), старт диалога, история, отправка, polling 5 с, закрытый диалог → новый, ошибки загрузки/отправки
+src/test/WidgetInbox.test.tsx | 10 | WidgetInbox (CHW-06): список open/closed, поиск, пустое состояние, переписка, авто-read, ответ оператора, close/reopen, ошибка + retry
 src/test/Calendar.test.tsx | 4 | Calendar: renders, events
 src/test/Employees.test.tsx | 4 | Employees: renders, list
 src/test/Files.test.tsx | 4 | Files: renders, folders
@@ -91,7 +93,7 @@ src/test/Wiki.test.tsx | 4 | Wiki: renders, categories
 src/test/AdminSettings.scheduledreports.test.tsx | 4 | Scheduled reports (флаг scheduled_reports): секция, добавление→POST, удаление→DELETE, запуск→POST /run
 src/test/AdminSettings.sla.test.tsx | 3 | AdminSettings SLA business hours: секция, дни/часы/таймзона, Save→PUT
 src/test/AdminSettings.ticketforms.test.tsx | 3 | AdminSettings Ticket Categories (флаг ticket_forms): CRUD категорий, поля, Save
-src/test/Chats.test.tsx | 3 | Chats: renders, list
+src/test/Chats.test.tsx | 4 | Chats: renders, list, вкладка «Виджет» (флаг chat_widget)
 src/test/ErrorBoundary.test.tsx | 3 | ErrorBoundary: catches, renders fallback
 src/test/Polls.test.tsx | 3 | Polls: renders, vote
 src/test/AdminDashboard.test.tsx | 2 | AdminDashboard: renders, stats
@@ -99,6 +101,8 @@ src/test/ForgotPassword.test.tsx | 2 | ForgotPassword: renders, submit
 src/test/NotFound.test.tsx | 2 | NotFound: renders 404
 src/test/ResetPassword.test.tsx | 2 | ResetPassword: renders, invalid link
 src/test/Search.test.tsx | 2 | Search: renders, query
+src/test/WidgetLauncher.test.tsx | 2 | WidgetLauncher (CHW-06): кнопка появляется при включённом канале, скрыта при недоступном API
+src/test/WidgetChat.test.tsx | 1 | WidgetChat (CHW-06): маршрут /widget/:token рендерит панель и закрывает iframe через postMessage
 src/test/AdminPush.test.tsx | 1 | AdminPush: renders
 src/test/Profile.test.tsx | 1 | Profile: renders
 src/test/Tickets.test.tsx | 1 | Tickets: renders
@@ -117,3 +121,5 @@ Coverage (01.10.2026, перемерено --coverage): 78.58 stmts / 69.6 branc
 Текущий факт 21.10.2026: 95 файла / 254 suite / 902 тестов (регенерировано из vitest --reporter=json: `node scripts/regenerate-test-inventory.js vitest-client.json server/vitest-server.json`). Прирост к 17.10: +4 теста — `scripts/check-backlog-schema.test.mjs` 22→26 (проверка уникальности заголовков бэклога по базе до «(» — перенос находки 1.5 «ЗАДАНИЕ АГЕНТУ.txt» SwiftMatch). Сервер: 90 файлов / 456 suite / 1149 тестов (0 failures, перепрогон 21.10 подтвердил цифры 17.10). Позже того же дня: +1 файл / +8 тестов — `scripts/refresh-auth-json.test.mjs` (8 тестов общего механизма обновления `auth.json` через dev-login; до него механизм был продублирован в двух скриптах).
 
 Текущий факт 23.10.2026: 95 файлов / 255 suite / 908 тестов (регенерировано из vitest --reporter=json: `node scripts/regenerate-test-inventory.js vitest-client.json server/vitest-server.json`). Прирост к 21.10: +6 тестов — `scripts/migrations-lag-audit.test.mjs` 18→24 (гейт теперь сверяет модели prisma с таблицами после `migrate:latest`: так поймали CON-02; плюс защита от схемы кастомных полей вне миграций). Сервер: 90 файлов / 456 suite / 1149 тестов (0 failures).
+
+Текущий факт 24.10.2026: 99 файлов / 263 suite / 934 тестов (регенерировано из vitest --reporter=json: `node scripts/regenerate-test-inventory.js vitest-client.json server/vitest-server.json`). Прирост к 23.10: +4 файла / +26 тестов — CHW-06 (виджет чата): `WidgetPanel.test.tsx` 12, `WidgetInbox.test.tsx` 10, `WidgetLauncher.test.tsx` 2, `WidgetChat.test.tsx` 1, `Chats.test.tsx` 3→4 (вкладка «Виджет» под флагом `chat_widget`). Сервер: 92 файла / 472 suite / 1197 тестов (0 failures).
