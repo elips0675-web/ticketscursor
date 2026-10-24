@@ -1,7 +1,7 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 92 файлов / 472 suite / 1197 тестов (все PASS, vitest --reporter=json от 24.10.2026)
+Реальный результат: 92 файлов / 472 suite / 1206 тестов (все PASS, vitest --reporter=json от 24.10.2026)
 Этап 68 закрыт 26.09: дыры 0% (injection 15, fileCheck 9, ldap 10, index 5, api-tokens.routes 10, canned-responses.routes 15, telegram.expanded 27) — все файлы с 0% покрытия закрыты.
 Coverage (All files): 80.99 stmts / 74.65 branches / 81.48 funcs / 82.67 lines (пороги 78/72/79/80 — замер 17.10.2026, `cd server && npx vitest run --coverage`, отчёт `server/coverage/lcov-report/index.html`)
 ВАЖНО: имя тестовой БД переопределяется через TEST_DB_NAME (server/vitest.global-setup.js:6) — иначе параллельные прогоны дропают общий servicedesk_test друг другу.
@@ -14,7 +14,7 @@ server/src/__tests__/rbac-matrix.test.js | 41 | RBAC: матрица 5×5, requi
 server/src/services/__tests__/tickets.service.sla.test.js | 40 | SLA: calculation, pause, business hours, breach detection, priority changes
 server/src/services/__tests__/email-ingestion.service.test.js | 28 | IMAP: extractTicketReference, stripTicketReference, getImapConfig, testImapConnection, pollOnce, reply/add, новый тикет, empty skip, errors
 server/src/__tests__/socket.test.js | 28 | WebSocket (реальный сервер на порту 0): JWT handshake, rate-limit, комнаты, typing, chat:read, disconnect, offline flush, delete, notify, getIO; комната `agents` — `agent` и `senior_agent` получают `widget:message` (CHW-06, инбокс виджета доступен agent+)
-server/src/__tests__/telegram.expanded.test.js | 27 | Telegram (Этап 68): init, /start, /link, /new, /tickets, /reply, notifications, /status → число тикетов, createTicketFromTelegram, forwardMessageToTicket
+server/src/__tests__/telegram.expanded.test.js | 35 | Telegram (Этап 68 + CHW-02): init, /start и /link создают контакт (не агента), первый /new создаёт requester-employee, повторный /new без дубля, /tickets, /reply с проверкой владельца, notifications, createTicketFromTelegram, forwardMessageToTicket, флаг telegram_contacts (off → legacy, ошибка → fail-open)
 server/src/__tests__/admin-stage58.test.js | 24 | Этап 58: admin-ops (backup/seed/redis-status), RBAC-эндпоинты, rate-limit admin
 server/src/services/__tests__/notify.test.js | 24 | Notifications: create, in-app, email, telegram, push (webpush fire-and-forget, 404/410 → cleanup подписки), dedup, фильтры каналов email/push/in_app через notification_preferences, серверная нормализация prefs
 server/src/__tests__/widget-inbox.test.js | 22 | Widget inbox (CHW-06): список open/closed + поиск, карточка, ответ оператора (имя из JWT/employees, переоткрытие закрытого, unread), read, close/reopen, RBAC, CRUD каналов и ротация токена, аудит, события в комнаты
@@ -95,7 +95,7 @@ server/src/__tests__/search.test.js | 4 | Search: fulltext, LIKE fallback, empty
 server/src/__tests__/secrets-rotation.test.js | 4 | Secrets rotation: JWT_SECRET="new,old" — подпись новым, verify старым/новым, отклонение неизвестного, export JWT_SECRET
 server/src/__tests__/trust-proxy.test.js | 4 | Trust proxy: TRUST_PROXY=1|true → 1, off по умолчанию, спуфинг X-Forwarded-For при off/on
 server/src/__tests__/admin-sla-settings.test.js | 3 | AdminSettings SLA (порт 4003, изоляция id): BUSINESS_WORKING_DAYS/HOURS_START/HOURS_END в ALLOWED_SETTINGS, PUT валидирует, GET отдаёт бизнес-часы
-server/src/__tests__/migration.idempotency.test.js | 3 | Migration idempotency: knex migrate:latest дважды no-op, fk_cascades up() повторно без дублей FK, scheduled_reports up() повторно (таблица + флаг не дублируются)
+server/src/__tests__/migration.idempotency.test.js | 4 | Migration idempotency: knex migrate:latest дважды no-op, fk_cascades up() повторно без дублей FK, scheduled_reports up() повторно (таблица + флаг), telegram_contacts up() повторно (контакт + флаг + бэкфилл role=requester)
 server/src/__tests__/metrics-endpoint.test.js | 2 | Эндпоинт `GET /api/metrics` реально отдаёт метрики, на которые ссылаются `monitoring/alerts.yml` (иначе правило и объявление «зелёные по построению», а алерт не сработает); 17.10
 server/src/__tests__/notify-failure.test.js | 2 | Notify-регресс: падение email/webhook-уведомлений → тикет всё равно создаётся (201)
 server/src/__tests__/ticket-lock.race.test.js | 2 | 
@@ -110,4 +110,4 @@ Coverage (01.10.2026, перемерено --coverage): 80.46 stmts / 74.35 bran
 
 Текущий факт 17.10.2026: 90 файлов / 456 suite / 1149 тестов (регенерировано из vitest --reporter=json). Прирост к 11.10: +1 файл / +5 тестов — `server/src/__tests__/metrics-endpoint.test.js` (2, метрики эндпоинта), `metrics.test.js` 5→8 (честные CPU/event-loop + счётчик `http_requests_total`).
 
-Текущий факт 24.10.2026: 92 файла / 472 suite / 1197 тестов (регенерировано из vitest --reporter=json). Прирост к 17.10: +2 файла / +48 тестов — CHW-06 (виджет чата): `public-widget.test.js` 21 и `widget-inbox.test.js` 22; `socket.test.js` 27→28 (комната `agents`: agent и senior_agent получают `widget:message`); `limiters.test.js` 12 без изменений (в описании добавлен `widgetLimiter` 600/мин).
+Текущий факт 24.10.2026: 92 файла / 472 suite / 1206 тестов (регенерировано из vitest --reporter=json). Прирост к 17.10: +2 файла / +57 тестов — CHW-06 (виджет чата): `public-widget.test.js` 21 и `widget-inbox.test.js` 22; `socket.test.js` 27→28 (комната `agents`: agent и senior_agent получают `widget:message`); CHW-02 (Telegram-контакт): `telegram.expanded.test.js` 27→35 и `migration.idempotency.test.js` 3→4; `limiters.test.js` 12 без изменений (в описании добавлен `widgetLimiter` 600/мин).

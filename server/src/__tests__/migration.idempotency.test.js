@@ -3,6 +3,7 @@ import knexLib from 'knex'
 import knexConfig from '../../knexfile.js'
 import { up as fkCascadesUp } from '../../migrations/20260924_fk_cascades.js'
 import { up as scheduledReportsUp } from '../../migrations/20260927_scheduled_reports.js'
+import { up as telegramContactsUp } from '../../migrations/20261024_telegram_contacts.js'
 
 // Migration idempotency (Этап 60): повторный накат не должен ронять деплой
 // и не должен дублировать объекты (FK). Прогон идёт по тестовой БД
@@ -50,5 +51,38 @@ describe('Migration idempotency — повторный накат безопас
     const rows = await knex('feature_flags').where({ key: 'scheduled_reports' }).count({ c: '*' })
     expect(Number(rows[0].c)).toBe(1)
     expect(await knex.schema.hasTable('scheduled_reports')).toBe(true)
+  })
+
+  it('telegram_contacts up() повторно — контакт и флаг не дублируются, роль понижается', async () => {
+    expect(await knex.schema.hasTable('telegram_contacts')).toBe(true)
+    const email = '987654321@telegram.bot'
+    const telegramId = '987654321'
+    await knex('telegram_contacts').where({ telegram_id: telegramId }).del()
+    await knex('employees').where({ email }).del()
+
+    const [employeeId] = await knex('employees').insert({
+      name: 'Legacy Telegram',
+      email,
+      password_hash: 'telegram-oauth',
+      role: 'agent',
+      department: 'Telegram',
+      is_active: true,
+    })
+
+    await telegramContactsUp(knex)
+    await telegramContactsUp(knex)
+
+    const employee = await knex('employees').where({ id: employeeId }).first()
+    expect(employee.role).toBe('requester')
+
+    const contacts = await knex('telegram_contacts').where({ telegram_id: telegramId })
+    expect(contacts).toHaveLength(1)
+    expect(contacts[0].employee_id).toBe(employeeId)
+
+    const flags = await knex('feature_flags').where({ key: 'telegram_contacts' }).count({ c: '*' })
+    expect(Number(flags[0].c)).toBe(1)
+
+    await knex('telegram_contacts').where({ telegram_id: telegramId }).del()
+    await knex('employees').where({ id: employeeId }).del()
   })
 })

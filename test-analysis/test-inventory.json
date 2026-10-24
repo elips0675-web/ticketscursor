@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-24T06:58:32.372Z",
+  "generated": "2026-10-24T07:27:42.799Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
@@ -13,7 +13,7 @@
   "server": {
     "files": 92,
     "suites": 472,
-    "tests": 1197,
+    "tests": 1206,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
@@ -21,7 +21,7 @@
   "total": {
     "files": 191,
     "suites": 735,
-    "tests": 2131,
+    "tests": 2140,
     "all_passing": true
   },
   "e2e": {
@@ -463,16 +463,16 @@
       "tests": 40
     },
     {
+      "file": "server/src/__tests__/telegram.expanded.test.js",
+      "tests": 35
+    },
+    {
       "file": "server/src/__tests__/socket.test.js",
       "tests": 28
     },
     {
       "file": "server/src/services/__tests__/email-ingestion.service.test.js",
       "tests": 28
-    },
-    {
-      "file": "server/src/__tests__/telegram.expanded.test.js",
-      "tests": 27
     },
     {
       "file": "server/src/__tests__/admin-stage58.test.js",
@@ -767,6 +767,10 @@
       "tests": 4
     },
     {
+      "file": "server/src/__tests__/migration.idempotency.test.js",
+      "tests": 4
+    },
+    {
       "file": "server/src/__tests__/org-chart.test.js",
       "tests": 4
     },
@@ -792,10 +796,6 @@
     },
     {
       "file": "server/src/__tests__/admin-sla-settings.test.js",
-      "tests": 3
-    },
-    {
-      "file": "server/src/__tests__/migration.idempotency.test.js",
       "tests": 3
     },
     {

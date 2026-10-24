@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import request from 'supertest'
 import jwt from 'jsonwebtoken'
 import { app, server } from '../app.js'
+import prisma from '../prisma.js'
 import { JWT_SECRET } from '../middleware.js'
 import {
   loadRateLimitOverrides,
@@ -133,14 +134,21 @@ describe('RBAC matrix (rbac.js)', () => {
 })
 
 describe('POST /api/admin/sessions/revoke-all', () => {
+  // Глобальный отзыв чистит refresh_tokens ВСЕХ пользователей в общей тестовой БД.
+  // Реальный вызов из параллельного файла стирал сессии auth-sessions.test.js и давал
+  // флейк «ожидали 2 сессии, получили 1». Поэтому здесь проверяем маршрут и аргумент
+  // deleteMany({}) через шпион, не трогая чужие строки.
   it('revokes all refresh tokens', async () => {
-    const res = await request(app)
-      .post('/api/admin/sessions/revoke-all')
-      .set('Authorization', `Bearer ${devToken}`)
-    expect([200, 500]).toContain(res.status)
-    if (res.status === 200) {
-      expect(typeof res.body.data.revoked).toBe('number')
-      expect(res.body.data.revoked).toBeGreaterThanOrEqual(0)
+    const spy = vi.spyOn(prisma.refresh_tokens, 'deleteMany').mockResolvedValueOnce({ count: 3 })
+    try {
+      const res = await request(app)
+        .post('/api/admin/sessions/revoke-all')
+        .set('Authorization', `Bearer ${devToken}`)
+      expect(res.status).toBe(200)
+      expect(res.body.data.revoked).toBe(3)
+      expect(spy).toHaveBeenCalledWith({})
+    } finally {
+      spy.mockRestore()
     }
   })
 
@@ -157,10 +165,8 @@ describe('POST /api/admin/sessions/revoke/:userId', () => {
     const res = await request(app)
       .post('/api/admin/sessions/revoke/999')
       .set('Authorization', `Bearer ${devToken}`)
-    expect([200, 500]).toContain(res.status)
-    if (res.status === 200) {
-      expect(typeof res.body.data.revoked).toBe('number')
-    }
+    expect(res.status).toBe(200)
+    expect(typeof res.body.data.revoked).toBe('number')
   })
 
   it('returns 400 for invalid user id', async () => {

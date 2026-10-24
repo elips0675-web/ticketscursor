@@ -55,6 +55,7 @@ model employees {
   api_tokens          api_tokens[]
   webhooks_created    webhooks[]           @relation("WebhookCreatedBy")
   widget_messages     widget_messages[]
+  telegram_contacts   telegram_contacts[]
 }
 
 model tickets {
@@ -368,6 +369,21 @@ model widget_messages {
   employee     employees?           @relation(fields: [employee_id], references: [id], onDelete: SetNull)
 
   @@index([conversation_id, created_at])
+}
+
+model telegram_contacts {
+  id          Int      @id @default(autoincrement())
+  telegram_id BigInt   @unique
+  chat_id     BigInt?
+  username    String?  @db.VarChar(255)
+  name        String?  @db.VarChar(255)
+  employee_id Int?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now())
+
+  employee employees? @relation(fields: [employee_id], references: [id], onDelete: SetNull)
+
+  @@index([employee_id])
 }
 
 model wiki_articles {

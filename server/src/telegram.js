@@ -1,9 +1,20 @@
 import TelegramBot from 'node-telegram-bot-api'
 import prisma from './prisma.js'
 import logger from './logger.js'
+import { isFeatureEnabled } from './feature-flags.js'
 
 let bot = null
 const chatIds = new Set()
+
+const TELEGRAM_EMAIL_DOMAIN = '@telegram.bot'
+
+async function contactsEnabled() {
+  try {
+    return await isFeatureEnabled('telegram_contacts')
+  } catch {
+    return true
+  }
+}
 
 export function initTelegram() {
   const token = process.env.TELEGRAM_BOT_TOKEN
@@ -37,7 +48,7 @@ export function initTelegram() {
 
     if (text === '/new' || text.startsWith('/new ')) {
       const title = text.replace('/new', '').trim() || 'Тикет из Telegram'
-      await createTicketFromTelegram(chatId, userId, title).catch(err => {
+      await createTicketFromTelegram(chatId, userId, title, msg.from).catch(err => {
         logger.error('Create ticket from Telegram error:', err)
         bot.sendMessage(chatId, '❌ Ошибка создания тикета')
       })
@@ -100,8 +111,26 @@ async function linkTelegramUser(chatId, telegramUserId, from) {
   const telegramId = String(telegramUserId)
   const name = [from.first_name, from.last_name].filter(Boolean).join(' ') || from.username || 'Telegram User'
 
+  if (await contactsEnabled()) {
+    await prisma.telegram_contacts.upsert({
+      where: { telegram_id: BigInt(telegramId) },
+      create: {
+        telegram_id: BigInt(telegramId),
+        chat_id: BigInt(chatId),
+        username: from.username || null,
+        name,
+      },
+      update: {
+        chat_id: BigInt(chatId),
+        username: from.username || null,
+        name,
+      },
+    })
+    return
+  }
+
   const existing = await prisma.employees.findFirst({
-    where: { email: `${telegramId}@telegram.bot` },
+    where: { email: `${telegramId}${TELEGRAM_EMAIL_DOMAIN}` },
     select: { id: true },
   })
 
@@ -109,26 +138,101 @@ async function linkTelegramUser(chatId, telegramUserId, from) {
     await prisma.employees.create({
       data: {
         name,
-        email: `${telegramId}@telegram.bot`,
+        email: `${telegramId}${TELEGRAM_EMAIL_DOMAIN}`,
         password_hash: 'telegram-oauth',
-        role: 'agent',
+        role: 'requester',
         department: 'Telegram',
-        title: 'Telegram Channel',
+        title: 'Telegram User',
         is_active: true,
       },
     })
   }
 }
 
-async function createTicketFromTelegram(chatId, userId, title) {
-  const telegramId = userId ? String(userId) : null
-  let employee = null
-  if (telegramId) {
-    employee = await prisma.employees.findFirst({
-      where: { email: `${telegramId}@telegram.bot` },
+async function getTelegramIdentity(telegramId) {
+  if (!telegramId) return { contact: null, employee: null }
+
+  if (await contactsEnabled()) {
+    const contact = await prisma.telegram_contacts.findUnique({
+      where: { telegram_id: BigInt(telegramId) },
+      select: { id: true, employee_id: true, name: true },
+    })
+    if (!contact || !contact.employee_id) return { contact, employee: null }
+
+    const employee = await prisma.employees.findUnique({
+      where: { id: contact.employee_id },
+      select: { id: true, name: true },
+    })
+    return { contact, employee }
+  }
+
+  const employee = await prisma.employees.findFirst({
+    where: { email: `${telegramId}${TELEGRAM_EMAIL_DOMAIN}` },
+    select: { id: true, name: true },
+  })
+  return { contact: null, employee }
+}
+
+async function ensureTelegramEmployee(telegramId, chatId, from) {
+  const { contact, employee } = await getTelegramIdentity(telegramId)
+  if (employee) return employee
+
+  const name = [from?.first_name, from?.last_name].filter(Boolean).join(' ') || from?.username || contact?.name || 'Telegram User'
+  const data = {
+    name,
+    email: `${telegramId}${TELEGRAM_EMAIL_DOMAIN}`,
+    password_hash: 'telegram-oauth',
+    role: 'requester',
+    department: 'Telegram',
+    title: 'Telegram User',
+    is_active: true,
+  }
+
+  if (!(await contactsEnabled())) {
+    return prisma.employees.create({ data, select: { id: true, name: true } })
+  }
+
+  let contactId = contact?.id
+  if (!contactId) {
+    const createdContact = await prisma.telegram_contacts.create({
+      data: {
+        telegram_id: BigInt(telegramId),
+        chat_id: chatId ? BigInt(chatId) : null,
+        username: from?.username || null,
+        name,
+      },
       select: { id: true },
     })
+    contactId = createdContact.id
   }
+
+  const existing = await prisma.employees.findFirst({
+    where: { email: `${telegramId}${TELEGRAM_EMAIL_DOMAIN}` },
+    select: { id: true, name: true },
+  })
+  if (existing) {
+    await prisma.telegram_contacts.update({
+      where: { id: contactId },
+      data: { employee_id: existing.id },
+    })
+    return existing
+  }
+
+  const created = await prisma.employees.create({ data, select: { id: true, name: true } })
+  await prisma.telegram_contacts.update({
+    where: { id: contactId },
+    data: { employee_id: created.id },
+  })
+  return created
+}
+
+async function createTicketFromTelegram(chatId, userId, title, from) {
+  if (!userId) {
+    bot.sendMessage(chatId, '❌ Не удалось определить пользователя Telegram')
+    return
+  }
+
+  const employee = await ensureTelegramEmployee(String(userId), chatId, from)
 
   const ticket = await prisma.tickets.create({
     data: {
@@ -136,7 +240,7 @@ async function createTicketFromTelegram(chatId, userId, title) {
       description: `Создано из Telegram chat ${chatId}`,
       priority: 'medium',
       category: 'support',
-      created_by: employee?.id || 1,
+      created_by: employee.id,
     },
   })
 
@@ -150,14 +254,14 @@ async function listUserTickets(chatId, userId) {
     return
   }
 
-  const telegramId = String(userId)
-  const employee = await prisma.employees.findFirst({
-    where: { email: `${telegramId}@telegram.bot` },
-    select: { id: true },
-  })
+  const { contact, employee } = await getTelegramIdentity(String(userId))
 
   if (!employee) {
-    bot.sendMessage(chatId, '❌ Аккаунт не привязан. Используйте /link')
+    if (contact) {
+      bot.sendMessage(chatId, '📋 У вас нет тикетов. Создайте: /new <название>')
+    } else {
+      bot.sendMessage(chatId, '❌ Аккаунт не привязан. Используйте /link')
+    }
     return
   }
 
@@ -194,26 +298,27 @@ async function replyToTicket(chatId, userId, ticketId, text) {
     return
   }
 
-  const telegramId = userId ? String(userId) : null
-  let senderName = 'Telegram User'
-  let senderId = 1
+  const { contact, employee } = userId ? await getTelegramIdentity(String(userId)) : { contact: null, employee: null }
 
-  if (telegramId) {
-    const employee = await prisma.employees.findFirst({
-      where: { email: `${telegramId}@telegram.bot` },
-      select: { id: true, name: true },
-    })
-    if (employee) {
-      senderName = employee.name
-      senderId = employee.id
+  if (!employee) {
+    if (contact) {
+      bot.sendMessage(chatId, '❌ Сначала создайте тикет: /new <название>')
+    } else {
+      bot.sendMessage(chatId, '❌ Аккаунт не привязан. Используйте /link')
     }
+    return
   }
 
-  const msg = await prisma.ticket_messages.create({
+  if (ticket.created_by !== employee.id && ticket.assigned_to !== employee.id) {
+    bot.sendMessage(chatId, `❌ Нет доступа к тикету #${ticketId}`)
+    return
+  }
+
+  await prisma.ticket_messages.create({
     data: {
       ticket_id: ticketId,
-      sender_id: senderId,
-      sender_name: senderName,
+      sender_id: employee.id,
+      sender_name: employee.name,
       text,
     },
   })
@@ -224,20 +329,20 @@ async function replyToTicket(chatId, userId, ticketId, text) {
   })
 
   bot.sendMessage(chatId, `✅ Ответ на тикет #${ticketId} отправлен`)
-  logger.info(`Reply to ticket #${ticketId} from Telegram: ${senderName}`)
+  logger.info(`Reply to ticket #${ticketId} from Telegram: ${employee.name}`)
 }
 
 async function forwardMessageToTicket(chatId, userId, text) {
-  const telegramId = userId ? String(userId) : null
-  if (!telegramId) return
+  if (!userId) return
 
-  const employee = await prisma.employees.findFirst({
-    where: { email: `${telegramId}@telegram.bot` },
-    select: { id: true },
-  })
+  const { contact, employee } = await getTelegramIdentity(String(userId))
 
   if (!employee) {
-    bot.sendMessage(chatId, '⚠️ Сначала привяжите аккаунт: /link')
+    if (contact) {
+      bot.sendMessage(chatId, '📋 Нет активных тикетов. Создайте: /new <название>')
+    } else {
+      bot.sendMessage(chatId, '⚠️ Сначала привяжите аккаунт: /link')
+    }
     return
   }
 

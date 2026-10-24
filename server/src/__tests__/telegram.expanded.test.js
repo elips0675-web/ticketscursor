@@ -10,11 +10,31 @@ const mockTelegramBotCtor = vi.hoisted(() => vi.fn(function ctor() { return mock
 vi.mock('node-telegram-bot-api', () => ({ default: mockTelegramBotCtor }))
 
 const prismaMock = vi.hoisted(() => ({
-  employees: { findFirst: vi.fn(), create: vi.fn() },
+  employees: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
+  telegram_contacts: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), upsert: vi.fn() },
   tickets: { findMany: vi.fn(), create: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
   ticket_messages: { create: vi.fn() },
 }))
 vi.mock('../prisma.js', () => ({ default: prismaMock }))
+
+const featureFlagsMock = vi.hoisted(() => ({ isFeatureEnabled: vi.fn() }))
+vi.mock('../feature-flags.js', () => featureFlagsMock)
+
+function resetDbMocks() {
+  featureFlagsMock.isFeatureEnabled.mockResolvedValue(true)
+  prismaMock.telegram_contacts.findUnique.mockResolvedValue(null)
+  prismaMock.telegram_contacts.create.mockResolvedValue({ id: 1 })
+  prismaMock.telegram_contacts.update.mockResolvedValue({})
+  prismaMock.telegram_contacts.upsert.mockResolvedValue({ id: 1 })
+  prismaMock.employees.findFirst.mockResolvedValue(null)
+  prismaMock.employees.findUnique.mockResolvedValue({ id: 5, name: 'Петя' })
+  prismaMock.employees.create.mockResolvedValue({ id: 50, name: 'Telegram User' })
+  prismaMock.tickets.findMany.mockResolvedValue([])
+  prismaMock.tickets.create.mockResolvedValue({ id: 77, title: 'Тикет' })
+  prismaMock.tickets.findUnique.mockResolvedValue({ id: 1, title: 'Тест', created_by: 5, assigned_to: 2 })
+  prismaMock.tickets.update.mockResolvedValue({})
+  prismaMock.ticket_messages.create.mockResolvedValue({ id: 1 })
+}
 
 describe('telegram.js', () => {
   beforeEach(() => {
@@ -24,14 +44,7 @@ describe('telegram.js', () => {
     mockBotInstance.sendMessage.mockClear()
     mockBotInstance.answerCallbackQuery.mockClear()
     mockTelegramBotCtor.mockClear()
-    // дефолтные ответы БД
-    prismaMock.employees.findFirst.mockResolvedValue(null)
-    prismaMock.employees.create.mockResolvedValue({ id: 50, name: 'Telegram User', email: '1@telegram.bot' })
-    prismaMock.tickets.findMany.mockResolvedValue([])
-    prismaMock.tickets.create.mockResolvedValue({ id: 77, title: 'Тикет' })
-    prismaMock.tickets.findUnique.mockResolvedValue({ id: 1, title: 'Тест', created_by: 1, assigned_to: 2 })
-    prismaMock.tickets.update.mockResolvedValue({})
-    prismaMock.ticket_messages.create.mockResolvedValue({ id: 1 })
+    resetDbMocks()
   })
 
   it('does not init bot when TELEGRAM_BOT_TOKEN is not set', async () => {
@@ -113,17 +126,12 @@ describe('telegram.js', () => {
   })
 })
 
-// ── Этап 68: команды /link, /new, /tickets, /reply, callback_query, forward ──
-describe('telegram.js — команды и уведомления (Этап 68)', () => {
+// ── Этап 68 + CHW-02: команды /link, /new, /tickets, /reply, callback_query, forward ──
+describe('telegram.js — команды и уведомления (Этап 68, CHW-02)', () => {
   beforeEach(() => {
+    vi.resetModules()
     vi.clearAllMocks()
-    prismaMock.employees.findFirst.mockResolvedValue(null)
-    prismaMock.employees.create.mockResolvedValue({ id: 50, name: 'Telegram User', email: '1@telegram.bot' })
-    prismaMock.tickets.findMany.mockResolvedValue([])
-    prismaMock.tickets.create.mockResolvedValue({ id: 77, title: 'Тикет' })
-    prismaMock.tickets.findUnique.mockResolvedValue({ id: 1, title: 'Тест', created_by: 1, assigned_to: 2 })
-    prismaMock.tickets.update.mockResolvedValue({})
-    prismaMock.ticket_messages.create.mockResolvedValue({ id: 1 })
+    resetDbMocks()
   })
 
   async function getModule() {
@@ -136,76 +144,135 @@ describe('telegram.js — команды и уведомления (Этап 68)
   const msgHandler = () => mockBotInstance.on.mock.calls.find(c => c[0] === 'message')[1]
   const cbHandler = () => mockBotInstance.on.mock.calls.find(c => c[0] === 'callback_query')[1]
 
-  it('/start привязывает нового пользователя и создаёт employee', async () => {
+  it('/start создаёт контакт Telegram, а не сотрудника-агента', async () => {
     await getModule()
     await msgHandler()({
       text: '/start',
       chat: { id: 201 },
-      from: { id: 5, first_name: 'Петя', last_name: 'Петров' },
+      from: { id: 5, first_name: 'Петя', last_name: 'Петров', username: 'petya' },
     })
-    expect(prismaMock.employees.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ email: '5@telegram.bot', role: 'agent', name: 'Петя Петров' }),
+    expect(prismaMock.telegram_contacts.upsert).toHaveBeenCalledWith({
+      where: { telegram_id: 5n },
+      create: expect.objectContaining({ telegram_id: 5n, chat_id: 201n, username: 'petya', name: 'Петя Петров' }),
+      update: expect.objectContaining({ chat_id: 201n, username: 'petya', name: 'Петя Петров' }),
     })
+    expect(prismaMock.employees.create).not.toHaveBeenCalled()
     expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(201, expect.stringContaining('Бот активирован'))
   })
 
-  it('/link не создаёт дубль, если employee уже есть', async () => {
-    prismaMock.employees.findFirst.mockResolvedValueOnce({ id: 5 })
+  it('/link обновляет существующий контакт и не создаёт сотрудника', async () => {
+    prismaMock.telegram_contacts.upsert.mockResolvedValueOnce({ id: 5 })
     await getModule()
     await msgHandler()({ text: '/link', chat: { id: 202 }, from: { id: 5, first_name: 'Петя' } })
+    expect(prismaMock.telegram_contacts.upsert).toHaveBeenCalledTimes(1)
     expect(prismaMock.employees.create).not.toHaveBeenCalled()
     expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(202, expect.stringContaining('Аккаунт привязан'))
   })
 
-  it('/new создаёт тикет [Telegram] и сообщает номер', async () => {
-    prismaMock.employees.findFirst.mockResolvedValueOnce({ id: 50 })
+  it('/new при первом тикете создаёт requester-сотрудника и привязывает контакт', async () => {
+    prismaMock.telegram_contacts.findUnique.mockResolvedValueOnce({ id: 7, employee_id: null, name: 'Петя Петров' })
+    prismaMock.employees.create.mockResolvedValueOnce({ id: 50, name: 'Петя Петров' })
     await getModule()
-    await msgHandler()({ text: '/new Помогите с VPN', chat: { id: 203 }, from: { id: 5, first_name: 'Петя' } })
+    await msgHandler()({
+      text: '/new Помогите с VPN',
+      chat: { id: 203 },
+      from: { id: 5, first_name: 'Петя', last_name: 'Петров' },
+    })
+    expect(prismaMock.employees.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ email: '5@telegram.bot', role: 'requester', name: 'Петя Петров' }),
+      select: { id: true, name: true },
+    })
+    expect(prismaMock.telegram_contacts.update).toHaveBeenCalledWith({
+      where: { id: 7 },
+      data: { employee_id: 50 },
+    })
     expect(prismaMock.tickets.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ title: '[Telegram] Помогите с VPN', priority: 'medium', created_by: 50 }),
     })
     expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(203, expect.stringContaining('#77'))
   })
 
-  it('/new без текста — дефолтный заголовок', async () => {
+  it('/new без /start создаёт контакт и requester-сотрудника', async () => {
+    prismaMock.telegram_contacts.create.mockResolvedValueOnce({ id: 9 })
+    prismaMock.employees.create.mockResolvedValueOnce({ id: 51, name: 'Аня' })
     await getModule()
-    await msgHandler()({ text: '/new', chat: { id: 204 }, from: { id: 5, first_name: 'Петя' } })
+    await msgHandler()({ text: '/new Заявка', chat: { id: 204 }, from: { id: 6, first_name: 'Аня' } })
+    expect(prismaMock.telegram_contacts.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ telegram_id: 6n, chat_id: 204n, name: 'Аня' }),
+      select: { id: true },
+    })
+    expect(prismaMock.telegram_contacts.update).toHaveBeenCalledWith({
+      where: { id: 9 },
+      data: { employee_id: 51 },
+    })
     expect(prismaMock.tickets.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ title: '[Telegram] Тикет из Telegram', created_by: 1 }),
+      data: expect.objectContaining({ created_by: 51 }),
     })
   })
 
-  it('/new без userId — тикет создаётся от id 1', async () => {
+  it('/new повторно не создаёт сотрудника', async () => {
+    prismaMock.telegram_contacts.findUnique.mockResolvedValueOnce({ id: 7, employee_id: 50, name: 'Петя' })
+    prismaMock.employees.findUnique.mockResolvedValueOnce({ id: 50, name: 'Петя' })
     await getModule()
-    await msgHandler()({ text: '/new Заявка', chat: { id: 205 } })
+    await msgHandler()({ text: '/new Повторно', chat: { id: 205 }, from: { id: 5, first_name: 'Петя' } })
+    expect(prismaMock.employees.create).not.toHaveBeenCalled()
     expect(prismaMock.tickets.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ created_by: 1 }),
+      data: expect.objectContaining({ created_by: 50 }),
     })
   })
 
-  it('/tickets без привязки — просит /link', async () => {
+  it('/new при существующем employee по email привязывает контакт без дубля', async () => {
+    prismaMock.telegram_contacts.create.mockResolvedValueOnce({ id: 10 })
+    prismaMock.employees.findFirst.mockResolvedValueOnce({ id: 60, name: 'Старый Telegram' })
     await getModule()
-    await msgHandler()({ text: '/tickets', chat: { id: 206 }, from: { id: 999, first_name: 'X' } })
-    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(206, expect.stringContaining('/link'))
+    await msgHandler()({ text: '/new Заявка', chat: { id: 224 }, from: { id: 8, first_name: 'Старый' } })
+    expect(prismaMock.employees.create).not.toHaveBeenCalled()
+    expect(prismaMock.telegram_contacts.update).toHaveBeenCalledWith({
+      where: { id: 10 },
+      data: { employee_id: 60 },
+    })
+    expect(prismaMock.tickets.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ created_by: 60 }),
+    })
+  })
+
+  it('/new без userId не создаёт тикет от чужого имени', async () => {
+    await getModule()
+    await msgHandler()({ text: '/new Заявка', chat: { id: 206 } })
+    expect(prismaMock.tickets.create).not.toHaveBeenCalled()
+    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(206, expect.stringContaining('пользователя Telegram'))
+  })
+
+  it('/tickets без контакта — просит /link', async () => {
+    await getModule()
+    await msgHandler()({ text: '/tickets', chat: { id: 207 }, from: { id: 999, first_name: 'X' } })
+    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(207, expect.stringContaining('/link'))
+  })
+
+  it('/tickets с контактом без сотрудника — предлагает /new', async () => {
+    prismaMock.telegram_contacts.findUnique.mockResolvedValueOnce({ id: 7, employee_id: null, name: 'Петя' })
+    await getModule()
+    await msgHandler()({ text: '/tickets', chat: { id: 208 }, from: { id: 5 } })
+    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(208, expect.stringContaining('/new'))
   })
 
   it('/tickets без тикетов — «нет тикетов»', async () => {
-    prismaMock.employees.findFirst.mockResolvedValueOnce({ id: 5 })
+    prismaMock.telegram_contacts.findUnique.mockResolvedValueOnce({ id: 7, employee_id: 5, name: 'Петя' })
     await getModule()
-    await msgHandler()({ text: '/tickets', chat: { id: 207 }, from: { id: 5 } })
-    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(207, expect.stringContaining('нет тикетов'))
+    await msgHandler()({ text: '/tickets', chat: { id: 209 }, from: { id: 5 } })
+    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(209, expect.stringContaining('нет тикетов'))
   })
 
   it('/tickets показывает список до 5 тикетов', async () => {
-    prismaMock.employees.findFirst.mockResolvedValueOnce({ id: 5 })
+    prismaMock.telegram_contacts.findUnique.mockResolvedValueOnce({ id: 7, employee_id: 5, name: 'Петя' })
     prismaMock.tickets.findMany.mockResolvedValue([
       { id: 1, title: 'А', status: 'open', priority: 'medium' },
       { id: 2, title: 'Б', status: 'closed', priority: 'low' },
     ])
     await getModule()
-    await msgHandler()({ text: '/tickets', chat: { id: 208 }, from: { id: 5 } })
+    await msgHandler()({ text: '/tickets', chat: { id: 210 }, from: { id: 5 } })
     expect(prismaMock.tickets.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 5 }))
-    const msg = mockBotInstance.sendMessage.mock.calls.find(c => c[0] === 208)?.[1]
+    const msg = mockBotInstance.sendMessage.mock.calls.find(c => c[0] === 210)?.[1]
     expect(msg).toContain('#1')
     expect(msg).toContain('#2')
   })
@@ -213,58 +280,103 @@ describe('telegram.js — команды и уведомления (Этап 68)
   it('/reply на несуществующий тикет — «не найден»', async () => {
     prismaMock.tickets.findUnique.mockResolvedValue(null)
     await getModule()
-    await msgHandler()({ text: '/reply 99 текст', chat: { id: 209 }, from: { id: 5 } })
-    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(209, expect.stringContaining('не найден'))
+    await msgHandler()({ text: '/reply 99 текст', chat: { id: 211 }, from: { id: 5 } })
+    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(211, expect.stringContaining('не найден'))
   })
 
   it('/reply без текста — подсказка', async () => {
     await getModule()
-    await msgHandler()({ text: '/reply 5', chat: { id: 210 }, from: { id: 5 } })
-    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(210, expect.stringContaining('/reply <id> <текст>'))
+    await msgHandler()({ text: '/reply 5', chat: { id: 212 }, from: { id: 5 } })
+    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(212, expect.stringContaining('/reply <id> <текст>'))
   })
 
   it('/reply создаёт сообщение и обновляет updated_at', async () => {
-    prismaMock.employees.findFirst.mockResolvedValueOnce({ id: 5, name: 'Петя' })
+    prismaMock.telegram_contacts.findUnique.mockResolvedValueOnce({ id: 7, employee_id: 5, name: 'Петя' })
     await getModule()
-    await msgHandler()({ text: '/reply 1 Привет', chat: { id: 211 }, from: { id: 5 } })
+    await msgHandler()({ text: '/reply 1 Привет', chat: { id: 213 }, from: { id: 5 } })
     expect(prismaMock.ticket_messages.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ ticket_id: 1, sender_id: 5, sender_name: 'Петя', text: 'Привет' }),
     })
     expect(prismaMock.tickets.update).toHaveBeenCalledWith({ where: { id: 1 }, data: { updated_at: expect.any(Date) } })
   })
 
+  it('/reply на чужой тикет — нет доступа, сообщение не создаётся', async () => {
+    prismaMock.tickets.findUnique.mockResolvedValue({ id: 1, title: 'Тест', created_by: 1, assigned_to: 2 })
+    prismaMock.telegram_contacts.findUnique.mockResolvedValueOnce({ id: 7, employee_id: 5, name: 'Петя' })
+    await getModule()
+    await msgHandler()({ text: '/reply 1 Привет', chat: { id: 214 }, from: { id: 5 } })
+    expect(prismaMock.ticket_messages.create).not.toHaveBeenCalled()
+    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(214, expect.stringContaining('Нет доступа'))
+  })
+
+  it('/reply без контакта — просит /link, сообщение не создаётся', async () => {
+    await getModule()
+    await msgHandler()({ text: '/reply 1 Привет', chat: { id: 215 }, from: { id: 999 } })
+    expect(prismaMock.ticket_messages.create).not.toHaveBeenCalled()
+    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(215, expect.stringContaining('/link'))
+  })
+
   it('код #123 текст форвардится в активный тикет', async () => {
-    prismaMock.employees.findFirst.mockResolvedValueOnce({ id: 5, name: 'Петя' })
+    prismaMock.telegram_contacts.findUnique.mockResolvedValue({ id: 7, employee_id: 5, name: 'Петя' })
     prismaMock.tickets.findMany.mockResolvedValue([{ id: 3 }])
     await getModule()
-    await msgHandler()({ text: '#3 Важное дополнение', chat: { id: 212 }, from: { id: 5 } })
+    await msgHandler()({ text: '#3 Важное дополнение', chat: { id: 216 }, from: { id: 5 } })
     expect(prismaMock.ticket_messages.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ ticket_id: 3, text: 'Важное дополнение' }),
     })
   })
 
   it('свободный текст без активных тикетов — предложение /new', async () => {
-    prismaMock.employees.findFirst.mockResolvedValueOnce({ id: 5 })
+    prismaMock.telegram_contacts.findUnique.mockResolvedValueOnce({ id: 7, employee_id: 5, name: 'Петя' })
     await getModule()
-    await msgHandler()({ text: 'просто текст', chat: { id: 213 }, from: { id: 5 } })
-    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(213, expect.stringContaining('/new'))
+    await msgHandler()({ text: 'просто текст', chat: { id: 217 }, from: { id: 5 } })
+    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(217, expect.stringContaining('/new'))
   })
 
   it('свободный текст без привязки — просит /link', async () => {
     await getModule()
-    await msgHandler()({ text: 'просто текст', chat: { id: 214 }, from: { id: 888 } })
-    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(214, expect.stringContaining('/link'))
+    await msgHandler()({ text: 'просто текст', chat: { id: 218 }, from: { id: 888 } })
+    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(218, expect.stringContaining('/link'))
+  })
+
+  it('свободный текст с контактом без сотрудника — предлагает /new', async () => {
+    prismaMock.telegram_contacts.findUnique.mockResolvedValueOnce({ id: 7, employee_id: null, name: 'Петя' })
+    await getModule()
+    await msgHandler()({ text: 'просто текст', chat: { id: 219 }, from: { id: 5 } })
+    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(219, expect.stringContaining('/new'))
+  })
+
+  it('флаг telegram_contacts выключен — legacy-поиск по email и роль requester', async () => {
+    featureFlagsMock.isFeatureEnabled.mockResolvedValue(false)
+    await getModule()
+    await msgHandler()({ text: '/start', chat: { id: 220 }, from: { id: 77, first_name: 'Аня' } })
+    expect(prismaMock.telegram_contacts.upsert).not.toHaveBeenCalled()
+    expect(prismaMock.employees.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ email: '77@telegram.bot', role: 'requester' }),
+    })
+  })
+
+  it('ошибка чтения флага — используется таблица контактов (fail-open)', async () => {
+    featureFlagsMock.isFeatureEnabled.mockRejectedValue(new Error('db down'))
+    prismaMock.telegram_contacts.findUnique.mockResolvedValueOnce({ id: 7, employee_id: 5, name: 'Петя' })
+    await getModule()
+    await msgHandler()({ text: '/tickets', chat: { id: 221 }, from: { id: 5 } })
+    expect(prismaMock.telegram_contacts.findUnique).toHaveBeenCalledWith({
+      where: { telegram_id: 5n },
+      select: { id: true, employee_id: true, name: true },
+    })
+    expect(mockBotInstance.sendMessage).toHaveBeenCalledWith(221, expect.stringContaining('нет тикетов'))
   })
 
   it('callback_query ticket_ отвечает answerCallbackQuery', async () => {
     await getModule()
-    cbHandler()({ data: 'ticket_12', id: 'q1', message: { chat: { id: 215 } } })
+    cbHandler()({ data: 'ticket_12', id: 'q1', message: { chat: { id: 222 } } })
     expect(mockBotInstance.answerCallbackQuery).toHaveBeenCalledWith('q1', { text: 'Открываю тикет #12' })
   })
 
   it('callback_query с data не ticket_ — игнорируется', async () => {
     await getModule()
-    cbHandler()({ data: 'other', id: 'q2', message: { chat: { id: 216 } } })
+    cbHandler()({ data: 'other', id: 'q2', message: { chat: { id: 223 } } })
     expect(mockBotInstance.answerCallbackQuery).not.toHaveBeenCalled()
   })
 

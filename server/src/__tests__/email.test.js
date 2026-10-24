@@ -8,6 +8,11 @@ vi.mock('nodemailer', () => ({
 
 vi.mock('../logger.js', () => ({ default: { error: vi.fn(), info: vi.fn() } }))
 
+// email.js читает SMTP-настройки из БД (admin_settings) и только потом из env.
+// В общей тестовой БД параллельный admin-settings-secrets.test.js пишет SMTP_HOST/PASS,
+// поэтому БД здесь отключена: файл проверяет именно env-фолбэк.
+vi.mock('../settings.js', () => ({ getSettings: vi.fn().mockResolvedValue({}) }))
+
 describe('email.js', () => {
   beforeEach(() => {
     vi.resetModules()
