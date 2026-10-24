@@ -48,9 +48,12 @@ router.get('/articles', async (req, res) => {
 
 router.get('/articles/:slug', async (req, res) => {
   try {
-    const article = await prisma.wiki_articles.findFirst({
-      where: { slug: req.params.slug, published: true, deleted_at: null },
-    })
+    const key = req.params.slug
+    const where = { published: true, deleted_at: null }
+    if (/^\d+$/.test(key)) where.id = Number(key)
+    else where.slug = key
+
+    const article = await prisma.wiki_articles.findFirst({ where })
     if (!article) return res.status(404).json({ success: false, message: 'Article not found' })
 
     let votes = { up: 0, down: 0 }

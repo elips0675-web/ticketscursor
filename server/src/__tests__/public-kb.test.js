@@ -124,6 +124,23 @@ describe('public-kb route', () => {
       expect(res.status).toHaveBeenCalledWith(404)
     })
 
+    it('находит статью по числовому id, если slug ещё не сгенерирован', async () => {
+      prismaMock.wiki_articles.findFirst.mockResolvedValueOnce({
+        id: 7,
+        title: 'Без slug',
+        slug: null,
+        content: null,
+        category: 'IT',
+      })
+      const handler = findHandler('get', '/articles/:slug')
+      const { req, res } = mockReqRes({ params: { slug: '7' } })
+      await handler(req, res)
+      expect(prismaMock.wiki_articles.findFirst).toHaveBeenCalledWith({
+        where: { published: true, deleted_at: null, id: 7 },
+      })
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }))
+    })
+
     it('handles votes query failure gracefully', async () => {
       prismaMock.wiki_articles.findFirst.mockResolvedValueOnce({
         id: 1,
