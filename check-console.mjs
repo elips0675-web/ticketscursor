@@ -13,6 +13,7 @@ const BASE_PAGES = [
   '/', '/wiki', '/chats', '/tickets', '/employees', '/search',
   '/calendar', '/polls', '/files', '/notifications', '/kanban', '/profile',
   '/news', '/calculator', '/admin', '/admin/users', '/admin/push',
+  '/kb', '/portal',
 ]
 
 // Все пункты меню (sidebar + admin-layout) — чтобы новый пункт попадал в обход

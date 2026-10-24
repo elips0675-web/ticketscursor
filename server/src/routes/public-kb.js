@@ -59,8 +59,8 @@ router.get('/articles/:slug', async (req, res) => {
       for (const v of voteData) {
         votes[v.vote_type === 'up' ? 'up' : 'down'] = Number(v.cnt)
       }
-    } catch {
-      // votes table may not exist yet
+    } catch (voteErr) {
+      logger.warn('Public KB votes read failed:', voteErr.message)
     }
 
     let similar = []
@@ -108,16 +108,20 @@ router.post('/articles/:id/vote', async (req, res) => {
     const { vote } = req.body
     if (!['up', 'down'].includes(vote)) return res.status(400).json({ success: false, message: 'Vote must be up or down' })
 
+    const article = await prisma.wiki_articles.findFirst({
+      where: { id: articleId, published: true, deleted_at: null },
+      select: { id: true },
+    })
+    if (!article) return res.status(404).json({ success: false, message: 'Article not found' })
+
     const ip = req.ip || req.connection?.remoteAddress || 'unknown'
+    await prisma.$executeRaw`INSERT INTO article_votes (article_id, vote_type, ip_address) VALUES (${articleId}, ${vote}, ${ip})`
 
-    try {
-      await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS article_votes (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, article_id INT UNSIGNED NOT NULL, vote_type VARCHAR(10) NOT NULL, ip_address VARCHAR(45), created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`
-      await prisma.$executeRaw`INSERT INTO article_votes (article_id, vote_type, ip_address) VALUES (${articleId}, ${vote}, ${ip})`
-    } catch {
-      // fallback if table creation fails
-    }
+    const voteData = await prisma.$queryRaw`SELECT vote_type, COUNT(*) as cnt FROM article_votes WHERE article_id = ${articleId} GROUP BY vote_type`
+    const votes = { up: 0, down: 0 }
+    for (const v of voteData) votes[v.vote_type === 'up' ? 'up' : 'down'] = Number(v.cnt)
 
-    res.json({ success: true })
+    res.json({ success: true, data: votes })
   } catch (err) {
     logger.error('Public KB vote error:', err)
     res.status(500).json({ success: false, message: 'Failed to vote' })

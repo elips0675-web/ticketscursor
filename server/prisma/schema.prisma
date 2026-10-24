@@ -327,6 +327,9 @@ model wiki_articles {
   content     String    @db.Text
   category    String?   @default("Другое") @db.VarChar(100)
   tags        Json?
+  slug        String?   @unique @db.VarChar(255)
+  published   Boolean   @default(false)
+  deleted_at  DateTime?
   author_id   Int
   author_name String    @db.VarChar(255)
   created_at  DateTime? @default(now())
@@ -334,6 +337,21 @@ model wiki_articles {
 
   author    employees?        @relation(fields: [author_id], references: [id], onDelete: Cascade)
   revisions wiki_revisions[]
+  votes     article_votes[]
+
+  @@index([published, deleted_at])
+}
+
+model article_votes {
+  id         Int       @id @default(autoincrement())
+  article_id Int
+  vote_type  String    @db.VarChar(10)
+  ip_address String?   @db.VarChar(45)
+  created_at DateTime? @default(now())
+
+  article wiki_articles @relation(fields: [article_id], references: [id], onDelete: Cascade)
+
+  @@index([article_id])
 }
 
 model wiki_revisions {

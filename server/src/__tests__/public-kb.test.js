@@ -1,4 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { readFileSync, readdirSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const prismaMock = {
   wiki_articles: {
@@ -191,20 +194,24 @@ describe('public-kb route', () => {
   })
 
   describe('POST /articles/:id/vote', () => {
-    it('records a vote', async () => {
+    it('records a vote and returns fresh counts', async () => {
+      prismaMock.wiki_articles.findFirst.mockResolvedValueOnce({ id: 1 })
+      prismaMock.$queryRaw.mockResolvedValueOnce([{ vote_type: 'up', cnt: 1 }])
       const handler = findHandler('post', '/articles/:id/vote')
       expect(handler).toBeTruthy()
       const { req, res } = mockReqRes({ params: { id: '1' }, body: { vote: 'up' } })
       await handler(req, res)
       expect(prismaMock.$executeRaw).toHaveBeenCalled()
-      expect(res.json).toHaveBeenCalledWith({ success: true })
+      expect(res.json).toHaveBeenCalledWith({ success: true, data: { up: 1, down: 0 } })
     })
 
     it('records a down vote', async () => {
+      prismaMock.wiki_articles.findFirst.mockResolvedValueOnce({ id: 2 })
+      prismaMock.$queryRaw.mockResolvedValueOnce([{ vote_type: 'down', cnt: 4 }])
       const handler = findHandler('post', '/articles/:id/vote')
       const { req, res } = mockReqRes({ params: { id: '2' }, body: { vote: 'down' } })
       await handler(req, res)
-      expect(res.json).toHaveBeenCalledWith({ success: true })
+      expect(res.json).toHaveBeenCalledWith({ success: true, data: { up: 0, down: 4 } })
     })
 
     it('returns 400 for invalid vote', async () => {
@@ -214,23 +221,23 @@ describe('public-kb route', () => {
       expect(res.status).toHaveBeenCalledWith(400)
     })
 
-    it('tolerates vote insert failure (table race)', async () => {
-      prismaMock.$executeRaw.mockRejectedValueOnce(new Error('table'))
+    it('returns 404 when article is not published or missing', async () => {
+      prismaMock.wiki_articles.findFirst.mockResolvedValueOnce(null)
+      const handler = findHandler('post', '/articles/:id/vote')
+      const { req, res } = mockReqRes({ params: { id: '999' }, body: { vote: 'up' } })
+      await handler(req, res)
+      expect(res.status).toHaveBeenCalledWith(404)
+      expect(prismaMock.$executeRaw).not.toHaveBeenCalled()
+    })
+
+    it('returns 500 when the vote insert fails (no fake success)', async () => {
+      prismaMock.wiki_articles.findFirst.mockResolvedValueOnce({ id: 1 })
+      prismaMock.$executeRaw.mockRejectedValueOnce(new Error('insert failed'))
       const handler = findHandler('post', '/articles/:id/vote')
       const { req, res } = mockReqRes({ params: { id: '1' }, body: { vote: 'up' } })
       await handler(req, res)
-      expect(res.json).toHaveBeenCalledWith({ success: true })
-    })
-
-    it('tolerates repeated vote failures (best-effort)', async () => {
-      // оба $executeRaw (CREATE + INSERT) находятся внутри одного try/catch —
-      // ошибки глотаются, роут всегда отвечает success
-      prismaMock.$executeRaw.mockRejectedValue(new Error('boom'))
-      const handler = findHandler('post', '/articles/:id/vote')
-      const { req, res } = mockReqRes({ params: { id: '1' }, body: { vote: 'down' } })
-      await handler(req, res)
-      expect(res.status).not.toHaveBeenCalled()
-      expect(res.json).toHaveBeenCalledWith({ success: true })
+      expect(res.status).toHaveBeenCalledWith(500)
+      expect(res.json).toHaveBeenCalledWith({ success: false, message: 'Failed to vote' })
     })
   })
 
@@ -262,6 +269,47 @@ describe('public-kb route', () => {
       const { req, res } = mockReqRes({ query: { q: 'x' } })
       await handler(req, res)
       expect(res.status).toHaveBeenCalledWith(500)
+    })
+  })
+
+  describe('схема БД под запросы роута', () => {
+    const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
+
+    function modelFields(schema, model) {
+      const block = schema.match(new RegExp(`model\\s+${model}\\s*\\{([\\s\\S]*?)\\n\\}`))
+      if (!block) return null
+      return block[1]
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line && !line.startsWith('//') && !line.startsWith('@@'))
+        .map((line) => line.split(/\s+/)[0])
+    }
+
+    it('wiki_articles содержит published, deleted_at и slug (иначе 500 на всех чтениях)', () => {
+      const schema = readFileSync(join(root, 'prisma', 'schema.prisma'), 'utf8')
+      const fields = modelFields(schema, 'wiki_articles')
+      expect(fields).not.toBeNull()
+      for (const field of ['published', 'deleted_at', 'slug']) {
+        expect(fields).toContain(field)
+      }
+    })
+
+    it('article_votes объявлена моделью, а не создаётся запросом в рантайме', () => {
+      const schema = readFileSync(join(root, 'prisma', 'schema.prisma'), 'utf8')
+      const fields = modelFields(schema, 'article_votes')
+      expect(fields).not.toBeNull()
+      expect(fields).toEqual(expect.arrayContaining(['article_id', 'vote_type', 'ip_address']))
+    })
+
+    it('колонки wiki_articles приходят миграцией, а не только объявлены в prisma', () => {
+      const dir = join(root, 'migrations')
+      const sources = readdirSync(dir)
+        .filter((file) => file.endsWith('.js'))
+        .map((file) => readFileSync(join(dir, file), 'utf8'))
+        .join('\n')
+      expect(sources).toContain('ADD COLUMN `published`')
+      expect(sources).toContain('ADD COLUMN `slug`')
+      expect(sources).toContain("createTable('article_votes'")
     })
   })
 })
