@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-24T07:56:55.683Z",
+  "generated": "2026-10-24T08:09:37.685Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
@@ -13,7 +13,7 @@
   "server": {
     "files": 94,
     "suites": 479,
-    "tests": 1242,
+    "tests": 1249,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
@@ -21,7 +21,7 @@
   "total": {
     "files": 193,
     "suites": 742,
-    "tests": 2176,
+    "tests": 2183,
     "all_passing": true
   },
   "e2e": {
@@ -643,6 +643,10 @@
       "tests": 10
     },
     {
+      "file": "server/src/__tests__/outbox.delivery.test.js",
+      "tests": 10
+    },
+    {
       "file": "server/src/__tests__/push.test.js",
       "tests": 10
     },
@@ -711,6 +715,10 @@
       "tests": 6
     },
     {
+      "file": "server/src/__tests__/migration.idempotency.test.js",
+      "tests": 6
+    },
+    {
       "file": "server/src/services/__tests__/calendar.service.test.js",
       "tests": 6
     },
@@ -747,10 +755,6 @@
       "tests": 5
     },
     {
-      "file": "server/src/__tests__/migration.idempotency.test.js",
-      "tests": 5
-    },
-    {
       "file": "server/src/__tests__/query-guards.test.js",
       "tests": 5
     },
@@ -780,10 +784,6 @@
     },
     {
       "file": "server/src/__tests__/org-chart.test.js",
-      "tests": 4
-    },
-    {
-      "file": "server/src/__tests__/outbox.delivery.test.js",
       "tests": 4
     },
     {

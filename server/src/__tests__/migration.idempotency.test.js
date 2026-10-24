@@ -5,6 +5,7 @@ import { up as fkCascadesUp } from '../../migrations/20260924_fk_cascades.js'
 import { up as scheduledReportsUp } from '../../migrations/20260927_scheduled_reports.js'
 import { up as telegramContactsUp } from '../../migrations/20261024_telegram_contacts.js'
 import { up as telegramUpdatesUp } from '../../migrations/20261024_telegram_updates.js'
+import { up as outboxRetryUp } from '../../migrations/20261024_outbox_retry.js'
 
 // Migration idempotency (Этап 60): повторный накат не должен ронять деплой
 // и не должен дублировать объекты (FK). Прогон идёт по тестовой БД
@@ -103,5 +104,36 @@ describe('Migration idempotency — повторный накат безопас
     const flags = await knex('feature_flags').where({ key: 'telegram_two_way' })
     expect(flags).toHaveLength(1)
     expect(Number(flags[0].enabled)).toBe(0)
+  })
+
+  it('outbox_retry up() повторно — колонки, индекс и флаг не дублируются', async () => {
+    for (const column of ['attempts', 'last_error', 'next_attempt_at', 'status']) {
+      expect(await knex.schema.hasColumn('event_outbox', column)).toBe(true)
+    }
+
+    await outboxRetryUp(knex)
+    await outboxRetryUp(knex)
+
+    const [indexes] = await knex.raw(
+      `SELECT COUNT(*) AS c FROM information_schema.STATISTICS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'event_outbox'
+         AND INDEX_NAME = 'idx_event_outbox_status_next' AND SEQ_IN_INDEX = 1`,
+    )
+    expect(Number(indexes[0].c)).toBe(1)
+
+    const flags = await knex('feature_flags').where({ key: 'outbox_retry' })
+    expect(flags).toHaveLength(1)
+    expect(Number(flags[0].enabled)).toBe(1)
+
+    const [id] = await knex('event_outbox').insert({
+      event_type: 'test:outbox-backfill',
+      payload: '{}',
+      sent_at: knex.fn.now(),
+      status: 'pending',
+    })
+    await outboxRetryUp(knex)
+    const row = await knex('event_outbox').where({ id }).first()
+    expect(row.status).toBe('sent')
+    await knex('event_outbox').where({ id }).del()
   })
 })
