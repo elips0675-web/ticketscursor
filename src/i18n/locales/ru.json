@@ -339,7 +339,8 @@
     "cancelEdit": "Отменить",
     "reply": "Ответить",
     "replyTo": "В ответ на",
-    "cancelReply": "Отменить ответ"
+    "cancelReply": "Отменить ответ",
+    "scrollToBottom": "К последнему сообщению"
   },
   "calendar": {
     "title": "Календарь",

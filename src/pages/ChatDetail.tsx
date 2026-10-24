@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   ArrowLeft,
+  ArrowDown,
   Send,
   Smile,
   Users,
@@ -58,6 +59,9 @@ export default function ChatDetail() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const msgEndRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const isAtBottomRef = useRef(true)
+  const [isAtBottom, setIsAtBottom] = useState(true)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   const mapMessage = (m: Record<string, unknown>): ChatMessage => ({
     id: m.id as number,
@@ -128,6 +132,9 @@ export default function ChatDetail() {
         return [...prev, mapped]
       })
       setTypingUsers((prev) => prev.filter((id) => id !== mapped.senderId))
+      if (mapped.senderId !== currentUserId && !isAtBottomRef.current) {
+        setUnreadCount((prev) => prev + 1)
+      }
       if (mapped.senderId !== currentUserId) {
         markRead(chatId, mapped.id)
         api.put(`/chats/${chatId}/read`, { lastReadMessageId: mapped.id }).catch(() => {})
@@ -173,6 +180,7 @@ export default function ChatDetail() {
   }, [socket])
 
   useEffect(() => {
+    if (!isAtBottomRef.current) return
     msgEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
@@ -189,6 +197,9 @@ export default function ChatDetail() {
       replyTo: replyTo || undefined,
     }
     setMessages((prev) => [...prev, msg as ChatMessage])
+    isAtBottomRef.current = true
+    setIsAtBottom(true)
+    setUnreadCount(0)
     if (input.trim()) {
       if (connected) {
         sendMessage(chatId, input.trim(), undefined, replyTo?.id)
@@ -276,11 +287,32 @@ export default function ChatDetail() {
   })
 
   useEffect(() => {
+    if (!isAtBottomRef.current) return
     if (virtualizer.getTotalSize() > 0) {
       virtualizer.scrollToIndex(filteredMsgs.length - 1, { align: 'end' })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredMsgs.length])
+
+  const handleScroll = () => {
+    const el = scrollRef.current
+    if (!el) return
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= 48
+    isAtBottomRef.current = atBottom
+    setIsAtBottom(atBottom)
+    if (atBottom) setUnreadCount(0)
+  }
+
+  const scrollToBottom = () => {
+    isAtBottomRef.current = true
+    setIsAtBottom(true)
+    setUnreadCount(0)
+    const el = scrollRef.current
+    if (el) el.scrollTop = el.scrollHeight
+    if (virtualizer.getTotalSize() > 0) {
+      virtualizer.scrollToIndex(filteredMsgs.length - 1, { align: 'end' })
+    }
+  }
 
   const isGroup = chatInfo.type === 'group' || chatInfo.type === 'channel'
   const currentUserId = user?.id ?? 0
@@ -328,7 +360,7 @@ export default function ChatDetail() {
             )}
             {msg.text && <p className="leading-snug">{msg.text}</p>}
             <div className={cn('flex items-center gap-1 mt-1', isMe ? 'justify-end' : 'justify-start')}>
-              {msg.edited && <span className="text-[9px] opacity-60">{t('chat.edited')}</span>}
+              {msg.edited && <span className="text-[9px] opacity-60">{t('chats.edited')}</span>}
               <span className="text-[9px] opacity-60">{formatTime(msg.createdAt)}</span>
               {isMe && (
                 <span
@@ -408,7 +440,7 @@ export default function ChatDetail() {
               <button
                 onClick={() => startEdit(msg)}
                 className="p-1 hover:bg-muted rounded-full text-muted-foreground"
-                aria-label={t('chat.editMessage')}
+                aria-label={t('chats.editMessage')}
               >
                 <Pencil className="w-3 h-3" />
               </button>
@@ -420,7 +452,7 @@ export default function ChatDetail() {
                   if (editingMsgId !== null) setEditingMsgId(null)
                 }}
                 className="p-1 hover:bg-muted rounded-full text-muted-foreground"
-                aria-label={t('chat.reply')}
+                aria-label={t('chats.reply')}
               >
                 <Reply className="w-3 h-3" />
               </button>
@@ -484,54 +516,72 @@ export default function ChatDetail() {
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-2 pr-1">
-          {virtualizer.getVirtualItems().length > 0 ? (
-            <div style={{ height: `${virtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
-              {virtualizer.getVirtualItems().map((virtualItem) => {
-                const msg = filteredMsgs[virtualItem.index]
-                return (
-                  <div
-                    key={msg.id}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      transform: `translateY(${virtualItem.start}px)`,
-                    }}
-                  >
-                    {renderMsg(msg)}
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            filteredMsgs.map((msg) => (
-              <div key={msg.id} className="mb-2">
-                {renderMsg(msg)}
+        <div className="relative flex-1 min-h-0">
+          <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto space-y-2 pr-1">
+            {virtualizer.getVirtualItems().length > 0 ? (
+              <div style={{ height: `${virtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
+                {virtualizer.getVirtualItems().map((virtualItem) => {
+                  const msg = filteredMsgs[virtualItem.index]
+                  return (
+                    <div
+                      key={msg.id}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        transform: `translateY(${virtualItem.start}px)`,
+                      }}
+                    >
+                      {renderMsg(msg)}
+                    </div>
+                  )
+                })}
               </div>
-            ))
+            ) : (
+              filteredMsgs.map((msg) => (
+                <div key={msg.id} className="mb-2">
+                  {renderMsg(msg)}
+                </div>
+              ))
+            )}
+            {typingUsers.length > 0 && (
+              <div className="flex items-center gap-2 px-1 py-1.5 text-xs text-muted-foreground">
+                <span className="flex gap-0.5">
+                  <span
+                    className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"
+                    style={{ animationDelay: '0ms' }}
+                  />
+                  <span
+                    className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"
+                    style={{ animationDelay: '150ms' }}
+                  />
+                  <span
+                    className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"
+                    style={{ animationDelay: '300ms' }}
+                  />
+                </span>
+                Кто-то печатает...
+              </div>
+            )}
+            <div ref={msgEndRef} />
+          </div>
+          {!isAtBottom && (
+            <Button
+              type="button"
+              size="icon"
+              onClick={scrollToBottom}
+              className="absolute bottom-3 right-3 rounded-full shadow-md"
+              aria-label={t('chats.scrollToBottom')}
+            >
+              <ArrowDown className="w-4 h-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </Button>
           )}
-          {typingUsers.length > 0 && (
-            <div className="flex items-center gap-2 px-1 py-1.5 text-xs text-muted-foreground">
-              <span className="flex gap-0.5">
-                <span
-                  className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"
-                  style={{ animationDelay: '0ms' }}
-                />
-                <span
-                  className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"
-                  style={{ animationDelay: '150ms' }}
-                />
-                <span
-                  className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"
-                  style={{ animationDelay: '300ms' }}
-                />
-              </span>
-              Кто-то печатает...
-            </div>
-          )}
-          <div ref={msgEndRef} />
         </div>
       )}
 
@@ -553,14 +603,14 @@ export default function ChatDetail() {
             <Reply className="w-3 h-3 text-muted-foreground shrink-0" />
             <div className="flex-1 min-w-0">
               <span className="block font-semibold text-primary truncate">
-                {t('chat.replyTo')}: {replyTo.senderName}
+                {t('chats.replyTo')}: {replyTo.senderName}
               </span>
               <span className="block text-muted-foreground truncate">{replyTo.text}</span>
             </div>
             <button
               onClick={() => setReplyTo(null)}
               className="p-1 hover:bg-muted rounded-full shrink-0"
-              aria-label={t('chat.cancelReply')}
+              aria-label={t('chats.cancelReply')}
             >
               <X className="w-3 h-3" />
             </button>
@@ -576,7 +626,7 @@ export default function ChatDetail() {
                   if (e.key === 'Enter') saveEdit()
                 }}
                 autoFocus
-                placeholder={t('chat.editMessage')}
+                placeholder={t('chats.editMessage')}
                 className="flex-1 h-10 text-sm"
               />
               <Button
@@ -584,7 +634,7 @@ export default function ChatDetail() {
                 onClick={saveEdit}
                 disabled={!editText.trim()}
                 className="h-10 w-10 rounded-xl shrink-0"
-                aria-label={t('chat.saveEdit')}
+                aria-label={t('chats.saveEdit')}
               >
                 <Check className="w-4 h-4" />
               </Button>
@@ -593,7 +643,7 @@ export default function ChatDetail() {
                 size="icon"
                 onClick={() => setEditingMsgId(null)}
                 className="h-10 w-10 rounded-xl shrink-0 text-muted-foreground hover:text-foreground"
-                aria-label={t('chat.cancelEdit')}
+                aria-label={t('chats.cancelEdit')}
               >
                 <X className="w-4 h-4" />
               </Button>

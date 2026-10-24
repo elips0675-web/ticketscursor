@@ -1,11 +1,11 @@
 {
-  "generated": "2026-10-24T12:33:11.641Z",
+  "generated": "2026-10-24T12:47:45.677Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 99,
-    "suites": 263,
-    "tests": 934,
+    "files": 100,
+    "suites": 265,
+    "tests": 938,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
@@ -19,9 +19,9 @@
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 194,
-    "suites": 744,
-    "tests": 2198,
+    "files": 195,
+    "suites": 746,
+    "tests": 2202,
     "all_passing": true
   },
   "e2e": {
@@ -358,6 +358,10 @@
     },
     {
       "file": "src/test/Calendar.test.tsx",
+      "tests": 4
+    },
+    {
+      "file": "src/test/ChatDetail.scroll.test.tsx",
       "tests": 4
     },
     {

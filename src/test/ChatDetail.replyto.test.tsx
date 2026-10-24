@@ -12,13 +12,13 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (k: string) =>
       ({
-        'chat.reply': 'Ответить',
-        'chat.replyTo': 'В ответ на',
-        'chat.cancelReply': 'Отменить ответ',
-        'chat.edited': 'изменено',
-        'chat.editMessage': 'Изменить сообщение',
-        'chat.saveEdit': 'Сохранить',
-        'chat.cancelEdit': 'Отменить',
+        'chats.reply': 'Ответить',
+        'chats.replyTo': 'В ответ на',
+        'chats.cancelReply': 'Отменить ответ',
+        'chats.edited': 'изменено',
+        'chats.editMessage': 'Изменить сообщение',
+        'chats.saveEdit': 'Сохранить',
+        'chats.cancelEdit': 'Отменить',
       })[k] || k,
   }),
 }))

@@ -338,7 +338,8 @@
     "cancelEdit": "Cancel",
     "reply": "Reply",
     "replyTo": "Replying to",
-    "cancelReply": "Cancel reply"
+    "cancelReply": "Cancel reply",
+    "scrollToBottom": "Scroll to latest"
   },
   "calendar": {
     "title": "Calendar",
