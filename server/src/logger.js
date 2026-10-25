@@ -7,6 +7,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const logDir = path.join(__dirname, '..', 'logs')
 fs.mkdirSync(logDir, { recursive: true })
 
+export const LOG_MAX_SIZE_BYTES = 10 * 1024 * 1024
+export const LOG_MAX_FILES = 5
+
+export function fileTransportOptions(dir, { maxsize = LOG_MAX_SIZE_BYTES, maxFiles = LOG_MAX_FILES } = {}) {
+  return [
+    { filename: path.join(dir, 'error.log'), level: 'error', maxsize, maxFiles },
+    { filename: path.join(dir, 'combined.log'), maxsize, maxFiles },
+  ]
+}
+
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: winston.format.combine(
@@ -24,8 +34,7 @@ const logger = winston.createLogger({
         }),
       ),
     }),
-    new winston.transports.File({ filename: path.join(logDir, 'error.log'), level: 'error', maxSize: '10m', maxFiles: 5 }),
-    new winston.transports.File({ filename: path.join(logDir, 'combined.log'), maxSize: '10m', maxFiles: 5 }),
+    ...fileTransportOptions(logDir).map((options) => new winston.transports.File(options)),
   ],
 })
 
