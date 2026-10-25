@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Outlet, useNavigate, useLocation } from "react-router-dom"
 import { LayoutDashboard, Ticket, MessageCircle, Users, Menu, MoreHorizontal, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -8,6 +8,7 @@ import { PwaInstallPrompt } from "@/components/pwa-install-prompt"
 import { cn } from "@/lib/utils"
 import NotificationBell from "@/components/NotificationBell"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
+import { KeyboardShortcuts } from "@/components/KeyboardShortcuts"
 import { useAuth } from "@/context/AuthContext"
 import { useGlobalShortcuts } from "@/hooks/use-global-shortcuts"
 
@@ -21,6 +22,16 @@ const bottomNavItems = [
 export function AppLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
   useGlobalShortcuts()
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return
+    const desktop = window.matchMedia('(min-width: 768px)')
+    const closeOnDesktop = (event: MediaQueryListEvent) => {
+      if (event.matches) setMenuOpen(false)
+    }
+    desktop.addEventListener('change', closeOnDesktop)
+    return () => desktop.removeEventListener('change', closeOnDesktop)
+  }, [])
 
   return (
     <div className="flex h-screen overflow-hidden bg-muted/30">
@@ -57,6 +68,7 @@ function MobileHeader({ onMenuClick }: { onMenuClick: () => void }) {
         <span className="font-bold text-sm">Service Desk</span>
       </div>
       <div className="flex items-center gap-1">
+        <KeyboardShortcuts />
         <NotificationBell />
         <span className="md:hidden"><LanguageSwitcher /></span>
         <Button

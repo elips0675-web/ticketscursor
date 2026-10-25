@@ -100,7 +100,7 @@ const bottomItems = [
 
 export function Sidebar() {
   return (
-    <aside className="hidden md:flex md:w-60 flex-col bg-sidebar text-sidebar-foreground h-screen shrink-0 overflow-y-auto">
+    <aside className="hidden md:flex md:w-60 flex-col bg-sidebar text-sidebar-foreground h-screen shrink-0 overflow-hidden">
       <SidebarContent />
     </aside>
   )
@@ -116,7 +116,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     items.filter((i) => i.roles.includes(userRole) && (!('feature' in i) || (i.feature === 'org_chart' && orgChartOn)))
   return (
     <>
-      <div className="p-5 border-b border-sidebar-border">
+      <div className="p-5 border-b border-sidebar-border shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
             <Ticket className="w-4 h-4 text-white" />
@@ -128,7 +128,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       </div>
 
-      <nav aria-label="Боковая навигация" className="flex-1 p-3 space-y-1">
+      <nav aria-label="Боковая навигация" className="flex-1 min-h-0 overflow-y-auto p-3 space-y-1">
         {filterByRole(navItems).map((item) => (
           <NavLink
             key={item.to}
@@ -150,7 +150,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         ))}
       </nav>
 
-      <div className="p-3 border-t border-sidebar-border space-y-1">
+      <div className="p-3 border-t border-sidebar-border space-y-1 shrink-0">
         {filterByRole(bottomItems).map((item) => (
           <NavLink
             key={item.to}
