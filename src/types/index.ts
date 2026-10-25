@@ -27,6 +27,29 @@ export interface TicketMessage {
   mentions: number[]
   createdAt: string
   isInternal: boolean
+  contentType?: 'text' | 'rich_json'
+  richPayload?: RichPayload | null
+}
+
+export type RichAction = { type: 'link' | 'postback'; label: string; url?: string; value?: string }
+
+export type RichOption = { label: string; value: string }
+
+export type RichBlock =
+  | {
+      type: 'card'
+      title: string
+      subtitle?: string
+      text?: string
+      image_url?: string
+      actions?: RichAction[]
+    }
+  | { type: 'input'; name: string; label: string; placeholder?: string; required?: boolean }
+  | { type: 'select'; name: string; label: string; options: RichOption[]; multiple?: boolean }
+  | { type: 'chips'; options: RichOption[] }
+
+export interface RichPayload {
+  blocks: RichBlock[]
 }
 
 export interface TimeEntry {
@@ -208,6 +231,8 @@ export interface ChatMessage {
   edited?: boolean
   reactions?: Record<string, number[]>
   replyTo?: { id: number; senderName: string; text: string }
+  contentType?: 'text' | 'rich_json'
+  richPayload?: RichPayload | null
 }
 
 export interface ChatReadReceipt {

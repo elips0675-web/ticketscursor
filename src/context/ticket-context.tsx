@@ -79,6 +79,8 @@ function mapTicket(raw: Record<string, unknown>): Ticket {
           mentions: parseMentions(m.mentions),
           createdAt: m.created_at,
           isInternal: !!m.is_internal,
+          contentType: (m.content_type === 'rich_json' ? 'rich_json' : 'text') as 'text' | 'rich_json',
+          richPayload: (m.rich_payload ?? null) as TicketMessage['richPayload'],
         }))
       : [],
     messages_count: raw.messages_count || (Array.isArray(raw.messages) ? raw.messages.length : 0),
@@ -381,6 +383,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
             mentions: parseMentions(msg.mentions),
             createdAt: msg.created_at,
             isInternal: !!msg.is_internal,
+            contentType: (msg.content_type === 'rich_json' ? 'rich_json' : 'text') as 'text' | 'rich_json',
+            richPayload: (msg.rich_payload ?? null) as TicketMessage['richPayload'],
           }
           return {
             ...t,

@@ -20,6 +20,8 @@ import { createTicketValidation, updateStatusValidation, updatePriorityValidatio
 import logger from '../logger.js'
 import { idempotent } from '../middleware/idempotency.js'
 import { validateUpload } from '../middleware/validateUpload.js'
+import { isFeatureEnabled } from '../feature-flags.js'
+import { resolveRichPayload, richMessageData } from '../rich-messages.js'
 import {
   listTickets,
   listOverdueSlaTickets,
@@ -441,7 +443,7 @@ router.post('/upload', upload.single('file'), validateUpload, (req, res) => {
 
 router.post('/:id/messages', idempotent, addMessageValidation, async (req, res) => {
   const ticketId = Number(req.params.id)
-  const { text, isInternal, attachments } = req.body
+  const { text, isInternal, attachments, rich_payload } = req.body
   try {
     const ticket = await prisma.tickets.findUnique({
       where: { id: ticketId },
@@ -449,6 +451,10 @@ router.post('/:id/messages', idempotent, addMessageValidation, async (req, res) 
     })
     if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' })
     if (!canAccessTicket(ticket, req.user)) return res.status(403).json({ success: false, message: 'Forbidden' })
+    const rich = resolveRichPayload(rich_payload, await isFeatureEnabled('rich_messages'))
+    if (rich.error) {
+      return res.status(400).json({ success: false, code: rich.error, errors: rich.errors })
+    }
     const mentionedUserIds = await resolveMentionedEmployees(text, req.user.userId)
     const msg = await prisma.ticket_messages.create({
       data: {
@@ -459,6 +465,7 @@ router.post('/:id/messages', idempotent, addMessageValidation, async (req, res) 
         attachments: attachments ? JSON.stringify(attachments) : null,
         mentions: mentionedUserIds.length > 0 ? JSON.stringify(mentionedUserIds) : null,
         is_internal: isInternal ? true : false,
+        ...richMessageData(rich.payload),
       },
     })
     await prisma.tickets.update({ where: { id: ticketId }, data: { updated_at: new Date() } })

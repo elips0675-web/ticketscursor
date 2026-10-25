@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { cn, formatTime } from '@/lib/utils'
 import { api } from '@/lib/api'
+import RichMessage from '@/components/chat/RichMessage'
 import type { ChatMessage, ChatReadReceipt } from '@/types'
 import { motion } from 'framer-motion'
 import { useSocket } from '@/context/SocketContext'
@@ -73,6 +74,8 @@ export default function ChatDetail() {
     createdAt: (m.createdAt ?? m.created_at) as string,
     edited: Boolean(m.edited_at ?? m.edited),
     reactions: m.reactions as Record<string, number[]> | undefined,
+    contentType: (m.content_type === 'rich_json' ? 'rich_json' : 'text') as 'text' | 'rich_json',
+    richPayload: (m.rich_payload ?? null) as ChatMessage['richPayload'],
     replyTo: m.reply_to
       ? {
           id: (m.reply_to as Record<string, unknown>).id as number,
@@ -359,6 +362,7 @@ export default function ChatDetail() {
               </div>
             )}
             {msg.text && <p className="leading-snug">{msg.text}</p>}
+            {msg.contentType === 'rich_json' && <RichMessage payload={msg.richPayload} />}
             <div className={cn('flex items-center gap-1 mt-1', isMe ? 'justify-end' : 'justify-start')}>
               {msg.edited && <span className="text-[9px] opacity-60">{t('chats.edited')}</span>}
               <span className="text-[9px] opacity-60">{formatTime(msg.createdAt)}</span>

@@ -1,3 +1,5 @@
+import type { RichPayload } from '@/types'
+
 const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
 
 export interface WidgetChannelConfig {
@@ -25,6 +27,8 @@ export interface WidgetMessage {
   sender_type: 'visitor' | 'agent'
   sender_name: string
   text: string
+  content_type?: 'text' | 'rich_json'
+  rich_payload?: RichPayload | null
   created_at: string
 }
 

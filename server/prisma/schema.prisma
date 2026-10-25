@@ -173,6 +173,8 @@ model ticket_messages {
   text          String    @db.Text
   attachments   Json?
   mentions      Json?
+  content_type  String    @default("text") @db.VarChar(20)
+  rich_payload  Json?
   is_internal   Boolean?  @default(false)
   created_at    DateTime? @default(now())
   deleted_at    DateTime?
@@ -302,6 +304,8 @@ model chat_messages {
   sender_id           Int
   sender_name         String    @db.VarChar(255)
   text                String    @db.Text
+  content_type        String    @default("text") @db.VarChar(20)
+  rich_payload        Json?
   created_at          DateTime? @default(now())
   edited_at           DateTime?
   reply_to_message_id Int?
@@ -363,6 +367,8 @@ model widget_messages {
   sender_name     String   @db.VarChar(255)
   employee_id     Int?
   text            String   @db.Text
+  content_type    String   @default("text") @db.VarChar(20)
+  rich_payload    Json?
   created_at      DateTime @default(now())
 
   conversation widget_conversations @relation(fields: [conversation_id], references: [id], onDelete: Cascade)

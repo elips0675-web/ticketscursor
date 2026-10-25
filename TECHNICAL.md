@@ -756,7 +756,7 @@ server/__tests__/
 }
 ```
 
-> **Примечание**: 943 клиентских / 1291 серверных / 61 E2E тестов (=2234, 0 failures; замер coverage 23.09.2026). Пороги заданы в `vitest.client.config.ts` и `server/vitest.config.ts`.
+> **Примечание**: 957 клиентских / 1322 серверных / 61 E2E тестов (=2279, 0 failures; замер coverage 23.09.2026). Пороги заданы в `vitest.client.config.ts` и `server/vitest.config.ts`.
 
 ---
 

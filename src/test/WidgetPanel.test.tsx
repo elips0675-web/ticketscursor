@@ -159,6 +159,29 @@ describe('WidgetPanel', () => {
     expect(mockApi.fetchWidgetThread).toHaveBeenCalledWith('site-token', 'conv-token-1')
   })
 
+  it('рендерит rich-карточку оператора', async () => {
+    window.localStorage.setItem(STORAGE_KEY, 'conv-token-1')
+    mockApi.fetchWidgetThread.mockResolvedValue({
+      name: 'Иван',
+      status: 'open',
+      messages: [
+        VISITOR_MESSAGE,
+        {
+          ...AGENT_MESSAGE,
+          content_type: 'rich_json',
+          rich_payload: {
+            blocks: [{ type: 'card', title: 'Счёт готов', text: 'Оплатите до 5 ноября.' }],
+          },
+        },
+      ],
+    })
+
+    render(<WidgetPanel websiteToken="site-token" />)
+
+    expect(await screen.findByText('Счёт готов')).toBeInTheDocument()
+    expect(screen.getByText('Оплатите до 5 ноября.')).toBeInTheDocument()
+  })
+
   it('удаляет протухший токен диалога и возвращает форму', async () => {
     window.localStorage.setItem(STORAGE_KEY, 'conv-token-1')
     mockApi.fetchWidgetThread.mockRejectedValue(new WidgetApiError(404, 'not found'))

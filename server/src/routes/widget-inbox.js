@@ -5,6 +5,8 @@ import logger from '../logger.js'
 import { authenticateToken, requireRole } from '../middleware.js'
 import { auditLogMiddleware } from '../audit.js'
 import { enqueueEvent } from '../outbox.js'
+import { isFeatureEnabled } from '../feature-flags.js'
+import { resolveRichPayload, richMessageData } from '../rich-messages.js'
 
 const router = Router()
 router.use(authenticateToken)
@@ -20,6 +22,8 @@ function publicMessage(message) {
     sender_type: message.sender_type,
     sender_name: message.sender_name,
     text: message.text,
+    content_type: message.content_type ?? 'text',
+    rich_payload: message.rich_payload ?? null,
     created_at: message.created_at,
   }
 }
@@ -117,6 +121,11 @@ router.post('/conversations/:id/messages', async (req, res) => {
       return res.status(400).json({ success: false, message: `Text too long (max ${MAX_TEXT} chars)` })
     }
 
+    const rich = resolveRichPayload(req.body?.rich_payload, await isFeatureEnabled('rich_messages'))
+    if (rich.error) {
+      return res.status(400).json({ success: false, code: rich.error, errors: rich.errors })
+    }
+
     const conversation = await prisma.widget_conversations.findUnique({ where: { id } })
     if (!conversation) return res.status(404).json({ success: false, message: 'Conversation not found' })
 
@@ -133,6 +142,7 @@ router.post('/conversations/:id/messages', async (req, res) => {
         sender_name: senderName,
         employee_id: req.user.userId,
         text,
+        ...richMessageData(rich.payload),
       },
     })
     await prisma.widget_conversations.update({

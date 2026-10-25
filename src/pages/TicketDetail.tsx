@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import RichMessage from '@/components/chat/RichMessage'
 import { useTickets } from '@/context/ticket-context'
 import { useAuth } from '@/context/AuthContext'
 import { useFeature } from '@/hooks/useFeature'
@@ -75,6 +76,8 @@ function mapMessageRow(m: Record<string, unknown>): TicketMessage {
     mentions: parseMentions(m.mentions),
     createdAt: m.created_at,
     isInternal: !!m.is_internal,
+    contentType: (m.content_type === 'rich_json' ? 'rich_json' : 'text') as 'text' | 'rich_json',
+    richPayload: (m.rich_payload ?? null) as TicketMessage['richPayload'],
   }
 }
 
@@ -567,6 +570,7 @@ export default function TicketDetail() {
                                   )}
                                 </div>
                                 <p className="text-sm text-foreground/80">{renderMentionedText(msg.text)}</p>
+                                {msg.contentType === 'rich_json' && <RichMessage payload={msg.richPayload} />}
                                 {msg.attachments && msg.attachments.length > 0 && (
                                   <div className="flex flex-wrap gap-2 mt-2">
                                     {msg.attachments.map((att: Record<string, unknown>, i: number) => (
@@ -607,6 +611,7 @@ export default function TicketDetail() {
                                 )}
                               </div>
                               <p className="text-sm text-foreground/80">{renderMentionedText(msg.text)}</p>
+                              {msg.contentType === 'rich_json' && <RichMessage payload={msg.richPayload} />}
                               {msg.attachments && msg.attachments.length > 0 && (
                                 <div className="flex flex-wrap gap-2 mt-2">
                                   {msg.attachments.map((att: Record<string, unknown>, i: number) => (

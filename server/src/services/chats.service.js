@@ -1,4 +1,5 @@
 import prisma from '../prisma.js'
+import { richMessageData } from '../rich-messages.js'
 
 export async function getChats() {
   const rooms = await prisma.chat_rooms.findMany({
@@ -54,7 +55,7 @@ export async function getChatById(id, page = 1, limit = 50) {
 }
 
 // Этап 65 (подзадача 3): reply-to/threads — replyToId ссылается на сообщение в том же чате.
-export async function createMessage({ chatId, userId, userName, text, replyToId }) {
+export async function createMessage({ chatId, userId, userName, text, replyToId, richPayload }) {
   if (replyToId != null) {
     const replied = await prisma.chat_messages.findFirst({
       where: { id: Number(replyToId), chat_id: chatId, deleted_at: null },
@@ -68,6 +69,7 @@ export async function createMessage({ chatId, userId, userName, text, replyToId 
     sender_name: userName,
     text,
     reply_to_message_id: replyToId != null ? Number(replyToId) : null,
+    ...richMessageData(richPayload),
   }
   const createOptions = replyToId != null
     ? {

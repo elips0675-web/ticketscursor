@@ -6,6 +6,7 @@ import { up as scheduledReportsUp } from '../../migrations/20260927_scheduled_re
 import { up as telegramContactsUp } from '../../migrations/20261024_telegram_contacts.js'
 import { up as telegramUpdatesUp } from '../../migrations/20261024_telegram_updates.js'
 import { up as outboxRetryUp } from '../../migrations/20261024_outbox_retry.js'
+import { up as richMessagesUp } from '../../migrations/20261025_rich_messages.js'
 
 // Migration idempotency (Этап 60): повторный накат не должен ронять деплой
 // и не должен дублировать объекты (FK). Прогон идёт по тестовой БД
@@ -135,5 +136,19 @@ describe('Migration idempotency — повторный накат безопас
     const row = await knex('event_outbox').where({ id }).first()
     expect(row.status).toBe('sent')
     await knex('event_outbox').where({ id }).del()
+  })
+
+  it('rich_messages up() повторно — колонки и флаг не дублируются', async () => {
+    for (const table of ['ticket_messages', 'chat_messages', 'widget_messages']) {
+      expect(await knex.schema.hasColumn(table, 'content_type')).toBe(true)
+      expect(await knex.schema.hasColumn(table, 'rich_payload')).toBe(true)
+    }
+
+    await richMessagesUp(knex)
+    await richMessagesUp(knex)
+
+    const flags = await knex('feature_flags').where({ key: 'rich_messages' })
+    expect(flags).toHaveLength(1)
+    expect(Number(flags[0].enabled)).toBe(1)
   })
 })

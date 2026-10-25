@@ -54,7 +54,7 @@ describe('createMessage', () => {
     prisma.chat_messages.create.mockResolvedValue({ id: 1 })
     await createMessage({ chatId: 1, userId: 1, userName: 'Alice', text: 'hello' })
     expect(prisma.chat_messages.create).toHaveBeenCalledWith({
-      data: { chat_id: 1, sender_id: 1, sender_name: 'Alice', text: 'hello', reply_to_message_id: null },
+      data: { chat_id: 1, sender_id: 1, sender_name: 'Alice', text: 'hello', reply_to_message_id: null, content_type: 'text', rich_payload: null },
     })
   })
 })
@@ -65,7 +65,7 @@ describe('createMessage с replyToId (Этап 65, reply-to/threads)', () => {
     prisma.chat_messages.create.mockResolvedValue({ id: 9, reply_to: { id: 3 } })
     const result = await createMessage({ chatId: 1, userId: 1, userName: 'Alice', text: 'ответ', replyToId: 3 })
     expect(prisma.chat_messages.create).toHaveBeenCalledWith({
-      data: { chat_id: 1, sender_id: 1, sender_name: 'Alice', text: 'ответ', reply_to_message_id: 3 },
+      data: { chat_id: 1, sender_id: 1, sender_name: 'Alice', text: 'ответ', reply_to_message_id: 3, content_type: 'text', rich_payload: null },
       include: { reply_to: { select: { id: true, sender_id: true, sender_name: true, text: true } } },
     })
     expect(result.id).toBe(9)

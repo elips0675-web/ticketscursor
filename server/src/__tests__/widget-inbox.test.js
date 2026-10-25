@@ -13,6 +13,7 @@ const prismaMock = {
     create: vi.fn(),
     update: vi.fn(),
   },
+  feature_flags: { findMany: vi.fn().mockResolvedValue([{ key: 'rich_messages', enabled: true }]) },
 }
 
 vi.mock('../prisma.js', () => ({ default: prismaMock }))

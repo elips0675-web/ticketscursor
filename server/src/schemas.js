@@ -61,6 +61,7 @@ export const addMessageSchema = z.object({
   text: z.string().trim().min(1, 'Message text required'),
   isInternal: z.boolean().optional(),
   attachments: z.string().optional(),
+  rich_payload: z.unknown().optional(),
 })
 
 export const createPollSchema = z.object({

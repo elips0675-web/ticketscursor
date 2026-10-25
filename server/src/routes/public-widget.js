@@ -34,6 +34,8 @@ function publicMessage(message) {
     sender_type: message.sender_type,
     sender_name: message.sender_name,
     text: message.text,
+    content_type: message.content_type ?? 'text',
+    rich_payload: message.rich_payload ?? null,
     created_at: message.created_at,
   }
 }

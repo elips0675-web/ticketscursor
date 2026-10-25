@@ -325,6 +325,7 @@
   "chats": {
     "title": "Chats",
     "search": "Search chats...",
+    "richMessage": "Formatted message",
     "newMessage": "New message",
     "typeMessage": "Type a message...",
     "noMessages": "No messages yet",

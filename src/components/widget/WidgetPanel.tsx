@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 're
 import { useTranslation } from 'react-i18next'
 import { Loader2, MessageCircle, Send, X } from 'lucide-react'
 import { cn, formatTime } from '@/lib/utils'
+import RichMessage from '@/components/chat/RichMessage'
 import {
   createWidgetConversation,
   fetchWidgetConfig,
@@ -418,6 +419,9 @@ export default function WidgetPanel({ websiteToken, onClose, className }: Widget
                 >
                   {message.text}
                 </div>
+                {message.content_type === 'rich_json' && (
+                  <RichMessage payload={message.rich_payload} className="text-left" />
+                )}
                 <span className="mt-1 block text-[10px] text-slate-400">
                   {formatTime(message.created_at)}
                 </span>

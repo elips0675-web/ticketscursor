@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn, formatRelativeTime, formatTime } from '@/lib/utils'
+import RichMessage from '@/components/chat/RichMessage'
+import type { RichPayload } from '@/types'
 
 type WidgetStatus = 'open' | 'closed'
 
@@ -16,6 +18,8 @@ interface WidgetInboxMessage {
   sender_type: 'visitor' | 'agent'
   sender_name: string
   text: string
+  content_type?: 'text' | 'rich_json'
+  rich_payload?: RichPayload | null
   created_at: string
 }
 
@@ -336,6 +340,9 @@ export default function WidgetInbox() {
                       >
                         {message.text}
                       </div>
+                      {message.content_type === 'rich_json' && (
+                        <RichMessage payload={message.rich_payload} className="text-left" />
+                      )}
                       <span className="mt-1 block text-[10px] text-muted-foreground">
                         {formatTime(message.created_at)}
                       </span>

@@ -156,6 +156,35 @@ describe('WidgetInbox', () => {
     expect(screen.getByText('Иван')).toBeInTheDocument()
   })
 
+  it('рендерит rich-карточку оператора в переписке', async () => {
+    server.use(
+      http.get(`${API}/widget-inbox/conversations`, () => HttpResponse.json({ success: true, data: [summary()] })),
+      http.get(`${API}/widget-inbox/conversations/1`, () =>
+        HttpResponse.json({
+          success: true,
+          data: detail({
+            messages: [
+              {
+                id: 2,
+                sender_type: 'agent',
+                sender_name: 'Иван',
+                text: 'Карточка ниже',
+                content_type: 'rich_json',
+                rich_payload: { blocks: [{ type: 'card', title: 'Счёт готов' }] },
+                created_at: '2026-10-24T09:05:00.000Z',
+              },
+            ],
+          }),
+        }),
+      ),
+    )
+    renderInbox()
+    await userEvent.setup().click(await screen.findByText('Анна'))
+
+    expect(await screen.findByText('Счёт готов')).toBeInTheDocument()
+    expect(screen.getByText('Карточка ниже')).toBeInTheDocument()
+  })
+
   it('помечает обращение прочитанным при открытии', async () => {
     const read = vi.fn()
     server.use(

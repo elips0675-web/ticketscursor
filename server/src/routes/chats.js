@@ -4,6 +4,8 @@ import { authenticateToken, requireRole } from '../middleware.js'
 import logger from '../logger.js'
 import { idempotent } from '../middleware/idempotency.js'
 import { enqueueEvent } from '../outbox.js'
+import { isFeatureEnabled } from '../feature-flags.js'
+import { resolveRichPayload } from '../rich-messages.js'
 import { getChats, getChatById, createMessage, getChatParticipants, markRead, findOrCreatePersonalChat, updateMessage } from '../services/chats.service.js'
 
 const router = Router()
@@ -35,16 +37,21 @@ router.get('/:id', async (req, res) => {
 })
 
 router.post('/:id/messages', idempotent, async (req, res) => {
-  const { text, replyToId } = req.body
+  const { text, replyToId, rich_payload } = req.body
   if (!text?.trim()) return res.status(400).json({ message: 'Text required' })
   if (text.length > 2000) return res.status(400).json({ message: 'Text too long (max 2000 chars)' })
   try {
+    const rich = resolveRichPayload(rich_payload, await isFeatureEnabled('rich_messages'))
+    if (rich.error) {
+      return res.status(400).json({ success: false, code: rich.error, errors: rich.errors })
+    }
     const msg = await createMessage({
       chatId: Number(req.params.id),
       userId: req.user.userId,
       userName: req.user.name || 'User',
       text,
       replyToId,
+      richPayload: rich.payload,
     })
     if (msg?.error === 'REPLY_NOT_FOUND') return res.status(404).json({ message: 'Replied message not found' })
     const participants = await getChatParticipants(Number(req.params.id), req.user.userId)
