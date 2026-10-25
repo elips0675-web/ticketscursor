@@ -1,11 +1,11 @@
 {
-  "generated": "2026-10-25T06:37:19.673Z",
+  "generated": "2026-10-25T06:58:27.269Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 105,
-    "suites": 279,
-    "tests": 970,
+    "files": 107,
+    "suites": 287,
+    "tests": 1001,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
@@ -19,9 +19,9 @@
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 205,
-    "suites": 781,
-    "tests": 2292,
+    "files": 207,
+    "suites": 789,
+    "tests": 2323,
     "all_passing": true
   },
   "e2e": {
@@ -91,6 +91,10 @@
     {
       "file": "src/test/useFeature.test.tsx",
       "tests": 21
+    },
+    {
+      "file": "src/test/global-shortcuts.test.tsx",
+      "tests": 19
     },
     {
       "file": "src/test/Calendar.expanded.test.tsx",
@@ -193,6 +197,10 @@
       "tests": 10
     },
     {
+      "file": "src/test/tickets-shortcuts.test.tsx",
+      "tests": 10
+    },
+    {
       "file": "src/test/wiki-diff.test.ts",
       "tests": 10
     },
@@ -210,6 +218,10 @@
     },
     {
       "file": "src/test/AppLayout.test.tsx",
+      "tests": 8
+    },
+    {
+      "file": "src/test/KeyboardShortcuts.test.tsx",
       "tests": 8
     },
     {
@@ -274,10 +286,6 @@
     },
     {
       "file": "src/test/ForgotPassword.expanded.test.tsx",
-      "tests": 6
-    },
-    {
-      "file": "src/test/KeyboardShortcuts.test.tsx",
       "tests": 6
     },
     {

@@ -47,6 +47,7 @@ function TestProviders({ children }: { children: React.ReactNode }) {
 }
 
 beforeEach(() => {
+  mockNavigate.mockClear()
   localStorage.setItem('token', 'test-token')
   localStorage.setItem('user', JSON.stringify({ id: 1, name: 'Admin', role: 'admin' }))
 })
@@ -94,9 +95,9 @@ describe('AppLayout', () => {
     expect(menuBtns.length).toBeGreaterThan(0)
   })
 
-  it('navigates to search on Ctrl+K', () => {
+  it('не перехватывает Ctrl+K — этим сочетанием владеет командная палитра', () => {
     render(<AppLayout />, { wrapper: TestProviders })
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))
-    expect(mockNavigate).toHaveBeenCalledWith('/search')
+    expect(mockNavigate).not.toHaveBeenCalledWith('/search')
   })
 })

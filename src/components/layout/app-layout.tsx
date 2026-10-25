@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import NotificationBell from "@/components/NotificationBell"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
 import { useAuth } from "@/context/AuthContext"
+import { useGlobalShortcuts } from "@/hooks/use-global-shortcuts"
 
 const bottomNavItems = [
   { to: "/", icon: LayoutDashboard, label: "Дашборд" },
@@ -18,19 +19,8 @@ const bottomNavItems = [
 ]
 
 export function AppLayout() {
-  const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
-        e.preventDefault()
-        navigate("/search")
-      }
-    }
-    window.addEventListener("keydown", handler)
-    return () => window.removeEventListener("keydown", handler)
-  }, [navigate])
+  useGlobalShortcuts()
 
   return (
     <div className="flex h-screen overflow-hidden bg-muted/30">

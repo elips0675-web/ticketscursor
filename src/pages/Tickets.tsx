@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -25,8 +25,9 @@ import { useSocket } from '@/context/SocketContext'
 import { useTickets } from '@/context/ticket-context'
 import { SkeletonCardGrid } from '@/components/skeletons'
 import { useDebounce } from '@/lib/use-debounce'
-import { formatRelativeTime } from '@/lib/utils'
+import { formatRelativeTime, cn } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
+import { isDialogOpen, resolveListShortcut } from '@/hooks/use-global-shortcuts'
 
 const PER_PAGE = 9
 
@@ -68,7 +69,8 @@ export default function Tickets() {
     }
   }, [socket, t, queryClient])
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 300)
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get('status') || 'all')
@@ -105,7 +107,47 @@ export default function Tickets() {
   const totalPages = Math.ceil(filtered.length / PER_PAGE)
   const paged = filtered.slice(0, page * PER_PAGE)
 
-  const resetPage = () => setPage(1)
+  const [activeIndex, setActiveIndex] = useState(-1)
+
+  const resetPage = () => {
+    setPage(1)
+    setActiveIndex(-1)
+  }
+
+  useEffect(() => {
+    if (searchParams.get('focus') !== 'search') return
+    searchInputRef.current?.focus()
+    const next = new URLSearchParams(searchParams)
+    next.delete('focus')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      const shortcut = resolveListShortcut(event, {
+        activeIndex,
+        count: paged.length,
+        dialogOpen: isDialogOpen(),
+      })
+      if (!shortcut) return
+      if (shortcut.type === 'open') {
+        if (document.activeElement !== document.body) return
+        event.preventDefault()
+        const ticket = paged[shortcut.index]
+        if (ticket) navigate(`/tickets/${ticket.id}`)
+        return
+      }
+      event.preventDefault()
+      setActiveIndex(shortcut.index)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [activeIndex, paged, navigate])
+
+  useEffect(() => {
+    if (activeIndex < 0) return
+    document.querySelector(`[data-ticket-index="${activeIndex}"]`)?.scrollIntoView({ block: 'nearest' })
+  }, [activeIndex])
 
   const idsInView = paged.map((t) => t.id)
   const allVisibleSelected = idsInView.length > 0 && idsInView.every((id) => selected.has(id))
@@ -261,6 +303,8 @@ export default function Tickets() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
+              ref={searchInputRef}
+              data-search-input
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value)
@@ -460,9 +504,11 @@ export default function Tickets() {
         <SkeletonCardGrid count={PER_PAGE} />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {paged.map((ticket) => (
+          {paged.map((ticket, index) => (
             <div
               key={ticket.id}
+              data-ticket-index={index}
+              data-active={activeIndex === index ? 'true' : undefined}
               onClick={() => navigate(`/tickets/${ticket.id}`)}
               role="button"
               tabIndex={0}
@@ -473,7 +519,10 @@ export default function Tickets() {
                   navigate(`/tickets/${ticket.id}`)
                 }
               }}
-              className="bg-white rounded-xl border p-5 hover:shadow-md transition-all cursor-pointer flex flex-col"
+              className={cn(
+                'bg-white rounded-xl border p-5 hover:shadow-md transition-all cursor-pointer flex flex-col',
+                activeIndex === index && 'ring-2 ring-primary',
+              )}
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">

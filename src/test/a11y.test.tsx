@@ -81,8 +81,8 @@ describe('a11y — axe-core, ключевые страницы (Этап 68)', (
   it('KeyboardShortcuts: диалог с горячими клавишами без нарушений', async () => {
     const user = userEvent.setup()
     render(<KeyboardShortcuts />)
-    await user.click(screen.getByLabelText('Горячие клавиши'))
-    await screen.findByRole('heading', { name: 'Горячие клавиши' })
+    await user.click(screen.getByLabelText('shortcuts.title'))
+    await screen.findByRole('heading', { name: 'shortcuts.title' })
     await expectNoA11yViolations()
   })
 })

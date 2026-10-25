@@ -951,5 +951,18 @@
     "actions": "Actions",
     "createTicket": "Create ticket",
     "globalSearch": "Global search"
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "commandPalette": "Command palette (search, navigation)",
+    "newTicket": "Create a new ticket",
+    "focusSearch": "Focus search",
+    "nextTicket": "Next ticket (in the list)",
+    "prevTicket": "Previous ticket (in the list)",
+    "openTicket": "Open the selected ticket",
+    "closeDialog": "Close the dialog",
+    "showShortcuts": "Show keyboard shortcuts",
+    "hintPrefix": "Press",
+    "hintSuffix": "to open/close"
   }
 }
