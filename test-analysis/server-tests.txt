@@ -1,12 +1,12 @@
 ===== СЕРВЕРНЫЕ ТЕСТЫ (Vitest + Supertest) =====
 Стек: Vitest 4.1.9, Supertest 7.0.0, Prisma 5.22, MySQL 8.4
 Запуск: cd server && npx vitest run
-Реальный результат: 100 файлов / 502 suite / 1322 теста (все PASS, vitest --reporter=json от 25.10.2026)
+Реальный результат: 101 файл / 507 suite / 1338 тестов (все PASS, vitest --reporter=json от 25.10.2026)
 Этап 68 закрыт 26.09: дыры 0% (injection 15, fileCheck 9, ldap 10, index 5, api-tokens.routes 10, canned-responses.routes 15, telegram.expanded 27) — все файлы с 0% покрытия закрыты.
 Coverage (All files): 80.99 stmts / 74.65 branches / 81.48 funcs / 82.67 lines (пороги 78/72/79/80 — замер 17.10.2026, `cd server && npx vitest run --coverage`, отчёт `server/coverage/lcov-report/index.html`)
 ВАЖНО: имя тестовой БД переопределяется через TEST_DB_NAME (server/vitest.global-setup.js:6) — иначе параллельные прогоны дропают общий servicedesk_test друг другу.
 
-===== ФАЙЛЫ (100 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (101 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 server/src/api.test.js | 184 | Интеграционные тесты всех API-роутов (auth, tickets, chats, files, employees, calendar, polls, news, wiki, search, admin, push, custom-fields, webhooks, rules, SSO, recurrence, lock, bulk, feature rollout)
@@ -54,7 +54,8 @@ server/src/__tests__/notification-prefs.test.js | 11 | Настройки уве
 server/src/__tests__/sla.test.js | 11 | SLA: timer logic, escalation levels, breach alerts
 server/src/__tests__/ticket-categories.test.js | 11 | Ticket forms (Этап 66): CRUD категорий и полей, валидация, RBAC admin, флаг ticket_forms
 server/src/__tests__/ticket-relations.test.js | 11 | Relations CRUD: parent/child, blocked-by, duplicates, валидация
-server/src/__tests__/wiki-versioning.routes.test.js | 11 | Wiki versioning routes (флаг wiki_versioning): PUT /:id → ревизия + дифф, GET /:id/revisions, GET /:id/revisions/:revId, POST /:id/rollback/:revId, 404/403/400, RBAC
+server/src/__tests__/wiki-versioning.routes.test.js | 16 | Wiki versioning routes (флаг wiki_versioning): PUT /:id → ревизия + дифф, GET /:id/revisions, GET /:id/revisions/:revId, POST /:id/rollback/:revId, 404/403/400, RBAC; KB-02 — снятие published=false в update, создание с published и slug из заголовка, черновик по умолчанию с суффиксом -2, 400 на published: 'yes', 403 для agent
+server/src/__tests__/wiki-publish.test.js | 11 | KB-02: slugify (транслитерация, пунктуация, пустой slug, лимит 200), createArticle (published true, черновик по умолчанию, уникализация -2, нормализация явного slug), updateArticle (снятие с публикации, published не трогается без поля, смена slug с исключением своей статьи)
 server/src/services/__tests__/polls.service.test.js | 11 | Polls: CRUD, vote, close, expire
 server/src/__tests__/api-tokens.routes.test.js | 10 | API-токены routes (Этап 68): CRUD + RBAC, мидлварь apiKey/токен в Authorization, невалидный токен → 401
 server/src/__tests__/auth-sessions.test.js | 10 | Сессии (флаг user_sessions): GET /auth/sessions — список своих (token не утекает), POST /auth/sessions/:id/revoke — своя/чужая/текущая (400)/несуществующая (400), санитизация id; unit: parseUserAgent (Chrome/Firefox/Safari/Edge/Opera × Windows/macOS/Android/iOS/Linux, isMobile)
@@ -127,3 +128,5 @@ Coverage (01.10.2026, перемерено --coverage): 80.46 stmts / 74.35 bran
 Текущий факт 25.10.2026 (CHW-10): без изменений — 100 файлов / 502 suite / 1322 теста (горячие клавиши — клиентский код, сервер не тронут).
 
 Текущий факт 25.10.2026 (CHW-11): 100 файлов / 502 suite / 1322 теста (0 failures). В `src/__tests__/background.expanded.test.js` число очередей BullMQ 5 → 4 (мёртвая очередь `dlq` удалена вместе с `QueueScheduler`), мок `QueueScheduler` снят — тест стережёт фактическое число очередей.
+
+Текущий факт 25.10.2026 (KB-02): 101 файл / 507 suite / 1338 тестов (0 failures). Прирост к CHW-11: +1 файл / +16 тестов — `wiki-publish.test.js` 11 (новый), `wiki-versioning.routes.test.js` 11 → 16 (+5 маршрутных тестов публикации); `wiki.service.test.js` 15 без изменения числа тестов (мок `findFirst` для уникализации slug + проверки slug/published в create).
