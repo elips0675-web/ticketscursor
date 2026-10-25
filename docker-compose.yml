@@ -13,7 +13,6 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - mysql_backup:/backup
-      - ./server/seed.sql:/docker-entrypoint-initdb.d/seed.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -75,6 +74,22 @@ services:
       mysql:
         condition: service_healthy
 
+  migrate:
+    build: ./server
+    container_name: sd-migrate
+    restart: "no"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-sduser}
+      DB_PASSWORD: ${DB_PASSWORD:-sdpassword}
+      DB_NAME: servicedesk
+      NODE_ENV: production
+    command: ["npm", "run", "migrate"]
+
   api:
     build: ./server
     container_name: sd-api
@@ -84,6 +99,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       PORT: 4000
       DB_HOST: mysql

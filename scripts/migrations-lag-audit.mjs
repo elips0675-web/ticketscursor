@@ -51,6 +51,9 @@ export const KNEXFILE = 'server/knexfile.js'
 export const MIGRATION_TABLE = 'knex_migrations'
 export const SETUP_DB_NAME = 'servicedesk_migrations_check'
 export const PRISMA_SCHEMA = 'server/prisma/schema.prisma'
+export const DOCKERFILE = 'server/Dockerfile'
+export const COMPOSE_FILE = 'docker-compose.yml'
+export const DOCKERIGNORE = 'server/.dockerignore'
 
 /** Расширения, которые knex подхватывает по `server/knexfile.js`. */
 export function parseKnexExtensions(knexfileText) {
@@ -104,6 +107,108 @@ export function auditModelCoverage({ models, tables, source = PRISMA_SCHEMA }) {
   }
 
   return { findings, stats: { models: models.length, tables: present.size, missing: missing.length } }
+}
+
+/**
+ * Фрагмент compose-сервиса по имени (от `  name:` до следующего сервиса или
+ * top-level ключа). Нужен, чтобы не искать `migrate` по всему файлу: команда
+ * миграций должна быть именно у сервиса, а ожидание — именно у api.
+ */
+export function extractComposeService(composeText, serviceName) {
+  const lines = composeText.split(/\r?\n/)
+  const start = lines.findIndex((line) => new RegExp(`^  ${serviceName}:\\s*$`).test(line))
+  if (start === -1) return ''
+  let end = lines.length
+  for (let i = start + 1; i < lines.length; i++) {
+    if (/^  [A-Za-z0-9_.-]+:\s*$/.test(lines[i])) {
+      end = i
+      break
+    }
+    if (/^\S/.test(lines[i]) && lines[i].trim() !== '') {
+      end = i
+      break
+    }
+  }
+  return lines.slice(start, end).join('\n')
+}
+
+/**
+ * Docker-обвязка миграций (RLS-06). Миграции, которые есть на диске, но не
+ * попадают в образ и не запускаются перед API, ничем не отличаются от
+ * отсутствующих: свежий контейнер поднимается на пустой схеме и отвечает 500.
+ * Раньше схему в docker создавал `server/seed.sql` как initdb (устаревшая копия:
+ * 14 таблиц против 45 моделей Prisma), а `server/Dockerfile` не копировал
+ * `migrations/` — API стартовал без единой миграции.
+ */
+export function auditDockerWiring({
+  dockerfileText,
+  composeText,
+  dockerignoreText,
+  source = `${DOCKERFILE} + ${COMPOSE_FILE}`,
+}) {
+  const findings = []
+  const add = (kind, msg) => findings.push({ kind, msg })
+
+  if (!dockerfileText || !composeText) {
+    add('vacuous', `${source}: не прочитаны Dockerfile или docker-compose.yml — проверять нечего`)
+    return { findings, stats: { dockerfile: false, migrate: false, apiWaits: false, ignore: false } }
+  }
+
+  const compose = composeText
+    .split(/\r?\n/)
+    .map((line) => line.replace(/\s+#.*$/, ''))
+    .join('\n')
+
+  if (!/^COPY\s+.*\bmigrations\b/m.test(dockerfileText)) {
+    add('docker-no-migrations', `${DOCKERFILE}: образ не копирует migrations/ — сервис миграций нечего накатывать`)
+  }
+  if (!/^COPY\s+.*\bknexfile\.js\b/m.test(dockerfileText)) {
+    add('docker-no-knexfile', `${DOCKERFILE}: образ не копирует knexfile.js — migrate:latest не найдёт конфиг`)
+  }
+
+  const migrateBlock = extractComposeService(compose, 'migrate')
+  const migrate = /(npm\W+run\W+migrate|knex\W+migrate:latest)/.test(migrateBlock)
+  if (!migrate) {
+    add('compose-no-migrate', `${COMPOSE_FILE}: нет сервиса migrate с командой наката миграций — свежая БД остаётся пустой`)
+  }
+
+  const apiBlock = extractComposeService(compose, 'api')
+  const apiWaits =
+    /depends_on:[\s\S]*?\bmigrate:[\s\S]*?condition:\s*service_completed_successfully/.test(apiBlock)
+  if (!apiWaits) {
+    add(
+      'compose-api-not-waiting',
+      `${COMPOSE_FILE}: api не ждёт завершения migrate (condition: service_completed_successfully) — стартует на недомигрированной схеме`,
+    )
+  }
+
+  if (/docker-entrypoint-initdb\.d/.test(compose)) {
+    add(
+      'compose-seed-initdb',
+      `${COMPOSE_FILE}: seed.sql монтируется как initdb — схема берётся из устаревшей копии, а не из миграций`,
+    )
+  }
+
+  const dockerfile = /^COPY\s+.*\bmigrations\b/m.test(dockerfileText) && /^COPY\s+.*\bknexfile\.js\b/m.test(dockerfileText)
+
+  const ignoreEntries = String(dockerignoreText || '')
+    .split(/\r?\n/)
+    .map((line) => line.trim().replace(/^!/, '').replace(/\/+$/, ''))
+    .filter((line) => line !== '' && !line.startsWith('#'))
+  const ignore = ignoreEntries.includes('node_modules') && ignoreEntries.includes('logs')
+  if (!dockerignoreText) {
+    add(
+      'dockerignore-missing',
+      `${DOCKERIGNORE}: файла нет — в контекст сборки едут node_modules и logs (на этом репозитории 1.9 ГБ за первые две минуты, сборка не укладывается в таймаут)`,
+    )
+  } else if (!ignore) {
+    add(
+      'dockerignore-context',
+      `${DOCKERIGNORE}: не исключены node_modules и logs — контекст сборки раздувается рантайм-данными, сборка образа деградирует до часов`,
+    )
+  }
+
+  return { findings, stats: { dockerfile, migrate, apiWaits, ignore } }
 }
 
 /** Имя миграции для knex — имя файла без расширения. */
@@ -203,6 +308,9 @@ function readSources() {
   return {
     knexfileText: readFileSync(path.join(ROOT, KNEXFILE), 'utf8'),
     prismaText: readFileSync(path.join(ROOT, PRISMA_SCHEMA), 'utf8'),
+    dockerfileText: readFileSync(path.join(ROOT, DOCKERFILE), 'utf8'),
+    composeText: readFileSync(path.join(ROOT, COMPOSE_FILE), 'utf8'),
+    dockerignoreText: readFileSync(path.join(ROOT, DOCKERIGNORE), 'utf8'),
     files: listMigrationFiles(),
   }
 }
@@ -260,13 +368,19 @@ async function main() {
   const dbArgIdx = args.indexOf('--db')
   const dbName = dbArgIdx === -1 ? null : args[dbArgIdx + 1]
 
-  const { knexfileText, files } = readSources()
+  const { knexfileText, files, dockerfileText, composeText, dockerignoreText } = readSources()
   const extensions = parseKnexExtensions(knexfileText)
 
   console.log(`• ${KNEXFILE}: knex подхватывает ${extensions.join(', ')}; файлов в ${MIGRATIONS_DIR}: ${files.length}`)
 
   const staticResult = auditMigrationFiles({ files, extensions })
-  let findings = [...staticResult.findings]
+  const dockerResult = auditDockerWiring({ dockerfileText, composeText, dockerignoreText })
+  console.log(
+    `• Docker: образ копирует migrations/knexfile — ${dockerResult.stats.dockerfile ? 'да' : 'нет'}; ` +
+      `сервис migrate — ${dockerResult.stats.migrate ? 'да' : 'нет'}; api ждёт migrate — ${dockerResult.stats.apiWaits ? 'да' : 'нет'}; ` +
+      `.dockerignore без node_modules/logs — ${dockerResult.stats.ignore ? 'да' : 'нет'}`,
+  )
+  let findings = [...staticResult.findings, ...dockerResult.findings]
   let live = null
 
   if (!offline) {

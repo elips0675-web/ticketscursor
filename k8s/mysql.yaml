@@ -29,8 +29,6 @@ spec:
           volumeMounts:
             - name: mysql-data
               mountPath: /var/lib/mysql
-            - name: seed-sql
-              mountPath: /docker-entrypoint-initdb.d
           readinessProbe:
             exec:
               command: [mysqladmin, ping, -h, localhost]
@@ -40,9 +38,6 @@ spec:
         - name: mysql-data
           persistentVolumeClaim:
             claimName: mysql-pvc
-        - name: seed-sql
-          configMap:
-            name: mysql-seed
 ---
 apiVersion: v1
 kind: Service

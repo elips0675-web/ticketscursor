@@ -6,3 +6,9 @@ test/
 coverage/
 Dockerfile
 .dockerignore
+logs/
+uploads/
+*.log
+test-results/
+playwright-report/
+.auth/

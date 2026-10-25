@@ -19,9 +19,14 @@ import {
   KNEXFILE,
   SETUP_DB_NAME,
   PRISMA_SCHEMA,
+  DOCKERFILE,
+  COMPOSE_FILE,
+  DOCKERIGNORE,
   parseKnexExtensions,
   parsePrismaModels,
   auditModelCoverage,
+  auditDockerWiring,
+  extractComposeService,
   migrationName,
   migrationExtension,
   auditMigrationFiles,
@@ -238,5 +243,122 @@ describe('гейт migrations-lag: покрытие моделей prisma таб
 
     const harness = readFileSync(path.join(root, 'server/test-db-setup.js'), 'utf8')
     expect(harness).not.toContain('CREATE TABLE IF NOT EXISTS custom_field')
+  })
+})
+
+describe('гейт migrations-lag: Docker накатывает миграции (RLS-06)', () => {
+  const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+  const read = (rel) => readFileSync(path.join(root, rel), 'utf8')
+
+  const dockerfileOk = [
+    'COPY --from=build /app/knexfile.js ./',
+    'COPY --from=build /app/migrations ./migrations',
+  ].join('\n')
+
+  const composeOk = [
+    'services:',
+    '  mysql:',
+    '    image: mysql:8.4',
+    '  migrate:',
+    '    build: ./server',
+    '    command: ["npm", "run", "migrate"]',
+    '    depends_on:',
+    '      mysql:',
+    '        condition: service_healthy',
+    '  api:',
+    '    build: ./server',
+    '    depends_on:',
+    '      migrate:',
+    '        condition: service_completed_successfully',
+    'volumes:',
+    '  mysql_data:',
+  ].join('\n')
+
+  it('зелёный на настоящем репозитории', () => {
+    const result = auditDockerWiring({
+      dockerfileText: read(DOCKERFILE),
+      composeText: read(COMPOSE_FILE),
+      dockerignoreText: read(DOCKERIGNORE),
+    })
+    expect(result.findings).toEqual([])
+    expect(result.stats).toEqual({ dockerfile: true, migrate: true, apiWaits: true, ignore: true })
+  })
+
+  it('красный, когда .dockerignore отсутствует — в контекст едут node_modules и logs', () => {
+    const result = auditDockerWiring({
+      dockerfileText: dockerfileOk,
+      composeText: composeOk,
+      dockerignoreText: '',
+    })
+    expect(kinds(result.findings)).toContain('dockerignore-missing')
+  })
+
+  it('красный, когда .dockerignore не исключает node_modules и logs', () => {
+    const result = auditDockerWiring({
+      dockerfileText: dockerfileOk,
+      composeText: composeOk,
+      dockerignoreText: 'node_modules\n.env\n',
+    })
+    expect(kinds(result.findings)).toContain('dockerignore-context')
+  })
+
+  it('красный, когда образ не копирует migrations/', () => {
+    const result = auditDockerWiring({
+      dockerfileText: 'COPY --from=build /app/knexfile.js ./',
+      composeText: composeOk,
+    })
+    expect(kinds(result.findings)).toContain('docker-no-migrations')
+  })
+
+  it('красный, когда образ не копирует knexfile.js', () => {
+    const result = auditDockerWiring({
+      dockerfileText: 'COPY --from=build /app/migrations ./migrations',
+      composeText: composeOk,
+      dockerignoreText: 'node_modules\nlogs\n',
+    })
+    expect(kinds(result.findings)).toContain('docker-no-knexfile')
+  })
+
+  it('красный, когда в compose нет сервиса migrate', () => {
+    const compose = composeOk.replace('    command: ["npm", "run", "migrate"]\n', '')
+    const result = auditDockerWiring({ dockerfileText: dockerfileOk, composeText: compose })
+    expect(kinds(result.findings)).toContain('compose-no-migrate')
+  })
+
+  it('красный, когда api не ждёт завершения migrate', () => {
+    const compose = composeOk.replace(
+      '      migrate:\n        condition: service_completed_successfully',
+      '      mysql:\n        condition: service_healthy',
+    )
+    const result = auditDockerWiring({ dockerfileText: dockerfileOk, composeText: compose })
+    expect(kinds(result.findings)).toContain('compose-api-not-waiting')
+  })
+
+  it('красный, когда seed.sql снова монтируется как initdb', () => {
+    const compose = composeOk.replace(
+      '    image: mysql:8.4',
+      '    image: mysql:8.4\n    volumes:\n      - ./server/seed.sql:/docker-entrypoint-initdb.d/seed.sql',
+    )
+    const result = auditDockerWiring({ dockerfileText: dockerfileOk, composeText: compose })
+    expect(kinds(result.findings)).toContain('compose-seed-initdb')
+  })
+
+  it('не считает командой миграций строку в чужом сервисе', () => {
+    const compose = composeOk
+      .replace('    command: ["npm", "run", "migrate"]\n', '')
+      .replace('    image: mysql:8.4', '    image: mysql:8.4\n    command: ["npm", "run", "migrate"]')
+    const result = auditDockerWiring({ dockerfileText: dockerfileOk, composeText: compose })
+    expect(kinds(result.findings)).toContain('compose-no-migrate')
+  })
+
+  it('изолирует блок сервиса до следующего сервиса', () => {
+    const block = extractComposeService(composeOk, 'migrate')
+    expect(block).toContain('npm')
+    expect(block).not.toContain('api:')
+    expect(extractComposeService(composeOk, 'missing')).toBe('')
+  })
+
+  it('не прочитанные файлы — vacuous, а не зелёный', () => {
+    expect(kinds(auditDockerWiring({ dockerfileText: '', composeText: '' }).findings)).toContain('vacuous')
   })
 })

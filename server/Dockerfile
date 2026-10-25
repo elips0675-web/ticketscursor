@@ -16,7 +16,9 @@ RUN apk add --no-cache wget
 WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/src ./src
+COPY --from=build /app/package.json ./
 COPY --from=build /app/knexfile.js ./
+COPY --from=build /app/migrations ./migrations
 COPY --from=build /app/prisma ./prisma
 RUN mkdir -p /app/uploads && chown -R node:node /app/uploads
 USER node
