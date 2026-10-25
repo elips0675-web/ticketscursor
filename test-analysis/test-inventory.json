@@ -1,27 +1,27 @@
 {
-  "generated": "2026-10-25T07:47:06.877Z",
+  "generated": "2026-10-25T12:09:59.245Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 109,
-    "suites": 291,
-    "tests": 1015,
+    "files": 110,
+    "suites": 299,
+    "tests": 1058,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 101,
-    "suites": 507,
-    "tests": 1338,
+    "files": 103,
+    "suites": 511,
+    "tests": 1343,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 210,
-    "suites": 798,
-    "tests": 2353,
+    "files": 213,
+    "suites": 810,
+    "tests": 2401,
     "all_passing": true
   },
   "e2e": {
@@ -57,11 +57,19 @@
       "tests": 46
     },
     {
+      "file": "scripts/migrations-lag-audit.test.mjs",
+      "tests": 35
+    },
+    {
       "file": "src/test/TicketDetail.test.tsx",
       "tests": 32
     },
     {
       "file": "scripts/check-alerts.test.mjs",
+      "tests": 31
+    },
+    {
+      "file": "scripts/schema-drift-audit.test.mjs",
       "tests": 31
     },
     {
@@ -79,10 +87,6 @@
     {
       "file": "src/test/Tickets.expanded.test.tsx",
       "tests": 25
-    },
-    {
-      "file": "scripts/migrations-lag-audit.test.mjs",
-      "tests": 24
     },
     {
       "file": "src/test/Admin.expanded.test.tsx",
@@ -181,6 +185,10 @@
       "tests": 11
     },
     {
+      "file": "src/test/AppLayout.test.tsx",
+      "tests": 11
+    },
+    {
       "file": "src/test/MarkdownEditor.test.tsx",
       "tests": 11
     },
@@ -191,10 +199,6 @@
     {
       "file": "src/test/WidgetInbox.test.tsx",
       "tests": 11
-    },
-    {
-      "file": "src/test/AppLayout.test.tsx",
-      "tests": 10
     },
     {
       "file": "src/test/CommandPalette.test.tsx",
@@ -873,6 +877,14 @@
     {
       "file": "server/src/__tests__/email-auto-reply.test.js",
       "tests": 3
+    },
+    {
+      "file": "server/src/__tests__/schema-alignment.test.js",
+      "tests": 3
+    },
+    {
+      "file": "server/src/__tests__/logger.test.js",
+      "tests": 2
     },
     {
       "file": "server/src/__tests__/metrics-endpoint.test.js",
