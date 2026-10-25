@@ -20,16 +20,6 @@ export function getTestDbConfig() {
   }
 }
 
-async function addColumnIfNotExists(conn, dbName, table, column, definition) {
-  const [rows] = await conn.execute(
-    `SELECT COUNT(*) AS cnt FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
-    [dbName, table, column]
-  )
-  if (rows[0].cnt === 0) {
-    await conn.execute(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`)
-  }
-}
-
 export async function prepareTestDatabase() {
   const { host, port, user, password, dbName } = getTestDbConfig()
 
@@ -40,30 +30,6 @@ export async function prepareTestDatabase() {
 
   const knexEnv = { ...process.env, DB_HOST: host, DB_PORT: String(port), DB_USER: user, DB_PASSWORD: password, DB_NAME: dbName }
   execSync('npx knex migrate:latest --knexfile knexfile.js', { cwd: SERVER_DIR, stdio: 'pipe', env: knexEnv })
-
-  const fix = await mysql.createConnection({ host, port, user, password, database: dbName })
-
-  // Fix column types that Knex creates incorrectly
-  await fix.execute('ALTER TABLE employees MODIFY COLUMN role VARCHAR(20) NOT NULL')
-  await fix.execute('ALTER TABLE tickets MODIFY COLUMN status VARCHAR(20) NOT NULL')
-  await fix.execute('ALTER TABLE tickets MODIFY COLUMN priority VARCHAR(20) NOT NULL')
-
-  // Add all columns Prisma expects but Knex doesn't create
-  await addColumnIfNotExists(fix, dbName, 'employees', 'last_active', 'DATETIME NULL')
-  await addColumnIfNotExists(fix, dbName, 'tickets', 'sla_paused_at', 'DATETIME NULL')
-  await addColumnIfNotExists(fix, dbName, 'tickets', 'sla_accumulated_ms', 'INT NOT NULL DEFAULT 0')
-  await addColumnIfNotExists(fix, dbName, 'tickets', 'email_message_id', 'VARCHAR(500) DEFAULT NULL')
-  await addColumnIfNotExists(fix, dbName, 'tickets', 'locked_by', 'INT NULL')
-  await addColumnIfNotExists(fix, dbName, 'tickets', 'locked_at', 'DATETIME NULL')
-  await addColumnIfNotExists(fix, dbName, 'tickets', 'deleted_at', 'DATETIME NULL')
-  await addColumnIfNotExists(fix, dbName, 'tickets', 'escalated_at', 'DATETIME NULL')
-  await addColumnIfNotExists(fix, dbName, 'tickets', 'escalation_level', 'INT NOT NULL DEFAULT 0')
-
-  // custom_field_definitions/custom_field_values создаются миграцией
-  // server/migrations/20261023_custom_field_definitions.js — харнесс их больше
-  // не дублирует (здесь жила колонка field_type вместо type и без UNIQUE-ключа).
-
-  await fix.end()
 
   execSync('npx knex seed:run --knexfile knexfile.js', { cwd: SERVER_DIR, stdio: 'pipe', env: knexEnv })
 

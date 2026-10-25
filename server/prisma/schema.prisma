@@ -78,6 +78,7 @@ model tickets {
   locked_by   Int?
   locked_at   DateTime?
   merged_into Int?
+  email_message_id String? @db.VarChar(500)
   created_at  DateTime? @default(now())
   updated_at  DateTime? @default(now())
   deleted_at  DateTime?
@@ -104,6 +105,7 @@ model tickets {
   @@index([updated_at])
   @@index([created_at])
   @@index([locked_by])
+  @@index([email_message_id])
 }
 
 model custom_field_definitions {

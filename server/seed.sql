@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS employees (
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
-  role ENUM('agent','senior_agent','admin') NOT NULL DEFAULT 'agent',
+  role VARCHAR(20) NOT NULL DEFAULT 'agent',
   department VARCHAR(255) DEFAULT '',
   avatar VARCHAR(500) DEFAULT '',
   phone VARCHAR(50) DEFAULT '',
@@ -24,9 +24,10 @@ CREATE TABLE IF NOT EXISTS tickets (
   id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(500) NOT NULL,
   description TEXT,
-  status ENUM('open','in_progress','resolved','closed') NOT NULL DEFAULT 'open',
-  priority ENUM('low','medium','high','critical') NOT NULL DEFAULT 'medium',
-  category ENUM('bug','feature','support','incident','other') NOT NULL DEFAULT 'support',
+  status VARCHAR(20) NOT NULL DEFAULT 'open',
+  priority VARCHAR(20) NOT NULL DEFAULT 'medium',
+  category VARCHAR(50) NOT NULL DEFAULT 'support',
+  email_message_id VARCHAR(500),
   created_by INT NOT NULL,
   assigned_to INT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -201,7 +202,7 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 CREATE TABLE IF NOT EXISTS chat_rooms (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(200) NOT NULL,
-  type ENUM('group','personal','channel') NOT NULL DEFAULT 'group',
+  type VARCHAR(20) NOT NULL DEFAULT 'group',
   unread INT DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
