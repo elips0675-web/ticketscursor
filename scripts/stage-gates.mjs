@@ -27,8 +27,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
  * и в серверные тесты).
  */
 export const GATE_RULES = [
-  { re: /^server\/migrations\//, gates: ['npm run check:migrations-lag', 'cd server && npm test'], why: 'миграции: лаг схемы + серверные тесты' },
-  { re: /^server\/prisma\//, gates: ['npm run check:migrations-lag', 'cd server && npm test'], why: 'schema.prisma: лаг схемы + серверные тесты' },
+  { re: /^server\/migrations\//, gates: ['npm run check:migrations-lag', 'npm run check:schema-drift', 'cd server && npm test'], why: 'миграции: лаг схемы + дрейф Prisma + серверные тесты' },
+  { re: /^server\/prisma\//, gates: ['npm run check:migrations-lag', 'npm run check:schema-drift', 'cd server && npm test'], why: 'schema.prisma: лаг схемы + дрейф + серверные тесты' },
+  { re: /^server\/(seed\.sql|test-db-setup\.js)$/, gates: ['npm run check:schema-drift'], why: 'вторая копия схемы (seed/харнесс): сверка с Prisma' },
   { re: /^server\/src\//, gates: ['cd server && npm test'], why: 'серверный код: серверные тесты' },
   { re: /^server\/(vitest\.config|package)/, gates: ['cd server && npm test'], why: 'конфиг сервера: серверные тесты' },
   { re: /^src\/.*\.(ts|tsx)$/, gates: ['npm test', 'npm run build'], why: 'фронт: клиентские тесты + сборка' },

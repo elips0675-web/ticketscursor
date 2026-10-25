@@ -23,6 +23,7 @@
     "check:headers": "node scripts/check-security-headers.mjs",
     "check:alerts": "node scripts/check-alerts.mjs",
     "check:migrations-lag": "node scripts/migrations-lag-audit.mjs",
+    "check:schema-drift": "node scripts/schema-drift-audit.mjs",
     "check:counters": "node scripts/check-doc-counters.mjs",
     "check:backlog": "node scripts/check-backlog-schema.mjs",
     "check:lint-gate": "node scripts/check-lint-gate.mjs",

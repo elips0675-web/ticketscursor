@@ -26,7 +26,7 @@ const SERVER_DIR = path.dirname(fileURLToPath(import.meta.url))
 // knex разрешает относительный migrations.directory от process.cwd(), поэтому из
 // корня репозитория «./migrations» указывал бы в пустоту (ENOENT). Приводим путь
 // к абсолютному от каталога server/ — гейт тогда работает из любого cwd.
-function configFor(dbName) {
+export function configFor(dbName) {
   const migrations = { ...(knexfile.migrations || {}) }
   const dir = migrations.directory || './migrations'
   migrations.directory = path.isAbsolute(dir) ? dir : path.resolve(SERVER_DIR, dir)
