@@ -7,7 +7,7 @@ import jwt from 'jsonwebtoken'
 
 vi.mock('../prisma.js', () => ({
   default: {
-    wiki_articles: { count: vi.fn(), findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
+    wiki_articles: { count: vi.fn(), findMany: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
     wiki_revisions: { findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn() },
   },
 }))
@@ -61,6 +61,7 @@ let app
 
 beforeEach(() => {
   vi.clearAllMocks()
+  prisma.wiki_articles.findFirst.mockResolvedValue(null)
   app = express()
   app.use(express.json())
   app.use('/api/wiki', wikiRouter)
@@ -118,6 +119,83 @@ describe('PUT /api/wiki/:id (Этап 65)', () => {
       .set('Authorization', `Bearer ${ADMIN}`)
       .send({ title: 'VPN v2', content: 'Инструкция обновлена' })
     expect(res.status).toBe(500)
+  })
+
+  it('200: снятие с публикации (published=false) попадает в update', async () => {
+    prisma.wiki_articles.update.mockResolvedValue({ id: 1, title: 'VPN', content: 'Текст', published: false })
+    prisma.wiki_revisions.findFirst.mockResolvedValue(null)
+    prisma.wiki_revisions.create.mockResolvedValue({})
+
+    const res = await request(app)
+      .put('/api/wiki/1')
+      .set('Authorization', `Bearer ${ADMIN}`)
+      .send({ title: 'VPN', content: 'Текст', published: false })
+
+    expect(res.status).toBe(200)
+    expect(prisma.wiki_articles.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: expect.objectContaining({ published: false }),
+    })
+  })
+})
+
+describe('POST /api/wiki (KB-02: публикация)', () => {
+  it('201: создаёт статью с published и slug из заголовка', async () => {
+    prisma.wiki_articles.create.mockResolvedValue({
+      id: 5, title: 'Инструкция по VPN', content: 'Текст', slug: 'instruktsiya-po-vpn', published: true,
+    })
+
+    const res = await request(app)
+      .post('/api/wiki')
+      .set('Authorization', `Bearer ${ADMIN}`)
+      .send({ title: 'Инструкция по VPN', content: 'Текст', published: true })
+
+    expect(res.status).toBe(201)
+    expect(prisma.wiki_articles.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        slug: 'instruktsiya-po-vpn',
+        published: true,
+        author_id: 42,
+      }),
+    })
+    expect(res.body.data.published).toBe(true)
+  })
+
+  it('201: черновик по умолчанию (published=false) и уникальный суффикс slug', async () => {
+    prisma.wiki_articles.findFirst
+      .mockResolvedValueOnce({ id: 1 })
+      .mockResolvedValueOnce(null)
+    prisma.wiki_articles.create.mockResolvedValue({ id: 6, title: 'VPN', published: false, slug: 'vpn-2' })
+
+    const res = await request(app)
+      .post('/api/wiki')
+      .set('Authorization', `Bearer ${ADMIN}`)
+      .send({ title: 'VPN', content: 'Текст' })
+
+    expect(res.status).toBe(201)
+    expect(prisma.wiki_articles.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ slug: 'vpn-2', published: false }),
+    })
+  })
+
+  it('400: published не boolean — схема отбивает', async () => {
+    const res = await request(app)
+      .post('/api/wiki')
+      .set('Authorization', `Bearer ${ADMIN}`)
+      .send({ title: 'VPN', content: 'Текст', published: 'yes' })
+
+    expect(res.status).toBe(400)
+    expect(prisma.wiki_articles.create).not.toHaveBeenCalled()
+  })
+
+  it('403: agent не может публиковать', async () => {
+    const res = await request(app)
+      .post('/api/wiki')
+      .set('Authorization', `Bearer ${AGENT}`)
+      .send({ title: 'VPN', content: 'Текст', published: true })
+
+    expect(res.status).toBe(403)
+    expect(prisma.wiki_articles.create).not.toHaveBeenCalled()
   })
 })
 

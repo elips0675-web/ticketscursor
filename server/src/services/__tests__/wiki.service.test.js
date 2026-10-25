@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('../../prisma.js', () => ({
   default: {
-    wiki_articles: { count: vi.fn(), findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
+    wiki_articles: { count: vi.fn(), findMany: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
     wiki_revisions: { findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn() },
   },
 }))
@@ -10,7 +10,10 @@ vi.mock('../../prisma.js', () => ({
 import { listArticles, getArticleById, createArticle, updateArticle, listRevisions, getRevision, rollbackArticle } from '../wiki.service.js'
 import prisma from '../../prisma.js'
 
-beforeEach(() => { vi.clearAllMocks() })
+beforeEach(() => {
+  vi.clearAllMocks()
+  prisma.wiki_articles.findFirst.mockResolvedValue(null)
+})
 
 describe('listArticles', () => {
   it('returns paginated articles', async () => {
@@ -51,18 +54,27 @@ describe('createArticle', () => {
     const result = await createArticle({ title: 'New', content: 'Content', category: 'Guide', tags: ['tag1'], userId: 1, userName: 'Admin' })
     expect(result.id).toBe(1)
     expect(result.category).toBe('Guide')
+    expect(prisma.wiki_articles.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ slug: 'new', published: false }),
+    })
   })
 
   it('uses default category when not provided', async () => {
     prisma.wiki_articles.create.mockResolvedValue({ id: 2, title: 'No Cat', content: '', category: 'Другое', tags: [], author_id: 1, author_name: 'User' })
     const result = await createArticle({ title: 'No Cat', content: '', category: undefined, tags: [], userId: 1, userName: 'User' })
     expect(result.category).toBe('Другое')
+    expect(prisma.wiki_articles.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ slug: 'no-cat' }),
+    })
   })
 
   it('uses default tags and author name when not provided', async () => {
     prisma.wiki_articles.create.mockResolvedValue({ id: 3, title: 'Minimal', content: 'test', category: 'Другое', tags: [], author_id: 1, author_name: 'User' })
     const result = await createArticle({ title: 'Minimal', content: 'test', category: undefined, tags: undefined, userId: 1, userName: undefined })
     expect(result.id).toBe(3)
+    expect(prisma.wiki_articles.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ slug: 'minimal' }),
+    })
   })
 })
 

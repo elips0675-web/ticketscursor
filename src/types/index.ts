@@ -271,6 +271,8 @@ export interface WikiArticle {
   authorName: string
   createdAt: string
   updatedAt: string
+  published?: boolean
+  slug?: string | null
 }
 
 export interface NewsPost {

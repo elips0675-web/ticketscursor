@@ -21,6 +21,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
+import { Checkbox } from '@/components/ui/checkbox'
 import type { WikiArticle } from '@/types'
 import { useAuth } from '@/context/AuthContext'
 import { useTranslation } from 'react-i18next'
@@ -40,6 +41,8 @@ function mapArticle(raw: Record<string, unknown>): WikiArticle {
     authorName: raw.author_name,
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
+    published: raw.published === true,
+    slug: (raw.slug as string | null | undefined) ?? null,
   }
 }
 
@@ -83,6 +86,7 @@ export default function WikiPage() {
   const [newContent, setNewContent] = useState('')
   const [newCategory, setNewCategory] = useState('Руководство')
   const [newTags, setNewTags] = useState('')
+  const [newPublished, setNewPublished] = useState(false)
   const imageInputRef = useRef<HTMLInputElement>(null)
   const [uploadingImg, setUploadingImg] = useState(false)
 
@@ -93,6 +97,7 @@ export default function WikiPage() {
   const [editContent, setEditContent] = useState('')
   const [editCategory, setEditCategory] = useState('Руководство')
   const [editTags, setEditTags] = useState('')
+  const [editPublished, setEditPublished] = useState(false)
   const [histOpen, setHistOpen] = useState(false)
   const [revisions, setRevisions] = useState<WikiRevision[]>([])
   const [selectedRev, setSelectedRev] = useState<WikiRevision | null>(null)
@@ -154,6 +159,7 @@ export default function WikiPage() {
           .split(',')
           .map((t) => t.trim())
           .filter(Boolean),
+        published: newPublished,
       })
     },
     onSuccess: (created) => {
@@ -164,6 +170,7 @@ export default function WikiPage() {
       setNewContent('')
       setNewCategory('Руководство')
       setNewTags('')
+      setNewPublished(false)
     },
   })
 
@@ -178,6 +185,7 @@ export default function WikiPage() {
           .split(',')
           .map((t) => t.trim())
           .filter(Boolean),
+        published: editPublished,
       })
     },
     onSuccess: (updated) => {
@@ -192,6 +200,7 @@ export default function WikiPage() {
     setEditContent(a.content)
     setEditCategory(a.category)
     setEditTags((a.tags || []).join(', '))
+    setEditPublished(a.published === true)
     setEditOpen(true)
   }
 
@@ -323,6 +332,17 @@ export default function WikiPage() {
                       />
                     </div>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="wiki-published"
+                      checked={newPublished}
+                      onCheckedChange={(checked) => setNewPublished(checked === true)}
+                    />
+                    <label htmlFor="wiki-published" className="text-sm font-medium">
+                      {t('wiki.publish')}
+                    </label>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t('wiki.publishHint')}</p>
                   <div className="flex gap-2">
                     <input
                       ref={imageInputRef}
@@ -456,9 +476,16 @@ export default function WikiPage() {
               </div>
               <p className="text-xs text-muted-foreground line-clamp-2">{a.content}</p>
               <div className="flex items-center justify-between">
-                <Badge variant="outline" className="text-[9px]">
-                  {a.category}
-                </Badge>
+                <div className="flex items-center gap-1">
+                  <Badge variant="outline" className="text-[9px]">
+                    {a.category}
+                  </Badge>
+                  {canManage && (
+                    <Badge variant={a.published ? 'default' : 'outline'} className="text-[9px]">
+                      {a.published ? t('wiki.published') : t('wiki.draft')}
+                    </Badge>
+                  )}
+                </div>
                 <div className="flex gap-1">
                   {a.tags.slice(0, 2).map((t) => (
                     <Badge key={t} className="text-[9px] bg-primary/10 text-primary border-0">
@@ -522,6 +549,17 @@ export default function WikiPage() {
                 />
               </div>
             </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="wiki-edit-published"
+                checked={editPublished}
+                onCheckedChange={(checked) => setEditPublished(checked === true)}
+              />
+              <label htmlFor="wiki-edit-published" className="text-sm font-medium">
+                {t('wiki.publish')}
+              </label>
+            </div>
+            <p className="text-xs text-muted-foreground">{t('wiki.publishHint')}</p>
             {versioningEnabled && <p className="text-xs text-muted-foreground">{t('wiki.editCreatesRevision')}</p>}
             <Button
               onClick={() => article && editMutation.mutate(article.id)}

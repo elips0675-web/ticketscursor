@@ -67,10 +67,10 @@ router.get('/:id', async (req, res) => {
 })
 
 router.post('/', requireRole('admin', 'senior_agent'), createWikiValidation, async (req, res) => {
-  const { title, content, category, tags } = req.body
+  const { title, content, category, tags, published, slug } = req.body
   try {
     const article = await createArticle({
-      title, content, category, tags,
+      title, content, category, tags, published, slug,
       userId: req.user.userId,
       userName: req.user.name,
     })
@@ -84,10 +84,10 @@ router.post('/', requireRole('admin', 'senior_agent'), createWikiValidation, asy
 // — Версионирование Wiki (Этап 65): PUT /:id сразу делает снимок-revision,
 // история/дифф/откат доступны всегда (данные не секретны), UI — под флагом wiki_versioning.
 router.put('/:id', requireRole('admin', 'senior_agent'), createWikiValidation, async (req, res) => {
-  const { title, content, category, tags } = req.body
+  const { title, content, category, tags, published, slug } = req.body
   try {
     const article = await updateArticle({
-      id: Number(req.params.id), title, content, category, tags,
+      id: Number(req.params.id), title, content, category, tags, published, slug,
       userId: req.user.userId,
       userName: req.user.name,
     })

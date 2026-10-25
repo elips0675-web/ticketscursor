@@ -86,6 +86,8 @@ export const createWikiSchema = z.object({
   content: z.string().trim().min(1, 'Content required'),
   category: z.string().optional(),
   tags: z.array(z.string()).optional(),
+  published: z.boolean().optional(),
+  slug: z.string().trim().min(1, 'Slug cannot be empty').max(255).optional(),
 })
 
 export const createCalendarSchema = z.object({

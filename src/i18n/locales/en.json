@@ -447,7 +447,11 @@
     "selectRevision": "Select a revision on the left to see changes",
     "diffFromCurrent": "Changes from current version to",
     "rollback": "Roll back to this version",
-    "rollbackManagerOnly": "Rollback is available to admins and senior agents"
+    "rollbackManagerOnly": "Rollback is available to admins and senior agents",
+    "publish": "Publish to public knowledge base",
+    "publishHint": "A draft is visible only inside the portal; a published article appears in /kb",
+    "published": "Published",
+    "draft": "Draft"
   },
   "profile": {
     "title": "Profile",
