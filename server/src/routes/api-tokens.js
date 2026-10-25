@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
   try {
     const tokens = await listTokens(req.user.userId)
     res.json({ success: true, data: tokens })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: 'Failed to list tokens' })
   }
 })
@@ -34,7 +34,7 @@ router.post('/', async (req, res) => {
       },
       message: 'Save this token — it will not be shown again',
     })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: 'Failed to create token' })
   }
 })
@@ -45,7 +45,7 @@ router.delete('/:id', async (req, res) => {
     if (result === null) return res.status(404).json({ success: false, message: 'Token not found' })
     if (result === 'forbidden') return res.status(403).json({ success: false, message: 'Cannot delete tokens of other users' })
     res.json({ success: true, message: 'Token deleted' })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: 'Failed to delete token' })
   }
 })

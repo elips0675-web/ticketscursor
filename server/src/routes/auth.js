@@ -7,7 +7,7 @@ import { JWT_SECRET, verifyJwtSecret, authenticateToken, requireRole } from '../
 import { sendTicketNotification } from '../email.js'
 import { loginValidation, registerValidation, changePasswordValidation } from '../validate.js'
 import { authenticateLDAP } from '../auth/ldap.js'
-import { initOIDCClient, getSSOConfig, isSSOEnabled, generateSSOState, generateSSONonce, getSSOAuthorizationUrl, handleSSOCallback } from '../auth/oidc.js'
+import { getSSOConfig, isSSOEnabled, generateSSOState, generateSSONonce, getSSOAuthorizationUrl, handleSSOCallback } from '../auth/oidc.js'
 import { generateTotpSecret, totpUri, verifyTotp } from '../auth/totp.js'
 import { isFeatureEnabled } from '../feature-flags.js'
 import { sessionMeta } from '../auth/session-meta.js'
@@ -397,7 +397,7 @@ router.get('/sso/config', async (req, res) => {
         issuerUrl: config.SSO_ISSUER_URL || '',
       },
     })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: 'Failed to get SSO config' })
   }
 })

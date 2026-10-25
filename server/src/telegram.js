@@ -405,7 +405,7 @@ export async function notifyTelegramRequester(ticketId, text, senderId) {
   })
   if (!ticket?.created_by || ticket.created_by === senderId) return false
 
-  let chatId = null
+  let chatId
   if (await contactsEnabled()) {
     const contact = await prisma.telegram_contacts.findFirst({
       where: { employee_id: ticket.created_by },

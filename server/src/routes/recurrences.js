@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
   try {
     const recurrences = await listRecurrences()
     res.json({ success: true, data: recurrences })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: 'Failed to list recurrences' })
   }
 })
@@ -22,7 +22,7 @@ router.get('/:id', async (req, res) => {
     const rec = await getRecurrenceById(Number(req.params.id))
     if (!rec) return res.status(404).json({ success: false, message: 'Recurrence not found' })
     res.json({ success: true, data: rec })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: 'Failed to get recurrence' })
   }
 })

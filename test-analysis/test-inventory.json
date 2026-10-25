@@ -1,11 +1,11 @@
 {
-  "generated": "2026-10-25T06:58:27.269Z",
+  "generated": "2026-10-25T07:23:53.798Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 107,
-    "suites": 287,
-    "tests": 1001,
+    "files": 108,
+    "suites": 289,
+    "tests": 1008,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
@@ -19,9 +19,9 @@
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 207,
-    "suites": 789,
-    "tests": 2323,
+    "files": 208,
+    "suites": 791,
+    "tests": 2330,
     "all_passing": true
   },
   "e2e": {
@@ -243,6 +243,10 @@
     {
       "file": "src/test/TicketWatchersCard.test.tsx",
       "tests": 8
+    },
+    {
+      "file": "scripts/check-lint-gate.test.mjs",
+      "tests": 7
     },
     {
       "file": "src/test/AdminCustomFields.test.tsx",

@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto'
 import prisma from '../prisma.js'
 import { getSettings } from '../settings.js'
-import { addBusinessHours, getRemainingBusinessMs } from '../sla.js'
+import { addBusinessHours } from '../sla.js'
 import { setTicketCustomFields } from './custom-fields.service.js'
 
 function parseBooleanSetting(value) {
@@ -242,7 +242,6 @@ export async function bulkUpdateTickets({ ids, action, status, employeeId, prior
 
   if (action === 'status') {
     const now = new Date()
-    const settings = await getSettings().catch(() => ({}))
     const validRows = rows.filter(row => {
       const transitions = VALID_TRANSITIONS[row.status]
       return transitions && transitions.includes(status)

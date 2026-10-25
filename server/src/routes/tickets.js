@@ -58,7 +58,7 @@ import {
 } from '../services/time.service.js'
 import { generateAssistantSuggestion } from '../services/assistant.service.js'
 import { listFieldDefinitions, getTicketCustomFields, setTicketCustomFields } from '../services/custom-fields.service.js'
-import { listCategories as listTicketCategories, getCategory as getTicketCategory, getCategoryByName as getTicketCategoryByName, validateTicketForm } from '../services/ticket-categories.service.js'
+import { listCategories as listTicketCategories, getCategoryByName as getTicketCategoryByName, validateTicketForm } from '../services/ticket-categories.service.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ticketUploads = path.join(__dirname, '..', '..', 'uploads', 'tickets')

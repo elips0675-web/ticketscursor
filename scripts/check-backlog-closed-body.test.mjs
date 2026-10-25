@@ -23,7 +23,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { auditLines, auditFile, auditClosureDates, CLOSURE_DATE_RE } from './check-backlog-closed-body.mjs'
-import { buildClosedLine, buildOpenSection, stage } from './stage-section.mjs'
+import { buildClosedLine, stage } from './stage-section.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const BACKLOG = path.join(ROOT, 'Что-доделать.txt')

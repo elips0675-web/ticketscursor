@@ -1,4 +1,3 @@
-import { getSettings } from './settings.js'
 
 const DEFAULT_WORKING_DAYS = [1, 2, 3, 4, 5]
 const DEFAULT_WORKING_HOURS_START = 9

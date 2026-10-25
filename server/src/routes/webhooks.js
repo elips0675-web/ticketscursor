@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
   try {
     const hooks = await listWebhooks()
     res.json({ success: true, data: hooks })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: 'Failed to list webhooks' })
   }
 })
@@ -34,7 +34,7 @@ router.post('/', async (req, res) => {
       createdBy: req.user.userId,
     })
     res.status(201).json({ success: true, data: hook })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: 'Failed to create webhook' })
   }
 })
@@ -44,7 +44,7 @@ router.put('/:id', async (req, res) => {
     const hook = await updateWebhook(Number(req.params.id), req.body)
     if (!hook) return res.status(404).json({ success: false, message: 'Webhook not found' })
     res.json({ success: true, data: hook })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: 'Failed to update webhook' })
   }
 })
@@ -54,7 +54,7 @@ router.delete('/:id', async (req, res) => {
     const result = await deleteWebhook(Number(req.params.id))
     if (!result) return res.status(404).json({ success: false, message: 'Webhook not found' })
     res.json({ success: true, message: 'Webhook deleted' })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: 'Failed to delete webhook' })
   }
 })

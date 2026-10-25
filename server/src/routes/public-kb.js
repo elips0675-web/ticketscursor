@@ -100,7 +100,7 @@ router.get('/categories', async (req, res) => {
       success: true,
       data: categories.map(c => c.category).filter(Boolean),
     })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: 'Failed to get categories' })
   }
 })

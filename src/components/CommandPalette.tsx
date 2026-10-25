@@ -154,10 +154,6 @@ export function CommandPalette() {
     return acc
   }, {})
 
-  useEffect(() => {
-    setSelectedIndex(0)
-  }, [query])
-
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
       e.preventDefault()
@@ -169,13 +165,6 @@ export function CommandPalette() {
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
-
-  useEffect(() => {
-    if (open) {
-      setQuery('')
-      setTimeout(() => inputRef.current?.focus(), 50)
-    }
-  }, [open])
 
   const executeItem = (item: PaletteItem) => {
     item.action()
@@ -199,14 +188,27 @@ export function CommandPalette() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next)
+        if (next) {
+          setQuery('')
+          setSelectedIndex(0)
+          setTimeout(() => inputRef.current?.focus(), 50)
+        }
+      }}
+    >
       <DialogContent className="p-0 max-w-lg gap-0 overflow-hidden">
         <div className="flex items-center border-b px-3">
           <Search className="w-4 h-4 text-muted-foreground shrink-0" />
           <input
             ref={inputRef}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value)
+              setSelectedIndex(0)
+            }}
             onKeyDown={onInputKeyDown}
             placeholder={t('commandPalette.placeholder')}
             className="flex-1 bg-transparent px-3 py-3 text-sm outline-none placeholder:text-muted-foreground"

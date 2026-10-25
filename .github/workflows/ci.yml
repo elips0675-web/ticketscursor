@@ -24,7 +24,8 @@ jobs:
       - run: npm ci
       - run: npm audit --audit-level=high --omit=dev
       - run: npx tsc --noEmit
-      - run: npx eslint . --max-warnings 100
+      - run: npx eslint . --max-warnings 0
+      - run: npm run check:lint-gate
       - run: npx vitest run --config vitest.client.config.ts
       - run: npx vite build
       - run: node scripts/check-bundle-size.js

@@ -999,8 +999,7 @@ export const handlers = [
       ],
     })
   }),
-  http.put(`${API}/admin/features`, async ({ request }) => {
-    const body = await request.json()
+  http.put(`${API}/admin/features`, async () => {
     return HttpResponse.json({ success: true, data: { updated: true } })
   }),
 

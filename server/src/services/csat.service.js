@@ -1,6 +1,5 @@
 import { randomUUID } from 'crypto'
 import prisma from '../prisma.js'
-import logger from '../logger.js'
 
 export async function createSurvey(ticketId, requesterEmail) {
   const token = randomUUID().replace(/-/g, '').slice(0, 32)

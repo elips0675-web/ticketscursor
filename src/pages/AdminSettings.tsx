@@ -24,7 +24,6 @@ import {
   XCircle,
   Key,
   Shield,
-  Globe,
   Upload,
   LogOut,
   Gauge,
@@ -471,11 +470,11 @@ function RedisStatus() {
 
   useEffect(() => {
     api
-      .get('/admin/settings/redis-status')
-      .then((d: any) => {
+      .get<{ url?: string; connected?: boolean }>('/admin/settings/redis-status')
+      .then((d) => {
         if (d) {
           setUrl(d.url || '')
-          setConnected(d.connected)
+          setConnected(!!d.connected)
           setInputUrl(d.url || '')
         }
         setLoading(false)
@@ -595,11 +594,12 @@ function EmailTemplatesSection() {
 
   useEffect(() => {
     api
-      .get('/admin/settings')
-      .then((data: any) => {
-        if (data?.EMAIL_TEMPLATES) {
+      .get<Record<string, unknown>>('/admin/settings')
+      .then((data) => {
+        const rawTemplates = data?.EMAIL_TEMPLATES
+        if (typeof rawTemplates === 'string') {
           try {
-            setTemplates({ ...DEFAULT_EMAIL_TEMPLATES, ...JSON.parse(data.EMAIL_TEMPLATES) })
+            setTemplates({ ...DEFAULT_EMAIL_TEMPLATES, ...(JSON.parse(rawTemplates) as Record<string, string>) })
           } catch {
             setTemplates({ ...DEFAULT_EMAIL_TEMPLATES })
           }
@@ -937,9 +937,6 @@ function SSOSection() {
   const [values, setValues] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [testing, setTesting] = useState(false)
-  const [testResult, setTestResult] = useState<'ok' | 'fail' | null>(null)
-  const [testMsg, setTestMsg] = useState('')
 
   useEffect(() => {
     api
@@ -1249,8 +1246,8 @@ function FeatureFlagsSection() {
 
   useEffect(() => {
     api
-      .get('/admin/features')
-      .then((data: any) => {
+      .get<FeatureFlag[]>('/admin/features')
+      .then((data) => {
         if (data) setFlags(data)
         setLoading(false)
       })
@@ -1455,6 +1452,15 @@ interface TicketFormField {
   options: string[]
 }
 
+interface TicketCategoryApiRow {
+  id?: number
+  name?: string
+  description?: string | null
+  schema?: unknown
+  enabled?: unknown
+  sort_order?: number
+}
+
 interface TicketCategoryRow {
   id?: number
   name: string
@@ -1483,15 +1489,15 @@ function TicketCategoriesSection() {
 
   useEffect(() => {
     api
-      .get('/admin/ticket-categories')
-      .then((data: any) => {
+      .get<TicketCategoryApiRow[]>('/admin/ticket-categories')
+      .then((data) => {
         if (Array.isArray(data)) {
           setRows(
-            data.map((c: any) => ({
+            data.map((c) => ({
               id: c.id,
-              name: c.name,
+              name: c.name ?? '',
               description: c.description || '',
-              schema: Array.isArray(c.schema) ? c.schema : [],
+              schema: Array.isArray(c.schema) ? (c.schema as TicketFormField[]) : [],
               enabled: !!c.enabled,
               sortOrder: c.sort_order ?? 0,
             })),

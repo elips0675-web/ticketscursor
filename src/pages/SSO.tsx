@@ -75,28 +75,22 @@ export function SSOCallback() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { login } = useAuth()
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(true)
+  const code = searchParams.get('code')
+  const stateParam = searchParams.get('state')
+  const ssoError = searchParams.get('error')
+  const initialError = ssoError
+    ? `${t('sso.errorTitle')}: ${searchParams.get('error_description') || ssoError}`
+    : !code || !stateParam
+      ? t('sso.missingAuthCode')
+      : ''
+  const [error, setError] = useState(initialError)
+  const [loading, setLoading] = useState(!initialError)
 
   useEffect(() => {
-    const code = searchParams.get('code')
-    const state = searchParams.get('state')
-    const ssoError = searchParams.get('error')
-
-    if (ssoError) {
-      setError(`${t('sso.errorTitle')}: ${searchParams.get('error_description') || ssoError}`)
-      setLoading(false)
-      return
-    }
-
-    if (!code || !state) {
-      setError(t('sso.missingAuthCode'))
-      setLoading(false)
-      return
-    }
+    if (initialError || !code || !stateParam) return
 
     api
-      .post('/auth/sso/callback', { code, state })
+      .post('/auth/sso/callback', { code, state: stateParam })
       .then((d: { data: { token: string; employee: { id: number; name: string; email: string; role: string } } }) => {
         if (d.data?.token) {
           login(d.data.token)
@@ -110,7 +104,7 @@ export function SSOCallback() {
         setError(e instanceof Error ? e.message : t('sso.authFailed'))
         setLoading(false)
       })
-  }, [searchParams, login, navigate, t])
+  }, [initialError, code, stateParam, login, navigate, t])
 
   if (loading) {
     return (

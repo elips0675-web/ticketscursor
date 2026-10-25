@@ -7,8 +7,6 @@ import { JWT_SECRET } from '../middleware.js'
 import logger from '../logger.js'
 
 const REFRESH_SECRET = process.env.REFRESH_SECRET || process.env.JWT_SECRET + '-refresh'
-const SSO_STATE_SECRET = process.env.SSO_STATE_SECRET || 'sso-state-secret-change-in-production'
-
 let oidcClient = null
 let ssoConfig = null
 

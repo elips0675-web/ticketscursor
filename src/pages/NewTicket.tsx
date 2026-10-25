@@ -36,6 +36,23 @@ interface TicketCatDef {
   enabled: boolean
 }
 
+interface TicketTemplate {
+  name: string
+  title: string
+  description: string
+  priority: string
+  category: string
+}
+
+function readLocalJson<T>(key: string, fallback: T): T {
+  try {
+    const saved = localStorage.getItem(key)
+    return saved ? (JSON.parse(saved) as T) : fallback
+  } catch {
+    return fallback
+  }
+}
+
 export default function NewTicket() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -45,31 +62,16 @@ export default function NewTicket() {
   const [priority, setPriority] = useState<TicketPriority>('medium')
   const [category, setCategory] = useState('support')
   const [tagsText, setTagsText] = useState('')
-  const [computerName, setComputerName] = useState('')
-  const [userAccount, setUserAccount] = useState('')
+  const [computerName, setComputerName] = useState(() => readLocalJson<{ computerName?: string }>('sysInfo', {}).computerName || '')
+  const [userAccount, setUserAccount] = useState(() => readLocalJson<{ userAccount?: string }>('sysInfo', {}).userAccount || '')
   const [customFieldDefs, setCustomFieldDefs] = useState<CustomFieldDef[]>([])
   const [customFieldValues, setCustomFieldValues] = useState<Record<number, string>>({})
   const [ticketCats, setTicketCats] = useState<TicketCatDef[]>([])
   const [formValues, setFormValues] = useState<Record<string, string>>({})
   const formsEnabled = useFeature('ticket_forms')
-  const [templates, setTemplates] = useState<
-    { name: string; title: string; description: string; priority: string; category: string }[]
-  >([])
+  const [templates] = useState<TicketTemplate[]>(() => readLocalJson<TicketTemplate[]>('ticketTemplates', []))
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('ticketTemplates')
-      if (saved) setTemplates(JSON.parse(saved))
-    } catch {
-      /* ignore */
-    }
-    const saved = localStorage.getItem('sysInfo')
-    if (saved) {
-      const { computerName: cn, userAccount: ua } = JSON.parse(saved)
-
-      if (cn) setComputerName(cn)
-      if (ua) setUserAccount(ua)
-    }
     api
       .get('/tickets/custom-fields')
       .then((data) => setCustomFieldDefs(data || []))

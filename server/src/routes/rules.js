@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
   try {
     const rules = await listRules()
     res.json({ success: true, data: rules })
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: 'Failed to list rules' })
   }
 })

@@ -1,10 +1,10 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 107 файлов / 287 suite / 1001 тест (все PASS, vitest --reporter=json от 25.10.2026)
+Реальный результат: 108 файлов / 289 suite / 1008 тестов (все PASS, vitest --reporter=json от 25.10.2026)
 Coverage (All files): 78.53 stmts / 69.74 branches / 70.34 funcs / 81.17 lines (пороги 76/67/68/78 — замер 23.10.2026, `npx vitest run --coverage`, отчёт `coverage/lcov-report/index.html`)
 
-===== ФАЙЛЫ (107 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (108 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 scripts/check-security-headers.test.mjs | 46 | Гейт периметра (P0): заголовки в nginx.conf/vercel.json, наследование add_header, helmet раньше express.static, Dockerfile копирует проверяемый конфиг
@@ -13,6 +13,7 @@ src/test/RichMessage.test.tsx | 8 | Rich messages (CHW-08): общий ренд�
 src/test/TicketDetail.rich.test.tsx | 2 | Rich messages в тикете (CHW-08): карточка и чипы из rich_payload через GET /tickets/:id (mapMessageRow), обычный текст блоки не рисует
 src/test/ChatDetail.rich.test.tsx | 2 | Rich messages в чате (CHW-08): карточка из rich_payload, обычный текст блоки не рисует
 scripts/messages-archive-measure.test.mjs | 13 | Замер архивации (CHW-09): порог 100 000 и возраст 90 дней совпадают с бэклогом, граница ≥ (99 999/100 000/150 000/0), исключения на невалидном замере и пороге, parseCount на выводе mysql и мусоре, CANDIDATES_SQL считает только closed/resolved старше 90 дней, код выхода при перейдённом пороге
+scripts/check-lint-gate.test.mjs | 7 | Гейт на гейт линтера (CHW-11): строгий `--max-warnings 0` в `scripts.lint` и в каждом вызове eslint в CI, ловит отсутствие флага, порог 100, «eslint не вызывается», второй вызов, битый package.json
 src/test/global-shortcuts.test.tsx | 19 | Горячие клавиши (CHW-10): isTypingTarget (INPUT/TEXTAREA/SELECT/contentEditable), isDialogOpen, resolveGlobalShortcut (c, /, модификаторы, Ctrl+K, поле ввода, диалог), resolveListShortcut (j/k с клампом, Enter, пустой список), хук — навигация на /tickets/new, фокус [data-search-input] и переход /tickets?focus=search
 src/test/tickets-shortcuts.test.tsx | 10 | Список тикетов с клавиатуры (CHW-10): data-ticket-index, j/k и кламп по границам, Enter открывает выбранный, Enter без выбора и при фокусе на кнопке не открывает, j игнорируется в поле поиска и при открытом диалоге, ?focus=search фокусирует поиск и убирает параметр из адреса
 src/test/TicketDetail.test.tsx | 32 | TicketDetail: сообщения, статус, приоритет, назначение, RBAC, virtual scroll (150 и 1000 — не падает), XSS, История (timeline, PDF, флаг off)
@@ -137,3 +138,5 @@ Coverage (01.10.2026, перемерено --coverage): 78.58 stmts / 69.6 branc
 Текущий факт 25.10.2026 (CHW-09): 105 файлов / 279 suite / 970 тестов. Прирост к CHW-08: +1 файл / +13 тестов — `scripts/messages-archive-measure.test.mjs` (замер архивации: порог 100 000 / 90 дней, граница ≥, падение на мусоре вместо молчаливого нуля). Сервер без изменений: 100 файлов / 502 suite / 1322 теста (0 failures).
 
 Текущий факт 25.10.2026 (CHW-10): 107 файлов / 287 suite / 1001 тест. Прирост к CHW-09: +2 файла / +31 тест — `global-shortcuts.test.tsx` 19 и `tickets-shortcuts.test.tsx` 10 (новые), `KeyboardShortcuts.test.tsx` 6→8 (реальный i18n + contentEditable). `AppLayout.test.tsx` и `a11y.test.tsx` переписаны без изменения числа тестов. Сервер без изменений: 100 файлов / 502 suite / 1322 теста (0 failures).
+
+Текущий факт 25.10.2026 (CHW-11): 108 файлов / 289 suite / 1008 тестов. Прирост к CHW-10: +1 файл / +7 тестов — `scripts/check-lint-gate.test.mjs`. Сервер без изменений по числу тестов: 100 файлов / 502 suite / 1322 теста (0 failures); в `background.expanded.test.js` обновлено ожидание числа очередей BullMQ (5 → 4) после удаления мёртвой `dlq`.

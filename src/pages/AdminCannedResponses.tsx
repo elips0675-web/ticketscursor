@@ -29,7 +29,6 @@ export default function AdminCannedResponses() {
   const [saving, setSaving] = useState(false)
 
   const load = async () => {
-    setLoading(true)
     try {
       const data = await api.get('/canned-responses')
       setItems(data || [])
@@ -39,8 +38,17 @@ export default function AdminCannedResponses() {
     setLoading(false)
   }
 
+  const reload = async () => {
+    setLoading(true)
+    await load()
+  }
+
   useEffect(() => {
-    load()
+    api
+      .get<CannedResponse[]>('/canned-responses')
+      .then((data) => setItems(data || []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
   }, [])
 
   const create = async () => {
@@ -53,7 +61,7 @@ export default function AdminCannedResponses() {
       setEditText('')
       setEditCategory('')
       setEditing(null)
-      await load()
+      await reload()
     } catch {
       /* ignore */
     }
@@ -67,7 +75,7 @@ export default function AdminCannedResponses() {
       await api.put(`/canned-responses/${id}`, { title: editTitle, text: editText, category: editCategory })
       toast.success(t('common.saveSuccess'))
       setEditing(null)
-      await load()
+      await reload()
     } catch {
       /* ignore */
     }
@@ -78,7 +86,7 @@ export default function AdminCannedResponses() {
     try {
       await api.delete(`/canned-responses/${id}`)
       toast.success(t('common.deleteSuccess'))
-      await load()
+      await reload()
     } catch {
       /* ignore */
     }

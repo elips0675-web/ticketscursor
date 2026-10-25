@@ -49,7 +49,7 @@ vi.mock('react-i18next', () => ({
 }))
 
 function mockApi() {
-  const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+  const fetchMock = vi.fn((url: string, _init?: RequestInit) => {
     const path = String(url)
     if (path.includes('/tickets/categories')) {
       return Promise.resolve({

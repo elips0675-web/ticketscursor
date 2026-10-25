@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Loader2, ArrowLeft, ThumbsUp, ThumbsDown, BookOpen, Tag, AlertCircle } from 'lucide-react'
 import { api } from '@/lib/api'
@@ -28,7 +28,6 @@ export default function PublicKBArticle() {
 
   useEffect(() => {
     if (!slug) return
-    setLoading(true)
     api
       .get(`/kb/articles/${slug}`)
       .then((d: Article) => {
@@ -39,7 +38,7 @@ export default function PublicKBArticle() {
         setError(e instanceof Error ? e.message : t('kb.notFound'))
         setLoading(false)
       })
-  }, [slug])
+  }, [slug, t])
 
   const vote = async (type: 'up' | 'down') => {
     if (!article || voted) return

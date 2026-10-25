@@ -62,15 +62,13 @@ test.describe('E2E: Login flow', () => {
 
 test.describe('E2E: Ticket CRUD flow', () => {
   let token: string
-  let ticketNumber: number
 
   test('create ticket via API and see it in list', async ({ page }) => {
     await page.goto('/')
     token = await devLogin(page)
 
     const title = `E2E Test ${Date.now()}`
-    const ticket = await createTicketViaApi(page, token, title, 'Description for E2E test')
-    ticketNumber = ticket?.number
+    await createTicketViaApi(page, token, title, 'Description for E2E test')
 
     await page.goto('/tickets')
     await page.waitForLoadState('networkidle')

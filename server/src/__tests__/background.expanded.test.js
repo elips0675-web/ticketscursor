@@ -24,7 +24,6 @@ const mockQueue = vi.hoisted(() => ({ upsertJobScheduler: vi.fn().mockResolvedVa
 const bullMqMock = vi.hoisted(() => ({
   Queue: vi.fn(function() { return mockQueue }),
   Worker: vi.fn(function() { return {} }),
-  QueueScheduler: vi.fn(function() { return {} }),
 }))
 const ioredisMock = vi.hoisted(() => ({ default: vi.fn() }))
 
@@ -136,7 +135,7 @@ describe('background.js — Redis path', () => {
     const { setupBackgroundJobs, stopBackgroundJobs } = await import('../background.js')
     await setupBackgroundJobs(prismaMock)
     expect(ioredisMock.default).toHaveBeenCalledWith('redis://localhost:6379', { maxRetriesPerRequest: null })
-    expect(bullMqMock.Queue).toHaveBeenCalledTimes(5)
+    expect(bullMqMock.Queue).toHaveBeenCalledTimes(4)
     expect(bullMqMock.Worker).toHaveBeenCalledTimes(5)
     expect(mockQueue.upsertJobScheduler).toHaveBeenCalledTimes(4)
     expect(loggerMock.default.info).toHaveBeenCalledWith('Background jobs using BullMQ (Redis) with retry + DLQ')

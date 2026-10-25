@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
 import { Plus, Save, Loader2, Trash2, GripVertical, Settings2 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
@@ -25,7 +23,6 @@ const FIELD_TYPES = ['text', 'number', 'date', 'select', 'textarea', 'checkbox']
 const CATEGORIES = ['general', 'support', 'billing', 'technical']
 
 export default function AdminCustomFields() {
-  const { t } = useTranslation()
   const [fields, setFields] = useState<FieldDefinition[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -43,9 +40,8 @@ export default function AdminCustomFields() {
   const [editOptions, setEditOptions] = useState('')
 
   const load = async () => {
-    setLoading(true)
     try {
-      const data = await api.get('/admin/custom-fields')
+      const data = await api.get<FieldDefinition[]>('/admin/custom-fields')
       setFields(data || [])
     } catch {
       /* ignore */
@@ -53,8 +49,17 @@ export default function AdminCustomFields() {
     setLoading(false)
   }
 
+  const reload = async () => {
+    setLoading(true)
+    await load()
+  }
+
   useEffect(() => {
-    load()
+    api
+      .get<FieldDefinition[]>('/admin/custom-fields')
+      .then((data) => setFields(data || []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
   }, [])
 
   const create = async () => {
@@ -72,7 +77,7 @@ export default function AdminCustomFields() {
       toast.success('Field created')
       setNewField({ name: '', type: 'text', category: 'general', required: false })
       setNewOptions('')
-      await load()
+      await reload()
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed'
       toast.error(message)
@@ -99,7 +104,7 @@ export default function AdminCustomFields() {
       await api.put(`/admin/custom-fields/${id}`, body)
       toast.success('Field updated')
       setEditingId(null)
-      await load()
+      await reload()
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed'
       toast.error(message)
@@ -112,7 +117,7 @@ export default function AdminCustomFields() {
     try {
       await api.delete(`/admin/custom-fields/${id}`)
       toast.success('Field deleted')
-      await load()
+      await reload()
     } catch {
       toast.error('Failed to delete field')
     }

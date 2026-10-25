@@ -450,14 +450,6 @@ export async function notifySlaBreached(ticketId) {
   })
 }
 
-const PRIORITY_ORDER = ['low', 'medium', 'high', 'critical']
-
-function getNextPriority(current) {
-  const idx = PRIORITY_ORDER.indexOf(current)
-  if (idx >= PRIORITY_ORDER.length - 1) return null
-  return PRIORITY_ORDER[idx + 1]
-}
-
 export async function notifySlaEscalated(ticketId, fromPriority, toPriority, level) {
   const t = await getTicketWithUsers(ticketId)
   if (!t) return

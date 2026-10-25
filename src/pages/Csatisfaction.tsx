@@ -6,9 +6,14 @@ import { Textarea } from '@/components/ui/textarea'
 import { Star, CheckCircle, Loader2 } from 'lucide-react'
 import { API_URL } from '@/lib/api'
 
+interface Survey {
+  ticket?: { title?: string }
+  ticket_id?: number
+}
+
 export default function Csatisfaction() {
   const { token } = useParams<{ token: string }>()
-  const [survey, setSurvey] = useState<any>(null)
+  const [survey, setSurvey] = useState<Survey | null>(null)
   const [rating, setRating] = useState(0)
   const [hovered, setHovered] = useState(0)
   const [comment, setComment] = useState('')

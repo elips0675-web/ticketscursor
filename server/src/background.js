@@ -33,7 +33,6 @@ async function withRetry(fn, name, prisma) {
 
 async function dlqRecord(taskName, error, attempts) {
   try {
-    const prisma = (await import('./prisma.js')).default
     const { default: knexLib } = await import('knex')
     const knexConfig = (await import('../knexfile.js')).default
     const knex = knexLib(knexConfig)
@@ -118,11 +117,10 @@ async function runScheduledReports() {
 
 export async function setupBackgroundJobs(prisma) {
   if (process.env.REDIS_URL) {
-    const { Queue, Worker, QueueScheduler } = await import('bullmq')
+    const { Queue, Worker } = await import('bullmq')
     const Redis = (await import('ioredis')).default
 
     const connection = new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: null })
-    const dlq = new Queue('service-desk-dlq', { connection })
 
     const cleanupQueue = new Queue('notification-cleanup', {
       connection,

@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Loader2, Search, BookOpen, Tag, ThumbsUp, ThumbsDown, ArrowRight } from 'lucide-react'
+import { Loader2, Search, BookOpen, Tag, ArrowRight } from 'lucide-react'
 import { api } from '@/lib/api'
 
 interface Article {
@@ -33,30 +33,42 @@ export default function PublicKB() {
   const [selectedCategory, setSelectedCategory] = useState('')
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 12, total: 0, totalPages: 0 })
 
-  const fetchArticles = async (page = 1, q = search, cat = selectedCategory) => {
-    setLoading(true)
+  const fetchArticles = useCallback(async (page: number, q: string, cat: string) => {
     try {
       const params = new URLSearchParams({ page: String(page), limit: '12' })
       if (q) params.set('q', q)
       if (cat) params.set('category', cat)
-      const d = await api.get(`/kb/articles?${params}`)
-      setArticles(d.data || [])
-      setPagination(d.pagination || { page: 1, limit: 12, total: 0, totalPages: 0 })
+      const d = await api.get<{ data?: Article[]; pagination?: Pagination }>(`/kb/articles?${params}`)
+      setArticles(d?.data || [])
+      setPagination(d?.pagination || { page: 1, limit: 12, total: 0, totalPages: 0 })
     } catch {
       setArticles([])
     }
     setLoading(false)
+  }, [])
+
+  const loadArticles = (page = 1, q = search, cat = selectedCategory) => {
+    setLoading(true)
+    void fetchArticles(page, q, cat)
   }
 
   useEffect(() => {
-    fetchArticles()
+    const params = new URLSearchParams({ page: '1', limit: '12' })
     api
-      .get('/kb/categories')
-      .then((d: string[]) => setCategories(d || []))
+      .get<{ data?: Article[]; pagination?: Pagination }>(`/kb/articles?${params}`)
+      .then((d) => {
+        setArticles(d?.data || [])
+        setPagination(d?.pagination || { page: 1, limit: 12, total: 0, totalPages: 0 })
+      })
+      .catch(() => setArticles([]))
+      .finally(() => setLoading(false))
+    api
+      .get<string[]>('/kb/categories')
+      .then((d) => setCategories(d || []))
       .catch(() => {})
   }, [])
 
-  const handleSearch = () => fetchArticles(1, search)
+  const handleSearch = () => loadArticles(1, search)
 
   return (
     <div className="min-h-screen bg-background">
@@ -88,7 +100,7 @@ export default function PublicKB() {
               variant={selectedCategory === '' ? 'default' : 'outline'}
               onClick={() => {
                 setSelectedCategory('')
-                fetchArticles(1, search, '')
+                loadArticles(1, search, '')
               }}
             >
               {t('kb.allCategories')}
@@ -100,7 +112,7 @@ export default function PublicKB() {
                 variant={selectedCategory === cat ? 'default' : 'outline'}
                 onClick={() => {
                   setSelectedCategory(cat)
-                  fetchArticles(1, search, cat)
+                  loadArticles(1, search, cat)
                 }}
               >
                 <Tag className="w-3 h-3 mr-1" />
@@ -157,7 +169,7 @@ export default function PublicKB() {
                   size="sm"
                   variant="outline"
                   disabled={pagination.page <= 1}
-                  onClick={() => fetchArticles(pagination.page - 1)}
+                  onClick={() => loadArticles(pagination.page - 1)}
                 >
                   ← {t('common.prev')}
                 </Button>
@@ -168,7 +180,7 @@ export default function PublicKB() {
                   size="sm"
                   variant="outline"
                   disabled={pagination.page >= pagination.totalPages}
-                  onClick={() => fetchArticles(pagination.page + 1)}
+                  onClick={() => loadArticles(pagination.page + 1)}
                 >
                   {t('common.next')} →
                 </Button>

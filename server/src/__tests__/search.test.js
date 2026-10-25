@@ -39,7 +39,7 @@ vi.mock('../middleware.js', () => {
         return res.status(403).json({ message: 'Invalid token' })
       }
     },
-    requireRole: (...roles) => (req, res, next) => {
+    requireRole: (..._roles) => (req, res, next) => {
       if (!req.user) return res.status(403).json({ message: 'Forbidden' })
       next()
     },
