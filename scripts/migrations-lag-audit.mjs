@@ -116,11 +116,11 @@ export function auditModelCoverage({ models, tables, source = PRISMA_SCHEMA }) {
  */
 export function extractComposeService(composeText, serviceName) {
   const lines = composeText.split(/\r?\n/)
-  const start = lines.findIndex((line) => new RegExp(`^  ${serviceName}:\\s*$`).test(line))
+  const start = lines.findIndex((line) => new RegExp(`^ {2}${serviceName}:\\s*$`).test(line))
   if (start === -1) return ''
   let end = lines.length
   for (let i = start + 1; i < lines.length; i++) {
-    if (/^  [A-Za-z0-9_.-]+:\s*$/.test(lines[i])) {
+    if (/^ {2}[A-Za-z0-9_.-]+:\s*$/.test(lines[i])) {
       end = i
       break
     }
