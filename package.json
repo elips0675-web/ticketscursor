@@ -25,6 +25,7 @@
     "check:migrations-lag": "node scripts/migrations-lag-audit.mjs",
     "check:counters": "node scripts/check-doc-counters.mjs",
     "check:backlog": "node scripts/check-backlog-schema.mjs",
+    "measure:archive": "node scripts/messages-archive-measure.mjs",
     "check:docs": "node scripts/check-doc-sync.mjs && node scripts/check-backlog-closed-body.mjs && node scripts/check-doc-counters.mjs && node scripts/check-backlog-schema.mjs",
     "stage:context": "node scripts/stage-context.mjs",
     "stage:preflight": "node scripts/stage-preflight.mjs",

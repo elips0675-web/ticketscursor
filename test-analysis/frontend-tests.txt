@@ -1,10 +1,10 @@
 ===== ФРОНТЕНД ТЕСТЫ (Vitest + RTL) =====
 Стек: Vitest 4.1.9, React Testing Library 16, jsdom, MSW 2, @testing-library/user-event
 Запуск: npx vitest run --config vitest.client.config.ts
-Реальный результат: 104 файлов / 273 suite / 957 тестов (все PASS, vitest --reporter=json от 25.10.2026)
+Реальный результат: 105 файлов / 279 suite / 970 тестов (все PASS, vitest --reporter=json от 25.10.2026)
 Coverage (All files): 78.53 stmts / 69.74 branches / 70.34 funcs / 81.17 lines (пороги 76/67/68/78 — замер 23.10.2026, `npx vitest run --coverage`, отчёт `coverage/lcov-report/index.html`)
 
-===== ФАЙЛЫ (104 шт, все реальные, из vitest --reporter=json) =====
+===== ФАЙЛЫ (105 шт, все реальные, из vitest --reporter=json) =====
 
 # Файлы | Тестов | Описание
 scripts/check-security-headers.test.mjs | 46 | Гейт периметра (P0): заголовки в nginx.conf/vercel.json, наследование add_header, helmet раньше express.static, Dockerfile копирует проверяемый конфиг
@@ -12,6 +12,7 @@ scripts/check-alerts.test.mjs | 31 | Гейт правил алертинга (R
 src/test/RichMessage.test.tsx | 8 | Rich messages (CHW-08): общий рендерер блоков — пустой payload, card (заголовок/подзаголовок/текст), ссылка в новой вкладке, postback-кнопка (значение наружу, без обработчика disabled), chips, input (обязательность, placeholder, disabled), select (варианты), неизвестный тип блока не ломает остальные
 src/test/TicketDetail.rich.test.tsx | 2 | Rich messages в тикете (CHW-08): карточка и чипы из rich_payload через GET /tickets/:id (mapMessageRow), обычный текст блоки не рисует
 src/test/ChatDetail.rich.test.tsx | 2 | Rich messages в чате (CHW-08): карточка из rich_payload, обычный текст блоки не рисует
+scripts/messages-archive-measure.test.mjs | 13 | Замер архивации (CHW-09): порог 100 000 и возраст 90 дней совпадают с бэклогом, граница ≥ (99 999/100 000/150 000/0), исключения на невалидном замере и пороге, parseCount на выводе mysql и мусоре, CANDIDATES_SQL считает только closed/resolved старше 90 дней, код выхода при перейдённом пороге
 src/test/TicketDetail.test.tsx | 32 | TicketDetail: сообщения, статус, приоритет, назначение, RBAC, virtual scroll (150 и 1000 — не падает), XSS, История (timeline, PDF, флаг off)
 src/test/TicketDetail.canned.test.tsx | 5 | TicketDetail быстрые ответы (CHW-07): список шаблонов, вставка отрендеренного текста с ticketId, дописывание к набранному, пустой список, ошибка загрузки
 src/test/Files.expanded.test.tsx | 27 | Files: empty, search, view, category, upload, drag-drop, keyboard, folder switch, list view, drag overlay
@@ -130,3 +131,5 @@ Coverage (01.10.2026, перемерено --coverage): 78.58 stmts / 69.6 branc
 Текущий факт 24.10.2026: 101 файлов / 267 suite / 943 тестов (регенерировано из vitest --reporter=json: `node scripts/regenerate-test-inventory.js vitest-client.json server/vitest-server.json`). Прирост к 23.10: +6 файлов / +35 тестов — CHW-07 (быстрые ответы): `TicketDetail.canned.test.tsx` 5 (новый файл); CHW-12 (автопрокрутка): `ChatDetail.scroll.test.tsx` 4 (новый файл); CHW-06 (виджет чата): `WidgetPanel.test.tsx` 12, `WidgetInbox.test.tsx` 10, `WidgetLauncher.test.tsx` 2, `WidgetChat.test.tsx` 1, `Chats.test.tsx` 3→4 (вкладка «Виджет» под флагом `chat_widget`). Сервер: 98 файлов / 491 suite / 1291 теста (0 failures; CHW-07 — merge fields: `template-variables.test.js` 13, `rules.service.test.js` 5, `email-auto-reply.test.js` 3, `canned-responses.routes.test.js` 15→21; CHW-05 — ClamAV: `clamav.expanded.test.js` 8→11, `health-ready.test.js` 6→7, `validate-upload.test.js` 11; CHW-04 — outbox retry: `outbox.delivery.test.js` 4→10, `migration.idempotency.test.js` 5→6; CHW-03 — readiness: `health-ready.test.js` 6, `api.test.js` 183→184, `injection.test.js` 15→16; CHW-01 — Telegram webhook: `telegram-webhook.test.js` 11, `telegram.expanded.test.js` 35→49, `notify.test.js` 24→26, `migration.idempotency.test.js` 4→5).
 
 Текущий факт 25.10.2026: 104 файлов / 273 suite / 957 тестов (регенерировано из vitest --reporter=json: `node scripts/regenerate-test-inventory.js vitest-client.json server/vitest-server.json`). Прирост к 24.10: +3 файла / +14 тестов — CHW-08 (rich messages): `RichMessage.test.tsx` 8, `ChatDetail.rich.test.tsx` 2, `TicketDetail.rich.test.tsx` 2 (новые), `WidgetPanel.test.tsx` 12→13, `WidgetInbox.test.tsx` 10→11. Попутно закрыт дрейф: `scripts/check-backlog-schema.test.mjs` 22→26. Сервер: 100 файлов / 502 suite / 1322 теста (0 failures).
+
+Текущий факт 25.10.2026 (CHW-09): 105 файлов / 279 suite / 970 тестов. Прирост к CHW-08: +1 файл / +13 тестов — `scripts/messages-archive-measure.test.mjs` (замер архивации: порог 100 000 / 90 дней, граница ≥, падение на мусоре вместо молчаливого нуля). Сервер без изменений: 100 файлов / 502 suite / 1322 теста (0 failures).
