@@ -13,11 +13,13 @@ import {
   Activity,
   Cpu,
   KeyRound,
+  UserCog,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { useTranslation } from 'react-i18next'
+import { useFeature } from '@/hooks/useFeature'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 const adminNavItems = [
@@ -29,6 +31,7 @@ const adminNavItems = [
   { to: '/admin/health', icon: Activity, labelKey: 'admin.health' },
   { to: '/admin/queues', icon: Cpu, labelKey: 'admin.queues' },
   { to: '/admin/rbac', icon: KeyRound, labelKey: 'admin.rbac' },
+  { to: '/admin/roles', icon: UserCog, labelKey: 'admin.roles', feature: 'custom_roles' },
   { to: '/admin/canned-responses', icon: MessageSquare, labelKey: 'admin.cannedResponses' },
   { to: '/admin/custom-fields', icon: Settings2, labelKey: 'admin.customFields' },
 ]
@@ -37,6 +40,10 @@ export function AdminLayout() {
   const { user, logout } = useAuth()
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const customRolesOn = useFeature('custom_roles')
+  const visibleNavItems = adminNavItems.filter(
+    (item) => !('feature' in item) || (item.feature === 'custom_roles' && customRolesOn),
+  )
 
   if (user?.role !== 'admin' && user?.role !== 'super_admin') {
     return (
@@ -77,7 +84,7 @@ export function AdminLayout() {
           </div>
         </div>
         <nav aria-label="Навигация админки" className="flex-1 p-2 space-y-0.5">
-          {adminNavItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}

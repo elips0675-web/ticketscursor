@@ -3,44 +3,51 @@ import userEvent from '@testing-library/user-event'
 import { AllTheProviders } from './test-utils'
 import AdminUsers from '@/pages/AdminUsers'
 
+const USERS = [
+  {
+    id: 1,
+    name: 'Alice Smith',
+    email: 'alice@test.com',
+    role: 'admin',
+    department: 'IT',
+    title: 'Admin',
+    online: true,
+    activeTickets: 3,
+    resolvedToday: 5,
+    isActive: true,
+    customRoleId: null,
+    customRoleName: null,
+    createdAt: '2025-01-01',
+  },
+  {
+    id: 2,
+    name: 'Bob Jones',
+    email: 'bob@test.com',
+    role: 'agent',
+    department: 'Support',
+    title: 'Agent',
+    online: false,
+    activeTickets: 1,
+    resolvedToday: 2,
+    isActive: false,
+    customRoleId: null,
+    customRoleName: null,
+    createdAt: '2025-06-01',
+  },
+]
+
+const ROLES = [{ id: 7, name: 'Auditor', permissions: ['audit.view'] }]
+
 describe('AdminUsers', () => {
   beforeEach(() => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            data: [
-              {
-                id: 1,
-                name: 'Alice Smith',
-                email: 'alice@test.com',
-                role: 'admin',
-                department: 'IT',
-                title: 'Admin',
-                online: true,
-                activeTickets: 3,
-                resolvedToday: 5,
-                isActive: true,
-                createdAt: '2025-01-01',
-              },
-              {
-                id: 2,
-                name: 'Bob Jones',
-                email: 'bob@test.com',
-                role: 'agent',
-                department: 'Support',
-                title: 'Agent',
-                online: false,
-                activeTickets: 1,
-                resolvedToday: 2,
-                isActive: false,
-                createdAt: '2025-06-01',
-              },
-            ],
-          }),
+      vi.fn((url: RequestInfo | URL) => {
+        const data = String(url).includes('/admin/roles') ? ROLES : USERS
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ success: true, data }),
+        })
       }),
     )
   })

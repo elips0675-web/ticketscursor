@@ -6,6 +6,7 @@ import multer from 'multer'
 import prisma from '../prisma.js'
 import { auditLogMiddleware } from '../audit.js'
 import { authenticateToken, requireRole } from '../middleware.js'
+import { requirePermission } from '../custom-roles.js'
 import { hasRole } from '../utils/roleUtils.js'
 import { invalidateCache } from '../cache.js'
 import { enqueueEvent } from '../outbox.js'
@@ -882,7 +883,7 @@ router.post('/:id/merge', requireRole('admin', 'senior_agent'), mergeTicketValid
   }
 })
 
-router.delete('/:id', requireRole('admin', 'senior_agent'), async (req, res) => {
+router.delete('/:id', requireRole('admin', 'senior_agent'), requirePermission('tickets.delete'), async (req, res) => {
   const ticketId = Number(req.params.id)
   try {
     const result = await deleteTicket(ticketId)

@@ -1,27 +1,27 @@
 {
-  "generated": "2026-10-25T12:09:59.245Z",
+  "generated": "2026-10-26T05:52:27.059Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 110,
-    "suites": 299,
-    "tests": 1058,
+    "files": 111,
+    "suites": 301,
+    "tests": 1067,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
   },
   "server": {
-    "files": 103,
-    "suites": 511,
-    "tests": 1343,
+    "files": 104,
+    "suites": 519,
+    "tests": 1386,
     "all_passing": true,
     "config": "vitest (server/vitest.config.js)",
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 213,
-    "suites": 810,
-    "tests": 2401,
+    "files": 215,
+    "suites": 820,
+    "tests": 2453,
     "all_passing": true
   },
   "e2e": {
@@ -211,6 +211,10 @@
     {
       "file": "src/test/wiki-diff.test.ts",
       "tests": 10
+    },
+    {
+      "file": "src/test/AdminRoles.test.tsx",
+      "tests": 9
     },
     {
       "file": "src/test/Search.expanded.test.tsx",
@@ -501,6 +505,10 @@
     {
       "file": "server/src/__tests__/telegram.expanded.test.js",
       "tests": 49
+    },
+    {
+      "file": "server/src/__tests__/custom-roles.test.js",
+      "tests": 43
     },
     {
       "file": "server/src/__tests__/rbac-matrix.test.js",

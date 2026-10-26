@@ -8,6 +8,8 @@ import { toast } from 'sonner'
 
 import { Users, RefreshCw, UserCheck, UserX, Upload, FileText, LogOut, Loader2 } from 'lucide-react'
 import mammoth from 'mammoth'
+import { useFeature } from '@/hooks/useFeature'
+import { api } from '@/lib/api'
 
 interface User {
   id: number
@@ -20,7 +22,14 @@ interface User {
   activeTickets: number
   resolvedToday: number
   isActive: boolean
+  customRoleId: number | null
+  customRoleName: string | null
   createdAt: string
+}
+
+interface CustomRoleOption {
+  id: number
+  name: string
 }
 
 export default function AdminUsers() {
@@ -39,6 +48,16 @@ export default function AdminUsers() {
   } | null>(null)
   const [defaultPassword, setDefaultPassword] = useState('123456')
   const [revokingId, setRevokingId] = useState<number | null>(null)
+  const customRolesOn = useFeature('custom_roles')
+  const [customRoles, setCustomRoles] = useState<CustomRoleOption[]>([])
+
+  useEffect(() => {
+    if (!customRolesOn) return
+    api
+      .get<CustomRoleOption[]>('/admin/roles')
+      .then((data) => setCustomRoles(data ?? []))
+      .catch(() => setCustomRoles([]))
+  }, [customRolesOn])
 
   const unwrapApiData = <T,>(payload: T | { success?: boolean; data?: T } | null): T | null => {
     if (!payload) return null
@@ -249,6 +268,25 @@ export default function AdminUsers() {
                       <option value="senior_agent">{t('employees.seniorAgent')}</option>
                       <option value="agent">{t('employees.agent')}</option>
                     </select>
+                    {customRolesOn && customRoles.length > 0 && (
+                      <select
+                        value={user.customRoleId ?? ''}
+                        onChange={(e) =>
+                          updateUser(user.id, { customRoleId: e.target.value ? Number(e.target.value) : null })
+                        }
+                        disabled={updating === user.id}
+                        aria-label={t('admin.roles')}
+                        data-testid={`custom-role-${user.id}`}
+                        className="h-8 rounded-md border border-input bg-background px-2 text-xs font-medium max-w-[160px]"
+                      >
+                        <option value="">{t('admin.rolesNone')}</option>
+                        {customRoles.map((role) => (
+                          <option key={role.id} value={role.id}>
+                            {role.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                     <Button
                       variant={user.isActive ? 'outline' : 'default'}
                       size="sm"

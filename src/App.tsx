@@ -50,6 +50,7 @@ const AdminCustomFields = lazy(() => import('@/pages/AdminCustomFields'))
 const AdminHealth = lazy(() => import('@/pages/AdminHealth'))
 const AdminQueues = lazy(() => import('@/pages/AdminQueues'))
 const AdminRbac = lazy(() => import('@/pages/AdminRbac'))
+const AdminRoles = lazy(() => import('@/pages/AdminRoles'))
 const WikiPage = lazy(() => import('@/pages/Wiki'))
 const SearchPage = lazy(() => import('@/pages/Search'))
 const FilesPage = lazy(() => import('@/pages/Files'))
@@ -235,6 +236,14 @@ export default function App() {
                         element={
                           <Page>
                             <AdminRbac />
+                          </Page>
+                        }
+                      />
+                      <Route
+                        path="roles"
+                        element={
+                          <Page>
+                            <AdminRoles />
                           </Page>
                         }
                       />

@@ -63,7 +63,7 @@ describe('гейт schema-drift: настоящий репозиторий', () 
   const models = parsePrismaSchema(read(PRISMA_SCHEMA))
 
   it('разбирает Prisma-схему и видит объявленные поля', () => {
-    expect(models.length).toBe(45)
+    expect(models.length).toBe(47)
     const tickets = models.find((entry) => entry.table === 'tickets')
     expect(tickets).toBeTruthy()
     expect(tickets.fields.find((entry) => entry.name === 'email_message_id')).toBeTruthy()

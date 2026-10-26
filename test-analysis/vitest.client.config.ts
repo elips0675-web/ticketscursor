@@ -12,6 +12,7 @@ export default defineConfig({
     },
     include: ['src/test/**/*.test.{ts,tsx}', 'scripts/**/*.test.mjs'],
     setupFiles: ['src/test/setup.ts'],
+    testTimeout: 15000,
     css: false,
     coverage: {
       provider: 'v8',
@@ -25,10 +26,10 @@ export default defineConfig({
         'src/vite-env.d.ts',
       ],
       thresholds: {
-        statements: 76,
-        branches: 67,
-        functions: 68,
-        lines: 78,
+        statements: 78,
+        branches: 69,
+        functions: 70,
+        lines: 80,
       },
     },
   },

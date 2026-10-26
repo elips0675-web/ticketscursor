@@ -25,9 +25,11 @@ model employees {
   created_at     DateTime? @default(now())
   last_active    DateTime?
   manager_id     Int?
+  custom_role_id Int?
 
   manager    employees?  @relation("EmployeeManager", fields: [manager_id], references: [id], onDelete: SetNull)
   subordinates employees[] @relation("EmployeeManager")
+  custom_roles custom_roles? @relation(fields: [custom_role_id], references: [id], onDelete: SetNull)
 
   tickets_created_by  tickets[]          @relation("tickets_created_by")
   tickets_assigned_to tickets[]          @relation("tickets_assigned_to")
@@ -556,6 +558,31 @@ model feature_flags {
   updated_at     DateTime? @default(now())
 
   @@map("feature_flags")
+}
+
+model custom_roles {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique @db.VarChar(100)
+  description String    @default("") @db.VarChar(500)
+  base_role   String    @default("agent") @db.VarChar(20)
+  created_at  DateTime? @default(now())
+  updated_at  DateTime? @default(now())
+
+  custom_role_permissions custom_role_permissions[]
+  employees               employees[]
+
+  @@map("custom_roles")
+}
+
+model custom_role_permissions {
+  id         Int    @id @default(autoincrement())
+  role_id    Int
+  permission String @db.VarChar(100)
+
+  custom_roles custom_roles @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
+  @@unique([role_id, permission])
+  @@map("custom_role_permissions")
 }
 
 model canned_responses {

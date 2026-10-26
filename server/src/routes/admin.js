@@ -24,6 +24,7 @@ import { getRbacMatrix } from '../rbac.js'
 import { getEmailTemplatePreview } from '../notify.js'
 import { setRateLimitOverrides } from '../limits.js'
 import { isFeatureEnabled, invalidateFeatureFlagCache } from '../feature-flags.js'
+import { getPermissionCatalog, listRoles, createRole, updateRole, deleteRole, requirePermission } from '../custom-roles.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const projectRoot = path.resolve(__dirname, '..', '..', '..')
@@ -157,6 +158,7 @@ router.get('/users', async (req, res) => {
   try {
     const rows = await prisma.employees.findMany({
       orderBy: [{ is_active: 'desc' }, { name: 'asc' }],
+      include: { custom_roles: { select: { id: true, name: true } } },
     })
     const data = rows.map(r => ({
       id: r.id, name: r.name, email: r.email,
@@ -166,6 +168,8 @@ router.get('/users', async (req, res) => {
       activeTickets: r.active_tickets || 0,
       resolvedToday: r.resolved_today || 0,
       isActive: r.is_active,
+      customRoleId: r.custom_role_id,
+      customRoleName: r.custom_roles?.name || null,
       createdAt: r.created_at,
     }))
     res.json({ success: true, data })
@@ -180,7 +184,7 @@ router.put('/users/:id', async (req, res) => {
   if (targetId === req.user.userId) {
     return res.status(400).json({ success: false, message: 'Cannot modify your own account' })
   }
-  const { role, isActive, department, title } = req.body
+  const { role, isActive, department, title, customRoleId } = req.body
   const data = {}
   if (role) {
     if (role === 'super_admin') {
@@ -190,6 +194,22 @@ router.put('/users/:id', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid role' })
     }
     data.role = role
+    // Смена роли сбрасывает custom role: иначе повышение до admin оставило бы
+    // урезанный набор прав (например «только audit.view») — невидимый для админа.
+    if (customRoleId === undefined) data.custom_role_id = null
+  }
+  if (customRoleId !== undefined) {
+    if (customRoleId === null) {
+      data.custom_role_id = null
+    } else {
+      const roleId = Number(customRoleId)
+      if (!Number.isInteger(roleId) || roleId <= 0) {
+        return res.status(400).json({ success: false, message: 'Invalid customRoleId' })
+      }
+      const exists = await prisma.custom_roles.findUnique({ where: { id: roleId }, select: { id: true } })
+      if (!exists) return res.status(400).json({ success: false, message: 'Unknown custom role' })
+      data.custom_role_id = roleId
+    }
   }
   if (isActive !== undefined) {
     data.is_active = Boolean(isActive)
@@ -640,6 +660,66 @@ router.delete('/ticket-categories/:id', async (req, res) => {
   } catch (err) {
     logger.error('Ticket category delete error:', err)
     res.status(500).json({ success: false, message: 'Failed to delete ticket category' })
+  }
+})
+
+// Custom roles (Этап 66.5): роль = именованный набор permissions, выдаётся
+// сотруднику через employees.custom_role_id. Гейт двойной: флаг фичи (иначе
+// 404, как у scheduled reports) и permission settings.manage — админ с
+// урезанной custom role не управляет ролями.
+const requireCustomRoles = async (req, res, next) => {
+  if (!(await isFeatureEnabled('custom_roles'))) {
+    return res.status(404).json({ success: false, message: 'Not found' })
+  }
+  next()
+}
+
+const manageRoles = [requireCustomRoles, requirePermission('settings.manage')]
+
+router.get('/permissions', manageRoles, (req, res) => {
+  res.json({ success: true, data: getPermissionCatalog() })
+})
+
+router.get('/roles', manageRoles, async (req, res) => {
+  try {
+    res.json({ success: true, data: await listRoles() })
+  } catch (err) {
+    logger.error('Custom roles list error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch roles' })
+  }
+})
+
+router.post('/roles', manageRoles, async (req, res) => {
+  try {
+    const role = await createRole(req.body || {})
+    res.status(201).json({ success: true, data: role })
+  } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ success: false, message: err.message })
+    logger.error('Custom role create error:', err)
+    res.status(500).json({ success: false, message: 'Failed to create role' })
+  }
+})
+
+router.put('/roles/:id', manageRoles, async (req, res) => {
+  try {
+    const role = await updateRole(Number(req.params.id), req.body || {})
+    if (!role) return res.status(404).json({ success: false, message: 'Role not found' })
+    res.json({ success: true, data: role })
+  } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ success: false, message: err.message })
+    logger.error('Custom role update error:', err)
+    res.status(500).json({ success: false, message: 'Failed to update role' })
+  }
+})
+
+router.delete('/roles/:id', manageRoles, async (req, res) => {
+  try {
+    const deleted = await deleteRole(Number(req.params.id))
+    if (!deleted) return res.status(404).json({ success: false, message: 'Role not found' })
+    res.json({ success: true, data: { deleted: true } })
+  } catch (err) {
+    logger.error('Custom role delete error:', err)
+    res.status(500).json({ success: false, message: 'Failed to delete role' })
   }
 })
 
