@@ -1,11 +1,11 @@
 {
-  "generated": "2026-10-26T05:52:27.059Z",
+  "generated": "2026-10-26T06:47:01.187Z",
   "tool": "node scripts/regenerate-test-inventory.js (vitest --reporter=json, actual execution)",
   "verified_by": "vitest run (actual execution)",
   "frontend": {
-    "files": 111,
-    "suites": 301,
-    "tests": 1067,
+    "files": 112,
+    "suites": 306,
+    "tests": 1093,
     "all_passing": true,
     "config": "vitest.client.config.ts",
     "run_command": "npx vitest run --config vitest.client.config.ts"
@@ -19,9 +19,9 @@
     "run_command": "cd server && npx vitest run"
   },
   "total": {
-    "files": 215,
-    "suites": 820,
-    "tests": 2453,
+    "files": 216,
+    "suites": 825,
+    "tests": 2479,
     "all_passing": true
   },
   "e2e": {
@@ -53,447 +53,451 @@
   },
   "frontend_files": [
     {
-      "file": "scripts/check-security-headers.test.mjs",
+      "file": "D:/Tickets Cursor nout/repo/scripts/check-security-headers.test.mjs",
       "tests": 46
     },
     {
-      "file": "scripts/migrations-lag-audit.test.mjs",
+      "file": "D:/Tickets Cursor nout/repo/scripts/migrations-lag-audit.test.mjs",
       "tests": 35
     },
     {
-      "file": "src/test/TicketDetail.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/TicketDetail.test.tsx",
       "tests": 32
     },
     {
-      "file": "scripts/check-alerts.test.mjs",
+      "file": "D:/Tickets Cursor nout/repo/scripts/check-alerts.test.mjs",
       "tests": 31
     },
     {
-      "file": "scripts/schema-drift-audit.test.mjs",
+      "file": "D:/Tickets Cursor nout/repo/scripts/schema-drift-audit.test.mjs",
       "tests": 31
     },
     {
-      "file": "src/test/Files.expanded.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Files.expanded.test.tsx",
       "tests": 27
     },
     {
-      "file": "scripts/check-backlog-closed-body.test.mjs",
+      "file": "D:/Tickets Cursor nout/repo/scripts/check-backlog-closed-body.test.mjs",
       "tests": 26
     },
     {
-      "file": "scripts/check-backlog-schema.test.mjs",
+      "file": "D:/Tickets Cursor nout/repo/scripts/check-backlog-schema.test.mjs",
       "tests": 26
     },
     {
-      "file": "src/test/Tickets.expanded.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/scripts/check-compose-logging.test.mjs",
+      "tests": 26
+    },
+    {
+      "file": "D:/Tickets Cursor nout/repo/src/test/Tickets.expanded.test.tsx",
       "tests": 25
     },
     {
-      "file": "src/test/Admin.expanded.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Admin.expanded.test.tsx",
       "tests": 22
     },
     {
-      "file": "src/test/useFeature.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/useFeature.test.tsx",
       "tests": 21
     },
     {
-      "file": "src/test/global-shortcuts.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/global-shortcuts.test.tsx",
       "tests": 19
     },
     {
-      "file": "src/test/Calendar.expanded.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Calendar.expanded.test.tsx",
       "tests": 18
     },
     {
-      "file": "src/test/Dashboard.expanded.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Dashboard.expanded.test.tsx",
       "tests": 18
     },
     {
-      "file": "src/test/Kanban.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Kanban.test.tsx",
       "tests": 18
     },
     {
-      "file": "scripts/check-menu-inventory.test.mjs",
+      "file": "D:/Tickets Cursor nout/repo/scripts/check-menu-inventory.test.mjs",
       "tests": 17
     },
     {
-      "file": "src/test/AdminSettings.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AdminSettings.test.tsx",
       "tests": 17
     },
     {
-      "file": "src/test/ChatDetail.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/ChatDetail.test.tsx",
       "tests": 15
     },
     {
-      "file": "src/test/Polls.expanded.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Polls.expanded.test.tsx",
       "tests": 14
     },
     {
-      "file": "src/test/TicketContext.optimistic.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/TicketContext.optimistic.test.tsx",
       "tests": 14
     },
     {
-      "file": "src/test/Wiki.expanded.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Wiki.expanded.test.tsx",
       "tests": 14
     },
     {
-      "file": "scripts/messages-archive-measure.test.mjs",
+      "file": "D:/Tickets Cursor nout/repo/scripts/messages-archive-measure.test.mjs",
       "tests": 13
     },
     {
-      "file": "src/test/AdminAudit.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AdminAudit.test.tsx",
       "tests": 13
     },
     {
-      "file": "src/test/AdminIntegrations.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AdminIntegrations.test.tsx",
       "tests": 13
     },
     {
-      "file": "src/test/AdminPush.expanded.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AdminPush.expanded.test.tsx",
       "tests": 13
     },
     {
-      "file": "src/test/AdminRules.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AdminRules.test.tsx",
       "tests": 13
     },
     {
-      "file": "src/test/Csatisfaction.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Csatisfaction.test.tsx",
       "tests": 13
     },
     {
-      "file": "src/test/Employees.expanded.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Employees.expanded.test.tsx",
       "tests": 13
     },
     {
-      "file": "src/test/Login.expanded.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Login.expanded.test.tsx",
       "tests": 13
     },
     {
-      "file": "src/test/SSO.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/SSO.test.tsx",
       "tests": 13
     },
     {
-      "file": "src/test/WidgetPanel.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/WidgetPanel.test.tsx",
       "tests": 13
     },
     {
-      "file": "scripts/check-doc-counters.test.mjs",
+      "file": "D:/Tickets Cursor nout/repo/scripts/check-doc-counters.test.mjs",
       "tests": 11
     },
     {
-      "file": "src/test/AdminLayout.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AdminLayout.test.tsx",
       "tests": 11
     },
     {
-      "file": "src/test/AppLayout.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AppLayout.test.tsx",
       "tests": 11
     },
     {
-      "file": "src/test/MarkdownEditor.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/MarkdownEditor.test.tsx",
       "tests": 11
     },
     {
-      "file": "src/test/News.expanded.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/News.expanded.test.tsx",
       "tests": 11
     },
     {
-      "file": "src/test/WidgetInbox.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/WidgetInbox.test.tsx",
       "tests": 11
     },
     {
-      "file": "src/test/CommandPalette.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/CommandPalette.test.tsx",
       "tests": 10
     },
     {
-      "file": "src/test/tickets-shortcuts.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/tickets-shortcuts.test.tsx",
       "tests": 10
     },
     {
-      "file": "src/test/wiki-diff.test.ts",
+      "file": "D:/Tickets Cursor nout/repo/src/test/wiki-diff.test.ts",
       "tests": 10
     },
     {
-      "file": "src/test/AdminRoles.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AdminRoles.test.tsx",
       "tests": 9
     },
     {
-      "file": "src/test/Search.expanded.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Search.expanded.test.tsx",
       "tests": 9
     },
     {
-      "file": "scripts/refresh-auth-json.test.mjs",
+      "file": "D:/Tickets Cursor nout/repo/scripts/refresh-auth-json.test.mjs",
       "tests": 8
     },
     {
-      "file": "src/test/AdminHealth.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AdminHealth.test.tsx",
       "tests": 8
     },
     {
-      "file": "src/test/KeyboardShortcuts.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/KeyboardShortcuts.test.tsx",
       "tests": 8
     },
     {
-      "file": "src/test/Login.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Login.test.tsx",
       "tests": 8
     },
     {
-      "file": "src/test/ResetPassword.expanded.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/ResetPassword.expanded.test.tsx",
       "tests": 8
     },
     {
-      "file": "src/test/RichMessage.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/RichMessage.test.tsx",
       "tests": 8
     },
     {
-      "file": "src/test/SocketContext.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/SocketContext.test.tsx",
       "tests": 8
     },
     {
-      "file": "src/test/TicketWatchersCard.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/TicketWatchersCard.test.tsx",
       "tests": 8
     },
     {
-      "file": "scripts/check-lint-gate.test.mjs",
+      "file": "D:/Tickets Cursor nout/repo/scripts/check-lint-gate.test.mjs",
       "tests": 7
     },
     {
-      "file": "src/test/AdminCustomFields.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AdminCustomFields.test.tsx",
       "tests": 7
     },
     {
-      "file": "src/test/Calculator.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Calculator.test.tsx",
       "tests": 7
     },
     {
-      "file": "src/test/PortalTrack.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/PortalTrack.test.tsx",
       "tests": 7
     },
     {
-      "file": "src/test/PublicKB.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/PublicKB.test.tsx",
       "tests": 7
     },
     {
-      "file": "src/test/Register.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Register.test.tsx",
       "tests": 7
     },
     {
-      "file": "src/test/TicketRelationsCard.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/TicketRelationsCard.test.tsx",
       "tests": 7
     },
     {
-      "file": "src/test/AdminQueues.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AdminQueues.test.tsx",
       "tests": 6
     },
     {
-      "file": "src/test/AdminRbac.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AdminRbac.test.tsx",
       "tests": 6
     },
     {
-      "file": "src/test/api.test.ts",
+      "file": "D:/Tickets Cursor nout/repo/src/test/api.test.ts",
       "tests": 6
     },
     {
-      "file": "src/test/AuthContext.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AuthContext.test.tsx",
       "tests": 6
     },
     {
-      "file": "src/test/ForgotPassword.expanded.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/ForgotPassword.expanded.test.tsx",
       "tests": 6
     },
     {
-      "file": "src/test/News.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/News.test.tsx",
       "tests": 6
     },
     {
-      "file": "src/test/NewTicket.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/NewTicket.test.tsx",
       "tests": 6
     },
     {
-      "file": "src/test/NotificationPreferencesSection.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/NotificationPreferencesSection.test.tsx",
       "tests": 6
     },
     {
-      "file": "src/test/Portal.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Portal.test.tsx",
       "tests": 6
     },
     {
-      "file": "src/test/PublicKBArticle.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/PublicKBArticle.test.tsx",
       "tests": 6
     },
     {
-      "file": "src/test/SessionsSection.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/SessionsSection.test.tsx",
       "tests": 6
     },
     {
-      "file": "src/test/TicketMergeDialog.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/TicketMergeDialog.test.tsx",
       "tests": 6
     },
     {
-      "file": "src/test/utils.test.ts",
+      "file": "D:/Tickets Cursor nout/repo/src/test/utils.test.ts",
       "tests": 6
     },
     {
-      "file": "src/test/Wiki.versioning.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Wiki.versioning.test.tsx",
       "tests": 6
     },
     {
-      "file": "src/test/AdminCannedResponses.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AdminCannedResponses.test.tsx",
       "tests": 5
     },
     {
-      "file": "src/test/AdminUsers.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AdminUsers.test.tsx",
       "tests": 5
     },
     {
-      "file": "src/test/ChatDetail.edit.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/ChatDetail.edit.test.tsx",
       "tests": 5
     },
     {
-      "file": "src/test/ChatDetail.replyto.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/ChatDetail.replyto.test.tsx",
       "tests": 5
     },
     {
-      "file": "src/test/Dashboard.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Dashboard.test.tsx",
       "tests": 5
     },
     {
-      "file": "src/test/i18n.parity.test.ts",
+      "file": "D:/Tickets Cursor nout/repo/src/test/i18n.parity.test.ts",
       "tests": 5
     },
     {
-      "file": "src/test/ProtectedRoute.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/ProtectedRoute.test.tsx",
       "tests": 5
     },
     {
-      "file": "src/test/PwaInstallPrompt.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/PwaInstallPrompt.test.tsx",
       "tests": 5
     },
     {
-      "file": "src/test/Team.expanded.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Team.expanded.test.tsx",
       "tests": 5
     },
     {
-      "file": "src/test/TicketDetail.canned.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/TicketDetail.canned.test.tsx",
       "tests": 5
     },
     {
-      "file": "src/test/TwoFactorSection.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/TwoFactorSection.test.tsx",
       "tests": 5
     },
     {
-      "file": "src/test/Wiki.publish.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Wiki.publish.test.tsx",
       "tests": 5
     },
     {
-      "file": "src/test/a11y.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/a11y.test.tsx",
       "tests": 4
     },
     {
-      "file": "src/test/AdminSettings.scheduledreports.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AdminSettings.scheduledreports.test.tsx",
       "tests": 4
     },
     {
-      "file": "src/test/Calendar.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Calendar.test.tsx",
       "tests": 4
     },
     {
-      "file": "src/test/ChatDetail.scroll.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/ChatDetail.scroll.test.tsx",
       "tests": 4
     },
     {
-      "file": "src/test/Chats.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Chats.test.tsx",
       "tests": 4
     },
     {
-      "file": "src/test/Employees.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Employees.test.tsx",
       "tests": 4
     },
     {
-      "file": "src/test/Files.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Files.test.tsx",
       "tests": 4
     },
     {
-      "file": "src/test/GdprExportSection.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/GdprExportSection.test.tsx",
       "tests": 4
     },
     {
-      "file": "src/test/NewTicket.forms.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/NewTicket.forms.test.tsx",
       "tests": 4
     },
     {
-      "file": "src/test/NotificationsPage.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/NotificationsPage.test.tsx",
       "tests": 4
     },
     {
-      "file": "src/test/use-push.test.ts",
+      "file": "D:/Tickets Cursor nout/repo/src/test/use-push.test.ts",
       "tests": 4
     },
     {
-      "file": "src/test/Wiki.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Wiki.test.tsx",
       "tests": 4
     },
     {
-      "file": "src/test/AdminSettings.sla.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AdminSettings.sla.test.tsx",
       "tests": 3
     },
     {
-      "file": "src/test/AdminSettings.ticketforms.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AdminSettings.ticketforms.test.tsx",
       "tests": 3
     },
     {
-      "file": "src/test/ErrorBoundary.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/ErrorBoundary.test.tsx",
       "tests": 3
     },
     {
-      "file": "src/test/Polls.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Polls.test.tsx",
       "tests": 3
     },
     {
-      "file": "src/test/AdminDashboard.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AdminDashboard.test.tsx",
       "tests": 2
     },
     {
-      "file": "src/test/ChatDetail.rich.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/ChatDetail.rich.test.tsx",
       "tests": 2
     },
     {
-      "file": "src/test/ForgotPassword.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/ForgotPassword.test.tsx",
       "tests": 2
     },
     {
-      "file": "src/test/NotFound.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/NotFound.test.tsx",
       "tests": 2
     },
     {
-      "file": "src/test/ResetPassword.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/ResetPassword.test.tsx",
       "tests": 2
     },
     {
-      "file": "src/test/Search.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Search.test.tsx",
       "tests": 2
     },
     {
-      "file": "src/test/TicketDetail.rich.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/TicketDetail.rich.test.tsx",
       "tests": 2
     },
     {
-      "file": "src/test/WidgetLauncher.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/WidgetLauncher.test.tsx",
       "tests": 2
     },
     {
-      "file": "src/test/AdminPush.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/AdminPush.test.tsx",
       "tests": 1
     },
     {
-      "file": "src/test/Profile.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Profile.test.tsx",
       "tests": 1
     },
     {
-      "file": "src/test/Tickets.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/Tickets.test.tsx",
       "tests": 1
     },
     {
-      "file": "src/test/WidgetChat.test.tsx",
+      "file": "D:/Tickets Cursor nout/repo/src/test/WidgetChat.test.tsx",
       "tests": 1
     }
   ],

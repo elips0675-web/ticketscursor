@@ -37,7 +37,7 @@ export const GATE_RULES = [
   { re: /^e2e\//, gates: ['npx playwright test'], why: 'E2E-спеки: прогон Playwright' },
   { re: /\.(md|txt)$/, gates: ['npm run check:docs'], why: 'доки/журналы: зеркала, счётчики, структура бэклога' },
   { re: /^(nginx\.conf|vercel\.json)$/, gates: ['npm run check:headers'], why: 'периметр: security-заголовки' },
-  { re: /^(docker-compose|Dockerfile|\.dockerignore)/, gates: ['npm run check:headers'], why: 'контейнер: заголовки и конфигурация периметра' },
+  { re: /^(docker-compose|Dockerfile|\.dockerignore)/, gates: ['npm run check:headers', 'npm run check:compose-logging'], why: 'контейнер: заголовки периметра + лимиты логов и retention тома' },
   { re: /^(package\.json|package-lock\.json|server\/package(-lock)?\.json)$/, gates: ['npm test', 'cd server && npm test'], why: 'зависимости: оба набора тестов' },
 ]
 

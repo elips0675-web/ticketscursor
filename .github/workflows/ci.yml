@@ -201,6 +201,23 @@ jobs:
           node-version: 22
       - run: npm run check:alerts
 
+  compose-logging:
+    # Гейт «логи контейнеров ограничены, а диск не чистят командой, убивающей откат».
+    # У каждого сервиса docker-compose.yml обязателен logging: (json-file, max-size
+    # не больше 100 МБ, max-file не больше 10): по умолчанию json-file пишет
+    # <id>-json.log без предела, а prune логи работающего контейнера не удаляет.
+    # У Prometheus обязателен --storage.tsdb.retention.time/size, иначе том растёт
+    # молча. Очистка через docker system prune -a / image prune -a / volume prune
+    # запрещена: она уносит образы под тегом :rollback (цель автоматического отката)
+    # и тома mysql_data/uploads_data. Только чтение файлов, зависимости не нужны.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run check:compose-logging
+
   backup-verify:
     # Ежедневная проверка, что mysqldump реально разворачивается (Промт 4 «Доделать.rtf»).
     # В CI валидируем seed.sql (содержит CREATE TABLE + INSERT — те же проверки COUNT>0);
