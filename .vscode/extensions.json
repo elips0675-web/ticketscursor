@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "saoudrizwan.claude-dev",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "humao.rest-client"
+  ],
+  "unwantedRecommendations": []
+}

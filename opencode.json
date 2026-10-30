@@ -1,0 +1,98 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "ollama/servicedesk-qwen-q5:latest",
+  "default_agent": "local",
+  "providers": {
+    "ollama": {
+      "models": {
+        "servicedesk-qwen:latest": {
+          "name": "servicedesk-qwen 7B · 16k · локально",
+          "limit": {
+            "context": 16384,
+            "output": 4096
+          },
+          "capabilities": {
+            "tools": true,
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        },
+        "servicedesk-qwen-q5:latest": {
+          "name": "servicedesk-qwen 7B Q5_K_M · 16k · локально",
+          "limit": {
+            "context": 16384,
+            "output": 4096
+          },
+          "capabilities": {
+            "tools": true,
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        },
+        "servicedesk-qwen-14b:latest": {
+          "name": "servicedesk-qwen 14B · 8k · локально",
+          "limit": {
+            "context": 8192,
+            "output": 4096
+          },
+          "capabilities": {
+            "tools": true,
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        },
+        "gpt-oss:120b-cloud": {
+          "name": "gpt-oss:120b-cloud · Ollama Cloud",
+          "limit": {
+            "context": 131072,
+            "output": 16384
+          },
+          "capabilities": {
+            "tools": true,
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "agents": {
+    "local": {
+      "description": "3060: одна узкая правка одного файла, без сети",
+      "mode": "primary",
+      "steps": 10,
+      "permissions": [
+        {
+          "action": "webfetch",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "websearch",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "cloud": {
+      "description": "Эскалация: многофайловые задачи, ревью диффа, миграции",
+      "mode": "primary"
+    }
+  }
+}

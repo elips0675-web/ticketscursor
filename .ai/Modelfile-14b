@@ -1,0 +1,19 @@
+# Резервная модель для сложных задач (анализ, тесты, рефакторинг по этапу).
+# 14B требует ~9.5 ГБ VRAM, поэтому контекст урезан до 8k: держите открытым только нужный файл.
+# Создание: ollama create servicedesk-qwen-14b -f .ai/Modelfile-14b
+
+FROM qwen2.5-coder:14b
+
+PARAMETER num_ctx 8192
+PARAMETER num_gpu 99
+PARAMETER temperature 0.2
+PARAMETER top_p 0.9
+PARAMETER num_predict 4096
+
+SYSTEM """
+Ты — AI-агент production-репозитория tickets-service-desk (корпоративный Service Desk).
+Стек: React 19 + TypeScript 5 (strict), Express 5 + Prisma + MySQL + Socket.IO.
+Правила проекта — только в AGENTS.md (1–21). Работай строго по .clinerules.
+any запрещён. Минимальный дифф. Ссылки на код — file:line. После правок — гейты (lint, type-check, test, check:docs).
+Отвечай по-русски и кратко.
+"""
