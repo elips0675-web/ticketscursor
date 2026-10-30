@@ -1,4 +1,6 @@
 # Что доделать — актуальный статус (26.10.2026)
+> НЕ ИСТОЧНИК ФАКТОВ О КОДЕ: журнал фиксирует прошлые прогоны. Для агента доказательство — только `file:line` из исходников; цитаты из этого файла отклоняются.
+
 
 > Источники аудитов: Kimi **8/10**, DeepSeek **8.0–8.5/10**, Qwen **8.5/10** (вердикты 23.09–07.10).
 > Тесты (факт 26.10.2026): клиент 112 файлов / 1093 + сервер 104 файлов / 1386 = **2479 тестов, 0 failures** (+52 к прошлой шапке: Этап 66.5 custom roles — 43 серверных и 9 клиентских тестов; подробности в «Что сделано.txt»); E2E 19 spec / 61 + check-console 26/28 (2 страницы — флаговые 404 `/team` и `/admin/settings`, реестр `TRACKED_ISSUES` в `check-console.mjs`); инвентарь `test-analysis/test-inventory.json` (регенерация: `node scripts/regenerate-test-inventory.js vitest-client.json server/vitest-server.json` — 216 файлов / 2479 тестов); счётчики шапок сверяются с инвентарём гейтом `node scripts/check-doc-counters.mjs --fix` (в `npm run check:docs` → CI `docs-canon`); синхронность доков: `node scripts/check-doc-sync.mjs` (в CI — джоба `docs-canon`). Покрытие перемерено 26.10.2026: клиент **80.07 / 71.98 / 72.29 / 82.69 %** (statements/branches/functions/lines; пороги `vitest.client.config.ts` — 78 / 69 / 70 / 80), сервер **82.03 / 76.14 / 83.16 / 83.87 %** (пороги `server/vitest.config.js` — 80 / 74 / 81 / 81) — оба гейта зелёные.
