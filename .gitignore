@@ -21,6 +21,12 @@ server/uploads/files/
 # MySQL dumps (backup-mysql.ps1 → backups/)
 backups/
 
+# Локальные бэкапы переключателя профилей (.ai/ai-profile.mjs)
+opencode.json.bak-*
+
+# Локальные бэкапы текстовых заметок
+*.backup.txt
+
 # Temporary vitest coverage JSON / diagnostics
 vitest-client.json
 server/vitest-server.json

@@ -1,0 +1,180 @@
+# Roadmap по улучшению Service Desk — актуальная версия
+
+**Дата:** 30.10.2026
+**Статус:** заменяет предыдущую версию файла (Qwen). Пересобрано по фактическому коду, CI и прогонам.
+**Важно:** это не бэклог. Открытые пункты, которые берутся в работу, переносятся в `Что-доделать.txt` по правилам репозитория (ID, дата проверки, доказательство file:line).
+
+---
+
+## 0. Короткий вердикт по исходному файлу
+
+- Как универсальный чек-лист — **6/10**: структура «4 этапа» разумная.
+- Как план конкретно для этого репозитория — **3/10**: около 60% пунктов уже сделаны, часть неприменима, часть содержит фактические ошибки.
+- Выполнять файл буквально нельзя: получим работу над уже закрытыми задачами и миграции ради миграций.
+- Главный дефект: план писался без чтения кода. Он не знает реального покрытия, структуры тестов, CI и текущих гейтов.
+
+---
+
+## 1. Факт-чек исходного плана
+
+| Утверждение в старом файле | Фактическое состояние (30.10.2026) |
+|---|---|
+| Покрытие 67–71% | Клиент: **80.07 / 71.98 / 72.29 / 82.69%** (statements / branches / functions / lines). Сервер: **82.03 / 76.14 / 83.16 / 83.87%**. Оба гейта зелёные |
+| Тесты в `src/server/__tests__/` | Такого пути нет. Реально: `src/test/` (клиент) и `server/src/__tests__/` (сервер) |
+| «50+ lazy-импортов в App.tsx» | **15** lazy-импортов на **43** страницы. Остальные страницы импортируются сразу |
+| «Проверить staleTime: 5min» | Уже настроено: `staleTime: 5 мин`, `gcTime: 10 мин`, `retry: 1`, `refetchOnWindowFocus: false` (`src/App.tsx:79-88`) |
+| «Добавить useIsFocused» | Это хук React Navigation (мобильный), в веб-проекте неприменим. В коде 0 вхождений |
+| «componentDidCatch ловит ошибки в промисах и setTimeout» | **Неверно.** Error Boundary ловит только render/lifecycle. Асинхронные ошибки нужно ловить через `window.onerror` / `unhandledrejection` и Sentry |
+| «5 контекстов: Ticket, Auth, Socket, TooltipProvider + другие» | 3 прикладных контекста: `AuthContext`, `SocketContext`, `ticket-context`. `TooltipProvider` — UI-провайдер, не состояние приложения |
+| «Миграция на Tailwind CSS v4» | Уже `tailwindcss ^4.1.4` + `@tailwindcss/postcss`; конфига `tailwind.config.ts` нет — это норма для v4 |
+| «PWA improvements» | PWA уже есть: `vite-plugin-pwa`, стратегия `injectManifest` (`vite.config.ts:27-33`) |
+| «Включить Sentry Performance» | Уже включён: `browserTracingIntegration` + `replayIntegration` (`src/App.tsx:63-71`) |
+| «Добавить проверку security headers» | Скрипт есть и уже запускается отдельной джобой `security-headers` в CI |
+| «Добавить тесты для SLA/RBAC/Files/WebSocket» | Уже есть: `sla.test.js`, `sla.timezone.test.js`, `rbac-matrix.test.js`, `files.route.test.js`, `socket.test.js`, `idor.test.js` |
+| «Использовать MSW» | MSW уже в devDependencies, `src/mocks/handlers.ts` используется в тестах |
+| «Безопасность загрузки файлов — реализовать» | Уже есть: лимит 50 МБ (`server/src/routes/files.js:28`), проверка magic bytes (`server/src/middleware/fileCheck.js`), ClamAV с отказом загрузок в prod при выключенном антивирусе (`server/src/clamav.js`) |
+| «no-explicit-any → error, исправить все ошибки» | В `src/**/*.{ts,tsx}` **0** явных `any`. Правило можно переключать безопасно (сделано, см. §6) |
+| «@tanstack/react-router для lazy-loading» | Это не оптимизация lazy-loading, а полная миграция роутера. Выгода не оправдывает риск |
+| «Добавить правило explicit-function-return-type» | Глобально не нужно: тысячи замечаний на 43 страницах при почти нулевой пользе. Только точечно для `server/src/services` и `src/lib` |
+
+---
+
+## 2. Что уже закрыто — повторно не делать
+
+- Покрытие тестами и пороги coverage (клиент и сервер).
+- E2E в CI, `check-console` в CI, security headers в CI.
+- MSW, Sentry (tracing + replay), PWA.
+- Tailwind CSS v4.
+- Проверка загрузки файлов: размер, magic bytes, ClamAV.
+- `staleTime` / `gcTime` / `retry` в React Query.
+- ESLint: 0 warnings, гейт `--max-warnings 0`.
+- Бэкапы в CI: джоба `backup-verify` + `scripts/verify-backup.mjs`.
+- Миграции и schema drift в CI: `migrations-lag`, `schema-drift`.
+
+---
+
+## 3. Реальные приоритеты
+
+### 3.1. P0 — надёжность и безопасность (сейчас)
+
+| ID | Задача | Факт / доказательство | Действие | Критерий приёмки |
+|---|---|---|---|---|
+| REL-01 | **БД и восстановление** | 30.10.2026: базы `servicedesk` не было, `/api/chats` отдавал 500, `/chats` показывал «Ничего не найдено». Восстановили миграциями и сидом | Регламент бэкапов + регулярный restore-дрилл в пустую БД + healthcheck, который проверяет не только процесс, но и доступность БД | Восстановление из дампа в пустую БД → `/api/health` 200, `/api/chats` возвращает данные, `/chats` непустой |
+| SEC-01 | **Секреты** | `server/.env`: `JWT_SECRET=your-secret-key-change-in-production`. Секреты хранятся в env открытым текстом (P1-08) | Убрать дефолтный секрет, добавить проверку при старте в production, описать ротацию, проверить `.env.example` | Приложение не стартует в production с дефолтным/пустым `JWT_SECRET`; ротация описана |
+| OBS-01 | **Циклы ошибок** | 30.10.2026: при недоступной БД `Outbox worker poll error` писался каждую секунду (сотни строк) | Backoff + rate-limit одинаковых ошибок, алерт на серию, не спамить в лог | При падении БД — не более N строк/мин и один алерт; после восстановления — автоматическое восстановление |
+| SEC-02 | **XSS в rich messages** | Rich-сообщения и markdown поддерживаются (`server/src/rich-messages.js`, `src/components/chat/RichMessage.tsx`) | Проверить санитайзинг HTML/ссылок, добавить тесты на `javascript:`, `<img onerror>`, `<script>` | Вредоносная разметка не исполняется; тест-инвариант в CI |
+| SEC-03 | **Загрузка файлов: краевые случаи** | Базовая защита уже есть | Проверить zip-bomb, лимиты по типам, поведение при `CLAMAV_ENABLED=false` в prod, e2e на 51 МБ | e2e: 51 МБ отклонён; архив с бомбой отклонён; prod без ClamAV не принимает файлы |
+
+### 3.2. P1 — качество (2–4 недели)
+
+| ID | Задача | Факт / доказательство | Действие | Критерий приёмки |
+|---|---|---|---|---|
+| I18N-01 | **Захардкоженный русский текст** | Не менее **258** строк с кириллицей в `src/pages/*.tsx` и `src/components/*.tsx`; ru/en уже есть | Вынести строки в `ru.json`/`en.json`, добавить CI-проверку по аналогии с `check-menu`, проверить plural forms | 0 кириллицы в pages/components (кроме тестов); паритет ключей ru/en; гейт в CI |
+| A11Y-01 | **Доступность** | `eslint-plugin-jsx-a11y` не подключён; axe-тест есть, но покрывает 4 экрана и без контраста (`src/test/a11y.test.tsx`) | Подключить `jsx-a11y`, расширить axe на 10 ключевых страниц, проверить контраст через Lighthouse | 0 violations в axe на ключевых страницах; Lighthouse Accessibility ≥ 90 |
+| ERR-01 | **ErrorBoundary** | Сейчас полноэкранный fallback с `window.location.reload()` (`src/components/ErrorBoundary.tsx`) | Сброс состояния без reload, fallback внутри layout, глобальные `window.onerror` / `unhandledrejection`, Sentry | E2E `error-boundary` (E2E-11): ошибка не даёт белый экран, есть «Повторить» |
+| PERF-01 | **Lazy для тяжёлых страниц** | Тяжёлые: `TicketDetail.tsx` 44 КБ, `AdminSettings.tsx` 63 КБ, `Wiki.tsx` 25 КБ, `Tickets.tsx` 23 КБ. Сейчас один общий `<Suspense>` | Перевести 4–6 тяжёлых страниц на `lazy`, сделать Suspense на уровне route, не ломать layout | Entry-chunk не растёт; бюджет бандла соблюдён (P2-11); навигация без мигания layout |
+| TEST-01 | **Coverage-пуш** | P1-13–15: `routes/admin.js` 58.03/55.32%, `Employees.tsx` 55.75/50.0, `TicketDetail.tsx` 62.94/58.39 (23.10.2026) | Добрать тесты по пунктам P1-13–15 | Покрытие указанных файлов выше порогов, гейт зелёный |
+| TEST-02 | **E2E критичных цепочек** | E2E-03/04/05 в бэклоге: admin-users, admin-rules, ticket-attachments | Реализовать по одному spec на цепочку | Тесты стабильны в CI, проверяют смысл, а не `h1,h2,h3` |
+
+### 3.3. P2 — только по измерениям (квартал)
+
+| ID | Задача | Условие входа |
+|---|---|---|
+| ARCH-01 | Рефакторинг контекстов (разделение `TicketContext`, селекторы) | Только после профилирования: доказаны лишние ререндеры |
+| ARCH-02 | Zustand / `@tanstack/react-router` | Не делать без конкретной боли. Текущий роутер работает, v7-флаги включены |
+| DEPS-01 | Анализ циклических зависимостей | После P1, как разовая проверка |
+| UI-01 | Code splitting UI-компонентов | Только если бюджет бандла показывает проблему |
+| OBS-02 | OpenTelemetry, CDN, SPF/DKIM | Инфраструктурные пункты P2-05, P2-06, P2-07 |
+| DATA-01 | Retention/автоочистка | Сначала утвердить политику хранения (TEST-16) |
+
+---
+
+## 4. План по спринтам
+
+**Неделя 1 — стабильность**
+1. REL-01: бэкап + restore-дрилл + healthcheck БД.
+2. SEC-01: убрать дефолтный `JWT_SECRET`.
+3. OBS-01: backoff и алерт для outbox worker.
+
+**Недели 2–4 — безопасность и качество**
+4. SEC-02: XSS-инварианты rich messages.
+5. SEC-03: краевые случаи загрузки файлов.
+6. I18N-01: вынос строк + CI-гейт.
+7. A11Y-01: jsx-a11y + axe + контраст.
+
+**Месяц 2 — UX и производительность**
+8. ERR-01: ErrorBoundary + глобальные обработчики.
+9. PERF-01: lazy для тяжёлых страниц.
+10. TEST-01/02: coverage-пуш и E2E критичных цепочек.
+
+**Квартал — рефакторинг**
+11. P2 только при наличии измерений и свободного бюджета.
+
+---
+
+## 5. Что вычеркнуто из старого плана и почему
+
+| Пункт | Почему вычеркнут |
+|---|---|
+| Tailwind v4 migration | Уже v4 |
+| PWA improvements | PWA уже реализована |
+| Sentry Performance | Уже включён |
+| MSW | Уже используется |
+| `useIsFocused` | Неприменимо (мобильный хук) |
+| `@tanstack/react-router` | Не оптимизация lazy-loading, а миграция роутера |
+| `explicit-function-return-type` глобально | Шум без пользы; только точечно |
+| «50+ lazy-импортов» | Их 15; задача остаётся, но объём другой |
+| «Тесты для SLA/RBAC/Files/WebSocket» | Уже есть |
+| «Security headers» | Уже в CI |
+| «Проверить staleTime» | Уже настроено; проверять нечего без метрик |
+
+---
+
+## 6. Быстрые победы, уже сделанные по этому плану
+
+- `@typescript-eslint/no-explicit-any`: `warn` → **`error`** в `eslint.config.js`. В `src` 0 явных `any`, гейт `--max-warnings 0` проходит.
+- Healthcheck API переведён на БД-зависимый эндпоинт: `docker-compose.yml` (api healthcheck) и `k8s/api.yaml` (readinessProbe) теперь используют `/api/health/ready` вместо `/api/health`. Liveness `/api/health` оставлен для проверки процесса.
+- Проведён restore-дрилл 30.10.2026: `mysqldump` → `scripts/verify-backup.mjs` → временная БД `servicedesk_verify` → импорт → проверка `tickets=5, employees=11` → DROP. Exit 0.
+- Зафиксирован инцидент 30.10.2026 (отсутствие БД) как основание для REL-01.
+
+---
+
+## 7. Гейты и Definition of Done
+
+Перед коммитом / в CI:
+
+```bash
+npm run check:docs
+npm run lint
+npm run type-check
+npm test
+cd server && npm test
+npm run build
+node check-console.mjs
+npx playwright test
+```
+
+DoD на фичу (правила репозитория):
+1. Feature flag через `useFeature()`, дефолт off.
+2. Тесты (клиент + сервер), негативные сценарии и идемпотентность.
+3. i18n ru/en.
+4. `check-console.mjs` → `ALL OK`, `[OK/RU]` на страницах обхода.
+5. Актуальный инвентарь тестов (`test-analysis/test-inventory.json`).
+6. Синхронизация доков (`check-doc-sync`).
+
+---
+
+## 8. Связь с существующим бэклогом
+
+Не дублировать пункты. Использовать существующие ID из `Что-доделать.txt`:
+
+- P1-08 — секреты только в env.
+- P1-13–15 — coverage `routes/admin.js`, `Employees.tsx`, `TicketDetail.tsx`.
+- E2E-03/04/05 — admin-users, admin-rules, ticket-attachments.
+- E2E-11 — error-boundary и a11y.
+- TEST-04 — `knex migrate:latest` в CI.
+- TEST-16 — retention (заблокировано политикой хранения).
+- P2-05/06/07 — tracing, CDN, SPF/DKIM.
+- P2-11 — per-chunk bundle budget.
+
+Новые пункты (REL-01, SEC-02, SEC-03, I18N-01, A11Y-01, ERR-01, PERF-01, OBS-01) при взятии в работу добавлять в `Что-доделать.txt` с ID, датой проверки и ссылкой на файл/функцию.
